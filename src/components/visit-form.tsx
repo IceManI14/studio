@@ -242,7 +242,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="hasBusinessCard"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-2 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -263,7 +263,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="discussedCompetitors"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-2 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -273,7 +273,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel htmlFor="discussedCompetitors" className="cursor-pointer">
-                      Competitors Discussed/Identified?
+                      Competitor Present?
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -365,3 +365,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
