@@ -103,7 +103,7 @@ const COMPETITOR_DETAILS: Record<string, { title?: string; details: string[] }> 
     details: ["Coolers: Brio"]
   },
   "Cleartide": {
-    details: ["Coolers: Wellsys 12000, Monet, E6, Waterlogic"]
+    details: ["Coolers: W9, i14, i15, i16"]
   },
   "Crown Coffee": {
     details: ["Coolers: Ion 200, Ion 400"]
@@ -340,3 +340,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+

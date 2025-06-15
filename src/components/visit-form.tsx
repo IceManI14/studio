@@ -74,7 +74,7 @@ const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
   "Blue Drop": ["Brio", "None Observed", "Other"],
   "WB Mason": ["Oasis - filter cooler", "Bottles", "None Observed", "Other"],
   "Atlantic Pure": ["W9", "i14", "i15", "i16", "None Observed", "Other"],
-  "Cleartide": ["Wellsys 12000", "Monet", "E6", "Waterlogic", "None Observed", "Other"],
+  "Cleartide": ["W9", "i14", "i15", "i16", "None Observed", "Other"],
   "Boston Bean": ["Ion 200", "Ion 400", "Alpine", "None Observed", "Other"],
   "Crown Coffee": ["Ion 200", "Ion 400", "None Observed", "Other"],
   "Aramark": ["Alpine", "None Observed", "Other"],
