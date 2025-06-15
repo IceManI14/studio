@@ -316,7 +316,7 @@ export default function HomePage() {
 
     toast({
       title: "Field Day Ended",
-      description: `Great work, ${selectedSalesperson?.name}! You completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
+      description: `Great work ${selectedSalesperson?.name}! You completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
     });
     setIsEndDayConfirmOpen(false);
   };
@@ -558,7 +558,7 @@ export default function HomePage() {
               </div>
 
               <div className="w-full pt-4 border-t">
-                <h3 className="text-2xl font-headline font-semibold text-primary mb-2 flex items-center">
+                <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
                   <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
                 </h3>
                 <div className="space-y-3">
