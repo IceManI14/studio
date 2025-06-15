@@ -67,6 +67,11 @@ export default function HomePage() {
     if (!selectedSalesperson) return null;
     return `trailblazerSuggestions_${selectedSalesperson.id}`;
   };
+  
+  const getColdCallCountStorageKey = (): string | null => {
+    if (!selectedSalesperson) return null;
+    return `trailblazerColdCallCount_${selectedSalesperson.id}`;
+  };
 
   // Effect to load selected salesperson
   useEffect(() => {
@@ -81,7 +86,7 @@ export default function HomePage() {
     }
   }, []);
 
-  // Effect to load visits and suggestions AFTER salesperson is selected & get mock GPS
+  // Effect to load visits, suggestions, and cold call count AFTER salesperson is selected & get mock GPS
   useEffect(() => {
     if (!selectedSalesperson) {
       setVisits([]); // Clear visits if no salesperson is selected
@@ -93,6 +98,7 @@ export default function HomePage() {
     }
     const visitsStorageKey = getVisitsStorageKey();
     const suggestionsStorageKey = getSuggestionsStorageKey();
+    const coldCallCountStorageKey = getColdCallCountStorageKey();
 
     if (visitsStorageKey) {
       const storedVisits = localStorage.getItem(visitsStorageKey);
@@ -129,8 +135,17 @@ export default function HomePage() {
       }
     }
 
+    if (coldCallCountStorageKey) {
+      const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
+      if (storedColdCallCount) {
+        setColdCallCount(parseInt(storedColdCallCount, 10) || 0);
+      } else {
+        setColdCallCount(0);
+      }
+    } else {
+      setColdCallCount(0); 
+    }
 
-    setColdCallCount(0); // Reset cold call count when salesperson changes or loads
 
     // Simulate getting current location
     const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6));
@@ -175,6 +190,14 @@ export default function HomePage() {
     }
   }, [visits, selectedSalesperson, toast]);
 
+  // Effect to save cold call count
+  useEffect(() => {
+    if (!selectedSalesperson) return;
+    const coldCallCountStorageKey = getColdCallCountStorageKey();
+    if (!coldCallCountStorageKey) return;
+    localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
+  }, [coldCallCount, selectedSalesperson]);
+
   // Effect to sort visits for Call Day tab
   useEffect(() => {
     if (visits.length > 0) {
@@ -204,6 +227,7 @@ export default function HomePage() {
   };
   
   const handleOpenAddVisitForm = () => {
+    setColdCallCount(prevCount => prevCount + 1);
     const currentTime = new Date();
     
     setCurrentEditingVisit({
@@ -259,6 +283,10 @@ export default function HomePage() {
 
   const confirmEndDay = () => {
     setColdCallCount(0); // Reset cold call count for the day
+    const coldCallCountStorageKey = getColdCallCountStorageKey();
+    if (coldCallCountStorageKey) {
+      localStorage.setItem(coldCallCountStorageKey, '0');
+    }
     toast({
       title: "Field Day Ended",
       description: `Great work, ${selectedSalesperson?.name}! Your session has been reset. Tomorrow is a new day!`,
@@ -368,6 +396,15 @@ export default function HomePage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 p-4 bg-card rounded-lg shadow">
+                    <h3 className="text-xl font-semibold text-foreground">
+                        Visit Card #
+                    </h3>
+                    <Badge variant="secondary" className="text-lg font-semibold">
+                        {coldCallCount}
+                    </Badge>
                 </div>
 
                 {visits.length === 0 && coldCallCount === 0 ? (
