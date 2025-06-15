@@ -589,7 +589,7 @@ export default function HomePage() {
                   <div className="flex gap-2">
                      <ExportPdfButton visits={visits} />
                      <ExportButton visits={visits} />
-                     <Button onClick={handleEmailChris} variant="outline">
+                     <Button onClick={handleEmailChris} variant="default">
                        <UserPlus className="mr-2 h-4 w-4" /> Email Chris
                      </Button>
                   </div>

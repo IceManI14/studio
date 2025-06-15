@@ -112,7 +112,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits }) => {
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="outline" disabled={visits.length === 0}>
+    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0}>
       <Printer className="mr-2 h-4 w-4" />
       Export PDF
     </Button>

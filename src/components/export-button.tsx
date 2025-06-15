@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Visit } from '@/lib/types';
@@ -65,7 +66,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits }) => {
   };
 
   return (
-    <Button onClick={handleExport} variant="outline" disabled={visits.length === 0}>
+    <Button onClick={handleExport} variant="default" disabled={visits.length === 0}>
       <Download className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
