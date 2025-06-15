@@ -43,7 +43,7 @@ const COMPETITORS_LIST = [
   "Other",
 ];
 
-const COOLER_TYPES_LIST = [
+const DEFAULT_COOLER_TYPES_LIST = [
   "Standard Bottle Cooler",
   "Bottle-Free Cooler (POU)",
   "Countertop Cooler",
@@ -52,6 +52,28 @@ const COOLER_TYPES_LIST = [
   "None Observed",
   "Other",
 ];
+
+const CULLIGAN_QUENCH_COOLERS = [
+  "Wellsys 9000", 
+  "Wellsys 11000", 
+  "W9", 
+  "Wellsys 12000", 
+  "I14", 
+  "I15", 
+  "I16",
+  "Quench Brand Cooler",
+  "Waterlogic Cooler",
+  "Ion Series Cooler (Legacy)",
+  "None Observed",
+  "Other"
+];
+
+const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
+  "Culligan-Quench": CULLIGAN_QUENCH_COOLERS,
+  // Add other competitor-specific lists here if needed
+  // e.g. "Atlantic Pure": ["W9", "i14", "i15", "i16", "None Observed", "Other"],
+};
+
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -97,6 +119,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
 
 
   const form = useForm<VisitFormData>({
@@ -120,6 +143,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const discussedCompetitorsValue = form.watch('discussedCompetitors');
   const hasBusinessCardValue = form.watch('hasBusinessCard');
+  const watchedCompetitorName = form.watch('competitorName');
+  const watchedCoolerType = form.watch('coolerType');
 
   useEffect(() => {
     if (initialData) {
@@ -161,8 +186,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setCurrentLongitude(undefined);
       setBusinessCardPreviewUrl(null);
     }
-    setSelectedFile(null); // Reset file selection on form open/initialData change
+    setSelectedFile(null); 
   }, [initialData, form, isOpen]);
+
+  useEffect(() => {
+    const newOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
+      ? COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
+      : DEFAULT_COOLER_TYPES_LIST;
+    setCurrentCoolerOptions(newOptions);
+  }, [watchedCompetitorName]);
+
+  useEffect(() => {
+    if (watchedCoolerType && !currentCoolerOptions.includes(watchedCoolerType)) {
+      form.setValue('coolerType', undefined);
+    }
+  }, [currentCoolerOptions, watchedCoolerType, form]);
+
 
   useEffect(() => {
     const stopAudioRecording = () => {
@@ -176,13 +215,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsRecordingNotes(false);
     };
   
-    if (!isOpen) { // Form is closing
+    if (!isOpen) { 
       stopAudioRecording();
       setSelectedFile(null);
       setBusinessCardPreviewUrl(null);
     }
   
-    return () => { // Cleanup on unmount
+    return () => { 
       stopAudioRecording();
     };
   }, [isOpen]);
@@ -196,16 +235,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setBusinessCardPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
-      form.setValue('businessCardImageUrl', undefined); // Clear any old URL, new one will be set on upload
+      form.setValue('businessCardImageUrl', undefined); 
     }
   };
 
   const handleRemoveImage = () => {
     setSelectedFile(null);
     setBusinessCardPreviewUrl(null);
-    form.setValue('businessCardImageUrl', undefined); // Ensure it's cleared
+    form.setValue('businessCardImageUrl', undefined); 
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset file input
+      fileInputRef.current.value = ''; 
     }
   };
 
@@ -277,20 +316,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           setIsUploading(false);
         }
       } else if (form.getValues('businessCardImageUrl') === undefined && initialData?.businessCardImageUrl) {
-        // This case means an existing image was explicitly cleared by the user (e.g. via a remove button that sets preview to null)
-        // and no new file was selected. So the image should be removed.
-        // However, if simply no new file was selected but an old one exists and wasn't "cleared", keep it.
-        // The current logic implies if `selectedFile` is null, it keeps `initialData.businessCardImageUrl`.
-        // If `businessCardPreviewUrl` is null AND `selectedFile` is null, it means user cleared it.
+        
         if (!businessCardPreviewUrl) finalBusinessCardImageUrl = undefined;
 
       } else {
-         // Keep existing image if no new file is selected and checkbox is still checked,
-        // and it wasn't explicitly cleared.
+         
         finalBusinessCardImageUrl = businessCardPreviewUrl || initialData?.businessCardImageUrl;
       }
     } else {
-      // If hasBusinessCard is unchecked, clear the image URL
       finalBusinessCardImageUrl = undefined;
     }
 
@@ -314,7 +347,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
       originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
-      visitNumber: initialData?.visitNumber, // Pass existing visitNumber for updates
+      visitNumber: initialData?.visitNumber, 
     };
 
     const result = await saveVisitAction(payload);
@@ -465,7 +498,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onCheckedChange={(checked) => {
                         field.onChange(checked);
                         if (!checked) {
-                           handleRemoveImage(); // Also clear image if unchecked
+                           handleRemoveImage(); 
                         }
                       }}
                       id="hasBusinessCard"
@@ -561,7 +594,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   render={({ field }) => (
                     <FormItem>
                        <FormLabel>Competitor Name</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                        }} 
+                        defaultValue={field.value}
+                       >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a competitor" />
@@ -585,14 +623,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cooler Type Observed</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select Cooler Type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {COOLER_TYPES_LIST.map((type) => (
+                          {currentCoolerOptions.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
