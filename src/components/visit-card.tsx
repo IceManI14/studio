@@ -101,7 +101,7 @@ const COMPETITOR_DETAILS: Record<string, { title?: string; details: string[] }> 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const { toast } = useToast();
-  const timeZone = 'America/New_York';
+  const timeZone = 'America/New_York'; // For EST/EDT
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -242,7 +242,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-              Competitor Intel {' '}
+              Competitor Intel{' '}
               <span className="text-accent">{`{${visit.competitorName}}`}</span>
             </h4>
             {COMPETITOR_DETAILS[visit.competitorName].title && (
@@ -301,5 +301,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
     
