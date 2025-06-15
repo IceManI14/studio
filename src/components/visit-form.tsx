@@ -236,7 +236,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             </Button>
             <Button type="submit" disabled={isSaving || isSuggestingCompany}>
               {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'Save Changes' : 'Log Partner'}
+              {initialData ? 'Save Changes' : 'Log Meeting'}
             </Button>
           </DialogFooter>
         </form>
