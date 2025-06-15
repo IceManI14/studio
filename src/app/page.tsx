@@ -592,7 +592,7 @@ export default function HomePage() {
                       ))}
                     </ol>
                   </div>
-                   <Button onClick={handleEmailSuggestions} variant="outline" className="mt-4">
+                   <Button onClick={handleEmailSuggestions} variant="default" className="mt-4">
                     <Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer
                   </Button>
                 </div>
