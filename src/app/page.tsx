@@ -118,7 +118,7 @@ export default function HomePage() {
 
   }, [selectedSalesperson, toast]); 
 
-  // Effect to save visits
+  // Effect to save visits and check for 30-door milestone
   useEffect(() => {
     if (!selectedSalesperson) return;
     const visitsStorageKey = getVisitsStorageKey();
@@ -127,7 +127,27 @@ export default function HomePage() {
     if (visits.length > 0 || localStorage.getItem(visitsStorageKey)) {
         localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
     }
-  }, [visits, selectedSalesperson]);
+
+    // Check for 30 doors milestone
+    if (visits.length >= 30) {
+      const today = new Date().toISOString().split('T')[0];
+      const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson.id}_${today}`;
+      
+      if (!localStorage.getItem(milestoneKey)) {
+        toast({
+          title: (
+            <div className="flex items-center">
+              <PartyPopper className="mr-2 h-5 w-5 text-accent" />
+              Milestone Achieved!
+            </div>
+          ),
+          description: "Congratulations! You've hit 30 doors today! Keep up the great work!",
+          duration: 7000, // Make it last a bit longer
+        });
+        localStorage.setItem(milestoneKey, 'true');
+      }
+    }
+  }, [visits, selectedSalesperson, toast]);
 
   // Effect to sort visits for Call Day tab
   useEffect(() => {
@@ -164,7 +184,7 @@ export default function HomePage() {
       id: '', // New visit, so no ID yet
       timestamp: currentTime,
       companyName: '',
-      notes: '',
+      notes: '', // Start with empty notes
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -450,3 +470,4 @@ export default function HomePage() {
     
 
     
+
