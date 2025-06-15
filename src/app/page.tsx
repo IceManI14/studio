@@ -18,6 +18,7 @@ export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
+  const [sessionAttemptNumber, setSessionAttemptNumber] = useState<number>(0); // New state for door hit counter
   const { toast } = useToast();
 
   // Load visits from localStorage on initial mount (client-side only)
@@ -45,15 +46,17 @@ export default function HomePage() {
   }, [visits]);
 
   const handleOpenAddVisitForm = () => {
+    const newAttemptNumber = sessionAttemptNumber + 1;
+    setSessionAttemptNumber(newAttemptNumber);
+
     const currentTime = new Date();
-    const startTimeString = `Meeting started at ${format(currentTime, 'HH:mm')}.`;
+    const startTimeString = `Session Attempt #${newAttemptNumber}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
+    
     setCurrentEditingVisit({
-      // Provide a structure that VisitForm expects for a new visit, including pre-filled notes
       id: '', // ID will be generated on save
-      timestamp: currentTime, // This timestamp is for the visit itself
+      timestamp: currentTime,
       companyName: '',
       notes: startTimeString,
-      // Ensure other optional fields that Visit expects are undefined or have defaults
       latitude: undefined,
       longitude: undefined,
       contactInfo: undefined,
@@ -95,7 +98,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8"> {/* Adjusted main spacing */}
+      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="text-center sm:text-left">
           <h1
             className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm"
@@ -121,13 +124,17 @@ export default function HomePage() {
 
           <TabsContent value="field-day">
             <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+                    <h2 className="text-xl font-semibold text-foreground">Door-to-Door Session</h2>
+                    <Badge variant="secondary">Doors Hit This Session: {sessionAttemptNumber}</Badge>
+                </div>
                 <div className="flex justify-center items-center w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                     </Button>
                 </div>
 
-                {visits.length === 0 ? (
+                {visits.length === 0 && sessionAttemptNumber === 0 ? ( // Also check sessionAttemptNumber for initial state
                     <div className="text-center py-10 bg-card rounded-lg shadow">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
@@ -160,7 +167,6 @@ export default function HomePage() {
                 <br />
                 Content for Call Day will be implemented here.
               </p>
-              {/* Placeholder for future Call Day components */}
             </div>
           </TabsContent>
 
@@ -173,7 +179,7 @@ export default function HomePage() {
                       </h2>
                       {visits.length > 0 && (
                           <Badge variant="secondary" className="text-sm font-medium">
-                              Doors Knocked: {visits.length}
+                              Total Doors Knocked: {visits.length}
                           </Badge>
                       )}
                   </div>
@@ -200,4 +206,3 @@ export default function HomePage() {
     </div>
   );
 }
-
