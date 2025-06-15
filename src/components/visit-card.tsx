@@ -1,15 +1,17 @@
+
 'use client';
 
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Hash, Info, Loader2, MapPin, MessageSquareText, Percent, Sparkles, Trash2 } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Hash, Info, Loader2, MapPin, MessageSquareText, Percent, Sparkles, Star, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface VisitCardProps {
   visit: Visit;
@@ -51,7 +53,22 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 {visit.contactInfo ? `${(visit.contactInfo.confidence * 100).toFixed(0)}% Conf.` : 'No Contact'}
             </Badge>
         </div>
-        <CardDescription className="flex items-center text-sm">
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+          <div className="flex items-center mt-1">
+            {[1, 2, 3, 4, 5].map((starValue) => (
+              <Star
+                key={starValue}
+                className={cn(
+                  "h-4 w-4",
+                  starValue <= (visit.partnershipConfidence ?? 0)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-muted-foreground/50"
+                )}
+              />
+            ))}
+          </div>
+        )}
+        <CardDescription className="flex items-center text-sm mt-1">
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
           Logged on {format(new Date(visit.timestamp), 'MMM d, yyyy, HH:mm')}
         </CardDescription>

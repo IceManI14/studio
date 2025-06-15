@@ -12,4 +12,5 @@ export interface Visit {
   notes?: string;
   contactInfo?: ContactInfo;
   notesSummary?: string;
+  partnershipConfidence?: number; // 1-5 stars
 }

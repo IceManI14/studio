@@ -3,7 +3,7 @@
 
 import type { Visit } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,13 +20,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState } from 'react';
-import { Loader2, MapPin, Sparkles } from 'lucide-react';
+import { Loader2, MapPin, Sparkles, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
   notes: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
+  partnershipConfidence: z.number().min(1).max(5).optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -45,6 +47,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   
   const [currentLatitude, setCurrentLatitude] = useState<number | undefined>(initialData?.latitude);
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
+  const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
 
 
   const form = useForm<VisitFormData>({
@@ -54,6 +57,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       notes: '',
       latitude: undefined,
       longitude: undefined,
+      partnershipConfidence: undefined,
     },
   });
 
@@ -64,6 +68,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         notes: initialData.notes || '',
         latitude: initialData.latitude,
         longitude: initialData.longitude,
+        partnershipConfidence: initialData.partnershipConfidence,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -73,6 +78,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         notes: '',
         latitude: undefined,
         longitude: undefined,
+        partnershipConfidence: undefined,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -109,6 +115,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       notes: data.notes,
       latitude: currentLatitude,
       longitude: currentLongitude,
+      partnershipConfidence: data.partnershipConfidence,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -169,6 +176,35 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
             {form.formState.errors.companyName && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.companyName.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="partnershipConfidence" className="font-medium">Partnership Confidence</Label>
+            <Controller
+              name="partnershipConfidence"
+              control={form.control}
+              render={({ field }) => (
+                <div className="flex items-center gap-1 mt-1" onMouseLeave={() => setHoveredStars(undefined)}>
+                  {[1, 2, 3, 4, 5].map((starValue) => {
+                    const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
+                    return (
+                      <Star
+                        key={starValue}
+                        className={cn(
+                          "h-6 w-6 cursor-pointer transition-colors",
+                          isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
+                        )}
+                        onClick={() => field.onChange(starValue)}
+                        onMouseEnter={() => setHoveredStars(starValue)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            />
+             {form.formState.errors.partnershipConfidence && (
+              <p className="text-sm text-destructive mt-1">{form.formState.errors.partnershipConfidence.message}</p>
             )}
           </div>
           
