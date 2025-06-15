@@ -157,19 +157,13 @@ export default function HomePage() {
   };
   
   const handleOpenAddVisitForm = () => {
-    // Calculate the cold call number for *this* specific visit
-    const currentCallNumberForNotes = coldCallCount + 1;
-    
-    // Update the state for the *next* time this function is called
-    setColdCallCount(currentCallNumberForNotes);
-
     const currentTime = new Date();
     
     setCurrentEditingVisit({
       id: '', // New visit, so no ID yet
       timestamp: currentTime,
       companyName: '',
-      notes: '', // Initial notes are now empty
+      notes: '', // Initial notes are empty
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -310,7 +304,7 @@ export default function HomePage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>End Your Field Day?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will reset your cold call counter. Are you sure you want to end your current field day?
+                            Are you sure you are done for the day?
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -451,4 +445,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
