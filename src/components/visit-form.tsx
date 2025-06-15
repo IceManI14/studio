@@ -20,13 +20,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Camera, Star, CheckSquare, Square, UserCircle, Mic, MicOff } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const COMPETITORS_LIST = [
@@ -80,11 +79,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
   const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
-  const cameraStreamRef = useRef<MediaStream | null>(null);
-
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -110,7 +104,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   });
 
   const discussedCompetitorsValue = form.watch('discussedCompetitors');
-  const businessCardChecked = form.watch('hasBusinessCard');
 
   useEffect(() => {
     if (initialData) {
@@ -151,37 +144,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, form, isOpen]);
 
   useEffect(() => {
-    const enableCamera = async () => {
-      if (!videoRef.current) return;
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        cameraStreamRef.current = stream;
-        videoRef.current.srcObject = stream;
-        setHasCameraPermission(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
-        });
-      }
-    };
-  
-    const disableCamera = () => {
-      if (cameraStreamRef.current) {
-        cameraStreamRef.current.getTracks().forEach(track => track.stop());
-        cameraStreamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-      if (hasCameraPermission !== false) {
-          setHasCameraPermission(undefined);
-      }
-    };
-
     const stopAudioRecording = () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
@@ -189,31 +151,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (mediaRecorderRef.current?.stream) {
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }
-      // Don't nullify mediaRecorderRef here if onstop event needs it
-      // mediaRecorderRef.current = null; 
       audioChunksRef.current = [];
       setIsRecordingNotes(false);
     };
   
-    if (isOpen) {
-        if (businessCardChecked && (hasCameraPermission === undefined || (hasCameraPermission === true && !videoRef.current?.srcObject))) {
-            enableCamera();
-        } else if (!businessCardChecked) {
-            disableCamera();
-        }
-    } else { // Form is closing
-      disableCamera();
+    if (!isOpen) { // Form is closing
       stopAudioRecording();
-      // Reset mic permission when form fully closes to allow re-prompt next time.
-      // Or keep it to remember user's choice for the session. Let's keep it for now.
-      // setHasMicPermission(undefined); 
     }
   
     return () => { // Cleanup on unmount
-      disableCamera();
       stopAudioRecording();
     };
-  }, [isOpen, businessCardChecked, toast]);
+  }, [isOpen]);
 
 
   const handleSuggestCompany = async () => {
@@ -308,24 +257,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     toast({ title: 'Location Logged (Mock)', description: `Lat: ${randomLat}, Lng: ${randomLng}` });
   };
 
-  const handleCaptureImagePlaceholder = () => {
-    if (!videoRef.current || !canvasRef.current) {
-        toast({ title: "Camera or canvas not ready", variant: "destructive" });
-        return;
-    }
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    if (context) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    }
-    toast({
-      title: 'Image Captured (Placeholder)',
-      description: 'Business card image captured. Saving not yet implemented.',
-    });
-  };
 
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
@@ -350,11 +281,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
           audioChunksRef.current = []; // Reset for next recording
         }
-        // Ensure stream tracks are stopped when recorder stops
         if (mediaRecorderRef.current?.stream) {
              mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
         }
-        setIsRecordingNotes(false); // Update state after stopping
+        setIsRecordingNotes(false); 
       };
 
       mediaRecorderRef.current.start();
@@ -373,7 +303,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleNotesBlur = () => {
     if (isRecordingNotes && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
-      // setIsRecordingNotes(false); // This will be set in onstop
     }
   };
 
@@ -454,49 +383,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
-
-            {businessCardChecked && (
-              <div className="space-y-2 mt-2 p-3 border rounded-md bg-secondary/30">
-                <Label htmlFor="businessCardPhoto" className="font-medium">Business Card Photo</Label>
-                <div className="relative">
-                    <video 
-                        id="businessCardPhoto" 
-                        ref={videoRef} 
-                        className="w-full aspect-video rounded-md border bg-muted object-cover" 
-                        autoPlay 
-                        muted 
-                        playsInline 
-                    />
-                    {hasCameraPermission === true && (
-                        <Button 
-                            type="button" 
-                            onClick={handleCaptureImagePlaceholder} 
-                            variant="secondary" 
-                            size="sm"
-                            className="absolute bottom-2 right-2 shadow-md"
-                        >
-                          <Camera className="mr-2 h-4 w-4" /> Capture
-                        </Button>
-                    )}
-                </div>
-
-                {hasCameraPermission === undefined && (
-                    <div className="text-sm text-muted-foreground p-2 border rounded-md flex items-center justify-center bg-background">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting camera access...
-                    </div>
-                )}
-                {hasCameraPermission === false && (
-                  <Alert variant="destructive">
-                    <AlertTitle>Camera Access Required</AlertTitle>
-                    <AlertDescription>
-                      Please allow camera access in your browser settings to capture the business card.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <canvas ref={canvasRef} style={{ display: 'none' }} />
-              </div>
-            )}
-
 
             <FormField
               control={form.control}
@@ -640,11 +526,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       className="mt-1 min-h-[100px]"
                       {...field}
                       onFocus={(e) => {
-                        field.onFocus(e); // Call original onFocus
+                        field.onFocus(e); 
                         handleNotesFocus();
                       }}
                       onBlur={(e) => {
-                        field.onBlur(e); // Call original onBlur
+                        field.onBlur(e); 
                         handleNotesBlur();
                       }}
                     />
