@@ -202,7 +202,9 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
-                    <h2 className="text-xl font-semibold text-foreground">Door-to-Door Session</h2>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      Welcome {selectedSalesperson.name}! Good Luck Today!
+                    </h2>
                     <Badge variant="secondary">Door Count</Badge>
                 </div>
                 <div className="flex justify-center items-center w-full">
@@ -285,3 +287,4 @@ export default function HomePage() {
     </div>
   );
 }
+
