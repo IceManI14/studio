@@ -241,6 +241,7 @@ export default function HomePage() {
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
+    setColdCallCount(0); // Reset cold call count for the new salesperson
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
     toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
