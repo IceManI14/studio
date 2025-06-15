@@ -31,6 +31,11 @@ import { Label } from '@/components/ui/label';
 import Image from 'next/image';
 import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader } from '@/components/ui/card';
 
+interface SubmittedSuggestion {
+  text: string;
+  salespersonName: string;
+  timestamp: string; 
+}
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -57,7 +62,7 @@ export default function HomePage() {
   const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
-  const [submittedSuggestions, setSubmittedSuggestions] = useState<string[]>([]);
+  const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -123,10 +128,23 @@ export default function HomePage() {
     }
 
     if (suggestionsStorageKey) {
-      const storedSuggestions = localStorage.getItem(suggestionsStorageKey);
-      if (storedSuggestions) {
+      const storedSuggestionsRaw = localStorage.getItem(suggestionsStorageKey);
+      if (storedSuggestionsRaw) {
         try {
-          setSubmittedSuggestions(JSON.parse(storedSuggestions));
+          const parsedSuggestions = JSON.parse(storedSuggestionsRaw);
+          const transformedSuggestions = parsedSuggestions.map((item: any) => {
+            if (typeof item === 'string') {
+              // Old format: convert to new object format
+              return {
+                text: item,
+                salespersonName: selectedSalesperson.name,
+                timestamp: new Date(0).toISOString(), // Default for old entries
+              };
+            }
+            // New format or already transformed: use as is
+            return item;
+          });
+          setSubmittedSuggestions(transformedSuggestions);
         } catch (error) {
           console.error("Failed to parse suggestions from localStorage", error);
           localStorage.removeItem(suggestionsStorageKey);
@@ -136,6 +154,7 @@ export default function HomePage() {
         setSubmittedSuggestions([]);
       }
     }
+
 
     if (coldCallCountStorageKey) {
       const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
@@ -302,7 +321,7 @@ export default function HomePage() {
   };
 
   const handleSubmitSuggestion = () => {
-    if (suggestionText.trim() === '') {
+    if (suggestionText.trim() === '' || !selectedSalesperson) {
       toast({
         title: 'Empty Suggestion',
         description: 'Please type your suggestion before submitting.',
@@ -313,12 +332,21 @@ export default function HomePage() {
     
     const suggestionsStorageKey = getSuggestionsStorageKey();
     if (suggestionsStorageKey) {
-      const newSuggestions = [...submittedSuggestions, suggestionText.trim()];
-      setSubmittedSuggestions(newSuggestions);
-      localStorage.setItem(suggestionsStorageKey, JSON.stringify(newSuggestions));
+      const newSuggestionObject: SubmittedSuggestion = {
+        text: suggestionText.trim(),
+        salespersonName: selectedSalesperson.name,
+        timestamp: new Date().toISOString(),
+      };
+      const newSuggestionsArray = [...submittedSuggestions, newSuggestionObject];
+      setSubmittedSuggestions(newSuggestionsArray);
+      localStorage.setItem(suggestionsStorageKey, JSON.stringify(newSuggestionsArray));
     }
 
-    console.log('App Suggestion:', suggestionText.trim()); 
+    console.log('App Suggestion:', {
+      salesperson: selectedSalesperson.name,
+      suggestion: suggestionText.trim(),
+      timestamp: new Date().toISOString(),
+    }); 
     toast({
       title: 'Suggestion Submitted!',
       description: 'Thank you for your feedback.',
@@ -523,7 +551,10 @@ export default function HomePage() {
                     <ol className="list-decimal list-inside space-y-2 text-foreground/90">
                       {submittedSuggestions.map((suggestion, index) => (
                         <li key={index} className="text-sm leading-relaxed">
-                          {suggestion}
+                          {suggestion.text}
+                          <span className="block text-xs text-muted-foreground mt-0.5">
+                            &mdash; by {suggestion.salespersonName} on {format(new Date(suggestion.timestamp), 'MMM d, yyyy')}
+                          </span>
                         </li>
                       ))}
                     </ol>
@@ -554,3 +585,4 @@ export default function HomePage() {
     </div>
   );
 }
+
