@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -40,7 +40,7 @@ const COMPETITORS_LIST = [
   "Culligan-Quench",
   "Ready Refresh/Primo",
   "WB Mason",
-  "Other",
+  "Other", // Should 'Other' be a competitor? Usually for cooler types.
 ];
 
 const DEFAULT_COOLER_TYPES_LIST = [
@@ -127,6 +127,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
+  const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
 
 
   const form = useForm<VisitFormData>({
@@ -194,20 +195,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setBusinessCardPreviewUrl(null);
     }
     setSelectedFile(null); 
+    setCustomCoolerNameInput('');
   }, [initialData, form, isOpen]);
 
   useEffect(() => {
-    const newOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
-      ? COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
-      : DEFAULT_COOLER_TYPES_LIST;
-    setCurrentCoolerOptions(newOptions);
-  }, [watchedCompetitorName]);
+    let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
+      ? [...COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]]
+      : [...DEFAULT_COOLER_TYPES_LIST];
 
-  useEffect(() => {
-    if (watchedCoolerType && !currentCoolerOptions.includes(watchedCoolerType)) {
-      form.setValue('coolerType', undefined);
+    if (!baseOptions.includes('Other')) {
+        baseOptions.push('Other');
     }
-  }, [currentCoolerOptions, watchedCoolerType, form]);
+
+    if (initialData?.coolerType && !baseOptions.includes(initialData.coolerType)) {
+        const otherIndex = baseOptions.indexOf('Other');
+        if (otherIndex !== -1) {
+            baseOptions.splice(otherIndex, 0, initialData.coolerType);
+        } else {
+            baseOptions.push(initialData.coolerType);
+        }
+    }
+    setCurrentCoolerOptions(baseOptions);
+  }, [watchedCompetitorName, initialData, isOpen]);
 
 
   useEffect(() => {
@@ -226,6 +235,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       stopAudioRecording();
       setSelectedFile(null);
       setBusinessCardPreviewUrl(null);
+      setCustomCoolerNameInput('');
     }
   
     return () => { 
@@ -275,6 +285,33 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       });
     } else {
       toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+    }
+  };
+
+  const handleAddCustomCooler = () => {
+    const newName = customCoolerNameInput.trim();
+    if (newName && !currentCoolerOptions.includes(newName)) {
+        const otherIndex = currentCoolerOptions.indexOf('Other');
+        let updatedOptions;
+        if (otherIndex !== -1) {
+            updatedOptions = [
+                ...currentCoolerOptions.slice(0, otherIndex),
+                newName,
+                ...currentCoolerOptions.slice(otherIndex)
+            ];
+        } else {
+            updatedOptions = [...currentCoolerOptions, newName, 'Other']; // Fallback
+        }
+        setCurrentCoolerOptions(updatedOptions);
+        form.setValue('coolerType', newName, { shouldValidate: true });
+        setCustomCoolerNameInput('');
+        toast({ title: "Custom Cooler Added", description: `${newName} added to options and selected.`});
+    } else if (newName && currentCoolerOptions.includes(newName)) {
+        form.setValue('coolerType', newName, { shouldValidate: true });
+        setCustomCoolerNameInput('');
+        toast({ title: "Cooler Selected", description: `${newName} selected.`});
+    } else {
+        toast({ title: "Invalid Name", description: "Please enter a cooler name.", variant: "default" });
     }
   };
 
@@ -644,6 +681,25 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           ))}
                         </SelectContent>
                       </Select>
+                      {field.value === 'Other' && (
+                        <div className="mt-2 space-y-2 flex items-center gap-2">
+                          <Input
+                            placeholder="Enter custom cooler name"
+                            value={customCoolerNameInput}
+                            onChange={(e) => setCustomCoolerNameInput(e.target.value)}
+                            className="h-9 flex-grow"
+                          />
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            onClick={handleAddCustomCooler} 
+                            disabled={!customCoolerNameInput.trim()}
+                            className="h-9"
+                          >
+                            <PlusSquare className="mr-1 h-4 w-4" /> Add
+                          </Button>
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -745,4 +801,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-
