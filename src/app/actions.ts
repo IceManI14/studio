@@ -1,4 +1,3 @@
-
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -15,6 +14,7 @@ export interface SaveVisitPayload {
   longitude?: number;
   partnershipConfidence?: number;
   hasBusinessCard?: boolean;
+  businessCardImageUrl?: string;
   discussedCompetitors?: boolean;
   competitorName?: string;
   coolerType?: string;
@@ -26,6 +26,7 @@ export interface SaveVisitPayload {
   originalNotes?: string;
   existingContactInfo?: ContactInfo; 
   existingNotesSummary?: string;
+  originalBusinessCardImageUrl?: string;
 }
 
 const saveVisitPayloadSchema = z.object({
@@ -36,6 +37,7 @@ const saveVisitPayloadSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
+  businessCardImageUrl: z.string().url().optional().nullable(),
   discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
@@ -49,6 +51,7 @@ const saveVisitPayloadSchema = z.object({
     confidence: z.number(),
   }).optional(),
   existingNotesSummary: z.string().optional(),
+  originalBusinessCardImageUrl: z.string().url().optional().nullable(),
 });
 
 
@@ -97,6 +100,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       notesSummary: summary,
       partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl === null ? undefined : validatedPayload.businessCardImageUrl,
       discussedCompetitors: validatedPayload.discussedCompetitors,
       competitorName: validatedPayload.competitorName,
       coolerType: validatedPayload.coolerType,

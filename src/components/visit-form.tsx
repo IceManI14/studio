@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Visit } from '@/lib/types';
@@ -20,12 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { formatInTimeZone } from 'date-fns-tz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from 'next/image';
 
 
 const COMPETITORS_LIST = [
@@ -56,6 +56,7 @@ const visitFormSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
+  businessCardImageUrl: z.string().url().optional().nullable(),
   discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
@@ -88,6 +89,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const audioChunksRef = useRef<Blob[]>([]);
   const timeZone = 'America/New_York';
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const form = useForm<VisitFormData>({
     resolver: zodResolver(visitFormSchema),
@@ -98,6 +104,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       longitude: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
+      businessCardImageUrl: null,
       discussedCompetitors: false,
       competitorName: undefined,
       coolerType: undefined,
@@ -108,6 +115,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   });
 
   const discussedCompetitorsValue = form.watch('discussedCompetitors');
+  const hasBusinessCardValue = form.watch('hasBusinessCard');
 
   useEffect(() => {
     if (initialData) {
@@ -118,6 +126,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         longitude: initialData.longitude,
         partnershipConfidence: initialData.partnershipConfidence,
         hasBusinessCard: initialData.hasBusinessCard || false,
+        businessCardImageUrl: initialData.businessCardImageUrl || null,
         discussedCompetitors: initialData.discussedCompetitors || false,
         competitorName: initialData.competitorName || undefined,
         coolerType: initialData.coolerType || undefined,
@@ -127,6 +136,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
+      setBusinessCardPreviewUrl(initialData.businessCardImageUrl || null);
     } else {
       form.reset({
         companyName: '',
@@ -135,6 +145,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         longitude: undefined,
         partnershipConfidence: undefined,
         hasBusinessCard: false,
+        businessCardImageUrl: null,
         discussedCompetitors: false,
         competitorName: undefined,
         coolerType: undefined,
@@ -144,7 +155,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
+      setBusinessCardPreviewUrl(null);
     }
+    setSelectedFile(null); // Reset file selection on form open/initialData change
   }, [initialData, form, isOpen]);
 
   useEffect(() => {
@@ -161,12 +174,36 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   
     if (!isOpen) { // Form is closing
       stopAudioRecording();
+      setSelectedFile(null);
+      setBusinessCardPreviewUrl(null);
     }
   
     return () => { // Cleanup on unmount
       stopAudioRecording();
     };
   }, [isOpen]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBusinessCardPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue('businessCardImageUrl', undefined); // Clear any old URL, new one will be set on upload
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setBusinessCardPreviewUrl(null);
+    form.setValue('businessCardImageUrl', undefined); // Ensure it's cleared
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset file input
+    }
+  };
 
 
   const handleSuggestCompany = async () => {
@@ -208,6 +245,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     
+    let finalBusinessCardImageUrl = initialData?.businessCardImageUrl;
+
+    if (data.hasBusinessCard) {
+      if (selectedFile) {
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+        try {
+          const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to upload image');
+          }
+          const uploadResult = await response.json();
+          finalBusinessCardImageUrl = uploadResult.url;
+          toast({ title: 'Business Card Uploaded', description: 'Image saved successfully.' });
+        } catch (error: any) {
+          toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
+          setIsSaving(false);
+          setIsUploading(false);
+          return; 
+        } finally {
+          setIsUploading(false);
+        }
+      } else if (form.getValues('businessCardImageUrl') === undefined && initialData?.businessCardImageUrl) {
+        // This case means an existing image was explicitly cleared by the user (e.g. via a remove button that sets preview to null)
+        // and no new file was selected. So the image should be removed.
+        // However, if simply no new file was selected but an old one exists and wasn't "cleared", keep it.
+        // The current logic implies if `selectedFile` is null, it keeps `initialData.businessCardImageUrl`.
+        // If `businessCardPreviewUrl` is null AND `selectedFile` is null, it means user cleared it.
+        if (!businessCardPreviewUrl) finalBusinessCardImageUrl = undefined;
+
+      } else {
+         // Keep existing image if no new file is selected and checkbox is still checked,
+        // and it wasn't explicitly cleared.
+        finalBusinessCardImageUrl = businessCardPreviewUrl || initialData?.businessCardImageUrl;
+      }
+    } else {
+      // If hasBusinessCard is unchecked, clear the image URL
+      finalBusinessCardImageUrl = undefined;
+    }
+
     const payload: SaveVisitPayload = {
       id: initialData?.id,
       companyName: data.companyName,
@@ -216,6 +298,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       longitude: currentLongitude,
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
+      businessCardImageUrl: finalBusinessCardImageUrl,
       discussedCompetitors: data.discussedCompetitors,
       competitorName: data.discussedCompetitors ? data.competitorName : undefined,
       coolerType: data.discussedCompetitors ? data.coolerType : undefined,
@@ -226,6 +309,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
+      originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
     };
 
     const result = await saveVisitAction(payload);
@@ -281,7 +365,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
           toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
-          audioChunksRef.current = []; // Reset for next recording
+          audioChunksRef.current = []; 
         }
         if (mediaRecorderRef.current?.stream) {
              mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -373,7 +457,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                           handleRemoveImage(); // Also clear image if unchecked
+                        }
+                      }}
                       id="hasBusinessCard"
                     />
                   </FormControl>
@@ -385,6 +474,52 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
+
+            {hasBusinessCardValue && (
+              <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
+                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !selectedFile)) && (
+                  <div className="mt-2 relative w-full aspect-[1.6/1] max-w-xs mx-auto group">
+                    <Image
+                      src={businessCardPreviewUrl || initialData!.businessCardImageUrl!}
+                      alt="Business card preview"
+                      layout="fill"
+                      objectFit="contain"
+                      className="rounded-md border"
+                    />
+                     <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={handleRemoveImage}
+                        aria-label="Remove image"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                  </div>
+                )}
+                <FormControl>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      id="businessCardImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="flex-grow"
+                      ref={fileInputRef}
+                      disabled={isUploading}
+                    />
+                    {isUploading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Upload an image of the business card. Max 5MB.
+                </FormDescription>
+                <FormMessage>{form.formState.errors.businessCardImageUrl?.message}</FormMessage>
+              </FormItem>
+            )}
+
 
             <FormField
               control={form.control}
@@ -543,11 +678,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isUploading}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes}>
-                {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isUploading}>
+                {(isSaving || isSuggestingCompany || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>
@@ -560,4 +695,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

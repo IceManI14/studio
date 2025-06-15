@@ -217,13 +217,13 @@ export default function HomePage() {
       notesSummary: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
+      businessCardImageUrl: undefined,
       discussedCompetitors: false,
       competitorName: undefined,
       coolerType: undefined,
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
-      isNewClient: false,
     });
     setIsVisitFormOpen(true);
   };
@@ -513,11 +513,3 @@ export default function HomePage() {
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Personalized for {selectedSalesperson.name}.</p>
       </footer>
     </div>
-  );
-}
-    
-
-    
-
-
-

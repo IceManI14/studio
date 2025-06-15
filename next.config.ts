@@ -16,8 +16,7 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-    ],
-  },
-};
-
-export default nextConfig;
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        port

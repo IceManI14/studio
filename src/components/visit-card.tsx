@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import NextImage from 'next/image'; // Renamed to avoid conflict with lucide-react Image icon
 
 interface VisitCardProps {
   visit: Visit;
@@ -209,6 +210,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
+        {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <ImageIcon className="mr-2 h-4 w-4 text-primary" /> Business Card
+            </h4>
+            <div className="relative w-full aspect-[1.6/1] max-w-xs mx-auto mt-2">
+              <NextImage 
+                src={visit.businessCardImageUrl} 
+                alt="Business Card" 
+                layout="fill" 
+                objectFit="contain"
+                className="rounded-md border"
+              />
+            </div>
+          </div>
+        )}
+
         {visit.contactInfo?.info && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -292,12 +310,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
                 </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-      </CardFooter>
-    </Card>
-  );
-};
-
-export default VisitCard;
-    
+            
