@@ -131,7 +131,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card rounded-lg shadow">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                        Click "Hit New Door" to get started!
+                        When you click "Hit New Door" this app will help you streamline your efforts
                     </Button>
                     </div>
                 ) : (
