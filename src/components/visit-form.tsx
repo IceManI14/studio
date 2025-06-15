@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Visit } from '@/lib/types';
@@ -29,7 +30,7 @@ import Image from 'next/image';
 
 
 const COMPETITORS_LIST = [
-  "Quench",
+  "Culligan-Quench",
   "Atlantic Pure",
   "Boston Bean",
   "Ready Refresh/Primo",
@@ -310,6 +311,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
       originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
+      visitNumber: initialData?.visitNumber, // Pass existing visitNumber for updates
     };
 
     const result = await saveVisitAction(payload);

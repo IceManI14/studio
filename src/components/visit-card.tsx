@@ -22,7 +22,7 @@ interface VisitCardProps {
 }
 
 const COMPETITOR_DETAILS: Record<string, { title?: string; details: string[] }> = {
-  "Quench": {
+  "Culligan-Quench": {
     details: [
       "Filtration only",
       "Terrible Service",
