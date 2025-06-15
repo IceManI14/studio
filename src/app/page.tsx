@@ -164,14 +164,12 @@ export default function HomePage() {
     setColdCallCount(currentCallNumberForNotes);
 
     const currentTime = new Date();
-    // Use the calculated number for *this* visit's notes
-    const startTimeString = `Cold Call #${currentCallNumberForNotes}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
     
     setCurrentEditingVisit({
       id: '', // New visit, so no ID yet
       timestamp: currentTime,
       companyName: '',
-      notes: startTimeString, // Set the initial notes with the correct cold call number
+      notes: '', // Initial notes are now empty
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -179,7 +177,6 @@ export default function HomePage() {
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       discussedCompetitors: false,
-      // Ensure other fields specific to a new visit are also reset or set to defaults
       competitorName: undefined,
       coolerType: undefined,
       decisionMakerName: '',
