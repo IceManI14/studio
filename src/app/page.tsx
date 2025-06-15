@@ -47,7 +47,7 @@ export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
-  const [sessionAttemptNumber, setSessionAttemptNumber] = useState<number>(0);
+  const [coldCallCount, setColdCallCount] = useState<number>(0);
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
@@ -79,7 +79,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!selectedSalesperson) {
       setVisits([]); // Clear visits if no salesperson is selected
-      setSessionAttemptNumber(0);
+      setColdCallCount(0);
       setUserCurrentLatitude(undefined);
       setUserCurrentLongitude(undefined);
       return;
@@ -103,7 +103,7 @@ export default function HomePage() {
     } else {
       setVisits([]); // No visits for this salesperson or first time
     }
-    setSessionAttemptNumber(0); // Reset session attempts when salesperson changes or loads
+    setColdCallCount(0); // Reset cold call count when salesperson changes or loads
 
     // Simulate getting current location
     const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6));
@@ -157,11 +157,11 @@ export default function HomePage() {
   };
   
   const handleOpenAddVisitForm = () => {
-    const newAttemptNumber = sessionAttemptNumber + 1;
-    setSessionAttemptNumber(newAttemptNumber);
+    const newColdCallCount = coldCallCount + 1;
+    setColdCallCount(newColdCallCount);
 
     const currentTime = new Date();
-    const startTimeString = `Session Attempt #${newAttemptNumber}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
+    const startTimeString = `Cold Call #${newColdCallCount}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
     
     setCurrentEditingVisit({
       id: '', 
@@ -208,7 +208,7 @@ export default function HomePage() {
   };
 
   const confirmEndDay = () => {
-    setSessionAttemptNumber(0);
+    setColdCallCount(0);
     toast({
       title: "Field Day Ended",
       description: `Great work, ${selectedSalesperson?.name}! Your session has been reset. Tomorrow is a new day!`,
@@ -250,6 +250,7 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="text-center sm:text-left">
           <div className="flex flex-col items-center mb-4">
+            
             <h1
               className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -301,7 +302,7 @@ export default function HomePage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>End Your Field Day?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will reset your session attempt counter. Are you sure you want to end your current field day?
+                            This will reset your cold call counter. Are you sure you want to end your current field day?
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -312,7 +313,7 @@ export default function HomePage() {
                     </AlertDialog>
                 </div>
 
-                {visits.length === 0 && sessionAttemptNumber === 0 ? (
+                {visits.length === 0 && coldCallCount === 0 ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
