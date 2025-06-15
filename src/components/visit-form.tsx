@@ -30,13 +30,16 @@ import Image from 'next/image';
 
 
 const COMPETITORS_LIST = [
-  "Culligan-Quench",
+  "Aramark",
   "Atlantic Pure",
+  "Blue Drop",
   "Boston Bean",
+  "Cintas",
+  "Cleartide",
+  "Crown Coffee",
+  "Culligan-Quench",
   "Ready Refresh/Primo",
   "WB Mason",
-  "Cintas",
-  "Aramark",
   "Other",
 ];
 
