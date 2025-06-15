@@ -1,12 +1,10 @@
 
 // pages/api/upload-image.js
 import { Storage } from '@google-cloud/storage';
-import formidable from 'formidable';
+import formidable from 'formidable'; // Using formidable v3
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-
-const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
-const bucketName = process.env.CLOUD_STORAGE_BUCKET_NAME;
+import fs from 'fs'; // Import fs for createReadStream
 
 export const config = {
   api: {
@@ -16,39 +14,52 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
+    console.warn(`Method ${req.method} not allowed for /api/upload-image.`);
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  if (!bucketName) {
-    console.error('CLOUD_STORAGE_BUCKET_NAME is not set in environment variables.');
-    return res.status(500).json({ message: 'Server configuration error.' });
+  if (!process.env.GCP_PROJECT_ID || !process.env.CLOUD_STORAGE_BUCKET_NAME) {
+    console.error('GCP_PROJECT_ID or CLOUD_STORAGE_BUCKET_NAME is not set in environment variables.');
+    return res.status(500).json({ message: 'Server configuration error: Missing critical environment variables (Cloud Project ID or Storage Bucket Name).' });
   }
 
-  const form = formidable({ multiples: false }); // Assuming single file upload
+  const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
+  const bucketName = process.env.CLOUD_STORAGE_BUCKET_NAME;
+
+  const form = formidable({ multiples: false });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
       console.error('Error parsing form data:', err);
-      return res.status(500).json({ message: 'Error parsing form data' });
+      return res.status(500).json({ message: 'Error parsing uploaded file data.', details: err.message });
     }
 
-    const fileArray = files.image;
+    const fileArray = files.image; // 'image' is the field name in FormData
     const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
 
-
     if (!file) {
-      return res.status(400).json({ message: 'No image file uploaded' });
+      console.warn('No image file uploaded in the "image" field.');
+      return res.status(400).json({ message: 'No image file provided in the upload.' });
     }
 
-    // Validate file type (basic example)
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
-      console.log('Invalid file type attempt:', file.mimetype);
-      return res.status(400).json({ message: 'Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.' });
+      console.warn(`Invalid file type attempt: ${file.mimetype}`);
+      return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed. Received: ${file.mimetype}` });
     }
 
-    // Generate a unique file name
-    const uniqueFileName = `${uuidv4()}${path.extname(file.originalFilename || 'image.png')}`;
+    // Better fallback for extension if originalFilename is missing
+    let extension = '.png'; // Default extension
+    if (file.originalFilename) {
+      extension = path.extname(file.originalFilename);
+    } else if (file.mimetype) {
+      const typePart = file.mimetype.split('/')[1];
+      if (typePart) {
+        extension = `.${typePart}`;
+      }
+    }
+    const uniqueFileName = `${uuidv4()}${extension}`;
+
 
     const bucket = storage.bucket(bucketName);
     const blob = bucket.file(uniqueFileName);
@@ -59,24 +70,42 @@ export default async (req, res) => {
       resumable: false,
     });
 
-    blobStream.on('error', (err) => {
-      console.error('Error uploading image to Cloud Storage:', err);
-      res.status(500).json({ message: 'Error uploading image' });
+    blobStream.on('error', (uploadError) => {
+      console.error('Error streaming image to Cloud Storage:', uploadError);
+      res.status(500).json({ message: 'Failed to upload image to Cloud Storage. This could be a permission issue or network problem. Check server logs.', details: uploadError.message });
     });
 
     blobStream.on('finish', () => {
-      // Make the image publicly accessible (adjust permissions as needed)
-      blob.makePublic().then(() => {
-        const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
-        res.status(200).json({ message: 'Image uploaded successfully', url: publicUrl });
-      }).catch((err) => {
-        console.error('Error making image public:', err);
-        res.status(500).json({ message: 'Error making image public' });
-      });
+      blob.makePublic()
+        .then(() => {
+          const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
+          console.log(`Image uploaded successfully: ${publicUrl}`);
+          res.status(200).json({ message: 'Image uploaded successfully', url: publicUrl });
+        })
+        .catch((makePublicError) => {
+          console.error('Error making image public after upload:', makePublicError);
+          const privateUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
+          res.status(500).json({ // Changed to 500 as making it public is often critical
+            message: 'Image uploaded but failed to make public. Check bucket/object permissions. The file might be in the bucket but not accessible via public URL.',
+            details: makePublicError.message,
+            url: privateUrl,
+            isPrivate: true
+          });
+        });
     });
 
-    // Pipe the file stream to the Cloud Storage blob stream
-    const readStream = require('fs').createReadStream(file.filepath);
-    readStream.pipe(blobStream);
+    try {
+      const readStream = fs.createReadStream(file.filepath);
+      readStream.on('error', (readStreamError) => {
+        console.error('Error reading file from temporary path:', readStreamError);
+        blobStream.end(); // Important to end blobStream if readStream fails
+        res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message });
+      });
+      readStream.pipe(blobStream);
+    } catch (pipeError: any) {
+      console.error('Error setting up file stream pipe:', pipeError);
+      blobStream.end(); // Ensure stream is closed
+      res.status(500).json({ message: 'Internal server error during file processing.', details: pipeError.message });
+    }
   });
 };
