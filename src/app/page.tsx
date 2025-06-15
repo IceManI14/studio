@@ -201,7 +201,7 @@ export default function HomePage() {
           {selectedSalesperson && (
             <div className="flex items-center justify-center sm:justify-start text-sm text-muted-foreground mt-2 bg-card p-2 rounded-md shadow-sm">
               <User className="mr-2 h-4 w-4 text-primary" />
-              Active User: <button onClick={() => setSelectedSalesperson(null)} className="font-semibold text-primary hover:underline ml-1 focus:outline-none">{selectedSalesperson.name} (Switch)</button>
+              Active User: <button onClick={() => setSelectedSalesperson(null)} className="font-semibold text-accent hover:underline ml-1 focus:outline-none">{selectedSalesperson.name} (Switch)</button>
             </div>
           )}
         </header>
@@ -300,3 +300,4 @@ export default function HomePage() {
     </div>
   );
 }
+
