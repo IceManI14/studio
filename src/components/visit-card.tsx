@@ -156,9 +156,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <CardTitle className="font-headline text-xl text-primary flex items-center">
-                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-            </CardTitle>
+            <div className="flex-grow">
+                <CardTitle className="font-headline text-xl text-primary flex items-center">
+                    <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+                </CardTitle>
+                {visit.latitude && visit.longitude && (
+                    <p className="text-xs text-muted-foreground flex items-center mt-1">
+                        <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                    </p>
+                )}
+            </div>
             <Badge variant={starRatingBadge.variant} className="ml-2 whitespace-nowrap">
                 {starRatingBadge.text}
             </Badge>
@@ -199,11 +206,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
           {format(new Date(visit.timestamp), 'MMM d, yyyy, HH:mm')}
         </CardDescription>
-        {visit.latitude && visit.longitude && (
-            <p className="text-xs text-muted-foreground flex items-center">
-                <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-            </p>
-        )}
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
         {visit.contactInfo?.info && (
@@ -239,9 +241,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-              Competitor Intel {`{`}
+              Competitor Intel {'{'}
               <span className="text-accent">{visit.competitorName}</span>
-              {`}`}
+              {'}'}
             </h4>
             {COMPETITOR_DETAILS[visit.competitorName].title && (
                 <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
@@ -257,7 +259,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         {visit.notesSummary && (
           <div className="p-3 bg-accent/10 rounded-md border border-accent/50">
             <h4 className="font-medium text-primary flex items-center mb-1">
-              <Sparkles className="mr-2 h-4 w-4 text-primary" /> Notes Summary
+              <Sparkles className="mr-2 h-4 w-4" /> Notes Summary
             </h4>
             <p className="text-accent/75 whitespace-pre-wrap break-words">{visit.notesSummary}</p>
           </div>
