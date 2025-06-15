@@ -387,13 +387,18 @@ export default function HomePage() {
   };
 
   const handleEmailChris = () => {
-    // Placeholder for actual email functionality
-    // For now, it just shows a toast.
-    // In a real app, this would open an email client or use an email API.
+    if (!selectedSalesperson) {
+        toast({ title: "No Salesperson Selected", description: "Please select a salesperson profile first.", variant: "default" });
+        return;
+    }
+
     const chrisEmail = "chris@drinkoptimum.com";
-    const subject = `Daily Route Update - ${selectedSalesperson?.name || 'Salesperson'} - ${format(new Date(), 'MMMM d, yyyy')}`;
+    const currentDate = format(new Date(), 'MMMM d, yyyy');
+    const subject = `Visits for the day! - ${selectedSalesperson.name} - ${currentDate}`;
     
-    let body = `Hello Chris,\n\nPlease find attached the daily route information for ${selectedSalesperson?.name || 'the salesperson'}.\n\n`;
+    let body = `Hello Chris,\n\nHere is the daily route information for ${selectedSalesperson.name} for ${currentDate}.\n\n`;
+    body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
+    body += `A summary is also included below:\n\n`;
     
     if (visits.length > 0) {
       body += `Summary of Visits (${visits.length} total):\n`;
@@ -415,14 +420,21 @@ export default function HomePage() {
       body += "No visits were logged today.\n";
     }
     
-    body += `\nBest regards,\n${selectedSalesperson?.name || 'Optimum Trailblazer App'}`;
+    body += `\nBest regards,\n${selectedSalesperson.name || 'Optimum Trailblazer App'}`;
 
-    const mailtoLink = `mailto:${chrisEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoLink, '_blank');
+    const gmailBaseUrl = 'https://mail.google.com/mail/?view=cm&fs=1';
+    const params = new URLSearchParams({
+      to: chrisEmail,
+      su: subject,
+      body: body,
+    });
+    const gmailLink = `${gmailBaseUrl}&${params.toString()}`;
+    
+    window.open(gmailLink, '_blank');
 
     toast({
-      title: "Email Chris Action",
-      description: "Attempting to open your email client to send a message to Chris.",
+      title: "Opening Gmail...",
+      description: "Please manually attach the exported PDF to the email before sending.",
     });
   };
 
