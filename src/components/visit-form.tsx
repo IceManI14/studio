@@ -23,9 +23,17 @@ import { useEffect, useState } from 'react';
 import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const COMPETITORS_LIST = [
+  "Competitor Alpha",
+  "Competitor Beta",
+  "Competitor Gamma",
+  "Competitor Delta",
+  "Other",
+];
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -35,6 +43,7 @@ const visitFormSchema = z.object({
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
   discussedCompetitors: z.boolean().optional(),
+  competitorName: z.string().optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -66,8 +75,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       discussedCompetitors: false,
+      competitorName: undefined,
     },
   });
+
+  const discussedCompetitorsValue = form.watch('discussedCompetitors');
 
   useEffect(() => {
     if (initialData) {
@@ -79,18 +91,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         partnershipConfidence: initialData.partnershipConfidence,
         hasBusinessCard: initialData.hasBusinessCard || false,
         discussedCompetitors: initialData.discussedCompetitors || false,
+        competitorName: initialData.competitorName || undefined,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
     } else {
       form.reset({
         companyName: '',
-        notes: initialData?.notes || '',
+        notes: initialData?.notes || '', // Keep pre-filled notes from "Hit New Door"
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
         hasBusinessCard: false,
         discussedCompetitors: false,
+        competitorName: undefined,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -128,9 +142,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const endTimeString = `Meeting ended at ${format(currentTime, 'HH:mm')}.`;
         
         const currentNotes = finalNotes.trim();
-        if (currentNotes) {
+        if (currentNotes && currentNotes.includes("Meeting started at")) { // Append if start time is there
             finalNotes = `${currentNotes}\n${endTimeString}`;
-        } else {
+        } else if (currentNotes) { // If only some other notes, append
+             finalNotes = `${currentNotes}\n${endTimeString}`;
+        }
+         else { // Only if notes are completely empty
             finalNotes = endTimeString;
         }
     }
@@ -144,6 +161,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
       discussedCompetitors: data.discussedCompetitors,
+      competitorName: data.discussedCompetitors ? data.competitorName : undefined, // Only save if discussed
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -194,7 +212,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 py-2">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
             <FormField
               control={form.control}
               name="companyName"
@@ -251,7 +269,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="hasBusinessCard" className="cursor-pointer">
+                    <FormLabel htmlFor="hasBusinessCard" className="cursor-pointer font-normal">
                       Business Card Collected?
                     </FormLabel>
                   </div>
@@ -267,18 +285,53 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                          form.setValue('competitorName', undefined);
+                        }
+                      }}
                       id="discussedCompetitors"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="discussedCompetitors" className="cursor-pointer">
+                    <FormLabel htmlFor="discussedCompetitors" className="cursor-pointer font-normal">
                       Competitor Present?
                     </FormLabel>
                   </div>
                 </FormItem>
               )}
             />
+            
+            {discussedCompetitorsValue && (
+              <FormField
+                control={form.control}
+                name="competitorName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Competitor</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a competitor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {COMPETITORS_LIST.map((competitor) => (
+                          <SelectItem key={competitor} value={competitor}>
+                            {competitor}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose the competitor discussed or observed.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             {/*
             <div className="space-y-2">
@@ -348,7 +401,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
                 Cancel
               </Button>
@@ -365,4 +418,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

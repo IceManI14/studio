@@ -15,6 +15,7 @@ export interface Visit {
   partnershipConfidence?: number; // 1-5 stars
   hasBusinessCard?: boolean;
   discussedCompetitors?: boolean;
+  competitorName?: string; // Added for selected competitor
 }
 
 export interface Salesperson {

@@ -33,7 +33,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     try {
       const result = await summarizeVisitNotes({ notes: visit.notes });
       const updatedVisit = { ...visit, notesSummary: result.summary };
-      onUpdateVisit(updatedVisit); // This should update the visit in the parent's state
+      onUpdateVisit(updatedVisit); 
       toast({ title: "Notes Re-summarized", description: "Summary has been updated."});
     } catch (error) {
       toast({ title: "Error Summarizing", description: "Could not re-summarize notes.", variant: "destructive" });
@@ -42,6 +42,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     }
   };
   
+  const getCompetitorDisplay = () => {
+    if (visit.discussedCompetitors) {
+      if (visit.competitorName) {
+        return `Competitor: ${visit.competitorName}`;
+      }
+      return 'Competitors: Discussed (Unspecified)';
+    }
+    return 'Competitors: Not Discussed';
+  };
+
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
@@ -76,7 +86,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-            Competitors: {visit.discussedCompetitors ? 'Discussed' : 'Not Discussed'}
+            {getCompetitorDisplay()}
           </div>
         </div>
         <CardDescription className="flex items-center text-sm mt-2">
