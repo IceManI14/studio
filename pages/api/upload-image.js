@@ -102,7 +102,7 @@ export default async (req, res) => {
         res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message });
       });
       readStream.pipe(blobStream);
-    } catch (pipeError: any) {
+    } catch (pipeError) {
       console.error('Error setting up file stream pipe:', pipeError);
       blobStream.end(); // Ensure stream is closed
       res.status(500).json({ message: 'Internal server error during file processing.', details: pipeError.message });
