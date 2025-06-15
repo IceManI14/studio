@@ -1,3 +1,4 @@
+
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -21,6 +22,7 @@ export interface SaveVisitPayload {
   decisionMakerName?: string;
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
+  visitNumber?: number; // Sequential number of the visit
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -44,6 +46,7 @@ const saveVisitPayloadSchema = z.object({
   decisionMakerName: z.string().optional().default(''),
   decisionMakerTitle: z.string().optional().default(''),
   decisionMakerContact: z.string().optional().default(''),
+  visitNumber: z.number().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -107,6 +110,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerName: validatedPayload.decisionMakerName,
       decisionMakerTitle: validatedPayload.decisionMakerTitle,
       decisionMakerContact: validatedPayload.decisionMakerContact,
+      visitNumber: validatedPayload.visitNumber,
     };
 
     return { visit };

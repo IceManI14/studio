@@ -107,7 +107,7 @@ export default function HomePage() {
           const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
             ...visit,
             timestamp: new Date(visit.timestamp),
-            isNewClient: visit.isNewClient || false, 
+            visitNumber: visit.visitNumber, // Make sure to parse visitNumber
           }));
           setVisits(parsedVisits);
         } catch (error) {
@@ -169,8 +169,8 @@ export default function HomePage() {
         localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
     }
 
-    // Check for 30 doors milestone
-    if (visits.length >= 30) {
+    // Check for 30 doors milestone (based on coldCallCount, which represents doors hit)
+    if (coldCallCount >= 30) {
       const today = new Date().toISOString().split('T')[0];
       const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson.id}_${today}`;
       
@@ -188,7 +188,7 @@ export default function HomePage() {
         localStorage.setItem(milestoneKey, 'true');
       }
     }
-  }, [visits, selectedSalesperson, toast]);
+  }, [visits, coldCallCount, selectedSalesperson, toast]); // Added coldCallCount to dependencies
 
   // Effect to save cold call count
   useEffect(() => {
@@ -227,7 +227,9 @@ export default function HomePage() {
   };
   
   const handleOpenAddVisitForm = () => {
-    setColdCallCount(prevCount => prevCount + 1);
+    const newVisitNumber = coldCallCount + 1;
+    setColdCallCount(prevCount => prevCount + 1); // Update total count for the session
+    
     const currentTime = new Date();
     
     setCurrentEditingVisit({
@@ -248,6 +250,7 @@ export default function HomePage() {
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
+      visitNumber: newVisitNumber, // Assign the sequential visit number
     });
     setIsVisitFormOpen(true);
   };
@@ -287,6 +290,11 @@ export default function HomePage() {
     if (coldCallCountStorageKey) {
       localStorage.setItem(coldCallCountStorageKey, '0');
     }
+    // Also reset the 30-door milestone for today if it was achieved
+    const today = new Date().toISOString().split('T')[0];
+    const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson?.id}_${today}`;
+    localStorage.removeItem(milestoneKey);
+
     toast({
       title: "Field Day Ended",
       description: `Great work, ${selectedSalesperson?.name}! Your session has been reset. Tomorrow is a new day!`,
@@ -398,14 +406,7 @@ export default function HomePage() {
                     </AlertDialog>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 p-3 bg-card rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-foreground">
-                        Visit Card #
-                    </h3>
-                    <Badge variant="secondary" className="text-base font-semibold">
-                        {coldCallCount}
-                    </Badge>
-                </div>
+                {/* The global "Visit Card #" box showing total coldCallCount has been removed from here */}
 
                 {visits.length === 0 && coldCallCount === 0 ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow">

@@ -1,3 +1,4 @@
+
 export interface ContactInfo {
   info: string;
   confidence: number;
@@ -21,6 +22,7 @@ export interface Visit {
   decisionMakerName?: string;
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
+  visitNumber?: number; // Sequential number of the visit for the day
 }
 
 export interface Salesperson {

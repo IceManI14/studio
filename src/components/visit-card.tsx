@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -204,9 +204,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
           </div>
         </div>
-        <CardDescription className="flex items-center text-sm mt-2">
-          <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+        <CardDescription className="flex items-center justify-between text-sm mt-2">
+          <div className="flex items-center">
+            <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+            {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+          </div>
+          {visit.visitNumber && (
+            <Badge variant="outline" className="ml-2 text-xs font-semibold px-1.5 py-0.5">
+              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+            </Badge>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
