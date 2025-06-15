@@ -80,7 +80,17 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8"> {/* Adjusted main spacing */}
         <header className="text-center sm:text-left">
-          <h1 className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm">
+          <h1
+            className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm"
+            style={{
+              textShadow: [
+                '-1px -1px 0 hsl(var(--accent))',
+                '1px -1px 0 hsl(var(--accent))',
+                '-1px 1px 0 hsl(var(--accent))',
+                '1px 1px 0 hsl(var(--accent))',
+              ].join(', '),
+            }}
+          >
             Optimum Trailblazer
           </h1>
         </header>
@@ -173,3 +183,4 @@ export default function HomePage() {
     </div>
   );
 }
+
