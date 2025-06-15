@@ -309,7 +309,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 name="competitorName"
                 render={({ field }) => (
                   <FormItem>
-                    {/* <FormLabel>Select Competitor</FormLabel> */}
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -324,9 +323,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Choose the competitor discussed or observed.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -418,3 +414,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
