@@ -12,6 +12,7 @@ import { PlusCircle, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -44,7 +45,22 @@ export default function HomePage() {
   }, [visits]);
 
   const handleOpenAddVisitForm = () => {
-    setCurrentEditingVisit(undefined);
+    const currentTime = new Date();
+    const startTimeString = `Meeting started at ${format(currentTime, 'HH:mm')}.`;
+    setCurrentEditingVisit({
+      // Provide a structure that VisitForm expects for a new visit, including pre-filled notes
+      id: '', // ID will be generated on save
+      timestamp: currentTime, // This timestamp is for the visit itself
+      companyName: '',
+      notes: startTimeString,
+      // Ensure other optional fields that Visit expects are undefined or have defaults
+      latitude: undefined,
+      longitude: undefined,
+      contactInfo: undefined,
+      notesSummary: undefined,
+      partnershipConfidence: undefined,
+      hasBusinessCard: false,
+    });
     setIsVisitFormOpen(true);
   };
 
@@ -183,4 +199,3 @@ export default function HomePage() {
     </div>
   );
 }
-

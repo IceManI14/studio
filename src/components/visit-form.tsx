@@ -24,6 +24,7 @@ import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { format } from 'date-fns';
 
 
 const visitFormSchema = z.object({
@@ -79,9 +80,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
     } else {
+      // For new visits, initialData might come with pre-filled notes (e.g., "Meeting started at...")
+      // So, check if initialData.notes exists before defaulting to empty string.
       form.reset({
         companyName: '',
-        notes: '',
+        notes: initialData?.notes || '', // Use notes from initialData if provided
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
@@ -116,16 +119,32 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
+    let finalNotes = data.notes || '';
+
+    // Only add "Meeting ended" for new visits (when initialData.id is effectively empty or undefined)
+    // initialData provided by page.tsx for new visits has an empty id.
+    if (!initialData || !initialData.id) {
+        const currentTime = new Date();
+        const endTimeString = `Meeting ended at ${format(currentTime, 'HH:mm')}.`;
+        
+        const currentNotes = finalNotes.trim();
+        if (currentNotes) {
+            finalNotes = `${currentNotes}\n${endTimeString}`;
+        } else {
+            finalNotes = endTimeString;
+        }
+    }
+    
     const payload: SaveVisitPayload = {
       id: initialData?.id,
       companyName: data.companyName,
-      notes: data.notes,
+      notes: finalNotes,
       latitude: currentLatitude,
       longitude: currentLongitude,
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
       originalCompanyName: initialData?.companyName,
-      originalNotes: initialData?.notes,
+      originalNotes: initialData?.notes, // originalNotes should be the notes before adding "Meeting ended"
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
     };
@@ -140,7 +159,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       });
     } else if (result.visit) {
       toast({
-        title: initialData ? 'Potential Partner Updated' : 'Potential Partner Logged',
+        title: initialData?.id ? 'Potential Partner Updated' : 'Potential Partner Logged',
         description: `${result.visit.companyName} details saved successfully.`,
       });
       onSave(result.visit);
@@ -167,10 +186,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            {initialData ? 'Edit Potential Partner' : 'New Potential Partner'}
+            {initialData?.id ? 'Edit Potential Partner' : 'New Potential Partner'}
           </DialogTitle>
           <DialogDescription>
-            {initialData ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
+            {initialData?.id ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -313,7 +332,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               </Button>
               <Button type="submit" disabled={isSaving || isSuggestingCompany}>
                 {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {initialData ? 'Save Changes' : 'Log Meeting'}
+                {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>
             </DialogFooter>
           </form>
