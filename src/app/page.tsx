@@ -203,7 +203,7 @@ export default function HomePage() {
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
                     <h2 className="text-xl font-semibold text-foreground">Door-to-Door Session</h2>
-                    <Badge variant="secondary">Doors Hit This Session: {sessionAttemptNumber}</Badge>
+                    <Badge variant="secondary">Door Count</Badge>
                 </div>
                 <div className="flex justify-center items-center w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
