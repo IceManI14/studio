@@ -11,6 +11,7 @@ import ExportButton from '@/components/export-button';
 import { PlusCircle, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from '@/components/ui/badge';
 
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -94,9 +95,16 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                        <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
+                            <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
+                        </h2>
+                        {visits.length > 0 && (
+                            <Badge variant="secondary" className="text-sm font-medium">
+                                Doors Knocked: {visits.length}
+                            </Badge>
+                        )}
+                    </div>
                     <div className="flex items-center gap-4">
                         <ExportButton visits={visits} />
                         <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
