@@ -181,10 +181,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           )}
           <div className="flex items-center text-xs text-muted-foreground">
-            {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-            Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             {getCompetitorDisplay()}
           </div>
@@ -194,6 +190,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 Cooler: {visit.coolerType}
             </div>
           )}
+          <div className="flex items-center text-xs text-muted-foreground">
+            {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+            Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
+          </div>
         </div>
         <CardDescription className="flex items-center text-sm mt-2">
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
