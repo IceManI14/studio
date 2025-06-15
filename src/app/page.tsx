@@ -157,17 +157,21 @@ export default function HomePage() {
   };
   
   const handleOpenAddVisitForm = () => {
-    const newColdCallCount = coldCallCount + 1;
-    setColdCallCount(newColdCallCount);
+    // Calculate the cold call number for *this* specific visit
+    const currentCallNumberForNotes = coldCallCount + 1;
+    
+    // Update the state for the *next* time this function is called
+    setColdCallCount(currentCallNumberForNotes);
 
     const currentTime = new Date();
-    const startTimeString = `Cold Call #${newColdCallCount}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
+    // Use the calculated number for *this* visit's notes
+    const startTimeString = `Cold Call #${currentCallNumberForNotes}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
     
     setCurrentEditingVisit({
-      id: '', 
+      id: '', // New visit, so no ID yet
       timestamp: currentTime,
       companyName: '',
-      notes: startTimeString,
+      notes: startTimeString, // Set the initial notes with the correct cold call number
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -175,6 +179,12 @@ export default function HomePage() {
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       discussedCompetitors: false,
+      // Ensure other fields specific to a new visit are also reset or set to defaults
+      competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: '',
+      decisionMakerTitle: '',
+      decisionMakerContact: '',
     });
     setIsVisitFormOpen(true);
   };
@@ -198,6 +208,7 @@ export default function HomePage() {
         updatedVisits[existingVisitIndex] = visit;
         return updatedVisits;
       }
+      // For new visits, add to the beginning and re-sort by timestamp
       return [visit, ...prevVisits].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     });
   };
@@ -208,7 +219,7 @@ export default function HomePage() {
   };
 
   const confirmEndDay = () => {
-    setColdCallCount(0);
+    setColdCallCount(0); // Reset cold call count for the day
     toast({
       title: "Field Day Ended",
       description: `Great work, ${selectedSalesperson?.name}! Your session has been reset. Tomorrow is a new day!`,
@@ -443,5 +454,4 @@ export default function HomePage() {
     </div>
   );
 }
-
     
