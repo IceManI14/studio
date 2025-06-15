@@ -1,3 +1,4 @@
+
 // pages/api/upload-image.js
 import { Storage } from '@google-cloud/storage';
 import formidable from 'formidable';
@@ -31,28 +32,31 @@ export default async (req, res) => {
       return res.status(500).json({ message: 'Error parsing form data' });
     }
 
-    const file = files.image; // Assuming the input field name for the image is 'image'
+    const fileArray = files.image;
+    const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
+
 
     if (!file) {
       return res.status(400).json({ message: 'No image file uploaded' });
     }
 
     // Validate file type (basic example)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-      return res.status(400).json({ message: 'Invalid file type. Only JPEG, PNG, and GIF are allowed.' });
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
+      console.log('Invalid file type attempt:', file.mimetype);
+      return res.status(400).json({ message: 'Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.' });
     }
 
     // Generate a unique file name
-    const uniqueFileName = `${uuidv4()}${path.extname(file.name)}`;
+    const uniqueFileName = `${uuidv4()}${path.extname(file.originalFilename || 'image.png')}`;
 
     const bucket = storage.bucket(bucketName);
     const blob = bucket.file(uniqueFileName);
     const blobStream = blob.createWriteStream({
       metadata: {
-        contentType: file.type,
+        contentType: file.mimetype,
       },
-      resumable: false, // Set to false for smaller files or if you don't need resumable uploads
+      resumable: false,
     });
 
     blobStream.on('error', (err) => {
@@ -72,7 +76,7 @@ export default async (req, res) => {
     });
 
     // Pipe the file stream to the Cloud Storage blob stream
-    const readStream = require('fs').createReadStream(file.path);
+    const readStream = require('fs').createReadStream(file.filepath);
     readStream.pipe(blobStream);
   });
 };
