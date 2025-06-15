@@ -212,9 +212,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <Info className="mr-2 h-4 w-4 text-primary" /> Contact Info
             </h4>
             <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.contactInfo.info}</p>
-            {visit.contactInfo.confidence && (
-                 <p className="text-xs text-muted-foreground mt-1">Confidence: {(visit.contactInfo.confidence * 100).toFixed(0)}%</p>
-            )}
           </div>
         )}
         
