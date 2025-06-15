@@ -124,7 +124,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const getCompetitorDisplay = () => {
     if (visit.discussedCompetitors) {
       if (visit.competitorName) {
-        return <>Competitor   <span className="text-accent">{`{${visit.competitorName}}`}</span></>;
+        return <>Competitor  <span className="text-accent">{`{${visit.competitorName}}`}</span></>;
       }
       return 'Competitors Discussed (Unspecified)';
     }
