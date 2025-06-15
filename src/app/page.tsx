@@ -9,12 +9,23 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -39,6 +50,7 @@ export default function HomePage() {
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const { toast } = useToast();
   const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
+  const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -191,6 +203,15 @@ export default function HomePage() {
     toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
   };
 
+  const confirmEndDay = () => {
+    setSessionAttemptNumber(0);
+    toast({
+      title: "Field Day Ended",
+      description: `Great work, ${selectedSalesperson?.name}! Your session has been reset.`,
+    });
+    setIsEndDayConfirmOpen(false);
+  };
+
   if (!selectedSalesperson) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -242,10 +263,29 @@ export default function HomePage() {
                       Welcome {selectedSalesperson.name}! Good Luck Today!
                     </h2>
                 </div>
-                <div className="flex justify-center items-center w-full">
+                <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                     </Button>
+                    <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                          <Sunset className="mr-2 h-5 w-5" /> End Day!
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>End Your Field Day?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will reset your session attempt counter. Are you sure you want to end your current field day?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={confirmEndDay}>End Day</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
 
                 {visits.length === 0 && sessionAttemptNumber === 0 ? (
@@ -357,5 +397,5 @@ export default function HomePage() {
       </footer>
     </div>
   );
-}
 
+    
