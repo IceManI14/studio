@@ -54,12 +54,12 @@ const DEFAULT_COOLER_TYPES_LIST = [
 ];
 
 const CULLIGAN_QUENCH_COOLERS = [
-  "Wellsys 9000", 
-  "Wellsys 11000", 
-  "W9", 
-  "Wellsys 12000", 
-  "I14", 
-  "I15", 
+  "Wellsys 9000",
+  "Wellsys 11000",
+  "W9",
+  "Wellsys 12000",
+  "I14",
+  "I15",
   "I16",
   "Quench Brand Cooler",
   "Waterlogic Cooler",
@@ -70,8 +70,15 @@ const CULLIGAN_QUENCH_COOLERS = [
 
 const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
   "Culligan-Quench": CULLIGAN_QUENCH_COOLERS,
-  // Add other competitor-specific lists here if needed
-  // e.g. "Atlantic Pure": ["W9", "i14", "i15", "i16", "None Observed", "Other"],
+  "Ready Refresh/Primo": ["Oasis - filter cooler", "Bottles", "None Observed", "Other"],
+  "Blue Drop": ["Brio", "None Observed", "Other"],
+  "WB Mason": ["Oasis - filter cooler", "Bottles", "None Observed", "Other"],
+  "Atlantic Pure": ["W9", "i14", "i15", "i16", "None Observed", "Other"],
+  "Cleartide": ["Wellsys 12000", "Monet", "E6", "Waterlogic", "None Observed", "Other"],
+  "Boston Bean": ["Ion 200", "Ion 400", "Alpine", "None Observed", "Other"],
+  "Crown Coffee": ["Ion 200", "Ion 400", "None Observed", "Other"],
+  "Aramark": ["Alpine", "None Observed", "Other"],
+  "Cintas": ["Waterlogic", "Oasis", "None Observed", "Other"],
 };
 
 
@@ -738,3 +745,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
