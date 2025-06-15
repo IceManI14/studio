@@ -273,7 +273,7 @@ export default function HomePage() {
                       </h2>
                       {visits.length > 0 && (
                           <Badge variant="secondary" className="text-sm font-medium">
-                              Total Doors Knocked: {visits.length}
+                              {selectedSalesperson.name} Visited: {visits.length}
                           </Badge>
                       )}
                   </div>
