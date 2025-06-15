@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Camera, Star, CheckSquare, Square, UserCircle, Box } from 'lucide-react';
+import { Loader2, Camera, Star, CheckSquare, Square, UserCircle, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -81,9 +81,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null); // For future image capture
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined); // undefined: not determined, true: granted, false: denied
-  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+
+  const [isRecordingNotes, setIsRecordingNotes] = useState(false);
+  const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
 
   const form = useForm<VisitFormData>({
@@ -150,7 +155,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (!videoRef.current) return;
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        streamRef.current = stream;
+        cameraStreamRef.current = stream;
         videoRef.current.srcObject = stream;
         setHasCameraPermission(true);
       } catch (error) {
@@ -165,30 +170,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     };
   
     const disableCamera = () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current = null;
       }
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-      if (hasCameraPermission !== false) { // Only reset if not explicitly denied
+      if (hasCameraPermission !== false) {
           setHasCameraPermission(undefined);
       }
     };
-  
-    if (isOpen && businessCardChecked) {
-      if (hasCameraPermission === undefined || (hasCameraPermission === true && !videoRef.current?.srcObject)) {
-        enableCamera();
+
+    const stopAudioRecording = () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
       }
-    } else {
+      if (mediaRecorderRef.current?.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+      // Don't nullify mediaRecorderRef here if onstop event needs it
+      // mediaRecorderRef.current = null; 
+      audioChunksRef.current = [];
+      setIsRecordingNotes(false);
+    };
+  
+    if (isOpen) {
+        if (businessCardChecked && (hasCameraPermission === undefined || (hasCameraPermission === true && !videoRef.current?.srcObject))) {
+            enableCamera();
+        } else if (!businessCardChecked) {
+            disableCamera();
+        }
+    } else { // Form is closing
       disableCamera();
+      stopAudioRecording();
+      // Reset mic permission when form fully closes to allow re-prompt next time.
+      // Or keep it to remember user's choice for the session. Let's keep it for now.
+      // setHasMicPermission(undefined); 
     }
   
-    return () => { // Cleanup on unmount or when dependencies change causing effect to re-run before next run
+    return () => { // Cleanup on unmount
       disableCamera();
+      stopAudioRecording();
     };
-  }, [isOpen, businessCardChecked, toast]); // Effect dependencies
+  }, [isOpen, businessCardChecked, toast]);
+
 
   const handleSuggestCompany = async () => {
     if (currentLatitude === undefined || currentLongitude === undefined) {
@@ -294,14 +320,61 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const context = canvas.getContext('2d');
     if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // const dataUri = canvas.toDataURL('image/png');
-        // console.log("Captured image data URI (placeholder):", dataUri.substring(0, 50) + "..."); 
-        // Actual saving of dataUri would be done here or passed up.
     }
     toast({
       title: 'Image Captured (Placeholder)',
       description: 'Business card image captured. Saving not yet implemented.',
     });
+  };
+
+  const handleNotesFocus = async () => {
+    if (isRecordingNotes) return;
+    if (hasMicPermission === false) {
+      toast({ title: "Microphone Access Denied", description: "Please enable microphone permissions to record audio notes.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setHasMicPermission(true);
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
+          toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
+          audioChunksRef.current = []; // Reset for next recording
+        }
+        // Ensure stream tracks are stopped when recorder stops
+        if (mediaRecorderRef.current?.stream) {
+             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+        setIsRecordingNotes(false); // Update state after stopping
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecordingNotes(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      setHasMicPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Microphone Access Denied',
+        description: 'Please enable microphone permissions in your browser settings.',
+      });
+    }
+  };
+
+  const handleNotesBlur = () => {
+    if (isRecordingNotes && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      // setIsRecordingNotes(false); // This will be set in onstop
+    }
   };
 
 
@@ -554,12 +627,26 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Visit Notes</FormLabel>
+                  <FormLabel className="flex items-center">
+                    Visit Notes
+                    {isRecordingNotes && <Mic className="ml-2 h-4 w-4 text-red-500 animate-pulse" />}
+                    {!isRecordingNotes && hasMicPermission === true && <Mic className="ml-2 h-4 w-4 text-green-500" />}
+                    {!isRecordingNotes && hasMicPermission === false && <MicOff className="ml-2 h-4 w-4 text-muted-foreground" />}
+                    {!isRecordingNotes && hasMicPermission === undefined && <Mic className="ml-2 h-4 w-4 text-muted-foreground" />}
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Details about the visit, key discussion points, etc."
                       className="mt-1 min-h-[100px]"
                       {...field}
+                      onFocus={(e) => {
+                        field.onFocus(e); // Call original onFocus
+                        handleNotesFocus();
+                      }}
+                      onBlur={(e) => {
+                        field.onBlur(e); // Call original onBlur
+                        handleNotesBlur();
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -571,8 +658,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany}>
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes}>
                 {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>
             </DialogFooter>
@@ -584,4 +672,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-
