@@ -54,20 +54,27 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const hasDecisionMakerInfo = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact;
 
-  const getContactBadgeVariant = () => {
-    if (!visit.contactInfo) {
-      return "secondary";
-    }
-    
+  const getStarRatingBadgeInfo = () => {
     const pConfidence = visit.partnershipConfidence ?? 0;
+    let text = "Not Rated";
+    let variant: "default" | "outline" | "secondary" = "secondary";
 
-    if (pConfidence >= 4) {
-      return "default"; 
-    } else if (pConfidence === 3) {
-      return "outline"; 
+    if (pConfidence >= 1 && pConfidence <= 5) {
+      text = `${pConfidence} Star${pConfidence > 1 ? 's' : ''}`;
+      if (pConfidence >= 4) {
+        variant = "default";
+      } else if (pConfidence === 3) {
+        variant = "outline";
+      } else { // 1 or 2 stars
+        variant = "secondary";
+      }
     }
-    return "secondary"; 
+    // If pConfidence is 0 or undefined, it remains "Not Rated" and "secondary"
+
+    return { text, variant };
   };
+
+  const starRatingBadge = getStarRatingBadgeInfo();
 
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -76,8 +83,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
-            <Badge variant={getContactBadgeVariant()} className="ml-2 whitespace-nowrap">
-                {visit.contactInfo ? `${(visit.contactInfo.confidence * 100).toFixed(0)}% Conf.` : 'No Contact'}
+            <Badge variant={starRatingBadge.variant} className="ml-2 whitespace-nowrap">
+                {starRatingBadge.text}
             </Badge>
         </div>
         <div className="flex flex-col space-y-1 mt-1">
@@ -129,6 +136,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <Info className="mr-2 h-4 w-4 text-primary" /> Contact Info
             </h4>
             <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.contactInfo.info}</p>
+            {visit.contactInfo.confidence && (
+                 <p className="text-xs text-muted-foreground mt-1">Confidence: {(visit.contactInfo.confidence * 100).toFixed(0)}%</p>
+            )}
           </div>
         )}
         
