@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -383,8 +383,47 @@ export default function HomePage() {
     });
     const gmailLink = `${gmailBaseUrl}&${params.toString()}`;
     
-    // Open Gmail in a new tab
     window.open(gmailLink, '_blank');
+  };
+
+  const handleEmailChris = () => {
+    // Placeholder for actual email functionality
+    // For now, it just shows a toast.
+    // In a real app, this would open an email client or use an email API.
+    const chrisEmail = "chris@drinkoptimum.com";
+    const subject = `Daily Route Update - ${selectedSalesperson?.name || 'Salesperson'} - ${format(new Date(), 'MMMM d, yyyy')}`;
+    
+    let body = `Hello Chris,\n\nPlease find attached the daily route information for ${selectedSalesperson?.name || 'the salesperson'}.\n\n`;
+    
+    if (visits.length > 0) {
+      body += `Summary of Visits (${visits.length} total):\n`;
+      visits.forEach((visit, index) => {
+        body += `\n${index + 1}. ${visit.companyName}`;
+        if (visit.notesSummary) {
+          body += `\n   Summary: ${visit.notesSummary}`;
+        }
+        if (visit.contactInfo?.info) {
+          body += `\n   Contact: ${visit.contactInfo.info}`;
+        }
+        if (visit.partnershipConfidence) {
+          body += `\n   Confidence: ${visit.partnershipConfidence}/5`;
+        }
+        body += `\n   Visited: ${format(new Date(visit.timestamp), 'MMM d, h:mm a')}`;
+        body += "\n";
+      });
+    } else {
+      body += "No visits were logged today.\n";
+    }
+    
+    body += `\nBest regards,\n${selectedSalesperson?.name || 'Optimum Trailblazer App'}`;
+
+    const mailtoLink = `mailto:${chrisEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink, '_blank');
+
+    toast({
+      title: "Email Chris Action",
+      description: "Attempting to open your email client to send a message to Chris.",
+    });
   };
 
 
@@ -538,6 +577,9 @@ export default function HomePage() {
                   <div className="flex gap-2">
                      <ExportPdfButton visits={visits} />
                      <ExportButton visits={visits} />
+                     <Button onClick={handleEmailChris} variant="outline">
+                       <UserPlus className="mr-2 h-4 w-4" /> Email Chris
+                     </Button>
                   </div>
               </div>
               <MapPlaceholder visits={visits} />
@@ -622,4 +664,3 @@ export default function HomePage() {
     </div>
   );
 }
-
