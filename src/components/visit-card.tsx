@@ -99,7 +99,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
         <CardDescription className="flex items-center text-sm mt-2">
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-          Logged on {format(new Date(visit.timestamp), 'MMM d, yyyy, HH:mm')}
+          {format(new Date(visit.timestamp), 'MMM d, yyyy, HH:mm')}
         </CardDescription>
         {visit.latitude && visit.longitude && (
             <p className="text-xs text-muted-foreground flex items-center">
@@ -182,3 +182,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
