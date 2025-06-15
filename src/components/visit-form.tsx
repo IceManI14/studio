@@ -20,8 +20,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState } from 'react';
-import { Loader2, MapPin, Sparkles, Star } from 'lucide-react';
+import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Checkbox } from "@/components/ui/checkbox"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -29,6 +32,7 @@ const visitFormSchema = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
+  hasBusinessCard: z.boolean().optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -58,6 +62,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       latitude: undefined,
       longitude: undefined,
       partnershipConfidence: undefined,
+      hasBusinessCard: false,
     },
   });
 
@@ -69,6 +74,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         latitude: initialData.latitude,
         longitude: initialData.longitude,
         partnershipConfidence: initialData.partnershipConfidence,
+        hasBusinessCard: initialData.hasBusinessCard || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -79,6 +85,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
+        hasBusinessCard: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -116,6 +123,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       latitude: currentLatitude,
       longitude: currentLongitude,
       partnershipConfidence: data.partnershipConfidence,
+      hasBusinessCard: data.hasBusinessCard,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -165,119 +173,151 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {initialData ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 py-2">
-          <div>
-            <Label htmlFor="companyName" className="font-medium">Company Name</Label>
-            <Input
-              id="companyName"
-              {...form.register('companyName')}
-              className="mt-1"
-              placeholder="e.g., Acme Corp or suggest from location"
-            />
-            {form.formState.errors.companyName && (
-              <p className="text-sm text-destructive mt-1">{form.formState.errors.companyName.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="partnershipConfidence" className="font-medium">Partnership Confidence</Label>
-            <Controller
-              name="partnershipConfidence"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 py-2">
+            <FormField
               control={form.control}
+              name="companyName"
               render={({ field }) => (
-                <div className="flex items-center gap-1 mt-1" onMouseLeave={() => setHoveredStars(undefined)}>
-                  {[1, 2, 3, 4, 5].map((starValue) => {
-                    const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
-                    return (
-                      <Star
-                        key={starValue}
-                        className={cn(
-                          "h-6 w-6 cursor-pointer transition-colors",
-                          isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
-                        )}
-                        onClick={() => field.onChange(starValue)}
-                        onMouseEnter={() => setHoveredStars(starValue)}
-                      />
-                    );
-                  })}
-                </div>
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Acme Corp or suggest from location" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
-             {form.formState.errors.partnershipConfidence && (
-              <p className="text-sm text-destructive mt-1">{form.formState.errors.partnershipConfidence.message}</p>
-            )}
-          </div>
-          
-          {/*
-          <div className="space-y-2">
-            <Label className="font-medium">Location (Optional)</Label>
-            <div className="flex items-center gap-2">
-                <Input 
-                    type="number" 
-                    step="any" 
-                    placeholder="Latitude" 
-                    value={currentLatitude ?? ""}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        setCurrentLatitude(val === "" ? undefined : parseFloat(val));
-                        form.setValue('latitude', val === "" ? undefined : parseFloat(val));
-                    }}
-                    className="w-1/2"
-                />
-                <Input 
-                    type="number" 
-                    step="any" 
-                    placeholder="Longitude" 
-                    value={currentLongitude ?? ""}
-                     onChange={(e) => {
-                        const val = e.target.value;
-                        setCurrentLongitude(val === "" ? undefined : parseFloat(val));
-                        form.setValue('longitude', val === "" ? undefined : parseFloat(val));
-                    }}
-                    className="w-1/2"
-                />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" onClick={handleLogCurrentLocation} className="w-full">
-                  <MapPin className="mr-2 h-4 w-4" /> Log Current (Mock)
-                </Button>
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleSuggestCompany} 
-                    disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
-                    className="w-full"
-                >
-                  {isSuggestingCompany ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  Suggest Company
-                </Button>
-            </div>
-            { (form.formState.errors.latitude || form.formState.errors.longitude) && (
-                <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
-            )}
-          </div>
-          */}
-
-          <div>
-            <Label htmlFor="notes" className="font-medium">Visit Notes</Label>
-            <Textarea
-              id="notes"
-              {...form.register('notes')}
-              className="mt-1 min-h-[100px]"
-              placeholder="Details about the visit, key discussion points, etc."
+            
+            <FormField
+              control={form.control}
+              name="partnershipConfidence"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Partnership Confidence</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-1 mt-1" onMouseLeave={() => setHoveredStars(undefined)}>
+                      {[1, 2, 3, 4, 5].map((starValue) => {
+                        const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
+                        return (
+                          <Star
+                            key={starValue}
+                            className={cn(
+                              "h-6 w-6 cursor-pointer transition-colors",
+                              isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
+                            )}
+                            onClick={() => field.onChange(starValue)}
+                            onMouseEnter={() => setHoveredStars(starValue)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSaving || isSuggestingCompany}>
-              {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'Save Changes' : 'Log Meeting'}
-            </Button>
-          </DialogFooter>
-        </form>
+            <FormField
+              control={form.control}
+              name="hasBusinessCard"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="hasBusinessCard"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="hasBusinessCard" className="cursor-pointer">
+                      Business Card Collected?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            
+            {/*
+            <div className="space-y-2">
+              <Label className="font-medium">Location (Optional)</Label>
+              <div className="flex items-center gap-2">
+                  <Input 
+                      type="number" 
+                      step="any" 
+                      placeholder="Latitude" 
+                      value={currentLatitude ?? ""}
+                      onChange={(e) => {
+                          const val = e.target.value;
+                          setCurrentLatitude(val === "" ? undefined : parseFloat(val));
+                          form.setValue('latitude', val === "" ? undefined : parseFloat(val));
+                      }}
+                      className="w-1/2"
+                  />
+                  <Input 
+                      type="number" 
+                      step="any" 
+                      placeholder="Longitude" 
+                      value={currentLongitude ?? ""}
+                       onChange={(e) => {
+                          const val = e.target.value;
+                          setCurrentLongitude(val === "" ? undefined : parseFloat(val));
+                          form.setValue('longitude', val === "" ? undefined : parseFloat(val));
+                      }}
+                      className="w-1/2"
+                  />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant="outline" onClick={handleLogCurrentLocation} className="w-full">
+                    <MapPin className="mr-2 h-4 w-4" /> Log Current (Mock)
+                  </Button>
+                  <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleSuggestCompany} 
+                      disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
+                      className="w-full"
+                  >
+                    {isSuggestingCompany ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Suggest Company
+                  </Button>
+              </div>
+              { (form.formState.errors.latitude || form.formState.errors.longitude) && (
+                  <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
+              )}
+            </div>
+            */}
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Visit Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Details about the visit, key discussion points, etc."
+                      className="mt-1 min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving || isSuggestingCompany}>
+                {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {initialData ? 'Save Changes' : 'Log Meeting'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

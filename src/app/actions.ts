@@ -13,7 +13,8 @@ export interface SaveVisitPayload {
   notes?: string;
   latitude?: number;
   longitude?: number;
-  partnershipConfidence?: number; // Added for star rating
+  partnershipConfidence?: number;
+  hasBusinessCard?: boolean;
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -27,7 +28,8 @@ const saveVisitPayloadSchema = z.object({
   notes: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  partnershipConfidence: z.number().min(1).max(5).optional(), // Added for star rating
+  partnershipConfidence: z.number().min(1).max(5).optional(),
+  hasBusinessCard: z.boolean().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -81,7 +83,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       longitude: validatedPayload.longitude,
       contactInfo: contactDetails,
       notesSummary: summary,
-      partnershipConfidence: validatedPayload.partnershipConfidence, // Added for star rating
+      partnershipConfidence: validatedPayload.partnershipConfidence,
+      hasBusinessCard: validatedPayload.hasBusinessCard,
     };
 
     return { visit };
