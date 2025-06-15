@@ -251,10 +251,10 @@ export default function HomePage() {
         <header className="text-center sm:text-left">
           <div className="flex flex-col items-center mb-4">
             <Image
-              src="https://placehold.co/150x50.png"
+              src="https://placehold.co/160x80.png"
               alt="Company Logo"
-              width={150}
-              height={50}
+              width={160}
+              height={80}
               className="mb-2"
               data-ai-hint="company logo"
               priority
@@ -451,3 +451,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
