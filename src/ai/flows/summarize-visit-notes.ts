@@ -1,3 +1,4 @@
+
 // Summarizes company visit notes using generative AI to provide users with key takeaways.
 
 'use server';
@@ -34,6 +35,10 @@ const summarizeVisitNotesFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      console.error('SummarizeVisitNotesPrompt did not return an output.');
+      return { summary: "Could not summarize notes due to an internal error." };
+    }
+    return output;
   }
 );

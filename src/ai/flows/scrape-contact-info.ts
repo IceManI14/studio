@@ -66,7 +66,13 @@ const scrapeContactInfoFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    // For now, the confidence score is a constant.
-    return {...output!, confidenceScore: 0.8};
+    if (!output) {
+      console.error('ScrapeContactInfoPrompt did not return an output for company:', input.companyName);
+      return { contactInfo: "Could not retrieve contact info due to an internal error.", confidenceScore: 0 };
+    }
+    // The prompt is expected to return the full ScrapeContactInfoOutputSchema.
+    // The previous override of confidenceScore might have been a temporary measure.
+    // Assuming the prompt correctly populates all fields including confidenceScore.
+    return output;
   }
 );
