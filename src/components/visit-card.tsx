@@ -5,7 +5,7 @@ import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
@@ -101,6 +101,7 @@ const COMPETITOR_DETAILS: Record<string, { title?: string; details: string[] }> 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const { toast } = useToast();
+  const timeZone = 'America/New_York';
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -160,7 +161,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
                     <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
                 </CardTitle>
-                {visit.latitude && visit.longitude && (
+                 {visit.latitude && visit.longitude && (
                     <p className="text-xs text-muted-foreground flex items-center mt-1">
                         <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                     </p>
@@ -204,7 +205,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
         <CardDescription className="flex items-center text-sm mt-2">
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-          {format(new Date(visit.timestamp), 'MMM d, yyyy, HH:mm')}
+          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, HH:mm')}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
@@ -241,9 +242,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-              Competitor Intel {'{'}
-              <span className="text-accent">{visit.competitorName}</span>
-              {'}'}
+              Competitor Intel {' '}
+              <span className="text-accent">{`{${visit.competitorName}}`}</span>
             </h4>
             {COMPETITOR_DETAILS[visit.competitorName].title && (
                 <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>

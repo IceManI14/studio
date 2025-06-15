@@ -24,7 +24,7 @@ import { Loader2, Star, UserCircle, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
@@ -86,6 +86,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const timeZone = 'America/New_York';
 
 
   const form = useForm<VisitFormData>({
@@ -196,12 +197,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     if (!initialData || !initialData.id) {
         const currentTime = new Date();
-        const endTimeString = `Meeting ended at ${format(currentTime, 'HH:mm')}.`;
+        const endTimeString = `Meeting ended at ${formatInTimeZone(currentTime, timeZone, 'HH:mm')}.`;
         
         const currentNotes = finalNotes.trim();
-        if (currentNotes && currentNotes.includes("Meeting started at")) { 
-            finalNotes = `${currentNotes}\n${endTimeString}`;
-        } else if (currentNotes) { 
+        if (currentNotes) { 
              finalNotes = `${currentNotes}\n${endTimeString}`;
         }
          else { 
