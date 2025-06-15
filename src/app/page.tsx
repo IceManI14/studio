@@ -219,7 +219,6 @@ export default function HomePage() {
                     <h2 className="text-xl font-semibold text-foreground text-center sm:text-left">
                       Welcome {selectedSalesperson.name}! Good Luck Today!
                     </h2>
-                    <Badge variant="secondary" className="text-center sm:text-left">Door Count</Badge>
                 </div>
                 <div className="flex justify-center items-center w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
