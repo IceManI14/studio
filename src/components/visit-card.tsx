@@ -259,7 +259,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <h4 className="font-medium text-accent-foreground flex items-center mb-1">
               <Sparkles className="mr-2 h-4 w-4 text-accent" /> Notes Summary
             </h4>
-            <p className="text-accent whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+            <p className="text-accent/75 whitespace-pre-wrap break-words">{visit.notesSummary}</p>
           </div>
         )}
         {!visit.notesSummary && visit.notes && (
