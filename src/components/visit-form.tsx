@@ -208,6 +208,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             )}
           </div>
           
+          {/*
           <div className="space-y-2">
             <Label className="font-medium">Location (Optional)</Label>
             <div className="flex items-center gap-2">
@@ -255,6 +256,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
             )}
           </div>
+          */}
 
           <div>
             <Label htmlFor="notes" className="font-medium">Visit Notes</Label>
