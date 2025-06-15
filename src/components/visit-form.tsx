@@ -1,6 +1,7 @@
+
 'use client';
 
-import type { Visit, ContactInfo } from '@/lib/types';
+import type { Visit } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -17,9 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { saveVisitAction, type SaveVisitPayload } from '@/app/actions';
+import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState } from 'react';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, Sparkles } from 'lucide-react';
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -40,8 +41,8 @@ interface VisitFormProps {
 const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
   
-  // For location logging
   const [currentLatitude, setCurrentLatitude] = useState<number | undefined>(initialData?.latitude);
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
 
@@ -78,6 +79,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [initialData, form, isOpen]);
 
+  const handleSuggestCompany = async () => {
+    if (currentLatitude === undefined || currentLongitude === undefined) {
+      toast({ title: "Location needed", description: "Please log location to suggest company.", variant: "default" });
+      return;
+    }
+    setIsSuggestingCompany(true);
+    const result = await getCompanyNameFromCoordsAction({ latitude: currentLatitude, longitude: currentLongitude });
+    setIsSuggestingCompany(false);
+
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
+      form.setValue('companyName', result.suggestedCompanyName);
+      toast({ 
+        title: "Company Suggested", 
+        description: `Found: ${result.suggestedCompanyName} (Confidence: ${(result.confidenceScore ?? 0) * 100}%)`
+      });
+    } else {
+      toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+    }
+  };
+
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
     const payload: SaveVisitPayload = {
@@ -112,8 +135,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   };
   
   const handleLogCurrentLocation = () => {
-    // Generate random coordinates (example range for US)
-    // This runs on client, so Math.random is fine.
     const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6)); 
     const randomLng = parseFloat((Math.random() * (-66 - -125) + -125).toFixed(6)); 
     
@@ -122,12 +143,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setCurrentLatitude(randomLat);
     setCurrentLongitude(randomLng);
 
-    toast({ title: 'Location Logged', description: `Lat: ${randomLat}, Lng: ${randomLng}` });
+    toast({ title: 'Location Logged (Mock)', description: `Lat: ${randomLat}, Lng: ${randomLng}` });
   };
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
@@ -144,10 +165,58 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               id="companyName"
               {...form.register('companyName')}
               className="mt-1"
-              placeholder="e.g., Acme Corp"
+              placeholder="e.g., Acme Corp or suggest from location"
             />
             {form.formState.errors.companyName && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.companyName.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="font-medium">Location (Optional)</Label>
+            <div className="flex items-center gap-2">
+                <Input 
+                    type="number" 
+                    step="any" 
+                    placeholder="Latitude" 
+                    value={currentLatitude ?? ""}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setCurrentLatitude(val === "" ? undefined : parseFloat(val));
+                        form.setValue('latitude', val === "" ? undefined : parseFloat(val));
+                    }}
+                    className="w-1/2"
+                />
+                <Input 
+                    type="number" 
+                    step="any" 
+                    placeholder="Longitude" 
+                    value={currentLongitude ?? ""}
+                     onChange={(e) => {
+                        const val = e.target.value;
+                        setCurrentLongitude(val === "" ? undefined : parseFloat(val));
+                        form.setValue('longitude', val === "" ? undefined : parseFloat(val));
+                    }}
+                    className="w-1/2"
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="outline" onClick={handleLogCurrentLocation} className="w-full">
+                  <MapPin className="mr-2 h-4 w-4" /> Log Current (Mock)
+                </Button>
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleSuggestCompany} 
+                    disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
+                    className="w-full"
+                >
+                  {isSuggestingCompany ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  Suggest Company
+                </Button>
+            </div>
+            { (form.formState.errors.latitude || form.formState.errors.longitude) && (
+                <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
             )}
           </div>
 
@@ -160,42 +229,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               placeholder="Details about the visit, key discussion points, etc."
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label className="font-medium">Location (Optional)</Label>
-            <div className="flex items-center gap-2">
-                <Input 
-                    type="number" 
-                    step="any" 
-                    placeholder="Latitude" 
-                    value={currentLatitude ?? ""}
-                    onChange={(e) => setCurrentLatitude(parseFloat(e.target.value))}
-                    className="w-1/2"
-                />
-                <Input 
-                    type="number" 
-                    step="any" 
-                    placeholder="Longitude" 
-                    value={currentLongitude ?? ""}
-                    onChange={(e) => setCurrentLongitude(parseFloat(e.target.value))}
-                    className="w-1/2"
-                />
-            </div>
-            <Button type="button" variant="outline" onClick={handleLogCurrentLocation} className="w-full">
-              <MapPin className="mr-2 h-4 w-4" /> Log Current Location (Mock)
-            </Button>
-            { (form.formState.errors.latitude || form.formState.errors.longitude) && (
-                <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
-            )}
-          </div>
-
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || isSuggestingCompany}>
+              {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {initialData ? 'Save Changes' : 'Log Visit'}
             </Button>
           </DialogFooter>

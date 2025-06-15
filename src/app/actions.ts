@@ -1,7 +1,9 @@
+
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
+import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords';
 import type { Visit, ContactInfo } from '@/lib/types';
 import { z } from 'zod';
 
@@ -54,7 +56,6 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         };
       } catch (e) {
         console.warn("Failed to scrape contact info:", e);
-        // Proceed without contact info or with partial error handling
         contactDetails = { info: "Could not retrieve contact info.", confidence: 0 };
       }
     }
@@ -88,4 +89,31 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     }
     return { error: 'Failed to save visit. An unexpected error occurred.' };
   }
+}
+
+const getCompanyNameFromCoordsPayloadSchema = z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+});
+
+export async function getCompanyNameFromCoordsAction(
+    payload: { latitude?: number; longitude?: number }
+): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; error?: string }> {
+    try {
+        const validatedPayload = getCompanyNameFromCoordsPayloadSchema.parse(payload);
+        const result = await getCompanyNameFromCoords({
+            latitude: validatedPayload.latitude,
+            longitude: validatedPayload.longitude,
+        });
+        return { 
+            suggestedCompanyName: result.suggestedCompanyName, 
+            confidenceScore: result.confidenceScore 
+        };
+    } catch (error) {
+        console.error("Error in getCompanyNameFromCoordsAction:", error);
+        if (error instanceof z.ZodError) {
+            return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+        }
+        return { error: 'Failed to suggest company name. An unexpected error occurred.' };
+    }
 }
