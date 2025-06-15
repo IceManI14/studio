@@ -2,49 +2,109 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Visit } from '@/lib/types';
+import type { Visit, Salesperson } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
-import { PlusCircle, ListChecks } from 'lucide-react';
+import { PlusCircle, ListChecks, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
+
+// Hardcoded salespeople for now
+const SALESPEOPLE: Salesperson[] = [
+  { id: 'sales_1', name: 'Alex Johnson' },
+  { id: 'sales_2', name: 'Maria Garcia' },
+  { id: 'sales_3', name: 'Kenji Tanaka' },
+  { id: 'sales_4', name: 'Sarah Miller' },
+];
+const SELECTED_SALESPERSON_ID_KEY = 'optimumTrailblazerSelectedSalespersonId';
+
 
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
-  const [sessionAttemptNumber, setSessionAttemptNumber] = useState<number>(0); // New state for door hit counter
+  const [sessionAttemptNumber, setSessionAttemptNumber] = useState<number>(0);
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const { toast } = useToast();
 
-  // Load visits from localStorage on initial mount (client-side only)
+  const getVisitsStorageKey = (): string | null => {
+    if (!selectedSalesperson) return null;
+    return `trailblazerVisits_${selectedSalesperson.id}`;
+  };
+
+  // Effect to load selected salesperson
   useEffect(() => {
-    const storedVisits = localStorage.getItem('trailblazerVisits');
-    if (storedVisits) {
-      try {
-        const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
-          ...visit,
-          timestamp: new Date(visit.timestamp) // Ensure timestamp is a Date object
-        }));
-        setVisits(parsedVisits);
-      } catch (error) {
-        console.error("Failed to parse visits from localStorage", error);
-        localStorage.removeItem('trailblazerVisits'); // Clear corrupted data
+    const storedSalespersonId = localStorage.getItem(SELECTED_SALESPERSON_ID_KEY);
+    if (storedSalespersonId) {
+      const foundSalesperson = SALESPEOPLE.find(s => s.id === storedSalespersonId);
+      if (foundSalesperson) {
+        setSelectedSalesperson(foundSalesperson);
+      } else {
+        localStorage.removeItem(SELECTED_SALESPERSON_ID_KEY); // Clean up invalid ID
       }
     }
   }, []);
 
-  // Save visits to localStorage whenever they change
+  // Effect to load visits AFTER salesperson is selected
   useEffect(() => {
-    if (visits.length > 0 || localStorage.getItem('trailblazerVisits')) { // Avoid writing empty array if never existed
-        localStorage.setItem('trailblazerVisits', JSON.stringify(visits));
+    if (!selectedSalesperson) {
+      setVisits([]); // Clear visits if no salesperson is selected
+      setSessionAttemptNumber(0);
+      return;
     }
-  }, [visits]);
+    const visitsStorageKey = getVisitsStorageKey();
+    if (!visitsStorageKey) return;
 
+    const storedVisits = localStorage.getItem(visitsStorageKey);
+    if (storedVisits) {
+      try {
+        const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
+          ...visit,
+          timestamp: new Date(visit.timestamp)
+        }));
+        setVisits(parsedVisits);
+      } catch (error) {
+        console.error("Failed to parse visits from localStorage", error);
+        localStorage.removeItem(visitsStorageKey); // Clear corrupted data
+        setVisits([]);
+      }
+    } else {
+      setVisits([]); // No visits for this salesperson or first time
+    }
+    setSessionAttemptNumber(0); // Reset session attempts when salesperson changes or loads
+  }, [selectedSalesperson]);
+
+  // Effect to save visits
+  useEffect(() => {
+    if (!selectedSalesperson) return;
+    const visitsStorageKey = getVisitsStorageKey();
+    if (!visitsStorageKey) return;
+
+    // Avoid writing an empty array if it was never stored for this salesperson
+    // Only save if there are visits or if there was pre-existing data for this key
+    if (visits.length > 0 || localStorage.getItem(visitsStorageKey)) {
+        localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
+    }
+  }, [visits, selectedSalesperson]);
+
+
+  const handleSelectSalesperson = (salesperson: Salesperson) => {
+    setSelectedSalesperson(salesperson);
+    localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
+    // Visits will be re-loaded by the useEffect hook dependent on selectedSalesperson.
+    // Clearing other states:
+    setIsVisitFormOpen(false);
+    setCurrentEditingVisit(undefined);
+    setSessionAttemptNumber(0); 
+    toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
+  };
+  
   const handleOpenAddVisitForm = () => {
     const newAttemptNumber = sessionAttemptNumber + 1;
     setSessionAttemptNumber(newAttemptNumber);
@@ -53,7 +113,7 @@ export default function HomePage() {
     const startTimeString = `Session Attempt #${newAttemptNumber}: Meeting started at ${format(currentTime, 'HH:mm')}.`;
     
     setCurrentEditingVisit({
-      id: '', // ID will be generated on save
+      id: '', 
       timestamp: currentTime,
       companyName: '',
       notes: startTimeString,
@@ -96,12 +156,23 @@ export default function HomePage() {
     toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
   };
 
+  if (!selectedSalesperson) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <SalespersonSelectorModal
+          salespeople={SALESPEOPLE}
+          onSelectSalesperson={handleSelectSalesperson}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="text-center sm:text-left">
+        <header className="sm:text-left">
           <h1
-            className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm"
+            className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm text-center"
             style={{
               textShadow: [
                 '-1px -1px 0 hsl(var(--accent))',
@@ -113,6 +184,12 @@ export default function HomePage() {
           >
             Optimum Trailblazer
           </h1>
+          {selectedSalesperson && (
+            <div className="flex items-center justify-center sm:justify-start text-sm text-muted-foreground mt-2 bg-card p-2 rounded-md shadow-sm">
+              <User className="mr-2 h-4 w-4 text-primary" />
+              Active User: <button onClick={() => setSelectedSalesperson(null)} className="font-semibold text-primary hover:underline ml-1 focus:outline-none">{selectedSalesperson.name} (Switch)</button>
+            </div>
+          )}
         </header>
 
         <Tabs defaultValue="field-day" className="w-full">
@@ -124,7 +201,7 @@ export default function HomePage() {
 
           <TabsContent value="field-day">
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
                     <h2 className="text-xl font-semibold text-foreground">Door-to-Door Session</h2>
                     <Badge variant="secondary">Doors Hit This Session: {sessionAttemptNumber}</Badge>
                 </div>
@@ -134,7 +211,7 @@ export default function HomePage() {
                     </Button>
                 </div>
 
-                {visits.length === 0 && sessionAttemptNumber === 0 ? ( // Also check sessionAttemptNumber for initial state
+                {visits.length === 0 && sessionAttemptNumber === 0 ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
@@ -167,6 +244,7 @@ export default function HomePage() {
                 <br />
                 Content for Call Day will be implemented here.
               </p>
+              <p className="mt-4 text-sm text-muted-foreground">Logged in as: {selectedSalesperson.name}</p>
             </div>
           </TabsContent>
 
@@ -186,6 +264,7 @@ export default function HomePage() {
                   <ExportButton visits={visits} />
               </div>
               <MapPlaceholder visits={visits} />
+               <p className="mt-4 text-sm text-muted-foreground text-center">Route for: {selectedSalesperson.name}</p>
             </section>
           </TabsContent>
         </Tabs>
@@ -201,7 +280,7 @@ export default function HomePage() {
         />
       </main>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
-        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Built with passion.</p>
+        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Personalized for {selectedSalesperson.name}.</p>
       </footer>
     </div>
   );

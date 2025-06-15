@@ -16,3 +16,8 @@ export interface Visit {
   hasBusinessCard?: boolean;
   discussedCompetitors?: boolean;
 }
+
+export interface Salesperson {
+  id: string;
+  name: string;
+}
