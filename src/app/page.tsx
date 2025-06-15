@@ -27,8 +27,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
-import { Label }
- from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -248,20 +248,31 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="sm:text-left">
-          <h1
-            className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
-            style={{
-              textShadow: [
-                '-1px -1px 0 hsl(var(--accent))',
-                '1px -1px 0 hsl(var(--accent))',
-                '-1px 1px 0 hsl(var(--accent))',
-                '1px 1px 0 hsl(var(--accent))',
-              ].join(', '),
-            }}
-          >
-            Optimum Trailblazer
-          </h1>
+        <header className="text-center sm:text-left">
+          <div className="flex flex-col items-center mb-4">
+            <Image
+              src="https://placehold.co/150x50.png"
+              alt="Company Logo"
+              width={150}
+              height={50}
+              className="mb-2"
+              data-ai-hint="company logo"
+              priority
+            />
+            <h1
+              className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
+              style={{
+                textShadow: [
+                  '-1px -1px 0 hsl(var(--accent))',
+                  '1px -1px 0 hsl(var(--accent))',
+                  '-1px 1px 0 hsl(var(--accent))',
+                  '1px 1px 0 hsl(var(--accent))',
+                ].join(', '),
+              }}
+            >
+              Optimum Trailblazer
+            </h1>
+          </div>
           {selectedSalesperson && (
             <div className="flex items-center justify-center sm:justify-start text-sm text-muted-foreground mt-2 bg-card p-2 rounded-md shadow-sm">
               <User className="mr-2 h-4 w-4 text-primary" />
