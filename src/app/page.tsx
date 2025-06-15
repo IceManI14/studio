@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
+import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader } from '@/components/ui/card';
+
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -107,7 +109,7 @@ export default function HomePage() {
           const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
             ...visit,
             timestamp: new Date(visit.timestamp),
-            visitNumber: visit.visitNumber, // Make sure to parse visitNumber
+            visitNumber: visit.visitNumber,
           }));
           setVisits(parsedVisits);
         } catch (error) {
@@ -188,7 +190,7 @@ export default function HomePage() {
         localStorage.setItem(milestoneKey, 'true');
       }
     }
-  }, [visits, coldCallCount, selectedSalesperson, toast]); // Added coldCallCount to dependencies
+  }, [visits, coldCallCount, selectedSalesperson, toast]);
 
   // Effect to save cold call count
   useEffect(() => {
@@ -202,13 +204,12 @@ export default function HomePage() {
   useEffect(() => {
     if (visits.length > 0) {
       const sorted = visits.slice().sort((a, b) => {
-        const confidenceA = a.partnershipConfidence ?? 0; // Treat undefined as 0 for sorting
+        const confidenceA = a.partnershipConfidence ?? 0; 
         const confidenceB = b.partnershipConfidence ?? 0;
   
         if (confidenceB !== confidenceA) {
-          return confidenceB - confidenceA; // Higher confidence first
+          return confidenceB - confidenceA; 
         }
-        // If confidence is the same, sort by date (most recent first)
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
       setSortedVisitsForCallDay(sorted);
@@ -228,15 +229,15 @@ export default function HomePage() {
   
   const handleOpenAddVisitForm = () => {
     const newVisitNumber = coldCallCount + 1;
-    setColdCallCount(prevCount => prevCount + 1); // Update total count for the session
+    setColdCallCount(prevCount => prevCount + 1); 
     
     const currentTime = new Date();
     
     setCurrentEditingVisit({
-      id: '', // New visit, so no ID yet
+      id: '', 
       timestamp: currentTime,
       companyName: '',
-      notes: '', // Start with empty notes
+      notes: '', 
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -250,7 +251,7 @@ export default function HomePage() {
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
-      visitNumber: newVisitNumber, // Assign the sequential visit number
+      visitNumber: newVisitNumber, 
     });
     setIsVisitFormOpen(true);
   };
@@ -274,7 +275,6 @@ export default function HomePage() {
         updatedVisits[existingVisitIndex] = visit;
         return updatedVisits;
       }
-      // For new visits, add to the beginning and re-sort by timestamp
       return [visit, ...prevVisits].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     });
   };
@@ -285,12 +285,11 @@ export default function HomePage() {
   };
 
   const confirmEndDay = () => {
-    setColdCallCount(0); // Reset cold call count for the day
+    setColdCallCount(0); 
     const coldCallCountStorageKey = getColdCallCountStorageKey();
     if (coldCallCountStorageKey) {
       localStorage.setItem(coldCallCountStorageKey, '0');
     }
-    // Also reset the 30-door milestone for today if it was achieved
     const today = new Date().toISOString().split('T')[0];
     const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson?.id}_${today}`;
     localStorage.removeItem(milestoneKey);
@@ -319,7 +318,7 @@ export default function HomePage() {
       localStorage.setItem(suggestionsStorageKey, JSON.stringify(newSuggestions));
     }
 
-    console.log('App Suggestion:', suggestionText.trim()); // Keep console log for debugging if needed
+    console.log('App Suggestion:', suggestionText.trim()); 
     toast({
       title: 'Suggestion Submitted!',
       description: 'Thank you for your feedback.',
@@ -405,8 +404,6 @@ export default function HomePage() {
                       </AlertDialogContent>
                     </AlertDialog>
                 </div>
-                
-                {/* The global "Visit Card #" box showing total coldCallCount has been removed from here */}
 
                 {visits.length === 0 && coldCallCount === 0 ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow">
@@ -520,13 +517,17 @@ export default function HomePage() {
               {submittedSuggestions.length > 0 && (
                 <div className="w-full pt-4 mt-6 border-t">
                   <h3 className="text-xl font-headline font-semibold text-primary mb-3">
-                    Previous Suggestions
+                    Submitted Suggestions
                   </h3>
-                  <ul className="list-disc list-inside space-y-2 text-foreground/80 pl-2 max-h-60 overflow-y-auto">
-                    {submittedSuggestions.map((suggestion, index) => (
-                      <li key={index} className="text-sm">{suggestion}</li>
-                    ))}
-                  </ul>
+                  <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
+                    <ol className="list-decimal list-inside space-y-2 text-foreground/90">
+                      {submittedSuggestions.map((suggestion, index) => (
+                        <li key={index} className="text-sm leading-relaxed">
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </div>
               )}
 
