@@ -579,7 +579,7 @@ export default function HomePage() {
                         <li key={index} className="text-sm leading-relaxed">
                           {suggestion.text}
                           <span className="block text-xs text-muted-foreground mt-0.5">
-                            &mdash; by {suggestion.salespersonName} on {format(new Date(suggestion.timestamp), 'MMM d, yyyy')}
+                            &mdash; by {suggestion.salespersonName} on {format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}
                           </span>
                         </li>
                       ))}
