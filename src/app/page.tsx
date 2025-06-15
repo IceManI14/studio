@@ -15,12 +15,15 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 
-// Hardcoded salespeople for now
+// Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
-  { id: 'sales_1', name: 'Alex Johnson' },
-  { id: 'sales_2', name: 'Maria Garcia' },
-  { id: 'sales_3', name: 'Kenji Tanaka' },
-  { id: 'sales_4', name: 'Sarah Miller' },
+  { id: 'sales_1', name: 'Jim Karat' },
+  { id: 'sales_2', name: 'Chris Canestrari' },
+  { id: 'sales_3', name: 'Paul W. Lyman' },
+  { id: 'sales_4', name: 'Sarah Kessel' },
+  { id: 'sales_5', name: 'George Maroon' },
+  { id: 'sales_6', name: 'Tom Brady' },
+  { id: 'sales_7', name: 'Sam' },
 ];
 const SELECTED_SALESPERSON_ID_KEY = 'optimumTrailblazerSelectedSalespersonId';
 
@@ -201,11 +204,11 @@ export default function HomePage() {
 
           <TabsContent value="field-day">
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
-                    <h2 className="text-xl font-semibold text-foreground">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
+                    <h2 className="text-xl font-semibold text-foreground text-center sm:text-left">
                       Welcome {selectedSalesperson.name}! Good Luck Today!
                     </h2>
-                    <Badge variant="secondary">Door Count</Badge>
+                    <Badge variant="secondary" className="text-center sm:text-left">Door Count</Badge>
                 </div>
                 <div className="flex justify-center items-center w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
