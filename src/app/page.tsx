@@ -267,7 +267,7 @@ export default function HomePage() {
 
           <TabsContent value="daily-route">
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
-              <div className="flex flex-col sm:flex-row justify-start items-start sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3">
                       <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
                           <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
