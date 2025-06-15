@@ -237,7 +237,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
           <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1 underline">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
               <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
               Competitor Intel: (<span className="text-accent">{visit.competitorName}</span>)
             </h4>
