@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,84 @@ interface VisitCardProps {
   onDelete: (visitId: string) => void;
   onUpdateVisit: (updatedVisit: Visit) => void;
 }
+
+const COMPETITOR_DETAILS: Record<string, { title?: string; details: string[] }> = {
+  "Quench": {
+    details: [
+      "Filtration only",
+      "Terrible Service",
+      "Offer R/O",
+      "Pricing: $45-$80 for Hot/Cold (qty dependent)",
+      "Offer Ice and water units",
+      "Owns BEVI ($350/month per unit)",
+      "Acquired: Waterlogic, Blue Reserve, Eastern Pure, Stonybrook",
+      "Similar contracts to Optimum"
+    ]
+  },
+  "Atlantic Pure": {
+    title: "Mostly Rhode Island and Southern MA",
+    details: [
+      "Wellsys dealer",
+      "Brand new company",
+      "Sometimes Ultra Filtration instead of RO in W9",
+      "Pricing: $49-$69 per unit",
+      "Offer Ice and water",
+      "Contracts: Same as Optimum, use Pure Water"
+    ]
+  },
+  "Boston Bean": {
+    title: "Coffee Company",
+    details: [
+      "Filtration only",
+      "Offer Alpine coolers and occasional ION",
+      "NO RO",
+      "Pricing: $40-$80 (qty dependent)",
+      "Offers BEVI"
+    ]
+  },
+  "Ready Refresh/Primo": {
+    details: [
+      "5 Gallon Bottles and Filtration",
+      "Bottled Brands: Nestle Pure Life, Poland Spring, Crystal Rock, Primo, Vermont Pure",
+      "Filtration Line: Accupure",
+      "Terrible service",
+      "Rarely offer RO",
+      "Cleaning Fee: $95 (recommended every 3 months, often charged unknowingly)",
+      "Filtration Cost: $40-$50",
+      "Bottle Pricing: $10-$15 (State contract: $4.75-$5.00/bottle + $10 delivery)"
+    ]
+  },
+  "WB Mason": {
+    title: "Paper company that offers water",
+    details: [
+      "5 gallons and filtration",
+      "Bottled Brands: Blizzard water or Poland Spring",
+      "Bottle Price: $5-$13",
+      "Filtration Pricing: $25-$50",
+      "Don’t offer RO"
+    ]
+  },
+  "Cintas": {
+    title: "Uniform company that offers water",
+    details: [
+      "Filtration only",
+      "Pricing: $35-$60",
+      "Don’t offer RO"
+    ]
+  },
+  "Aramark": {
+    details: [
+      "Filtration only",
+      "Pricing: $40-$80",
+      "Charge for Filter changes (cost unknown)",
+      "Don’t Offer RO"
+    ]
+  },
+  "Other": {
+    details: ["Details for this competitor are not pre-defined. Add specific notes if available."]
+  }
+};
+
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -65,12 +143,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         variant = "default";
       } else if (pConfidence === 3) {
         variant = "outline";
-      } else { // 1 or 2 stars
+      } else { 
         variant = "secondary";
       }
     }
-    // If pConfidence is 0 or undefined, it remains "Not Rated" and "secondary"
-
     return { text, variant };
   };
 
@@ -161,6 +237,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
           </div>
         )}
+        
+        {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
+              Competitor Intel: {visit.competitorName}
+            </h4>
+            {COMPETITOR_DETAILS[visit.competitorName].title && (
+                <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+            )}
+            <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+              {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {visit.notesSummary && (
           <div className="p-3 bg-accent/10 rounded-md border border-accent/50">
@@ -207,3 +300,5 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
+    
