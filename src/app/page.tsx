@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Textarea } from '@/components/ui/textarea';
+import { Label }
+ from '@/components/ui/label';
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -51,6 +54,7 @@ export default function HomePage() {
   const { toast } = useToast();
   const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
+  const [suggestionText, setSuggestionText] = useState('');
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -212,6 +216,24 @@ export default function HomePage() {
     setIsEndDayConfirmOpen(false);
   };
 
+  const handleSubmitSuggestion = () => {
+    if (suggestionText.trim() === '') {
+      toast({
+        title: 'Empty Suggestion',
+        description: 'Please type your suggestion before submitting.',
+        variant: 'default',
+      });
+      return;
+    }
+    // In a real app, you would send this suggestion to a backend.
+    console.log('App Suggestion:', suggestionText);
+    toast({
+      title: 'Suggestion Submitted!',
+      description: 'Thank you for your feedback.',
+    });
+    setSuggestionText('');
+  };
+
   if (!selectedSalesperson) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -367,15 +389,35 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="about">
-            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-4">
-              <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
-                <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
-              </h2>
-              <p className="text-foreground text-base leading-relaxed">
-                This app is intended to help you streamline your efforts in acquiring new clients and partners alike. 
-                It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
-              </p>
-              <p className="text-sm text-muted-foreground">
+            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
+              <div>
+                <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
+                  <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
+                </h2>
+                <p className="text-foreground text-base leading-relaxed mt-2">
+                  This app is intended to help you streamline your efforts in acquiring new clients and partners alike. 
+                  It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
+                </p>
+              </div>
+
+              <div className="w-full pt-4 border-t">
+                <h3 className="text-xl font-headline font-semibold text-primary mb-2">Suggest an Improvement</h3>
+                <div className="space-y-3">
+                  <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
+                  <Textarea
+                    id="appSuggestion"
+                    placeholder="Type your feedback or feature request here..."
+                    value={suggestionText}
+                    onChange={(e) => setSuggestionText(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                  <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}>
+                    <Send className="mr-2 h-4 w-4" /> Submit Suggestion
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground mt-auto pt-4">
                 Currently logged in as: {selectedSalesperson.name}
               </p>
             </div>
@@ -397,7 +439,4 @@ export default function HomePage() {
       </footer>
     </div>
   );
-
-    
-
-    
+}
