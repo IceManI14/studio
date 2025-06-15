@@ -34,6 +34,8 @@ export default function HomePage() {
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
   const [sessionAttemptNumber, setSessionAttemptNumber] = useState<number>(0);
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
+  const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
+  const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const { toast } = useToast();
 
   const getVisitsStorageKey = (): string | null => {
@@ -54,11 +56,13 @@ export default function HomePage() {
     }
   }, []);
 
-  // Effect to load visits AFTER salesperson is selected
+  // Effect to load visits AFTER salesperson is selected & get mock GPS
   useEffect(() => {
     if (!selectedSalesperson) {
       setVisits([]); // Clear visits if no salesperson is selected
       setSessionAttemptNumber(0);
+      setUserCurrentLatitude(undefined);
+      setUserCurrentLongitude(undefined);
       return;
     }
     const visitsStorageKey = getVisitsStorageKey();
@@ -81,7 +85,18 @@ export default function HomePage() {
       setVisits([]); // No visits for this salesperson or first time
     }
     setSessionAttemptNumber(0); // Reset session attempts when salesperson changes or loads
-  }, [selectedSalesperson]);
+
+    // Simulate getting current location
+    const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6));
+    const randomLng = parseFloat((Math.random() * (-66 - -125) + -125).toFixed(6));
+    setUserCurrentLatitude(randomLat);
+    setUserCurrentLongitude(randomLng);
+    toast({
+      title: "Mock Location Acquired",
+      description: `App initialized with mock location: Lat: ${randomLat.toFixed(4)}, Lng: ${randomLng.toFixed(4)}`
+    });
+
+  }, [selectedSalesperson, toast]); // Added toast to dependencies
 
   // Effect to save visits
   useEffect(() => {
@@ -89,8 +104,6 @@ export default function HomePage() {
     const visitsStorageKey = getVisitsStorageKey();
     if (!visitsStorageKey) return;
 
-    // Avoid writing an empty array if it was never stored for this salesperson
-    // Only save if there are visits or if there was pre-existing data for this key
     if (visits.length > 0 || localStorage.getItem(visitsStorageKey)) {
         localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
     }
@@ -100,11 +113,9 @@ export default function HomePage() {
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
-    // Visits will be re-loaded by the useEffect hook dependent on selectedSalesperson.
-    // Clearing other states:
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
-    setSessionAttemptNumber(0); 
+    // sessionAttemptNumber will be reset by the useEffect dependent on selectedSalesperson
     toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
   };
   
@@ -120,8 +131,8 @@ export default function HomePage() {
       timestamp: currentTime,
       companyName: '',
       notes: startTimeString,
-      latitude: undefined,
-      longitude: undefined,
+      latitude: userCurrentLatitude, // Use app-level current location
+      longitude: userCurrentLongitude, // Use app-level current location
       contactInfo: undefined,
       notesSummary: undefined,
       partnershipConfidence: undefined,
@@ -290,4 +301,3 @@ export default function HomePage() {
     </div>
   );
 }
-
