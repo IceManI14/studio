@@ -364,7 +364,7 @@ export default function HomePage() {
       return;
     }
 
-    const subject = `Optimum Trailblazer App Suggestions from ${selectedSalesperson.name}`;
+    const subject = `App Improvement Suggestion`;
     let body = `Suggestions for the Optimum Trailblazer App:\n\n`;
     submittedSuggestions.forEach((suggestion, index) => {
       body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
