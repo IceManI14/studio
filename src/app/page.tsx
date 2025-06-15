@@ -94,17 +94,10 @@ export default function HomePage() {
 
           <TabsContent value="field-day">
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                     {/* Title "Hit New Door" or similar, if needed, can go here */}
-                    <div className="flex items-center gap-3">
-                        {/* Intentionally left blank or add a new title if desired for this tab */}
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {/* ExportButton was here, moved to Daily Route */}
-                        <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
-                            <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
-                        </Button>
-                    </div>
+                <div className="flex justify-center items-center w-full">
+                    <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                        <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
+                    </Button>
                 </div>
 
                 {visits.length === 0 ? (
