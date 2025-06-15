@@ -48,7 +48,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits }) => {
       if (link.download !== undefined) { // Feature detection
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', `trailblazer_tracker_visits_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `optimum_trailblazer_visits_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();

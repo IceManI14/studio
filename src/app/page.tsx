@@ -78,7 +78,7 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-10">
         <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <h1 className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm">
-            Trailblazer Tracker
+            Optimum Trailblazer
           </h1>
           <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
             <PlusCircle className="mr-2 h-5 w-5" /> Add New Visit
@@ -132,7 +132,7 @@ export default function HomePage() {
         />
       </main>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
-        <p>&copy; {new Date().getFullYear()} Trailblazer Tracker. Built with passion.</p>
+        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Built with passion.</p>
       </footer>
     </div>
   );

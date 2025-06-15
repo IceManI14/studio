@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Trailblazer Tracker',
+  title: 'Optimum Trailblazer',
   description: 'Track your company visits and contacts.',
 };
 
