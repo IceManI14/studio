@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -92,7 +92,8 @@ export default function HomePage() {
       try {
         const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
           ...visit,
-          timestamp: new Date(visit.timestamp)
+          timestamp: new Date(visit.timestamp),
+          isNewClient: visit.isNewClient || false, // Ensure isNewClient has a default
         }));
         setVisits(parsedVisits);
       } catch (error) {
@@ -163,7 +164,7 @@ export default function HomePage() {
       id: '', // New visit, so no ID yet
       timestamp: currentTime,
       companyName: '',
-      notes: '', // Initial notes are empty
+      notes: '',
       latitude: userCurrentLatitude, 
       longitude: userCurrentLongitude, 
       contactInfo: undefined,
@@ -176,6 +177,7 @@ export default function HomePage() {
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
+      isNewClient: false,
     });
     setIsVisitFormOpen(true);
   };
@@ -406,7 +408,7 @@ export default function HomePage() {
               </div>
 
               <div className="w-full pt-4 border-t">
-                <h3 className="text-xl font-headline font-semibold text-primary mb-2">Suggest an Improvement</h3>
+                <h3 className="text-xl font-headline font-semibold text-primary mb-2">Suggestions and Improvements</h3>
                 <div className="space-y-3">
                   <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
                   <Textarea
