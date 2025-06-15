@@ -272,7 +272,7 @@ export default function HomePage() {
                           <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
                       </h2>
                       {visits.length > 0 && (
-                          <Badge variant="secondary" className="text-sm font-medium">
+                          <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
                               {selectedSalesperson.name} Visited: {visits.length}
                           </Badge>
                       )}
