@@ -316,7 +316,7 @@ export default function HomePage() {
 
     toast({
       title: "Field Day Ended",
-      description: `Great work ${selectedSalesperson?.name}! You completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
+      description: `Great work ${selectedSalesperson?.name}! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
     });
     setIsEndDayConfirmOpen(false);
   };
