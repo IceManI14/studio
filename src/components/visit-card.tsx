@@ -54,6 +54,21 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const hasDecisionMakerInfo = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact;
 
+  const getContactBadgeVariant = () => {
+    if (!visit.contactInfo) {
+      return "secondary";
+    }
+    
+    const pConfidence = visit.partnershipConfidence ?? 0;
+
+    if (pConfidence >= 4) {
+      return "default"; 
+    } else if (pConfidence === 3) {
+      return "outline"; 
+    }
+    return "secondary"; 
+  };
+
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
@@ -61,7 +76,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
-            <Badge variant={visit.contactInfo && visit.contactInfo.confidence > 0.7 ? "default" : "secondary"} className="ml-2 whitespace-nowrap">
+            <Badge variant={getContactBadgeVariant()} className="ml-2 whitespace-nowrap">
                 {visit.contactInfo ? `${(visit.contactInfo.confidence * 100).toFixed(0)}% Conf.` : 'No Contact'}
             </Badge>
         </div>
@@ -182,4 +197,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
