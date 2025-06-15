@@ -155,7 +155,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {initialData ? 'Edit Potential Partner' : 'New Potential Partner'}
           </DialogTitle>
           <DialogDescription>
-            {initialData ? 'Update the details of this potential partner.' : 'Add a new potential partner to your log.'}
+            {initialData ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 py-2">
