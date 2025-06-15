@@ -207,7 +207,7 @@ export default function HomePage() {
     setSessionAttemptNumber(0);
     toast({
       title: "Field Day Ended",
-      description: `Great work, ${selectedSalesperson?.name}! Your session has been reset.`,
+      description: `Great work, ${selectedSalesperson?.name}! Your session has been reset. Tomorrow is a new day!`,
     });
     setIsEndDayConfirmOpen(false);
   };
@@ -397,5 +397,7 @@ export default function HomePage() {
       </footer>
     </div>
   );
+
+    
 
     
