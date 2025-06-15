@@ -8,7 +8,7 @@ import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
-import ExportPdfButton from '@/components/export-pdf-button'; // Import the new component
+import ExportPdfButton from '@/components/export-pdf-button';
 import { PlusCircle, ListChecks, User, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,6 +38,8 @@ export default function HomePage() {
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const { toast } = useToast();
+  const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
+
 
   const getVisitsStorageKey = (): string | null => {
     if (!selectedSalesperson) return null;
@@ -97,7 +99,7 @@ export default function HomePage() {
       description: `App initialized with mock location: Lat: ${randomLat.toFixed(4)}, Lng: ${randomLng.toFixed(4)}`
     });
 
-  }, [selectedSalesperson, toast]); // Added toast to dependencies
+  }, [selectedSalesperson, toast]); 
 
   // Effect to save visits
   useEffect(() => {
@@ -110,13 +112,31 @@ export default function HomePage() {
     }
   }, [visits, selectedSalesperson]);
 
+  // Effect to sort visits for Call Day tab
+  useEffect(() => {
+    if (visits.length > 0) {
+      const sorted = visits.slice().sort((a, b) => {
+        const confidenceA = a.partnershipConfidence ?? 0; // Treat undefined as 0 for sorting
+        const confidenceB = b.partnershipConfidence ?? 0;
+  
+        if (confidenceB !== confidenceA) {
+          return confidenceB - confidenceA; // Higher confidence first
+        }
+        // If confidence is the same, sort by date (most recent first)
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+      setSortedVisitsForCallDay(sorted);
+    } else {
+      setSortedVisitsForCallDay([]);
+    }
+  }, [visits]);
+
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
-    // sessionAttemptNumber will be reset by the useEffect dependent on selectedSalesperson
     toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
   };
   
@@ -132,8 +152,8 @@ export default function HomePage() {
       timestamp: currentTime,
       companyName: '',
       notes: startTimeString,
-      latitude: userCurrentLatitude, // Use app-level current location
-      longitude: userCurrentLongitude, // Use app-level current location
+      latitude: userCurrentLatitude, 
+      longitude: userCurrentLongitude, 
       contactInfo: undefined,
       notesSummary: undefined,
       partnershipConfidence: undefined,
@@ -252,16 +272,34 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="call-day">
-            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-center justify-center">
-              <h2 className="text-2xl font-headline font-semibold mb-4 text-foreground">
-                Call Day Activities
-              </h2>
-              <p className="text-muted-foreground text-center">
-                This section is for logging calls, managing call lists, or viewing call-related analytics.
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
+                <h2 className="text-2xl font-semibold text-foreground text-center">
+                  Call Day Priority List
+                </h2>
+              </div>
+              {sortedVisitsForCallDay.length === 0 ? (
+                <div className="text-center py-10 bg-card rounded-lg shadow">
+                  <p className="text-xl text-muted-foreground mb-4">No visits to display. Log visits in "Field Day" first.</p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {sortedVisitsForCallDay.map(visit => (
+                    <VisitCard 
+                      key={visit.id} 
+                      visit={visit} 
+                      onEdit={handleEditVisit} 
+                      onDelete={handleDeleteVisit}
+                      onUpdateVisit={handleUpdateVisitInList} 
+                    />
+                  ))}
+                </div>
+              )}
+              <p className="mt-4 text-sm text-muted-foreground text-center">
+                Organized by partnership confidence (highest first), then by date visited (most recent first).
                 <br />
-                Content for Call Day will be implemented here.
+                Logged in as: {selectedSalesperson.name}
               </p>
-              <p className="mt-4 text-sm text-muted-foreground">Logged in as: {selectedSalesperson.name}</p>
             </div>
           </TabsContent>
 
