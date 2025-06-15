@@ -8,6 +8,7 @@ import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
+import ExportPdfButton from '@/components/export-pdf-button'; // Import the new component
 import { PlusCircle, ListChecks, User, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -269,7 +270,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
                       <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                          <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
+                          <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
                       </h2>
                       {visits.length > 0 && (
                           <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
@@ -277,7 +278,10 @@ export default function HomePage() {
                           </Badge>
                       )}
                   </div>
-                  <ExportButton visits={visits} />
+                  <div className="flex gap-2">
+                     <ExportPdfButton visits={visits} />
+                     <ExportButton visits={visits} />
+                  </div>
               </div>
               <MapPlaceholder visits={visits} />
                <p className="mt-4 text-sm text-muted-foreground text-center">Route for: {selectedSalesperson.name}</p>
@@ -316,3 +320,4 @@ export default function HomePage() {
     </div>
   );
 }
+
