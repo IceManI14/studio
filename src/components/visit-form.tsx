@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState } from 'react';
-import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square } from 'lucide-react';
+import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square, UserCircle, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -35,6 +35,16 @@ const COMPETITORS_LIST = [
   "Other",
 ];
 
+const COOLER_TYPES_LIST = [
+  "Standard Bottle Cooler",
+  "Bottle-Free Cooler (POU)",
+  "Countertop Cooler",
+  "Under-Sink Chiller",
+  "Specialty Cooler (e.g., sparkling)",
+  "None Observed",
+  "Other",
+];
+
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
   notes: z.string().optional(),
@@ -44,6 +54,10 @@ const visitFormSchema = z.object({
   hasBusinessCard: z.boolean().optional(),
   discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
+  coolerType: z.string().optional(),
+  decisionMakerName: z.string().optional(),
+  decisionMakerTitle: z.string().optional(),
+  decisionMakerContact: z.string().optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -76,6 +90,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       hasBusinessCard: false,
       discussedCompetitors: false,
       competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: '',
+      decisionMakerTitle: '',
+      decisionMakerContact: '',
     },
   });
 
@@ -92,6 +110,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         hasBusinessCard: initialData.hasBusinessCard || false,
         discussedCompetitors: initialData.discussedCompetitors || false,
         competitorName: initialData.competitorName || undefined,
+        coolerType: initialData.coolerType || undefined,
+        decisionMakerName: initialData.decisionMakerName || '',
+        decisionMakerTitle: initialData.decisionMakerTitle || '',
+        decisionMakerContact: initialData.decisionMakerContact || '',
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -105,6 +127,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         hasBusinessCard: false,
         discussedCompetitors: false,
         competitorName: undefined,
+        coolerType: undefined,
+        decisionMakerName: '',
+        decisionMakerTitle: '',
+        decisionMakerContact: '',
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -161,7 +187,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
       discussedCompetitors: data.discussedCompetitors,
-      competitorName: data.discussedCompetitors ? data.competitorName : undefined, // Only save if discussed
+      competitorName: data.discussedCompetitors ? data.competitorName : undefined,
+      coolerType: data.discussedCompetitors ? data.coolerType : undefined, // Only save if competitor discussed
+      decisionMakerName: data.decisionMakerName,
+      decisionMakerTitle: data.decisionMakerTitle,
+      decisionMakerContact: data.decisionMakerContact,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -289,6 +319,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         field.onChange(checked);
                         if (!checked) {
                           form.setValue('competitorName', undefined);
+                          form.setValue('coolerType', undefined);
                         }
                       }}
                       id="discussedCompetitors"
@@ -304,80 +335,99 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
             
             {discussedCompetitorsValue && (
-              <FormField
+              <>
+                <FormField
+                  control={form.control}
+                  name="competitorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a competitor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COMPETITORS_LIST.map((competitor) => (
+                            <SelectItem key={competitor} value={competitor}>
+                              {competitor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="coolerType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Cooler Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COOLER_TYPES_LIST.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            <div className="space-y-1 pt-2">
+              <Label className="font-medium text-base">Decision Maker Info (Optional)</Label>
+               <FormField
                 control={form.control}
-                name="competitorName"
+                name="decisionMakerName"
                 render={({ field }) => (
                   <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a competitor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {COMPETITORS_LIST.map((competitor) => (
-                          <SelectItem key={competitor} value={competitor}>
-                            {competitor}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel className="text-sm font-normal">Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Jane Doe" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-            
-            {/*
-            <div className="space-y-2">
-              <Label className="font-medium">Location (Optional)</Label>
-              <div className="flex items-center gap-2">
-                  <Input 
-                      type="number" 
-                      step="any" 
-                      placeholder="Latitude" 
-                      value={currentLatitude ?? ""}
-                      onChange={(e) => {
-                          const val = e.target.value;
-                          setCurrentLatitude(val === "" ? undefined : parseFloat(val));
-                          form.setValue('latitude', val === "" ? undefined : parseFloat(val));
-                      }}
-                      className="w-1/2"
-                  />
-                  <Input 
-                      type="number" 
-                      step="any" 
-                      placeholder="Longitude" 
-                      value={currentLongitude ?? ""}
-                       onChange={(e) => {
-                          const val = e.target.value;
-                          setCurrentLongitude(val === "" ? undefined : parseFloat(val));
-                          form.setValue('longitude', val === "" ? undefined : parseFloat(val));
-                      }}
-                      className="w-1/2"
-                  />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant="outline" onClick={handleLogCurrentLocation} className="w-full">
-                    <MapPin className="mr-2 h-4 w-4" /> Log Current (Mock)
-                  </Button>
-                  <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={handleSuggestCompany} 
-                      disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
-                      className="w-full"
-                  >
-                    {isSuggestingCompany ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    Suggest Company
-                  </Button>
-              </div>
-              { (form.formState.errors.latitude || form.formState.errors.longitude) && (
-                  <p className="text-sm text-destructive mt-1">Please enter valid coordinates.</p>
-              )}
+              <FormField
+                control={form.control}
+                name="decisionMakerTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-normal">Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Office Manager" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="decisionMakerContact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-normal">Contact (Email/Phone Ext.)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., jane@example.com or x123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            */}
+            
 
             <FormField
               control={form.control}
@@ -414,4 +464,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

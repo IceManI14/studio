@@ -16,7 +16,11 @@ export interface SaveVisitPayload {
   partnershipConfidence?: number;
   hasBusinessCard?: boolean;
   discussedCompetitors?: boolean;
-  competitorName?: string; // Added
+  competitorName?: string;
+  coolerType?: string;
+  decisionMakerName?: string;
+  decisionMakerTitle?: string;
+  decisionMakerContact?: string;
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -33,7 +37,11 @@ const saveVisitPayloadSchema = z.object({
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
   discussedCompetitors: z.boolean().optional(),
-  competitorName: z.string().optional(), // Added
+  competitorName: z.string().optional(),
+  coolerType: z.string().optional(),
+  decisionMakerName: z.string().optional().default(''),
+  decisionMakerTitle: z.string().optional().default(''),
+  decisionMakerContact: z.string().optional().default(''),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -90,7 +98,11 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard,
       discussedCompetitors: validatedPayload.discussedCompetitors,
-      competitorName: validatedPayload.competitorName, // Added
+      competitorName: validatedPayload.competitorName,
+      coolerType: validatedPayload.coolerType,
+      decisionMakerName: validatedPayload.decisionMakerName,
+      decisionMakerTitle: validatedPayload.decisionMakerTitle,
+      decisionMakerContact: validatedPayload.decisionMakerContact,
     };
 
     return { visit };
