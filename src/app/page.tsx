@@ -8,7 +8,7 @@ import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
-import { PlusCircle, ListChecks, User } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -207,10 +207,11 @@ export default function HomePage() {
         </header>
 
         <Tabs defaultValue="field-day" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 shadow-sm">
+          <TabsList className="grid w-full grid-cols-4 mb-6 shadow-sm">
             <TabsTrigger value="field-day">Field Day</TabsTrigger>
             <TabsTrigger value="call-day">Call Day</TabsTrigger>
-            <TabsTrigger value="daily-route">Daily Route Overview</TabsTrigger>
+            <TabsTrigger value="daily-route">Daily Route</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
           </TabsList>
 
           <TabsContent value="field-day">
@@ -281,6 +282,21 @@ export default function HomePage() {
               <MapPlaceholder visits={visits} />
                <p className="mt-4 text-sm text-muted-foreground text-center">Route for: {selectedSalesperson.name}</p>
             </section>
+          </TabsContent>
+
+          <TabsContent value="about">
+            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-4">
+              <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
+                <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
+              </h2>
+              <p className="text-foreground text-base leading-relaxed">
+                This app is intended to help you streamline your efforts in acquiring new clients and partners alike. 
+                It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Currently logged in as: {selectedSalesperson.name}
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
 
