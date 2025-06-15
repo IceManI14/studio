@@ -513,3 +513,5 @@ export default function HomePage() {
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Personalized for {selectedSalesperson.name}.</p>
       </footer>
     </div>
+  );
+}

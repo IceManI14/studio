@@ -310,4 +310,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
                 </AlertDialogFooter>
-            
+            </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default VisitCard;
