@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -55,11 +55,17 @@ export default function HomePage() {
   const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
+  const [submittedSuggestions, setSubmittedSuggestions] = useState<string[]>([]);
 
 
   const getVisitsStorageKey = (): string | null => {
     if (!selectedSalesperson) return null;
     return `trailblazerVisits_${selectedSalesperson.id}`;
+  };
+
+  const getSuggestionsStorageKey = (): string | null => {
+    if (!selectedSalesperson) return null;
+    return `trailblazerSuggestions_${selectedSalesperson.id}`;
   };
 
   // Effect to load selected salesperson
@@ -75,35 +81,55 @@ export default function HomePage() {
     }
   }, []);
 
-  // Effect to load visits AFTER salesperson is selected & get mock GPS
+  // Effect to load visits and suggestions AFTER salesperson is selected & get mock GPS
   useEffect(() => {
     if (!selectedSalesperson) {
       setVisits([]); // Clear visits if no salesperson is selected
+      setSubmittedSuggestions([]); // Clear suggestions
       setColdCallCount(0);
       setUserCurrentLatitude(undefined);
       setUserCurrentLongitude(undefined);
       return;
     }
     const visitsStorageKey = getVisitsStorageKey();
-    if (!visitsStorageKey) return;
+    const suggestionsStorageKey = getSuggestionsStorageKey();
 
-    const storedVisits = localStorage.getItem(visitsStorageKey);
-    if (storedVisits) {
-      try {
-        const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
-          ...visit,
-          timestamp: new Date(visit.timestamp),
-          isNewClient: visit.isNewClient || false, // Ensure isNewClient has a default
-        }));
-        setVisits(parsedVisits);
-      } catch (error) {
-        console.error("Failed to parse visits from localStorage", error);
-        localStorage.removeItem(visitsStorageKey); // Clear corrupted data
-        setVisits([]);
+    if (visitsStorageKey) {
+      const storedVisits = localStorage.getItem(visitsStorageKey);
+      if (storedVisits) {
+        try {
+          const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
+            ...visit,
+            timestamp: new Date(visit.timestamp),
+            isNewClient: visit.isNewClient || false, 
+          }));
+          setVisits(parsedVisits);
+        } catch (error) {
+          console.error("Failed to parse visits from localStorage", error);
+          localStorage.removeItem(visitsStorageKey); 
+          setVisits([]);
+        }
+      } else {
+        setVisits([]); 
       }
-    } else {
-      setVisits([]); // No visits for this salesperson or first time
     }
+
+    if (suggestionsStorageKey) {
+      const storedSuggestions = localStorage.getItem(suggestionsStorageKey);
+      if (storedSuggestions) {
+        try {
+          setSubmittedSuggestions(JSON.parse(storedSuggestions));
+        } catch (error) {
+          console.error("Failed to parse suggestions from localStorage", error);
+          localStorage.removeItem(suggestionsStorageKey);
+          setSubmittedSuggestions([]);
+        }
+      } else {
+        setSubmittedSuggestions([]);
+      }
+    }
+
+
     setColdCallCount(0); // Reset cold call count when salesperson changes or loads
 
     // Simulate getting current location
@@ -249,8 +275,15 @@ export default function HomePage() {
       });
       return;
     }
-    // In a real app, you would send this suggestion to a backend.
-    console.log('App Suggestion:', suggestionText);
+    
+    const suggestionsStorageKey = getSuggestionsStorageKey();
+    if (suggestionsStorageKey) {
+      const newSuggestions = [...submittedSuggestions, suggestionText.trim()];
+      setSubmittedSuggestions(newSuggestions);
+      localStorage.setItem(suggestionsStorageKey, JSON.stringify(newSuggestions));
+    }
+
+    console.log('App Suggestion:', suggestionText.trim()); // Keep console log for debugging if needed
     toast({
       title: 'Suggestion Submitted!',
       description: 'Thank you for your feedback.',
@@ -428,7 +461,9 @@ export default function HomePage() {
               </div>
 
               <div className="w-full pt-4 border-t">
-                <h3 className="text-xl font-headline font-semibold text-primary mb-2">Suggestions and Improvements</h3>
+                <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
+                  <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
+                </h3>
                 <div className="space-y-3">
                   <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
                   <Textarea
@@ -443,6 +478,19 @@ export default function HomePage() {
                   </Button>
                 </div>
               </div>
+
+              {submittedSuggestions.length > 0 && (
+                <div className="w-full pt-4 mt-6 border-t">
+                  <h3 className="text-xl font-headline font-semibold text-primary mb-3">
+                    Previous Suggestions
+                  </h3>
+                  <ul className="list-disc list-inside space-y-2 text-foreground/80 pl-2 max-h-60 overflow-y-auto">
+                    {submittedSuggestions.map((suggestion, index) => (
+                      <li key={index} className="text-sm">{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <p className="text-sm text-muted-foreground mt-auto pt-4">
                 Currently logged in as: {selectedSalesperson.name}
@@ -470,5 +518,6 @@ export default function HomePage() {
     
 
     
+
 
 
