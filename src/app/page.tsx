@@ -216,7 +216,7 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
-                    <h2 className="text-xl font-semibold text-foreground text-center">
+                    <h2 className="text-2xl font-semibold text-foreground text-center">
                       Welcome {selectedSalesperson.name}! Good Luck Today!
                     </h2>
                 </div>
@@ -300,4 +300,3 @@ export default function HomePage() {
     </div>
   );
 }
-
