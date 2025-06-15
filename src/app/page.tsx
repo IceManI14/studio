@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import { PlusCircle, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -75,51 +77,80 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-10">
-        <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8"> {/* Adjusted main spacing */}
+        <header className="text-center sm:text-left">
           <h1 className="text-3xl sm:text-4xl font-headline font-bold text-primary drop-shadow-sm">
             Optimum Trailblazer
           </h1>
-          <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
-            <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
-          </Button>
         </header>
 
-        <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl">
-          <h2 id="map-section-title" className="text-2xl font-headline font-semibold mb-4 text-foreground">
-            Daily Route Overview
-          </h2>
-          <MapPlaceholder visits={visits} />
-        </section>
+        <Tabs defaultValue="field-day" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 shadow-sm">
+            <TabsTrigger value="field-day">Field Day</TabsTrigger>
+            <TabsTrigger value="call-day">Call Day</TabsTrigger>
+            <TabsTrigger value="daily-route">Daily Route Overview</TabsTrigger>
+          </TabsList>
 
-        <section aria-labelledby="visits-section-title">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-              <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
-            </h2>
-            <ExportButton visits={visits} />
-          </div>
-          {visits.length === 0 ? (
-            <div className="text-center py-10 bg-card rounded-lg shadow">
-              <p className="text-xl text-muted-foreground mb-4">No visits logged yet.</p>
-              <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                Click "Hit New Door" to get started!
-              </Button>
+          <TabsContent value="field-day">
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
+                        <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
+                    </h2>
+                    <div className="flex items-center gap-4">
+                        <ExportButton visits={visits} />
+                        <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                            <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
+                        </Button>
+                    </div>
+                </div>
+
+                {visits.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-lg shadow">
+                    <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
+                    <Button onClick={handleOpenAddVisitForm} variant="secondary">
+                        Click "Hit New Door" to get started!
+                    </Button>
+                    </div>
+                ) : (
+                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {visits.map(visit => (
+                        <VisitCard 
+                        key={visit.id} 
+                        visit={visit} 
+                        onEdit={handleEditVisit} 
+                        onDelete={handleDeleteVisit}
+                        onUpdateVisit={handleUpdateVisitInList} 
+                        />
+                    ))}
+                    </div>
+                )}
             </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {visits.map(visit => (
-                <VisitCard 
-                  key={visit.id} 
-                  visit={visit} 
-                  onEdit={handleEditVisit} 
-                  onDelete={handleDeleteVisit}
-                  onUpdateVisit={handleUpdateVisitInList} 
-                />
-              ))}
+          </TabsContent>
+
+          <TabsContent value="call-day">
+            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-center justify-center">
+              <h2 className="text-2xl font-headline font-semibold mb-4 text-foreground">
+                Call Day Activities
+              </h2>
+              <p className="text-muted-foreground text-center">
+                This section is for logging calls, managing call lists, or viewing call-related analytics.
+                <br />
+                Content for Call Day will be implemented here.
+              </p>
+              {/* Placeholder for future Call Day components */}
             </div>
-          )}
-        </section>
+          </TabsContent>
+
+          <TabsContent value="daily-route">
+            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl">
+              <h2 id="map-section-title" className="text-2xl font-headline font-semibold mb-4 text-foreground">
+                Daily Route Overview
+              </h2>
+              <MapPlaceholder visits={visits} />
+            </section>
+          </TabsContent>
+        </Tabs>
 
         <VisitForm
           isOpen={isVisitFormOpen}
