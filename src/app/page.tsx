@@ -570,7 +570,7 @@ export default function HomePage() {
 
               {submittedSuggestions.length > 0 && (
                 <div className="w-full pt-4 mt-6 border-t">
-                  <h3 className="text-xl font-headline font-semibold text-primary mb-3">
+                  <h3 className="text-2xl font-headline font-semibold text-primary mb-3">
                     List of Possible Improvements
                   </h3>
                   <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
