@@ -34,6 +34,7 @@ const visitFormSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
+  discussedCompetitors: z.boolean().optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -64,6 +65,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       longitude: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
+      discussedCompetitors: false,
     },
   });
 
@@ -76,19 +78,19 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         longitude: initialData.longitude,
         partnershipConfidence: initialData.partnershipConfidence,
         hasBusinessCard: initialData.hasBusinessCard || false,
+        discussedCompetitors: initialData.discussedCompetitors || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
     } else {
-      // For new visits, initialData might come with pre-filled notes (e.g., "Meeting started at...")
-      // So, check if initialData.notes exists before defaulting to empty string.
       form.reset({
         companyName: '',
-        notes: initialData?.notes || '', // Use notes from initialData if provided
+        notes: initialData?.notes || '',
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
         hasBusinessCard: false,
+        discussedCompetitors: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -121,8 +123,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setIsSaving(true);
     let finalNotes = data.notes || '';
 
-    // Only add "Meeting ended" for new visits (when initialData.id is effectively empty or undefined)
-    // initialData provided by page.tsx for new visits has an empty id.
     if (!initialData || !initialData.id) {
         const currentTime = new Date();
         const endTimeString = `Meeting ended at ${format(currentTime, 'HH:mm')}.`;
@@ -143,8 +143,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       longitude: currentLongitude,
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
+      discussedCompetitors: data.discussedCompetitors,
       originalCompanyName: initialData?.companyName,
-      originalNotes: initialData?.notes, // originalNotes should be the notes before adding "Meeting ended"
+      originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
     };
@@ -252,6 +253,27 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <div className="space-y-1 leading-none">
                     <FormLabel htmlFor="hasBusinessCard" className="cursor-pointer">
                       Business Card Collected?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="discussedCompetitors"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="discussedCompetitors"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="discussedCompetitors" className="cursor-pointer">
+                      Competitors Discussed/Identified?
                     </FormLabel>
                   </div>
                 </FormItem>

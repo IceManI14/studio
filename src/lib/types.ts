@@ -14,4 +14,5 @@ export interface Visit {
   notesSummary?: string;
   partnershipConfidence?: number; // 1-5 stars
   hasBusinessCard?: boolean;
+  discussedCompetitors?: boolean;
 }
