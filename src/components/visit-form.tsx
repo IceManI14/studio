@@ -19,13 +19,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
-import { useEffect, useState } from 'react';
-import { Loader2, MapPin, Sparkles, Star, CheckSquare, Square, UserCircle, Box } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Loader2, Camera, Star, CheckSquare, Square, UserCircle, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const COMPETITORS_LIST = [
   "Competitor Alpha",
@@ -78,6 +80,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
   const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null); // For future image capture
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined); // undefined: not determined, true: granted, false: denied
+  const streamRef = useRef<MediaStream | null>(null);
+
 
   const form = useForm<VisitFormData>({
     resolver: zodResolver(visitFormSchema),
@@ -98,6 +105,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   });
 
   const discussedCompetitorsValue = form.watch('discussedCompetitors');
+  const businessCardChecked = form.watch('hasBusinessCard');
 
   useEffect(() => {
     if (initialData) {
@@ -120,7 +128,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } else {
       form.reset({
         companyName: '',
-        notes: initialData?.notes || '', // Keep pre-filled notes from "Hit New Door"
+        notes: initialData?.notes || '', 
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
@@ -136,6 +144,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setCurrentLongitude(undefined);
     }
   }, [initialData, form, isOpen]);
+
+  useEffect(() => {
+    const enableCamera = async () => {
+      if (!videoRef.current) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        setHasCameraPermission(true);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings.',
+        });
+      }
+    };
+  
+    const disableCamera = () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      if (hasCameraPermission !== false) { // Only reset if not explicitly denied
+          setHasCameraPermission(undefined);
+      }
+    };
+  
+    if (isOpen && businessCardChecked) {
+      if (hasCameraPermission === undefined || (hasCameraPermission === true && !videoRef.current?.srcObject)) {
+        enableCamera();
+      }
+    } else {
+      disableCamera();
+    }
+  
+    return () => { // Cleanup on unmount or when dependencies change causing effect to re-run before next run
+      disableCamera();
+    };
+  }, [isOpen, businessCardChecked, toast]); // Effect dependencies
 
   const handleSuggestCompany = async () => {
     if (currentLatitude === undefined || currentLongitude === undefined) {
@@ -168,12 +221,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const endTimeString = `Meeting ended at ${format(currentTime, 'HH:mm')}.`;
         
         const currentNotes = finalNotes.trim();
-        if (currentNotes && currentNotes.includes("Meeting started at")) { // Append if start time is there
+        if (currentNotes && currentNotes.includes("Meeting started at")) { 
             finalNotes = `${currentNotes}\n${endTimeString}`;
-        } else if (currentNotes) { // If only some other notes, append
+        } else if (currentNotes) { 
              finalNotes = `${currentNotes}\n${endTimeString}`;
         }
-         else { // Only if notes are completely empty
+         else { 
             finalNotes = endTimeString;
         }
     }
@@ -188,7 +241,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       hasBusinessCard: data.hasBusinessCard,
       discussedCompetitors: data.discussedCompetitors,
       competitorName: data.discussedCompetitors ? data.competitorName : undefined,
-      coolerType: data.discussedCompetitors ? data.coolerType : undefined, // Only save if competitor discussed
+      coolerType: data.discussedCompetitors ? data.coolerType : undefined,
       decisionMakerName: data.decisionMakerName,
       decisionMakerTitle: data.decisionMakerTitle,
       decisionMakerContact: data.decisionMakerContact,
@@ -227,6 +280,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setCurrentLongitude(randomLng);
 
     toast({ title: 'Location Logged (Mock)', description: `Lat: ${randomLat}, Lng: ${randomLng}` });
+  };
+
+  const handleCaptureImagePlaceholder = () => {
+    if (!videoRef.current || !canvasRef.current) {
+        toast({ title: "Camera or canvas not ready", variant: "destructive" });
+        return;
+    }
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // const dataUri = canvas.toDataURL('image/png');
+        // console.log("Captured image data URI (placeholder):", dataUri.substring(0, 50) + "..."); 
+        // Actual saving of dataUri would be done here or passed up.
+    }
+    toast({
+      title: 'Image Captured (Placeholder)',
+      description: 'Business card image captured. Saving not yet implemented.',
+    });
   };
 
 
@@ -290,7 +365,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="hasBusinessCard"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-2 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -307,11 +382,54 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             />
 
+            {businessCardChecked && (
+              <div className="space-y-2 mt-2 p-3 border rounded-md bg-secondary/30">
+                <Label htmlFor="businessCardPhoto" className="font-medium">Business Card Photo</Label>
+                <div className="relative">
+                    <video 
+                        id="businessCardPhoto" 
+                        ref={videoRef} 
+                        className="w-full aspect-video rounded-md border bg-muted object-cover" 
+                        autoPlay 
+                        muted 
+                        playsInline 
+                    />
+                    {hasCameraPermission === true && (
+                        <Button 
+                            type="button" 
+                            onClick={handleCaptureImagePlaceholder} 
+                            variant="secondary" 
+                            size="sm"
+                            className="absolute bottom-2 right-2 shadow-md"
+                        >
+                          <Camera className="mr-2 h-4 w-4" /> Capture
+                        </Button>
+                    )}
+                </div>
+
+                {hasCameraPermission === undefined && (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md flex items-center justify-center bg-background">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting camera access...
+                    </div>
+                )}
+                {hasCameraPermission === false && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Camera Access Required</AlertTitle>
+                    <AlertDescription>
+                      Please allow camera access in your browser settings to capture the business card.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+              </div>
+            )}
+
+
             <FormField
               control={form.control}
               name="discussedCompetitors"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-2 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -335,12 +453,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
             
             {discussedCompetitorsValue && (
-              <>
+              <div className="space-y-3 p-3 border rounded-md bg-secondary/30">
                 <FormField
                   control={form.control}
                   name="competitorName"
                   render={({ field }) => (
                     <FormItem>
+                       <FormLabel>Competitor Name</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -364,6 +483,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   name="coolerType"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Cooler Type Observed</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -382,10 +502,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     </FormItem>
                   )}
                 />
-              </>
+              </div>
             )}
 
-            <div className="space-y-1 pt-2">
+            <div className="space-y-3 pt-2 p-3 border rounded-md bg-secondary/30">
               <Label className="font-medium text-base">Decision Maker Info (Optional)</Label>
                <FormField
                 control={form.control}
@@ -464,3 +584,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
