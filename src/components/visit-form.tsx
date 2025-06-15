@@ -130,7 +130,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } else {
       form.reset({
         companyName: '',
-        notes: initialData?.notes || '', 
+        notes: '', 
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
@@ -197,7 +197,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     if (!initialData || !initialData.id) {
         const currentTime = new Date();
-        const endTimeString = `Meeting ended at ${formatInTimeZone(currentTime, timeZone, 'HH:mm')}.`;
+        const endTimeString = `Meeting ended at ${formatInTimeZone(currentTime, timeZone, 'h:mm a')}.`;
         
         const currentNotes = finalNotes.trim();
         if (currentNotes) { 
@@ -560,3 +560,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+

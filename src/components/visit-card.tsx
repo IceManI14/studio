@@ -205,7 +205,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
         <CardDescription className="flex items-center text-sm mt-2">
           <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, HH:mm')}
+          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
