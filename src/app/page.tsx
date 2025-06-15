@@ -95,18 +95,12 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                     {/* Title "Hit New Door" or similar, if needed, can go here */}
                     <div className="flex items-center gap-3">
-                        <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                            <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
-                        </h2>
-                        {visits.length > 0 && (
-                            <Badge variant="secondary" className="text-sm font-medium">
-                                Doors Knocked: {visits.length}
-                            </Badge>
-                        )}
+                        {/* Intentionally left blank or add a new title if desired for this tab */}
                     </div>
                     <div className="flex items-center gap-4">
-                        <ExportButton visits={visits} />
+                        {/* ExportButton was here, moved to Daily Route */}
                         <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
                             <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                         </Button>
@@ -151,10 +145,20 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="daily-route">
-            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl">
-              <h2 id="map-section-title" className="text-2xl font-headline font-semibold mb-4 text-foreground">
-                Daily Route Overview
-              </h2>
+            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                      <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
+                          <ListChecks className="mr-3 h-7 w-7 text-primary" /> Logged Company Visits
+                      </h2>
+                      {visits.length > 0 && (
+                          <Badge variant="secondary" className="text-sm font-medium">
+                              Doors Knocked: {visits.length}
+                          </Badge>
+                      )}
+                  </div>
+                  <ExportButton visits={visits} />
+              </div>
               <MapPlaceholder visits={visits} />
             </section>
           </TabsContent>
