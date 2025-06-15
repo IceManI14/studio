@@ -596,12 +596,6 @@ export default function HomePage() {
                   </div>
               </div>
               
-              <div className="flex justify-start gap-2">
-                <Button variant="outline">New Button 1</Button>
-                <Button variant="outline">New Button 2</Button>
-                <Button variant="outline">New Button 3</Button>
-              </div>
-
               <MapPlaceholder visits={visits} />
                <p className="mt-4 text-sm text-muted-foreground text-center">Route for: {selectedSalesperson.name}</p>
             </section>
