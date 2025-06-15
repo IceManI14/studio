@@ -398,11 +398,11 @@ export default function HomePage() {
                     </AlertDialog>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 p-4 bg-card rounded-lg shadow">
-                    <h3 className="text-xl font-semibold text-foreground">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 p-3 bg-card rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-foreground">
                         Visit Card #
                     </h3>
-                    <Badge variant="secondary" className="text-lg font-semibold">
+                    <Badge variant="secondary" className="text-base font-semibold">
                         {coldCallCount}
                     </Badge>
                 </div>
