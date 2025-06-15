@@ -60,6 +60,7 @@ export default function HomePage() {
       notesSummary: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
+      discussedCompetitors: false,
     });
     setIsVisitFormOpen(true);
   };
@@ -111,7 +112,7 @@ export default function HomePage() {
           </h1>
         </header>
 
-        <Tabs defaultValue="field-day" className="w-full">
+        <Tabs defaultValue="daily-route" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6 shadow-sm">
             <TabsTrigger value="field-day">Field Day</TabsTrigger>
             <TabsTrigger value="call-day">Call Day</TabsTrigger>
