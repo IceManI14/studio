@@ -29,10 +29,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 
 const COMPETITORS_LIST = [
-  "Competitor Alpha",
-  "Competitor Beta",
-  "Competitor Gamma",
-  "Competitor Delta",
+  "Quench",
+  "Atlantic Pure",
+  "Boston Bean",
+  "Ready Refresh/Primo",
+  "WB Mason",
+  "Cintas",
+  "Aramark",
   "Other",
 ];
 
