@@ -309,7 +309,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 name="competitorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select Competitor</FormLabel>
+                    {/* <FormLabel>Select Competitor</FormLabel> */}
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
