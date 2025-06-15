@@ -43,38 +43,38 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 89% 60%; /* Vibrant blue #4285F4 */
-    --primary-foreground: 0 0% 100%; /* White for good contrast on blue */
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 36 100% 50%; /* Warm orange #FF9800 */
-    --accent-foreground: 0 0% 98%; /* Light text for orange in dark mode */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 217 89% 60%; /* Using primary color for ring */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 220 40% 10%; /* Very Dark Desaturated Blue */
+    --foreground: 30 50% 95%; /* Light Cream/Off-white */
+    --card: 220 30% 15%; /* Slightly Lighter Dark Blue */
+    --card-foreground: 30 50% 95%;
+    --popover: 220 30% 15%;
+    --popover-foreground: 30 50% 95%;
+    --primary: 210 70% 45%; /* Deep, Rich Blue */
+    --primary-foreground: 30 50% 95%; /* Light Cream for text on primary */
+    --secondary: 220 25% 20%; /* Darker Grey-Blue */
+    --secondary-foreground: 30 50% 90%; /* Slightly darker cream */
+    --muted: 220 20% 25%; /* Darker Muted Blue */
+    --muted-foreground: 30 30% 70%; /* Greyer Cream */
+    --accent: 40 80% 60%; /* Warm Gold/Brass */
+    --accent-foreground: 220 40% 10%; /* Dark text for good contrast on accent */
+    --destructive: 0 70% 55%; /* Classic red, adjusted for dark mode */
+    --destructive-foreground: 0 0% 100%; /* White */
+    --border: 220 30% 25%; /* Subtle Dark Blue-Grey Border */
+    --input: 220 30% 25%;
+    --ring: 40 80% 60%; /* Gold/Brass for focus ring */
+    --chart-1: 210 70% 55%; /* Nautical Blues & Teals */
+    --chart-2: 190 60% 45%;
+    --chart-3: 40 70% 50%;  /* Gold Accent */
+    --chart-4: 200 65% 65%;
+    --chart-5: 30 60% 70%;  /* Sandy Gold */
+    --sidebar-background: 220 35% 12%; /* Deep Navy for Sidebar */
+    --sidebar-foreground: 30 50% 90%; /* Light Cream text */
+    --sidebar-primary: 40 80% 60%;    /* Gold for active/primary items */
+    --sidebar-primary-foreground: 220 40% 10%; /* Dark text on gold */
+    --sidebar-accent: 220 30% 20%;     /* Subtle hover */
+    --sidebar-accent-foreground: 30 50% 95%; /* Light cream for hover text */
+    --sidebar-border: 220 30% 22%;     /* Darker border for sidebar */
+    --sidebar-ring: 40 80% 60%;       /* Gold for focus rings in sidebar */
   }
 }
 
@@ -95,22 +95,23 @@ body {
   @keyframes pulse {
     0% {
       transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7);
+      box-shadow: 0 0 0 0 hsla(var(--primary), 0.7);
     }
     70% {
       transform: scale(1);
-      box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0);
+      box-shadow: 0 0 0 10px hsla(var(--primary), 0);
     }
     100% {
       transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
+      box-shadow: 0 0 0 0 hsla(var(--primary), 0);
     }
   }
 }
 /* Helper to convert HSL to RGB for box-shadow (since CSS vars in rgba are tricky) */
+/* This part is less critical if we use hsla directly in the animation */
 :root {
-  --primary-rgb: 66, 133, 244; /* #4285F4 */
+  --primary-rgb: 66, 133, 244; /* #4285F4 - Default light theme primary */
 }
 .dark {
-   --primary-rgb: 66, 133, 244; /* #4285F4 - same for dark mode or adjust if needed */
+   --primary-rgb: 36, 93, 154; /* #245D9A - Nautical dark theme primary */
 }
