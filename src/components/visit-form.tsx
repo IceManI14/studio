@@ -125,7 +125,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       });
     } else if (result.visit) {
       toast({
-        title: initialData ? 'Visit Updated' : 'Visit Logged',
+        title: initialData ? 'Potential Partner Updated' : 'Potential Partner Logged',
         description: `${result.visit.companyName} details saved successfully.`,
       });
       onSave(result.visit);
@@ -152,10 +152,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            {initialData ? 'Edit Visit' : 'Log New Visit'}
+            {initialData ? 'Edit Potential Partner' : 'New Potential Partner'}
           </DialogTitle>
           <DialogDescription>
-            {initialData ? 'Update the details of your company visit.' : 'Add a new company visit to your log.'}
+            {initialData ? 'Update the details of this potential partner.' : 'Add a new potential partner to your log.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 py-2">
@@ -236,7 +236,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             </Button>
             <Button type="submit" disabled={isSaving || isSuggestingCompany}>
               {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'Save Changes' : 'Log Visit'}
+              {initialData ? 'Save Changes' : 'Log Partner'}
             </Button>
           </DialogFooter>
         </form>
