@@ -250,15 +250,6 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="text-center sm:text-left">
           <div className="flex flex-col items-center mb-4">
-            <Image
-              src="https://placehold.co/160x80.png"
-              alt="Company Logo"
-              width={160}
-              height={80}
-              className="mb-2"
-              data-ai-hint="company logo"
-              priority
-            />
             <h1
               className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
