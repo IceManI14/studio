@@ -583,7 +583,7 @@ export default function HomePage() {
                   </h2>
                   {visits.length > 0 && (
                       <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                          {selectedSalesperson.name} Visited: {visits.length}
+                          {selectedSalesperson.name} Visits: {visits.length}
                       </Badge>
                   )}
               </div>
