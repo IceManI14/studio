@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
 import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SubmittedSuggestion {
   text: string;
@@ -63,6 +64,8 @@ export default function HomePage() {
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -222,20 +225,29 @@ export default function HomePage() {
   // Effect to sort visits for Call Day tab
   useEffect(() => {
     if (visits.length > 0) {
-      const sorted = visits.slice().sort((a, b) => {
+      const sorted = [...visits].sort((a, b) => {
         const confidenceA = a.partnershipConfidence ?? 0;
         const confidenceB = b.partnershipConfidence ?? 0;
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
 
-        if (confidenceB !== confidenceA) {
-          return confidenceB - confidenceA;
+        let comparison = 0;
+
+        if (sortCriteria === 'partnershipConfidence') {
+          comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
+          if (comparison !== 0) return comparison;
+          return timeB - timeA; // Secondary: most recent first
+        } else { // sortCriteria === 'timestamp'
+          comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+          if (comparison !== 0) return comparison;
+          return confidenceB - confidenceA; // Secondary: highest confidence first
         }
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
       setSortedVisitsForCallDay(sorted);
     } else {
       setSortedVisitsForCallDay([]);
     }
-  }, [visits]);
+  }, [visits, sortCriteria, sortOrder]);
 
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
@@ -549,6 +561,46 @@ export default function HomePage() {
                   Call Day Priority List
                 </h2>
               </div>
+
+              <div className="p-4 bg-card rounded-lg shadow mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <ListFilter className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-medium text-foreground">Sort Options</h3>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <Label htmlFor="sort-criteria" className="text-sm">Sort By</Label>
+                    <Select
+                      value={sortCriteria}
+                      onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp')}
+                    >
+                      <SelectTrigger id="sort-criteria" className="w-full sm:w-[220px]">
+                        <SelectValue placeholder="Select criteria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
+                        <SelectItem value="timestamp">Date Visited</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <Label htmlFor="sort-order" className="text-sm">Order</Label>
+                    <Select
+                      value={sortOrder}
+                      onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                    >
+                      <SelectTrigger id="sort-order" className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Select order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">Descending</SelectItem>
+                        <SelectItem value="asc">Ascending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow">
                   <p className="text-xl text-muted-foreground mb-4">No visits to display. Log visits in "Field Day" first.</p>
@@ -567,8 +619,6 @@ export default function HomePage() {
                 </div>
               )}
               <p className="mt-4 text-sm text-muted-foreground text-center">
-                Organized by partnership confidence (highest first), then by date visited (most recent first).
-                <br />
                 Logged in as: {selectedSalesperson.name}
               </p>
             </div>
@@ -576,7 +626,6 @@ export default function HomePage() {
 
           <TabsContent value="daily-route">
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
-              {/* Title/Badge Block */}
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
                       <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
@@ -588,7 +637,6 @@ export default function HomePage() {
                   )}
               </div>
 
-              {/* Buttons Block */}
               <div className="flex flex-wrap gap-2 justify-center">
                  <ExportPdfButton visits={visits} className="h-8 px-2 text-xs" />
                  <ExportButton visits={visits} className="h-8 px-2 text-xs" />
