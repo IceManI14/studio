@@ -405,7 +405,7 @@ export default function HomePage() {
         return;
     }
 
-    const chrisEmail = "chris@drinkoptimum.com";
+    const chrisEmail = "chrisc@drinkoptimum.com";
     const currentDate = format(new Date(), 'MMMM d, yyyy');
     const subject = `Visits for the day! - ${selectedSalesperson.name} - ${currentDate}`;
     
@@ -433,7 +433,7 @@ export default function HomePage() {
       body += "No visits were logged today.\n";
     }
     
-    body += `\nBest regards,\n${selectedSalesperson.name || 'Optimum Trailblazer App'}`;
+    body += `\n\nBest regards,\n${selectedSalesperson.name || 'Optimum Trailblazer App'}`;
 
     const gmailBaseUrl = 'https://mail.google.com/mail/?view=cm&fs=1';
     const params = new URLSearchParams({
