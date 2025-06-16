@@ -2,7 +2,7 @@
 'use client';
 
 import type { Visit } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { Button, type ButtonProps } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
@@ -11,9 +11,10 @@ import { formatInTimeZone } from 'date-fns-tz';
 
 interface ExportPdfButtonProps {
   visits: Visit[];
+  size?: ButtonProps['size'];
 }
 
-const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits }) => {
+const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size }) => {
   const { toast } = useToast();
   const timeZone = 'America/New_York';
 
@@ -112,7 +113,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits }) => {
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0}>
+    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0} size={size}>
       <Printer className="mr-2 h-4 w-4" />
       Export PDF
     </Button>
