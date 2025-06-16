@@ -576,24 +576,25 @@ export default function HomePage() {
 
           <TabsContent value="daily-route">
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-                  <div className="flex items-center gap-3">
-                      <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                          <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
-                      </h2>
-                      {visits.length > 0 && (
-                          <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                              {selectedSalesperson.name} Visited: {visits.length}
-                          </Badge>
-                      )}
-                  </div>
-                  <div className="flex gap-2">
-                     <ExportPdfButton visits={visits} />
-                     <ExportButton visits={visits} />
-                     <Button onClick={handleEmailChris} variant="default">
-                       <UserPlus className="mr-2 h-4 w-4" /> Email Chris
-                     </Button>
-                  </div>
+              {/* Title/Badge Block */}
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-start">
+                  <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
+                      <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
+                  </h2>
+                  {visits.length > 0 && (
+                      <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
+                          {selectedSalesperson.name} Visited: {visits.length}
+                      </Badge>
+                  )}
+              </div>
+
+              {/* Buttons Block */}
+              <div className="flex flex-wrap gap-2 justify-start">
+                 <ExportPdfButton visits={visits} />
+                 <ExportButton visits={visits} />
+                 <Button onClick={handleEmailChris} variant="default">
+                   <UserPlus className="mr-2 h-4 w-4" /> Email Chris
+                 </Button>
               </div>
               
               <MapPlaceholder visits={visits} />
