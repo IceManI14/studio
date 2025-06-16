@@ -590,9 +590,9 @@ export default function HomePage() {
 
               {/* Buttons Block */}
               <div className="flex flex-wrap gap-2 justify-start">
-                 <ExportPdfButton visits={visits} size="sm" />
-                 <ExportButton visits={visits} size="sm" />
-                 <Button onClick={handleEmailChris} variant="default" size="sm">
+                 <ExportPdfButton visits={visits} size="sm" className="h-8 px-2 text-xs" />
+                 <ExportButton visits={visits} size="sm" className="h-8 px-2 text-xs" />
+                 <Button onClick={handleEmailChris} variant="default" size="sm" className="h-8 px-2 text-xs">
                    <UserPlus className="mr-2 h-4 w-4" /> Email Chris
                  </Button>
               </div>

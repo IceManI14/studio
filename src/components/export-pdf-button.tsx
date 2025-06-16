@@ -8,13 +8,15 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatInTimeZone } from 'date-fns-tz';
+import { cn } from '@/lib/utils';
 
 interface ExportPdfButtonProps {
   visits: Visit[];
   size?: ButtonProps['size'];
+  className?: string;
 }
 
-const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size }) => {
+const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className }) => {
   const { toast } = useToast();
   const timeZone = 'America/New_York';
 
@@ -113,7 +115,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size }) => {
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0} size={size}>
+    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0} size={size} className={cn(className)}>
       <Printer className="mr-2 h-4 w-4" />
       Export PDF
     </Button>

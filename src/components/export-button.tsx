@@ -5,13 +5,15 @@ import type { Visit } from '@/lib/types';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ExportButtonProps {
   visits: Visit[];
   size?: ButtonProps['size'];
+  className?: string;
 }
 
-const ExportButton: React.FC<ExportButtonProps> = ({ visits, size }) => {
+const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) => {
   const { toast } = useToast();
 
   const handleExport = () => {
@@ -67,7 +69,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size }) => {
   };
 
   return (
-    <Button onClick={handleExport} variant="default" disabled={visits.length === 0} size={size}>
+    <Button onClick={handleExport} variant="default" disabled={visits.length === 0} size={size} className={cn(className)}>
       <Download className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
