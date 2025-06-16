@@ -3,7 +3,6 @@
 
 import type { Visit } from '@/lib/types';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -70,7 +69,6 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
 
   return (
     <Button onClick={handleExport} variant="default" disabled={visits.length === 0} size={size} className={cn(className)}>
-      <Download className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
   );

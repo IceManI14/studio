@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, UserPlus } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -593,7 +593,7 @@ export default function HomePage() {
                  <ExportPdfButton visits={visits} size="sm" className="h-8 px-2 text-xs" />
                  <ExportButton visits={visits} size="sm" className="h-8 px-2 text-xs" />
                  <Button onClick={handleEmailChris} variant="default" size="sm" className="h-8 px-2 text-xs">
-                   <UserPlus className="mr-2 h-4 w-4" /> Email Chris
+                   Email Chris
                  </Button>
               </div>
               

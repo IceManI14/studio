@@ -3,7 +3,6 @@
 
 import type { Visit } from '@/lib/types';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { ArrowDown } from 'lucide-react'; // Changed from Printer to ArrowDown
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -116,7 +115,6 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
 
   return (
     <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0} size={size} className={cn(className)}>
-      <ArrowDown className="mr-2 h-4 w-4" /> {/* Changed from Printer to ArrowDown */}
       Export PDF
     </Button>
   );
