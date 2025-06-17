@@ -327,6 +327,8 @@ export default function HomePage() {
       decisionMakerContact: '',
       visitNumber: newVisitNumber,
       interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
     });
     setIsVisitFormOpen(true);
   };
@@ -566,7 +568,9 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="text-center sm:text-left">
           <div className="flex flex-col items-center mb-4">
-
+            <div className="mb-4">
+              <Image src="/logo.png" alt="Optimum Logo" width={250} height={60} priority />
+            </div>
             <h1
               className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -854,7 +858,7 @@ export default function HomePage() {
                   It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
                 </p>
                 <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
-                  <li>
+                   <li>
                     When you "hit new door", the app begins to scrape the web for the company data at which you are currently located.
                     It will hopefully give a a quick run down of what you are up against as a salesperson,
                     and potentially help you get to the decision maker more efficiently.
@@ -930,3 +934,4 @@ export default function HomePage() {
     </div>
   );
 }
+
