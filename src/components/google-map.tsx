@@ -81,14 +81,18 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
             <MapPin className="w-12 h-12 mb-4" />
             <p className="text-lg font-semibold">Error loading Google Maps.</p>
             <p className="text-sm mt-2">
-              Please ensure your API key (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`) is correct in the `.env` file, 
-              the "Maps JavaScript API" is enabled in your Google Cloud Console,
-              and your API key restrictions (e.g., HTTP referrers, API restrictions) are correctly configured for your domain.
+              This can happen for several reasons:
             </p>
-            <p className="text-xs mt-3">
-              For more details, open your browser's developer console (usually by pressing F12) and look for error messages from Google Maps.
+            <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+              <li>The Google Maps API key (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in your `.env` file) might be incorrect or missing.</li>
+              <li>The "Maps JavaScript API" might not be enabled in your Google Cloud Console.</li>
+              <li>Billing might not be enabled for the Google Cloud project associated with the API key.</li>
+              <li>The API key restrictions (e.g., HTTP referrers, API restrictions) might be misconfigured and blocking requests from your domain or `localhost`.</li>
+            </ul>
+            <p className="text-sm mt-3 font-semibold">
+              For more specific details, please open your browser's developer console (usually by pressing F12) and look for error messages from Google Maps (often prefixed with "Google Maps JavaScript API error:").
             </p>
-            {loadError.message && <p className="text-xs mt-2 italic">Reported error: {loadError.message}</p>}
+            {loadError.message && <p className="text-xs mt-2 italic">Reported library error: {loadError.message}</p>}
         </div>
     );
   }
@@ -108,6 +112,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
             <MapPin className="w-12 h-12 mb-4" />
             <p className="text-lg font-semibold">Google Maps API Key is missing.</p>
             <p className="text-sm mt-2">Please add your `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to your .env file and restart the server.</p>
+             <p className="text-xs mt-2">Ensure the key is enabled for the "Maps JavaScript API" in your Google Cloud Console and that billing is active for the project.</p>
         </div>
     );
   }
@@ -153,3 +158,4 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
 };
 
 export default GoogleMapComponent;
+
