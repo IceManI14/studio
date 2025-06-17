@@ -322,7 +322,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 ...currentCoolerOptions.slice(otherIndex)
             ];
         } else {
-            updatedOptions = [...currentCoolerOptions, newName, 'Other']; // Fallback
+            updatedOptions = [...currentCoolerOptions, newName, 'Other']; 
         }
         setCurrentCoolerOptions(updatedOptions);
         form.setValue('coolerType', newName, { shouldValidate: true });
@@ -436,18 +436,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setIsSaving(false);
   };
   
-  const handleLogCurrentLocation = () => {
-    const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6)); 
-    const randomLng = parseFloat((Math.random() * (-66 - -125) + -125).toFixed(6)); 
-    
-    form.setValue('latitude', randomLat);
-    form.setValue('longitude', randomLng);
-    setCurrentLatitude(randomLat);
-    setCurrentLongitude(randomLng);
-
-    toast({ title: 'Location Logged (Mock)', description: `Lat: ${randomLat}, Lng: ${randomLng}` });
-  };
-
 
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
@@ -518,7 +506,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <FormItem>
                   <FormLabel>Company Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Acme Corp or suggest from location" {...field} />
+                    <div className="flex items-center gap-2">
+                        <Input placeholder="e.g., Acme Corp" {...field} />
+                        <Button 
+                            type="button" 
+                            onClick={handleSuggestCompany} 
+                            variant="outline" 
+                            size="sm"
+                            disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
+                        >
+                          {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Suggest'}
+                        </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -862,4 +861,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

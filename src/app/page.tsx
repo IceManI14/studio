@@ -45,10 +45,8 @@ interface SubmittedSuggestion {
 const AVAILABLE_AI_MODELS = [
   { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
   { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
-  // Add more models here if needed, ensure they are configured in Genkit
 ];
 
-// Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
   { id: 'sales_1', name: 'Jim Karat' },
   { id: 'sales_2', name: 'Chris Canestrari' },
@@ -101,7 +99,6 @@ export default function HomePage() {
     return `trailblazerColdCallCount_${selectedSalesperson.id}`;
   };
 
-  // Effect to load selected salesperson
   useEffect(() => {
     const storedSalespersonId = localStorage.getItem(SELECTED_SALESPERSON_ID_KEY);
     if (storedSalespersonId) {
@@ -109,16 +106,15 @@ export default function HomePage() {
       if (foundSalesperson) {
         setSelectedSalesperson(foundSalesperson);
       } else {
-        localStorage.removeItem(SELECTED_SALESPERSON_ID_KEY); // Clean up invalid ID
+        localStorage.removeItem(SELECTED_SALESPERSON_ID_KEY); 
       }
     }
   }, []);
 
-  // Effect to load visits, suggestions, and cold call count AFTER salesperson is selected & get mock GPS
   useEffect(() => {
     if (!selectedSalesperson) {
-      setVisits([]); // Clear visits if no salesperson is selected
-      setSubmittedSuggestions([]); // Clear suggestions
+      setVisits([]); 
+      setSubmittedSuggestions([]); 
       setColdCallCount(0);
       setUserCurrentLatitude(undefined);
       setUserCurrentLongitude(undefined);
@@ -155,14 +151,12 @@ export default function HomePage() {
           const parsedSuggestions = JSON.parse(storedSuggestionsRaw);
           const transformedSuggestions = parsedSuggestions.map((item: any) => {
             if (typeof item === 'string') {
-              // Old format: convert to new object format
               return {
                 text: item,
                 salespersonName: selectedSalesperson.name,
-                timestamp: new Date(0).toISOString(), // Default for old entries
+                timestamp: new Date(0).toISOString(), 
               };
             }
-            // New format or already transformed: use as is
             return item;
           });
           setSubmittedSuggestions(transformedSuggestions);
@@ -176,7 +170,6 @@ export default function HomePage() {
       }
     }
 
-
     if (coldCallCountStorageKey) {
       const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
       if (storedColdCallCount) {
@@ -188,20 +181,47 @@ export default function HomePage() {
       setColdCallCount(0);
     }
 
-
-    // Simulate getting current location
-    const randomLat = parseFloat((Math.random() * (49 - 25) + 25).toFixed(6));
-    const randomLng = parseFloat((Math.random() * (-66 - -125) + -125).toFixed(6));
-    setUserCurrentLatitude(randomLat);
-    setUserCurrentLongitude(randomLng);
-    toast({
-      title: "Mock Location Acquired",
-      description: `App initialized with mock location: Lat: ${randomLat.toFixed(4)}, Lng: ${randomLng.toFixed(4)}`
-    });
+    // Get actual GPS location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserCurrentLatitude(position.coords.latitude);
+          setUserCurrentLongitude(position.coords.longitude);
+          toast({
+            title: "Current Location Acquired",
+            description: `Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`
+          });
+        },
+        (error) => {
+          setUserCurrentLatitude(undefined);
+          setUserCurrentLongitude(undefined);
+          let errorMessage = "Could not retrieve location.";
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMessage = "Location access denied. Please enable it in your browser settings.";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage = "Location information is unavailable.";
+          } else if (error.code === error.TIMEOUT) {
+            errorMessage = "Location request timed out.";
+          }
+          toast({
+            title: "Location Error",
+            description: errorMessage,
+            variant: "default" 
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support geolocation.",
+        variant: "default"
+      });
+      setUserCurrentLatitude(undefined);
+      setUserCurrentLongitude(undefined);
+    }
 
   }, [selectedSalesperson, toast]);
 
-  // Effect to save visits and check for 30-door milestone
   useEffect(() => {
     if (!selectedSalesperson) return;
     const visitsStorageKey = getVisitsStorageKey();
@@ -211,7 +231,6 @@ export default function HomePage() {
         localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
     }
 
-    // Check for 30 doors milestone (based on coldCallCount, which represents doors hit)
     if (coldCallCount >= 30) {
       const today = new Date().toISOString().split('T')[0];
       const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson.id}_${today}`;
@@ -225,14 +244,13 @@ export default function HomePage() {
             </div>
           ),
           description: "Congratulations! You've hit 30 doors today! Keep up the great work!",
-          duration: 7000, // Make it last a bit longer
+          duration: 7000, 
         });
         localStorage.setItem(milestoneKey, 'true');
       }
     }
   }, [visits, coldCallCount, selectedSalesperson, toast]);
 
-  // Effect to save cold call count
   useEffect(() => {
     if (!selectedSalesperson) return;
     const coldCallCountStorageKey = getColdCallCountStorageKey();
@@ -240,7 +258,6 @@ export default function HomePage() {
     localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
   }, [coldCallCount, selectedSalesperson]);
 
-  // Effect to sort visits for Call Day tab
   useEffect(() => {
     if (visits.length > 0) {
       const sorted = [...visits].sort((a, b) => {
@@ -254,11 +271,11 @@ export default function HomePage() {
         if (sortCriteria === 'partnershipConfidence') {
           comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
           if (comparison !== 0) return comparison;
-          return timeB - timeA; // Secondary: most recent first
-        } else { // sortCriteria === 'timestamp'
+          return timeB - timeA; 
+        } else { 
           comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
           if (comparison !== 0) return comparison;
-          return confidenceB - confidenceA; // Secondary: highest confidence first
+          return confidenceB - confidenceA; 
         }
       });
       setSortedVisitsForCallDay(sorted);
@@ -277,7 +294,7 @@ export default function HomePage() {
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
-    setColdCallCount(0); // Reset cold call count for the new salesperson
+    setColdCallCount(0); 
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
     setChatMessages([ { id: 'ai_welcome_new_user', sender: 'ai', text: `Hello ${salesperson.name}! I am your Optimum Trailblazer AI Assistant. How can I help you?`, timestamp: new Date() }]);
@@ -295,8 +312,8 @@ export default function HomePage() {
       timestamp: currentTime,
       companyName: '',
       notes: '',
-      latitude: userCurrentLatitude,
-      longitude: userCurrentLongitude,
+      latitude: userCurrentLatitude, 
+      longitude: userCurrentLongitude, 
       contactInfo: undefined,
       notesSummary: undefined,
       partnershipConfidence: undefined,
@@ -495,7 +512,7 @@ export default function HomePage() {
 
     try {
       const result = await getAiChatResponseAction({
-        currentMessages: [...chatMessages, newUserMessage], // Pass the latest state
+        currentMessages: [...chatMessages, newUserMessage], 
         model: selectedAiModel,
         visits: recentVisits,
       });
@@ -913,5 +930,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
