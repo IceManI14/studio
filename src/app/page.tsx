@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MessageCircle, MapPin, Brain, Loader2 } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -572,7 +572,7 @@ export default function HomePage() {
         </header>
 
         <Tabs defaultValue="field-day" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 shadow-sm">
+          <TabsList className="grid w-full grid-cols-5 mb-6 border bg-transparent p-1 rounded-md">
             <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
             <TabsTrigger value="call-day"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
             <TabsTrigger value="visits"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
