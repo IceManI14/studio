@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Visit, Salesperson } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import MapPlaceholder from '@/components/map-placeholder';
@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -29,14 +29,34 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
-import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader } from '@/components/ui/card';
+import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader, CardFooter as UiCardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 interface SubmittedSuggestion {
   text: string;
   salespersonName: string;
   timestamp: string;
 }
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  timestamp: Date;
+}
+
+const DUMMY_AI_MESSAGES: ChatMessage[] = [
+  { id: 'ai1', sender: 'ai', text: 'Hello! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
+  { id: 'user1', sender: 'user', text: 'Can you give me a summary of my top prospects from yesterday?', timestamp: new Date(Date.now() - 1000 * 60 * 4) },
+  { id: 'ai2', sender: 'ai', text: 'Certainly! Based on yesterday\'s logs, your top prospects by partnership confidence are "Innovate Solutions" (5 stars) and "Local Biz Co." (4 stars). Would you like more details on either?', timestamp: new Date(Date.now() - 1000 * 60 * 3) },
+  { id: 'user2', sender: 'user', text: 'Tell me more about Innovate Solutions.', timestamp: new Date(Date.now() - 1000 * 60 * 2) },
+  { id: 'ai3', sender: 'ai', text: 'For "Innovate Solutions", you noted high interest in the premium filtration system and they have a good budget. Contact person is Jane Doe. (This is dummy data for visualization).', timestamp: new Date(Date.now() - 1000 * 60 * 1) },
+];
+
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -66,6 +86,10 @@ export default function HomePage() {
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(DUMMY_AI_MESSAGES);
+  const [chatInput, setChatInput] = useState('');
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -248,6 +272,12 @@ export default function HomePage() {
       setSortedVisitsForCallDay([]);
     }
   }, [visits, sortCriteria, sortOrder]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
 
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
@@ -451,6 +481,30 @@ export default function HomePage() {
     });
   };
 
+  const handleSendChatMessage = () => {
+    if (chatInput.trim() === '' || !selectedSalesperson) return;
+
+    const newUserMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: chatInput.trim(),
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, newUserMessage]);
+
+    setTimeout(() => {
+      const aiResponse: ChatMessage = {
+        id: crypto.randomUUID(),
+        sender: 'ai',
+        text: `I've processed your message: "${chatInput.trim()}". As a demo AI, I'm providing a canned response. In a real scenario, I'd offer more specific help!`,
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, aiResponse]);
+    }, 1200);
+
+    setChatInput('');
+  };
+
 
   if (!selectedSalesperson) {
     return (
@@ -492,11 +546,12 @@ export default function HomePage() {
         </header>
 
         <Tabs defaultValue="field-day" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 shadow-sm">
-            <TabsTrigger value="field-day">Field Day</TabsTrigger>
-            <TabsTrigger value="call-day">Call Day</TabsTrigger>
-            <TabsTrigger value="daily-route">Daily Route</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 mb-6 shadow-sm">
+            <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
+            <TabsTrigger value="call-day"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
+            <TabsTrigger value="daily-route"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Daily Route</TabsTrigger>
+            <TabsTrigger value="ai-chat"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />AI Chat</TabsTrigger>
+            <TabsTrigger value="about"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
           </TabsList>
 
           <TabsContent value="field-day">
@@ -650,6 +705,69 @@ export default function HomePage() {
             </section>
           </TabsContent>
 
+          <TabsContent value="ai-chat">
+            <UiCard className="w-full max-w-2xl mx-auto shadow-xl">
+              <UiCardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <Bot className="h-8 w-8 text-primary" />
+                  <h2 className="text-2xl font-headline font-semibold text-foreground">
+                    AI Assistant Chat
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground">Ask questions about your visits or get planning help.</p>
+              </UiCardHeader>
+              <UiCardContent className="p-0">
+                <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
+                  {chatMessages.map((message) => (
+                    <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                      <div className={`flex items-end gap-2 max-w-[75%]`}>
+                        {message.sender === 'ai' && (
+                          <Avatar className="h-8 w-8 self-start">
+                            <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                            <AvatarFallback>AI</AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
+                          <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                          <p className="text-xs mt-1.5 opacity-80 text-right">
+                            {format(message.timestamp, 'p')}
+                          </p>
+                        </div>
+                        {message.sender === 'user' && (
+                          <Avatar className="h-8 w-8 self-start">
+                            <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
+                            <AvatarFallback>{selectedSalesperson?.name.substring(0, 1) || 'U'}</AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </ScrollArea>
+              </UiCardContent>
+              <UiCardFooter className="p-4">
+                <div className="flex w-full items-center space-x-2">
+                  <Input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => { if (e.key === 'Enter') handleSendChatMessage(); }}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim()}>
+                    <Send className="h-4 w-4" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </div>
+              </UiCardFooter>
+            </UiCard>
+             <p className="mt-4 text-sm text-muted-foreground text-center">
+                Chatting as: {selectedSalesperson.name}
+              </p>
+          </TabsContent>
+
+
           <TabsContent value="about">
             <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
               <div>
@@ -727,3 +845,4 @@ export default function HomePage() {
     </div>
   );
 }
+
