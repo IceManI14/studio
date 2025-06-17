@@ -43,8 +43,8 @@ interface SubmittedSuggestion {
 }
 
 const AVAILABLE_AI_MODELS = [
-  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
-  { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
+  { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
+  { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
   // Add more models here if needed, ensure they are configured in Genkit
 ];
 
@@ -835,6 +835,13 @@ export default function HomePage() {
                   This app is intended to help you streamline your efforts in acquiring new clients and partners alike.
                   It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
                 </p>
+                <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
+                  <li>
+                    When you hit a new door, the app begins to scrape the web for the company data at which you reside. 
+                    It will hopefully give a a quick run down of what you are up against as a salesperson, 
+                    and potential help you get to the decision maker more efficiently.
+                  </li>
+                </ul>
               </div>
 
               <div className="w-full pt-4 border-t">
