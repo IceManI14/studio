@@ -837,9 +837,9 @@ export default function HomePage() {
                 </p>
                 <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
                   <li>
-                    When you "hit new door", the app begins to scrape the web for the company data at which you reside. 
-                    It will hopefully give a a quick run down of what you are up against as a salesperson, 
-                    and potential help you get to the decision maker more efficiently.
+                    When you "hit new door", the app begins to scrape the web for the company data at which you are currently located.
+                    It will hopefully give a a quick run down of what you are up against as a salesperson,
+                    and potentially help you get to the decision maker more efficiently.
                   </li>
                   <li>
                     When you "log the meeting" the app creates a visit card that stores very important information for your future. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
@@ -913,3 +913,4 @@ export default function HomePage() {
   );
 }
 
+    
