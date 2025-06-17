@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Visit } from '@/lib/types';
@@ -8,11 +9,12 @@ interface MapPlaceholderProps {
   visits: Visit[];
 }
 
+// This component is now a fallback or could be removed if GoogleMapComponent handles all cases.
+// For now, keeping its structure but it won't be actively used if GoogleMapComponent is rendered.
 const MapPlaceholder: React.FC<MapPlaceholderProps> = ({ visits }) => {
   const [clientVisits, setClientVisits] = useState<Visit[]>([]);
 
   useEffect(() => {
-    // Ensure this runs client-side to avoid hydration issues if visits data is complex
     setClientVisits(visits);
   }, [visits]);
 
@@ -34,15 +36,13 @@ const MapPlaceholder: React.FC<MapPlaceholderProps> = ({ visits }) => {
   return (
     <div 
       className="relative w-full h-64 md:h-96 bg-secondary/50 rounded-lg shadow-md flex items-center justify-center overflow-hidden border"
-      aria-label="Map of visited locations"
+      aria-label="Map of visited locations placeholder"
       data-ai-hint="map location"
     >
       <p className="text-muted-foreground font-medium text-lg z-10 bg-background/80 px-4 py-2 rounded">
-        Map of Visited Locations
+        Map of Visited Locations (Placeholder)
       </p>
       {clientVisits.map(visit => {
-         // Calculate position for pins, needs a map library for real use
-         // This is a very rough visual approximation
          const {x, y, valid} = normalizeCoords(visit.latitude, visit.longitude);
          if (!valid) return null;
 
@@ -55,7 +55,6 @@ const MapPlaceholder: React.FC<MapPlaceholderProps> = ({ visits }) => {
             />
          );
       })}
-       {/* Example of a "current location" pulsing dot - not tied to data for this app version */}
       <div 
         className="absolute pulse-dot bg-primary rounded-full w-3 h-3"
         style={{ left: '50%', top: '50%' }} 

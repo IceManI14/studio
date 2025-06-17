@@ -4,11 +4,11 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Visit, Salesperson, ChatMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
+import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -812,7 +812,7 @@ export default function HomePage() {
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                      <ListChecks className="mr-3 h-7 w-7 text-primary" /> Company Visits
+                      <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Visits Map
                   </h2>
                   {visits.length > 0 && (
                       <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
@@ -829,7 +829,7 @@ export default function HomePage() {
                  </Button>
               </div>
               
-              <MapPlaceholder visits={visits} />
+              <GoogleMapComponent visits={visits} />
                <p className="mt-4 text-sm text-muted-foreground text-center">Visits for: {selectedSalesperson.name}</p>
             </section>
           </TabsContent>
