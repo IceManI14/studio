@@ -332,6 +332,26 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     
+    if (data.partnershipConfidence && data.partnershipConfidence >= 4) {
+      const unitInterestMarker = "[System Note - High Confidence Follow-up] Potential Unit Interest:";
+      const alreadyHasUnitInterest = finalNotes && finalNotes.includes(unitInterestMarker);
+
+      if (!alreadyHasUnitInterest) {
+        const unitInterestPromptMessage = "This company has high partnership potential (4+ stars)! What unit are they potentially interested in? (e.g., Bottle-Free Cooler, Ice Machine, Specific Model)";
+        const interestedUnit = window.prompt(unitInterestPromptMessage);
+
+        if (interestedUnit && interestedUnit.trim() !== "") {
+          const unitInterestText = `${unitInterestMarker} ${interestedUnit.trim()}`;
+          if (finalNotes.trim() === "") {
+            finalNotes = unitInterestText;
+          } else {
+            finalNotes = finalNotes.trim() + "\n\n" + unitInterestText;
+          }
+          form.setValue('notes', finalNotes, { shouldValidate: false, shouldDirty: true });
+        }
+      }
+    }
+
     let finalBusinessCardImageUrl = initialData?.businessCardImageUrl;
 
     if (data.hasBusinessCard) {
@@ -801,3 +821,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
