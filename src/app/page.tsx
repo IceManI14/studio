@@ -575,7 +575,7 @@ export default function HomePage() {
           <TabsList className="grid w-full grid-cols-5 mb-6 shadow-sm">
             <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
             <TabsTrigger value="call-day"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
-            <TabsTrigger value="daily-route"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Daily Route</TabsTrigger>
+            <TabsTrigger value="visits"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
             <TabsTrigger value="ai-chat"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />AI Chat</TabsTrigger>
             <TabsTrigger value="about"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
           </TabsList>
@@ -705,7 +705,7 @@ export default function HomePage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="daily-route">
+          <TabsContent value="visits">
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
@@ -727,7 +727,7 @@ export default function HomePage() {
               </div>
               
               <MapPlaceholder visits={visits} />
-               <p className="mt-4 text-sm text-muted-foreground text-center">Route for: {selectedSalesperson.name}</p>
+               <p className="mt-4 text-sm text-muted-foreground text-center">Visits for: {selectedSalesperson.name}</p>
             </section>
           </TabsContent>
 
