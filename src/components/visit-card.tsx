@@ -128,7 +128,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue}` : 'Yes (No Value)') : 'No'}
+            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue}` : 'Yes (No Value)') : 'Not Yet'}
           </div>
         </div>
         <CardDescription className="flex items-center justify-between text-sm mt-2">
