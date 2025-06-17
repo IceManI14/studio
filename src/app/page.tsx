@@ -309,6 +309,7 @@ export default function HomePage() {
       decisionMakerTitle: '',
       decisionMakerContact: '',
       visitNumber: newVisitNumber,
+      interestedUnit: undefined,
     });
     setIsVisitFormOpen(true);
   };
@@ -576,7 +577,7 @@ export default function HomePage() {
             <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
             <TabsTrigger value="call-day"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
             <TabsTrigger value="visits"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
-            <TabsTrigger value="ai-chat"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />AI Chat</TabsTrigger>
+            <TabsTrigger value="ai-chat"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Debbie</TabsTrigger>
             <TabsTrigger value="about"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
           </TabsList>
 
@@ -738,7 +739,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-3">
                     <Bot className="h-8 w-8 text-primary" />
                     <h2 className="text-2xl font-headline font-semibold text-foreground">
-                      AI Assistant Chat
+                      Debbie
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
