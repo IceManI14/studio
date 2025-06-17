@@ -77,11 +77,18 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
 
   if (loadError) {
     return (
-        <div className="flex flex-col items-center justify-center h-96 bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive">
+        <div className="flex flex-col items-center justify-center h-96 bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
             <MapPin className="w-12 h-12 mb-4" />
             <p className="text-lg font-semibold">Error loading Google Maps.</p>
-            <p className="text-sm">Please ensure the API key is correct and the Maps JavaScript API is enabled.</p>
-            <p className="text-xs mt-2">Details: {loadError.message}</p>
+            <p className="text-sm mt-2">
+              Please ensure your API key (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`) is correct in the `.env` file, 
+              the "Maps JavaScript API" is enabled in your Google Cloud Console,
+              and your API key restrictions (e.g., HTTP referrers, API restrictions) are correctly configured for your domain.
+            </p>
+            <p className="text-xs mt-3">
+              For more details, open your browser's developer console (usually by pressing F12) and look for error messages from Google Maps.
+            </p>
+            {loadError.message && <p className="text-xs mt-2 italic">Reported error: {loadError.message}</p>}
         </div>
     );
   }
@@ -97,10 +104,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   
   if (!apiKey) {
     return (
-        <div className="flex flex-col items-center justify-center h-96 bg-secondary/10 border border-amber-500 rounded-lg p-4 text-amber-700 dark:text-amber-400">
+        <div className="flex flex-col items-center justify-center h-96 bg-secondary/10 border border-amber-500 rounded-lg p-4 text-amber-700 dark:text-amber-400 text-center">
             <MapPin className="w-12 h-12 mb-4" />
             <p className="text-lg font-semibold">Google Maps API Key is missing.</p>
-            <p className="text-sm">Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file.</p>
+            <p className="text-sm mt-2">Please add your `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to your .env file and restart the server.</p>
         </div>
     );
   }
@@ -128,7 +135,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
               position={{ lat: visit.latitude!, lng: visit.longitude! }}
               onCloseClick={handleInfoWindowClose}
               options={{
-                pixelOffset: new window.google.maps.Size(0, -30) // Adjust as needed
+                pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined // Adjust as needed
               }}
             >
               <div className="p-1">
