@@ -4,8 +4,10 @@
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords';
-import type { Visit, ContactInfo } from '@/lib/types';
+import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow';
+import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
+import { format } from 'date-fns';
 
 export interface SaveVisitPayload {
   id?: string; // For updates
@@ -148,4 +150,63 @@ export async function getCompanyNameFromCoordsAction(
         }
         return { error: 'Failed to suggest company name. An unexpected error occurred.' };
     }
+}
+
+const aiChatPayloadSchema = z.object({
+  currentMessages: z.array(
+    z.object({
+      id: z.string(),
+      sender: z.enum(['user', 'ai']),
+      text: z.string(),
+      timestamp: z.date(),
+    })
+  ),
+  model: z.string(),
+  visits: z.array(
+    z.object({
+      id: z.string(),
+      timestamp: z.date(),
+      companyName: z.string(),
+      notesSummary: z.string().optional(),
+      partnershipConfidence: z.number().optional(),
+    })
+  ),
+});
+
+export async function getAiChatResponseAction(
+  payload: z.infer<typeof aiChatPayloadSchema>
+): Promise<{ aiResponse?: string; error?: string }> {
+  try {
+    const validatedPayload = aiChatPayloadSchema.parse(payload);
+
+    const chatHistoryString = validatedPayload.currentMessages
+      .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.text}`)
+      .join('\n');
+    
+    const newUserMessage = validatedPayload.currentMessages[validatedPayload.currentMessages.length - 1].text;
+
+    const visitsContextString = validatedPayload.visits
+      .map(
+        (visit) =>
+          `Company: ${visit.companyName}, Visited: ${format(visit.timestamp, 'yyyy-MM-dd')}, Confidence: ${
+            visit.partnershipConfidence || 'N/A'
+          } stars, Summary: ${visit.notesSummary || 'No summary available.'}`
+      )
+      .join('\n---\n');
+
+    const result = await chatWithVisits({
+      chatHistory: chatHistoryString,
+      userMessage: newUserMessage,
+      visitsContext: visitsContextString,
+      modelName: validatedPayload.model,
+    });
+
+    return { aiResponse: result.aiResponse };
+  } catch (error) {
+    console.error("Error in getAiChatResponseAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
+  }
 }

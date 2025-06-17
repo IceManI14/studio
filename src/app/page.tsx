@@ -2,18 +2,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import type { Visit, Salesperson } from '@/lib/types';
+import type { Visit, Salesperson, ChatMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import MapPlaceholder from '@/components/map-placeholder';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MessageCircle, MapPin } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MessageCircle, MapPin, Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import {
   AlertDialog,
@@ -34,7 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import { getAiChatResponseAction } from '@/app/actions';
 
 interface SubmittedSuggestion {
   text: string;
@@ -42,21 +42,11 @@ interface SubmittedSuggestion {
   timestamp: string;
 }
 
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  text: string;
-  timestamp: Date;
-}
-
-const DUMMY_AI_MESSAGES: ChatMessage[] = [
-  { id: 'ai1', sender: 'ai', text: 'Hello! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
-  { id: 'user1', sender: 'user', text: 'Can you give me a summary of my top prospects from yesterday?', timestamp: new Date(Date.now() - 1000 * 60 * 4) },
-  { id: 'ai2', sender: 'ai', text: 'Certainly! Based on yesterday\'s logs, your top prospects by partnership confidence are "Innovate Solutions" (5 stars) and "Local Biz Co." (4 stars). Would you like more details on either?', timestamp: new Date(Date.now() - 1000 * 60 * 3) },
-  { id: 'user2', sender: 'user', text: 'Tell me more about Innovate Solutions.', timestamp: new Date(Date.now() - 1000 * 60 * 2) },
-  { id: 'ai3', sender: 'ai', text: 'For "Innovate Solutions", you noted high interest in the premium filtration system and they have a good budget. Contact person is Jane Doe. (This is dummy data for visualization).', timestamp: new Date(Date.now() - 1000 * 60 * 1) },
+const AVAILABLE_AI_MODELS = [
+  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
+  { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
+  // Add more models here if needed, ensure they are configured in Genkit
 ];
-
 
 // Updated salespeople list
 const SALESPEOPLE: Salesperson[] = [
@@ -87,9 +77,13 @@ export default function HomePage() {
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(DUMMY_AI_MESSAGES);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+     { id: 'ai_welcome', sender: 'ai', text: 'Hello! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?', timestamp: new Date() }
+  ]);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const [isAiResponding, setIsAiResponding] = useState(false);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -286,6 +280,7 @@ export default function HomePage() {
     setColdCallCount(0); // Reset cold call count for the new salesperson
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
+    setChatMessages([ { id: 'ai_welcome_new_user', sender: 'ai', text: `Hello ${salesperson.name}! I am your Optimum Trailblazer AI Assistant. How can I help you?`, timestamp: new Date() }]);
     toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
   };
 
@@ -481,8 +476,8 @@ export default function HomePage() {
     });
   };
 
-  const handleSendChatMessage = () => {
-    if (chatInput.trim() === '' || !selectedSalesperson) return;
+  const handleSendChatMessage = async () => {
+    if (chatInput.trim() === '' || !selectedSalesperson || isAiResponding) return;
 
     const newUserMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -491,18 +486,49 @@ export default function HomePage() {
       timestamp: new Date(),
     };
     setChatMessages(prev => [...prev, newUserMessage]);
-
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: crypto.randomUUID(),
-        sender: 'ai',
-        text: `I've processed your message: "${chatInput.trim()}". As a demo AI, I'm providing a canned response. In a real scenario, I'd offer more specific help!`,
-        timestamp: new Date(),
-      };
-      setChatMessages(prev => [...prev, aiResponse]);
-    }, 1200);
-
     setChatInput('');
+    setIsAiResponding(true);
+
+    const oneWeekAgo = subDays(new Date(), 7);
+    const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
+
+    try {
+      const result = await getAiChatResponseAction({
+        currentMessages: [...chatMessages, newUserMessage], // Pass the latest state
+        model: selectedAiModel,
+        visits: recentVisits,
+      });
+
+      if (result.error) {
+        toast({ title: "AI Chat Error", description: result.error, variant: "destructive" });
+        const aiErrorResponse: ChatMessage = {
+          id: crypto.randomUUID(),
+          sender: 'ai',
+          text: `Sorry, I encountered an error: ${result.error}`,
+          timestamp: new Date(),
+        };
+        setChatMessages(prev => [...prev, aiErrorResponse]);
+      } else if (result.aiResponse) {
+        const aiResponse: ChatMessage = {
+          id: crypto.randomUUID(),
+          sender: 'ai',
+          text: result.aiResponse,
+          timestamp: new Date(),
+        };
+        setChatMessages(prev => [...prev, aiResponse]);
+      }
+    } catch (e: any) {
+      toast({ title: "AI Chat Failed", description: "Could not get response from AI.", variant: "destructive" });
+       const aiFailureResponse: ChatMessage = {
+          id: crypto.randomUUID(),
+          sender: 'ai',
+          text: "I'm having trouble connecting right now. Please try again later.",
+          timestamp: new Date(),
+        };
+        setChatMessages(prev => [...prev, aiFailureResponse]);
+    } finally {
+      setIsAiResponding(false);
+    }
   };
 
 
@@ -708,13 +734,30 @@ export default function HomePage() {
           <TabsContent value="ai-chat">
             <UiCard className="w-full max-w-2xl mx-auto shadow-xl">
               <UiCardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <Bot className="h-8 w-8 text-primary" />
-                  <h2 className="text-2xl font-headline font-semibold text-foreground">
-                    AI Assistant Chat
-                  </h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bot className="h-8 w-8 text-primary" />
+                    <h2 className="text-2xl font-headline font-semibold text-foreground">
+                      AI Assistant Chat
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <Brain className="h-5 w-5 text-muted-foreground" />
+                    <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                      <SelectTrigger className="w-[180px] h-9 text-xs">
+                        <SelectValue placeholder="Select AI Model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AVAILABLE_AI_MODELS.map(model => (
+                          <SelectItem key={model.id} value={model.id} className="text-xs">
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Ask questions about your visits or get planning help.</p>
+                <p className="text-sm text-muted-foreground pt-2">Ask questions about your visits or get planning help. Recent visits are used as context.</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
                 <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
@@ -742,6 +785,19 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))}
+                  {isAiResponding && (
+                    <div className="flex justify-start mb-4">
+                        <div className="flex items-end gap-2 max-w-[75%]">
+                            <Avatar className="h-8 w-8 self-start">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                                <AvatarFallback>AI</AvatarFallback>
+                            </Avatar>
+                            <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            </div>
+                        </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </ScrollArea>
               </UiCardContent>
@@ -752,11 +808,12 @@ export default function HomePage() {
                     placeholder="Type your message..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => { if (e.key === 'Enter') handleSendChatMessage(); }}
+                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }}
                     className="flex-1"
+                    disabled={isAiResponding}
                   />
-                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim()}>
-                    <Send className="h-4 w-4" />
+                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
+                    {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     <span className="sr-only">Send</span>
                   </Button>
                 </div>
