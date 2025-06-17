@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview AI flow for a sales assistant chatbot that uses visit context.
+ * @fileOverview AI flow for a sales assistant chatbot that uses visit context and can analyze PDFs.
  *
- * - chatWithVisits - Function to get a chat response based on history and visit context.
+ * - chatWithVisits - Function to get a chat response based on history, visit context, and an optional PDF.
  * - ChatWithVisitsInput - Input type for the chatWithVisits function.
  * - ChatWithVisitsOutput - Output type for the chatWithVisits function.
  */
@@ -16,6 +16,7 @@ const ChatWithVisitsInputSchema = z.object({
   userMessage: z.string().describe('The latest message from the user.'),
   visitsContext: z.string().describe('A summary of recent company visits relevant to the conversation. Each visit is separated by "---".'),
   modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-1.5-flash-latest").'),
+  pdfUrl: z.string().url().optional().describe('An optional URL to a PDF document for analysis. The AI will use this for context if provided.'),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
 
@@ -46,13 +47,18 @@ Recent Visit Data for Context (from the last 7 days):
 No recent visits found in the last 7 days.
 {{/if}}
 
-Based on the conversation and the visit data, provide a helpful and concise response to the user.
+{{#if pdfUrl}}
+The user has also attached the following PDF document for additional context. Please analyze its content and incorporate relevant information into your response:
+{{{media url=pdfUrl}}}
+{{/if}}
+
+Based on the conversation, the visit data, and any attached PDF, provide a helpful and concise response to the user.
 If visit data is relevant, incorporate it naturally into your response.
-If asked for summaries or analysis, use the provided visit data.
+If a PDF is provided, refer to its content when answering questions or providing analysis related to it.
+If asked for summaries or analysis, use the provided visit data and PDF content.
 Keep your responses focused on sales strategy, visit planning, and analyzing customer interactions.
 Be positive and encouraging.
 AI:`,
-  // Note: The 'model' will be passed dynamically in the flow.
   config: {
     safetySettings: [
       {
@@ -61,7 +67,7 @@ AI:`,
       },
       {
         category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_ONLY_HIGH', // More permissive for potentially relevant business/technical discussions
+        threshold: 'BLOCK_ONLY_HIGH', 
       },
       {
         category: 'HARM_CATEGORY_HARASSMENT',
@@ -82,12 +88,11 @@ const chatWithVisitsFlow = ai.defineFlow(
     outputSchema: ChatWithVisitsOutputSchema,
   },
   async (input) => {
-    const { chatHistory, userMessage, visitsContext, modelName } = input;
+    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl } = input;
     
-    // Dynamically select the model for the prompt call
     const { output } = await prompt(
-        { chatHistory, userMessage, visitsContext }, // Pass only what the prompt template expects
-        { model: modelName } // Specify the model to use
+        { chatHistory, userMessage, visitsContext, pdfUrl }, 
+        { model: modelName } 
     );
 
     if (!output) {
@@ -97,4 +102,3 @@ const chatWithVisitsFlow = ai.defineFlow(
     return output;
   }
 );
-

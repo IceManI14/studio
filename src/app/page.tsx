@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2 } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +92,9 @@ export default function HomePage() {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
+  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
 
   const getVisitsStorageKey = (): string | null => {
@@ -505,18 +508,80 @@ export default function HomePage() {
     });
   };
 
+  const handlePdfSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        toast({ title: "Invalid File Type", description: "Please select a PDF file.", variant: "destructive" });
+        setSelectedPdf(null);
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ title: "File Too Large", description: "Please select a PDF file smaller than 5MB.", variant: "destructive" });
+        setSelectedPdf(null);
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
+        return;
+      }
+      setSelectedPdf(file);
+    } else {
+      setSelectedPdf(null);
+    }
+  };
+
+  const handleClearPdf = () => {
+    setSelectedPdf(null);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = '';
+    }
+  };
+
   const handleSendChatMessage = async () => {
-    if (chatInput.trim() === '' || !selectedSalesperson || isAiResponding) return;
+    if (chatInput.trim() === '' || !selectedSalesperson || isAiResponding || isUploadingPdf) return;
+
+    let messageText = chatInput.trim();
+    let pdfUrlForAi: string | undefined = undefined;
+    
+    setIsAiResponding(true); // Set AI responding early
+
+    if (selectedPdf) {
+      setIsUploadingPdf(true);
+      const formData = new FormData();
+      formData.append('pdfFile', selectedPdf);
+      try {
+        const response = await fetch('/api/upload-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to upload PDF');
+        }
+        const uploadResult = await response.json();
+        pdfUrlForAi = uploadResult.url;
+        toast({ title: 'PDF Attached', description: `${selectedPdf.name} uploaded and sent to AI.`, duration: 3000});
+        // Append a note about the PDF to the user's message for clarity in chat history
+        messageText += ` (Attached PDF: ${selectedPdf.name})`;
+      } catch (uploadError: any) {
+        toast({ title: 'PDF Upload Failed', description: uploadError.message, variant: 'destructive' });
+        setIsUploadingPdf(false);
+        setIsAiResponding(false);
+        return;
+      } finally {
+        setIsUploadingPdf(false);
+        setSelectedPdf(null); // Clear after attempting upload
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
+      }
+    }
 
     const newUserMessage: ChatMessage = {
       id: crypto.randomUUID(),
       sender: 'user',
-      text: chatInput.trim(),
+      text: messageText,
       timestamp: new Date(),
     };
     setChatMessages(prev => [...prev, newUserMessage]);
     setChatInput('');
-    setIsAiResponding(true);
 
     const oneWeekAgo = subDays(new Date(), 7);
     const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
@@ -525,13 +590,14 @@ export default function HomePage() {
       const result = await getAiChatResponseAction({
         currentMessages: [...chatMessages, newUserMessage], 
         model: selectedAiModel,
-        visits: recentVisits.map(v => ({ // Ensure only necessary fields are passed
+        visits: recentVisits.map(v => ({
             id: v.id,
             timestamp: v.timestamp,
             companyName: v.companyName,
             notesSummary: v.notesSummary,
             partnershipConfidence: v.partnershipConfidence
         })),
+        pdfUrl: pdfUrlForAi,
       });
 
       if (result.error) {
@@ -794,7 +860,7 @@ export default function HomePage() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground pt-2">Ask questions about your visits or get planning help. Recent visits are used as context.</p>
+                <p className="text-sm text-muted-foreground pt-2">Ask questions about your visits or get planning help. Recent visits and attached PDFs are used as context.</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
                 <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
@@ -822,7 +888,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))}
-                  {isAiResponding && (
+                  {isAiResponding && !isUploadingPdf && ( // Only show AI loader if not uploading PDF, upload has its own indicator
                     <div className="flex justify-start mb-4">
                         <div className="flex items-end gap-2 max-w-[75%]">
                             <Avatar className="h-8 w-8 self-start">
@@ -838,19 +904,55 @@ export default function HomePage() {
                   <div ref={messagesEndRef} />
                 </ScrollArea>
               </UiCardContent>
-              <UiCardFooter className="p-4">
+              <UiCardFooter className="p-4 space-y-2 flex-col items-start">
+                {selectedPdf && (
+                  <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
+                    <div className="flex items-center gap-2 truncate">
+                      <Paperclip className="h-4 w-4 text-primary shrink-0" />
+                      <span className="truncate" title={selectedPdf.name}>{selectedPdf.name}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleClearPdf} className="h-6 w-6 shrink-0">
+                      <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      <span className="sr-only">Clear PDF</span>
+                    </Button>
+                  </div>
+                )}
+                 {isUploadingPdf && (
+                    <div className="w-full flex items-center gap-2 text-xs text-primary p-1">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading PDF: {selectedPdf?.name}...
+                    </div>
+                 )}
                 <div className="flex w-full items-center space-x-2">
+                  <Input
+                    id="pdf-upload-input"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfSelect}
+                    className="hidden"
+                    ref={pdfInputRef}
+                    disabled={isAiResponding || isUploadingPdf}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => pdfInputRef.current?.click()}
+                    disabled={isAiResponding || isUploadingPdf}
+                    aria-label="Attach PDF"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
                   <Input
                     type="text"
                     placeholder="Type your message..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }}
+                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding && !isUploadingPdf) handleSendChatMessage(); }}
                     className="flex-1"
-                    disabled={isAiResponding}
+                    disabled={isAiResponding || isUploadingPdf}
                   />
-                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
-                    {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isUploadingPdf}>
+                    {(isAiResponding && !isUploadingPdf) || isUploadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     <span className="sr-only">Send</span>
                   </Button>
                 </div>

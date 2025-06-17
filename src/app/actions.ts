@@ -193,6 +193,7 @@ const aiChatPayloadSchema = z.object({
       partnershipConfidence: z.number().optional(),
     })
   ),
+  pdfUrl: z.string().url().optional(),
 });
 
 export async function getAiChatResponseAction(
@@ -223,6 +224,7 @@ export async function getAiChatResponseAction(
       userMessage: newUserMessage,
       visitsContext: visitsContextString,
       modelName: validatedPayload.model,
+      pdfUrl: validatedPayload.pdfUrl,
     });
 
     return { aiResponse: result.aiResponse };
@@ -234,4 +236,3 @@ export async function getAiChatResponseAction(
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
 }
-
