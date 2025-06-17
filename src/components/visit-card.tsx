@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -77,6 +77,65 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const starRatingBadge = getStarRatingBadgeInfo();
 
+  const getTDSInfo = () => {
+    if (!visit.hasTDSReading || typeof visit.tdsValue !== 'number') {
+      return null;
+    }
+    const tds = visit.tdsValue;
+    if (tds <= 50) {
+      return { 
+        message: "Optimum Water Quality. Ideal for RO/DI.", 
+        variant: "default" as const, 
+        icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
+        className: "bg-green-500 hover:bg-green-600 text-white border-green-600"
+      };
+    } else if (tds > 50 && tds <= 100) {
+      return { 
+        message: "High Quality Bottled Water.", 
+        variant: "default" as const, 
+        icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
+        className: "bg-blue-500 hover:bg-blue-600 text-white border-blue-600"
+      };
+    } else if (tds > 100 && tds <= 150) {
+      return { 
+        message: "Spring Water.", 
+        variant: "secondary" as const, 
+        icon: <Wind className="mr-1 h-3 w-3" /> ,
+        className: "bg-sky-500 hover:bg-sky-600 text-white border-sky-600"
+      };
+    } else if (tds > 150 && tds <= 275) {
+      return { 
+        message: "Marginally Acceptable Water.", 
+        variant: "outline" as const, 
+        icon: <AlertTriangle className="mr-1 h-3 w-3" />,
+        className: "text-yellow-700 border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50"
+      };
+    } else if (tds > 275 && tds <= 500) {
+      return { 
+        message: "HIGH TDS Water (Tap/Mineral Spring).", 
+        variant: "outline" as const, 
+        icon: <AlertTriangle className="mr-1 h-3 w-3" />,
+        className: "text-orange-700 border-orange-500 bg-orange-50 hover:bg-orange-100 dark:text-orange-400 dark:border-orange-600 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
+      };
+    } else if (tds > 500) {
+      return { 
+        message: "EPA MAXIMUM CONTAMINANT LEVEL.", 
+        variant: "destructive" as const, 
+        icon: <ShieldAlert className="mr-1 h-3 w-3" />,
+        className: "" // Destructive variant handles its own styling
+      };
+    }
+    return {
+        message: "TDS Level Undefined.",
+        variant: "outline" as const,
+        icon: <ShieldQuestion className="mr-1 h-3 w-3" />,
+        className: "text-gray-700 border-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50"
+    };
+  };
+
+  const tdsInfo = getTDSInfo();
+
+
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
@@ -128,7 +187,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue}` : 'Yes (No Value)') : 'Not Yet'}
+            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue} PPM` : 'Yes (No Value)') : 'Not Yet'}
           </div>
         </div>
         <CardDescription className="flex items-center justify-between text-sm mt-2">
@@ -164,9 +223,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
            <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading
+              <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
             </h4>
-            <p className="text-muted-foreground">{visit.tdsValue} PPM</p>
+            <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
+            {tdsInfo && (
+              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5", tdsInfo.className)}>
+                {tdsInfo.icon}
+                {tdsInfo.message}
+              </Badge>
+            )}
           </div>
         )}
 
@@ -270,3 +335,5 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
+    
