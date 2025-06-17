@@ -516,7 +516,13 @@ export default function HomePage() {
       const result = await getAiChatResponseAction({
         currentMessages: [...chatMessages, newUserMessage], 
         model: selectedAiModel,
-        visits: recentVisits,
+        visits: recentVisits.map(v => ({ // Ensure only necessary fields are passed
+            id: v.id,
+            timestamp: v.timestamp,
+            companyName: v.companyName,
+            notesSummary: v.notesSummary,
+            partnershipConfidence: v.partnershipConfidence
+        })),
       });
 
       if (result.error) {
@@ -566,13 +572,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="text-center sm:text-left">
-          <div className="flex flex-col items-center mb-4">
-            <div className="mb-4">
+        <header className="flex flex-col items-center space-y-4">
+          <div className="flex flex-col items-center">
+            <div className="mb-2">
               <Image src="/logo.png" alt="Optimum Logo" width={250} height={60} priority />
             </div>
             <h1
-              className="text-5xl sm:text-6xl font-headline font-bold text-primary drop-shadow-sm text-center"
+              className="text-4xl sm:text-5xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
                 textShadow: [
                   '-1px -1px 0 hsl(var(--accent))',
@@ -586,7 +592,7 @@ export default function HomePage() {
             </h1>
           </div>
           {selectedSalesperson && (
-            <div className="flex items-center justify-center text-sm text-muted-foreground mt-2 bg-card p-2 rounded-md shadow-sm">
+            <div className="flex items-center justify-center text-sm text-muted-foreground bg-card p-2 rounded-md shadow-sm w-full max-w-xs">
               <User className="mr-2 h-4 w-4 text-primary" />
               Active User: <button onClick={() => setSelectedSalesperson(null)} className="font-semibold text-accent hover:underline ml-1 focus:outline-none">{selectedSalesperson.name} (Switch)</button>
             </div>
