@@ -187,10 +187,12 @@ export async function getAiChatResponseAction(
 
     const visitsContextString = validatedPayload.visits
       .map(
-        (visit) =>
-          `Company: ${visit.companyName}, Visited: ${format(visit.timestamp, 'yyyy-MM-dd')}, Confidence: ${
-            visit.partnershipConfidence || 'N/A'
-          } stars, Summary: ${visit.notesSummary || 'No summary available.'}`
+        (visit) => {
+          const confidenceText = visit.partnershipConfidence 
+            ? `${visit.partnershipConfidence}/5 stars` 
+            : 'Not Rated';
+          return `Company: ${visit.companyName}, Visited: ${format(visit.timestamp, 'yyyy-MM-dd')}, Confidence: ${confidenceText}, Summary: ${visit.notesSummary || 'No summary available.'}`;
+        }
       )
       .join('\n---\n');
 
@@ -210,3 +212,4 @@ export async function getAiChatResponseAction(
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
 }
+
