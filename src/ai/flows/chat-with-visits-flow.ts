@@ -53,7 +53,26 @@ Keep your responses focused on sales strategy, visit planning, and analyzing cus
 Be positive and encouraging.
 AI:`,
   // Note: The 'model' will be passed dynamically in the flow.
-  // Default safety settings will be used unless overridden.
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH', // More permissive for potentially relevant business/technical discussions
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+    ],
+  },
 });
 
 const chatWithVisitsFlow = ai.defineFlow(
@@ -78,3 +97,4 @@ const chatWithVisitsFlow = ai.defineFlow(
     return output;
   }
 );
+
