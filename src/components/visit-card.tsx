@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -266,6 +266,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
             {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
             {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
+          </div>
+        )}
+
+        {visit.interestedUnit && (
+          <div className="p-3 bg-green-500/10 rounded-md border border-green-500/30">
+            <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-1">
+              <PackageCheck className="mr-2 h-4 w-4" /> Potential Unit Interest
+            </h4>
+            <p className="text-green-600 dark:text-green-300">{visit.interestedUnit}</p>
           </div>
         )}
 

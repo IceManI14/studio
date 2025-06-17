@@ -23,6 +23,7 @@ export interface Visit {
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
   visitNumber?: number; // Sequential number of the visit for the day
+  interestedUnit?: string; // Unit the company is potentially interested in
 }
 
 export interface Salesperson {
@@ -36,3 +37,4 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+

@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -40,7 +40,7 @@ const COMPETITORS_LIST = [
   "Culligan-Quench",
   "Ready Refresh/Primo",
   "WB Mason",
-  "Other", // Should 'Other' be a competitor? Usually for cooler types.
+  "Other", 
 ];
 
 const DEFAULT_COOLER_TYPES_LIST = [
@@ -81,6 +81,17 @@ const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
   "Cintas": ["Waterlogic", "Oasis", "None Observed", "Other"],
 };
 
+const OUR_COOLERS_LIST = [
+  "Optimum Standard POU",
+  "Optimum Enhanced POU (RO/UV)",
+  "Optimum Countertop POU",
+  "Optimum Floorstanding Ice & Water",
+  "Optimum Countertop Ice & Water",
+  "BEVI Smart Cooler (via Optimum)",
+  "Sparkling Water Add-on",
+  "Other (Specify in notes)",
+];
+
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -96,6 +107,7 @@ const visitFormSchema = z.object({
   decisionMakerName: z.string().optional(),
   decisionMakerTitle: z.string().optional(),
   decisionMakerContact: z.string().optional(),
+  interestedUnit: z.string().optional(),
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -146,6 +158,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
+      interestedUnit: undefined,
     },
   });
 
@@ -153,6 +166,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
   const watchedCoolerType = form.watch('coolerType');
+  const partnershipConfidenceValue = form.watch('partnershipConfidence');
 
   useEffect(() => {
     if (initialData) {
@@ -170,6 +184,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         decisionMakerName: initialData.decisionMakerName || '',
         decisionMakerTitle: initialData.decisionMakerTitle || '',
         decisionMakerContact: initialData.decisionMakerContact || '',
+        interestedUnit: initialData.interestedUnit || undefined,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -189,6 +204,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: '',
+        interestedUnit: undefined,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -217,6 +233,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
     setCurrentCoolerOptions(baseOptions);
   }, [watchedCompetitorName, initialData, isOpen]);
+
+  useEffect(() => {
+    if (partnershipConfidenceValue && partnershipConfidenceValue < 4) {
+      form.setValue('interestedUnit', undefined);
+    }
+  }, [partnershipConfidenceValue, form]);
 
 
   useEffect(() => {
@@ -332,26 +354,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     
-    if (data.partnershipConfidence && data.partnershipConfidence >= 4) {
-      const unitInterestMarker = "[System Note - High Confidence Follow-up] Potential Unit Interest:";
-      const alreadyHasUnitInterest = finalNotes && finalNotes.includes(unitInterestMarker);
-
-      if (!alreadyHasUnitInterest) {
-        const unitInterestPromptMessage = "This company has high partnership potential (4+ stars)! What unit are they potentially interested in? (e.g., Bottle-Free Cooler, Ice Machine, Specific Model)";
-        const interestedUnit = window.prompt(unitInterestPromptMessage);
-
-        if (interestedUnit && interestedUnit.trim() !== "") {
-          const unitInterestText = `${unitInterestMarker} ${interestedUnit.trim()}`;
-          if (finalNotes.trim() === "") {
-            finalNotes = unitInterestText;
-          } else {
-            finalNotes = finalNotes.trim() + "\n\n" + unitInterestText;
-          }
-          form.setValue('notes', finalNotes, { shouldValidate: false, shouldDirty: true });
-        }
-      }
-    }
-
     let finalBusinessCardImageUrl = initialData?.businessCardImageUrl;
 
     if (data.hasBusinessCard) {
@@ -406,6 +408,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerName: data.decisionMakerName,
       decisionMakerTitle: data.decisionMakerTitle,
       decisionMakerContact: data.decisionMakerContact,
+      interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -551,6 +554,43 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             />
 
+            {partnershipConfidenceValue && partnershipConfidenceValue >= 4 && (
+              <FormField
+                control={form.control}
+                name="interestedUnit"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                    <FormLabel className="flex items-center">
+                      <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ''} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a cooler they are interested in" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {OUR_COOLERS_LIST.map((cooler) => (
+                          <SelectItem key={cooler} value={cooler}>
+                            {cooler}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Select the type of cooler the company showed interest in.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+
             <FormField
               control={form.control}
               name="hasBusinessCard"
@@ -663,6 +703,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           field.onChange(value);
                         }} 
                         defaultValue={field.value}
+                        value={field.value || ''}
                        >
                         <FormControl>
                           <SelectTrigger>

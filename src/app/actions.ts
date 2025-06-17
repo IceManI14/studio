@@ -25,6 +25,7 @@ export interface SaveVisitPayload {
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
   visitNumber?: number; // Sequential number of the visit
+  interestedUnit?: string; // Unit the company is potentially interested in
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -49,6 +50,7 @@ const saveVisitPayloadSchema = z.object({
   decisionMakerTitle: z.string().optional().default(''),
   decisionMakerContact: z.string().optional().default(''),
   visitNumber: z.number().optional(),
+  interestedUnit: z.string().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -113,6 +115,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerTitle: validatedPayload.decisionMakerTitle,
       decisionMakerContact: validatedPayload.decisionMakerContact,
       visitNumber: validatedPayload.visitNumber,
+      interestedUnit: validatedPayload.interestedUnit,
     };
 
     return { visit };
