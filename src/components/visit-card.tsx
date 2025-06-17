@@ -119,7 +119,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       };
     } else if (tds > 500) {
       return { 
-        message: "EPA MAXIMUM CONTAMINANT LEVEL.", 
+        message: "EPA MAXIMUM CONTAMINANT LEVEL. Techs may need to install a pre-filter! Salesperson must mention that there may be a need for more service calls @ $149 each visit.", 
         variant: "destructive" as const, 
         icon: <ShieldAlert className="mr-1 h-3 w-3" />,
         className: "" // Destructive variant handles its own styling
