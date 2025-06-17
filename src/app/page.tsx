@@ -50,7 +50,17 @@ const AVAILABLE_AI_MODELS = [
 const SALESPEOPLE: Salesperson[] = [
   { id: 'sales_1', name: 'Jim Karat' },
   { id: 'sales_2', name: 'Chris Canestrari' },
-  { id: 'sales_3', name: 'Paul W. Lyman' },
+  { 
+    id: 'sales_3', 
+    name: 'Paul W. Lyman',
+    territory: [
+      "Auburn", "Chester", "Kingston", "Seabrook", "Exeter", "Stratham", 
+      "Newmarket", "Durham", "Portsmouth", "Deerfield", "Nottingham", 
+      "Hampton", "Rye", "Sandown", "Raymond", "Hampstead", "Dover", 
+      "Tilton", "Belmont", "Franklin", "Laconia", "New Hampton", 
+      "Meredith", "Gilford", "Kittery", "York", "Ogunquit", "Wells", "Kennebunk"
+    ]
+  },
   { id: 'sales_4', name: 'Sarah Kessel' },
   { id: 'sales_5', name: 'George Maroon' },
   { id: 'sales_6', name: 'Tom Brady' },
@@ -181,7 +191,6 @@ export default function HomePage() {
       setColdCallCount(0);
     }
 
-    // Get actual GPS location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -940,4 +949,3 @@ export default function HomePage() {
     </div>
   );
 }
-

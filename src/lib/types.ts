@@ -31,6 +31,7 @@ export interface Visit {
 export interface Salesperson {
   id: string;
   name: string;
+  territory?: string[];
 }
 
 export interface ChatMessage {
@@ -39,4 +40,3 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
-
