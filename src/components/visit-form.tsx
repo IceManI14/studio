@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -108,6 +108,16 @@ const visitFormSchema = z.object({
   decisionMakerTitle: z.string().optional(),
   decisionMakerContact: z.string().optional(),
   interestedUnit: z.string().optional(),
+  hasTDSReading: z.boolean().optional(),
+  tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+}).refine(data => {
+  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
+    return false; 
+  }
+  return true;
+}, {
+  message: "TDS value (0-1500) is required when TDS Reading is checked.",
+  path: ["tdsValue"], 
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -159,14 +169,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerTitle: '',
       decisionMakerContact: '',
       interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
     },
   });
 
   const discussedCompetitorsValue = form.watch('discussedCompetitors');
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
-  const watchedCoolerType = form.watch('coolerType');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
+  const hasTDSReadingValue = form.watch('hasTDSReading');
 
   useEffect(() => {
     if (initialData) {
@@ -185,6 +197,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         decisionMakerTitle: initialData.decisionMakerTitle || '',
         decisionMakerContact: initialData.decisionMakerContact || '',
         interestedUnit: initialData.interestedUnit || undefined,
+        hasTDSReading: initialData.hasTDSReading || false,
+        tdsValue: initialData.tdsValue,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -205,6 +219,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         decisionMakerTitle: '',
         decisionMakerContact: '',
         interestedUnit: undefined,
+        hasTDSReading: false,
+        tdsValue: undefined,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -409,6 +425,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerTitle: data.decisionMakerTitle,
       decisionMakerContact: data.decisionMakerContact,
       interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
+      hasTDSReading: data.hasTDSReading,
+      tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -661,6 +679,61 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               </FormItem>
             )}
 
+            <FormField
+              control={form.control}
+              name="hasTDSReading"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        const booleanChecked = Boolean(checked);
+                        field.onChange(booleanChecked);
+                        if (!booleanChecked) {
+                          form.setValue('tdsValue', undefined, { shouldValidate: true });
+                        }
+                      }}
+                      id="hasTDSReading"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="hasTDSReading" className="cursor-pointer font-normal">
+                      TDS Reading Taken?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {hasTDSReadingValue && (
+              <FormField
+                control={form.control}
+                name="tdsValue"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                    <FormLabel htmlFor="tdsValue" className="flex items-center">
+                      <Droplets className="mr-2 h-5 w-5 text-primary" /> TDS Value (0-1500)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        id="tdsValue"
+                        type="number"
+                        placeholder="Enter TDS value"
+                        {...field}
+                        onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                        value={field.value === undefined ? '' : field.value}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter the Total Dissolved Solids reading.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
 
             <FormField
               control={form.control}
@@ -861,3 +934,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+

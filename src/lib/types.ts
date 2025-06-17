@@ -24,6 +24,8 @@ export interface Visit {
   decisionMakerContact?: string;
   visitNumber?: number; // Sequential number of the visit for the day
   interestedUnit?: string; // Unit the company is potentially interested in
+  hasTDSReading?: boolean;
+  tdsValue?: number;
 }
 
 export interface Salesperson {

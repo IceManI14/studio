@@ -26,6 +26,8 @@ export interface SaveVisitPayload {
   decisionMakerContact?: string;
   visitNumber?: number; // Sequential number of the visit
   interestedUnit?: string; // Unit the company is potentially interested in
+  hasTDSReading?: boolean;
+  tdsValue?: number;
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -51,6 +53,8 @@ const saveVisitPayloadSchema = z.object({
   decisionMakerContact: z.string().optional().default(''),
   visitNumber: z.number().optional(),
   interestedUnit: z.string().optional(),
+  hasTDSReading: z.boolean().optional(),
+  tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -59,6 +63,19 @@ const saveVisitPayloadSchema = z.object({
   }).optional(),
   existingNotesSummary: z.string().optional(),
   originalBusinessCardImageUrl: z.string().url().optional().nullable(),
+}).refine(data => {
+  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null)) {
+    return false; 
+  }
+  if (!data.hasTDSReading && data.tdsValue !== undefined && data.tdsValue !== null) {
+    // This case is tricky - if not hasTDSReading, tdsValue should ideally be ignored or cleared.
+    // For now, schema validation will pass if tdsValue is present but hasTDSReading is false.
+    // The form logic should handle clearing tdsValue if hasTDSReading is unchecked.
+  }
+  return true;
+}, {
+  message: "TDS value is required when TDS Reading is checked.",
+  path: ["tdsValue"], 
 });
 
 
@@ -116,6 +133,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerContact: validatedPayload.decisionMakerContact,
       visitNumber: validatedPayload.visitNumber,
       interestedUnit: validatedPayload.interestedUnit,
+      hasTDSReading: validatedPayload.hasTDSReading,
+      tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
     };
 
     return { visit };

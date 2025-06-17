@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -218,6 +218,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
           </div>
+          <div className="flex items-center text-xs text-muted-foreground">
+            {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue}` : 'Yes (No Value)') : 'No'}
+          </div>
         </div>
         <CardDescription className="flex items-center justify-between text-sm mt-2">
           <div className="flex items-center">
@@ -246,6 +250,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 className="rounded-md border"
               />
             </div>
+          </div>
+        )}
+
+        {visit.hasTDSReading && visit.tdsValue !== undefined && (
+           <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading
+            </h4>
+            <p className="text-muted-foreground">{visit.tdsValue} PPM</p>
           </div>
         )}
 
