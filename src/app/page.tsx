@@ -970,7 +970,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
                   <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
                 </h2>
-                <p className="text-foreground text-base leading-relaxed mt-2">
+                <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
                   This app is intended to help you streamline your efforts in acquiring new clients and partners alike.
                   It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
                 </p>
