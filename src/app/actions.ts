@@ -101,7 +101,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         };
       } catch (e) {
         console.warn("Failed to scrape contact info:", e);
-        contactDetails = { info: "Could not automatically load contact information!", confidence: 0 };
+        contactDetails = { info: "No contact info found on web!", confidence: 0 };
       }
     }
 
