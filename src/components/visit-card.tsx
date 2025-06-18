@@ -155,21 +155,24 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex justify-between items-center w-full">
-          {visit.visitNumber && (
-            <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
-              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-            </Badge>
-          )}
+        <div className="flex flex-col items-center w-full">
+          <div className="flex justify-between items-center w-full">
+            {visit.visitNumber && (
+              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+              </Badge>
+            )}
+             {/* Spacer to push visit number to left and rating badge to right if both exist, else they center if only one exists */}
+            {(visit.visitNumber && visit.partnershipConfidence && visit.partnershipConfidence > 0) && <div className="flex-grow"></div>}
+            
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
+                {starRatingBadge.text}
+              </Badge>
+            )}
+          </div>
+          
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
-              {starRatingBadge.text}
-            </Badge>
-          )}
-        </div>
-
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full">
             <div className="flex justify-center items-center">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
@@ -183,11 +186,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 />
               ))}
             </div>
+          )}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
             <span className="text-xs text-muted-foreground">
               (Partnership Confidence)
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex-grow space-y-1 mt-2">
             <div className="flex justify-between items-baseline">
@@ -274,7 +279,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         )}
 
         {visit.contactInfo?.info && (
-          <div className="p-3 bg-secondary/30 rounded-md">
+          <div className="p-2 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <Info className="mr-2 h-4 w-4 text-primary" /> Contact Info
             </h4>
