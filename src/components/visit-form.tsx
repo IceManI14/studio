@@ -110,7 +110,7 @@ const visitFormSchema = z.object({
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
-  futureMeetingSet: z.boolean().optional(), // New field
+  futureMeetingSet: z.boolean().optional(), 
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false; 
@@ -143,7 +143,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const timeZone = 'America/New_York';
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
@@ -172,7 +171,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: undefined,
       hasTDSReading: false,
       tdsValue: undefined,
-      futureMeetingSet: false, // New field
+      futureMeetingSet: false, 
     },
   });
 
@@ -201,7 +200,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: initialData.interestedUnit || undefined,
         hasTDSReading: initialData.hasTDSReading || false,
         tdsValue: initialData.tdsValue,
-        futureMeetingSet: initialData.futureMeetingSet || false, // New field
+        futureMeetingSet: initialData.futureMeetingSet || false, 
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -224,7 +223,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
-        futureMeetingSet: false, // New field
+        futureMeetingSet: false, 
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -361,16 +360,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setIsSaving(true);
     let finalNotes = data.notes || '';
 
-    if (!initialData || !initialData.id) {
-        const currentTime = new Date();
-        const endTimeString = `Meeting ended at ${formatInTimeZone(currentTime, timeZone, 'h:mm a')}.`;
+    if ((!initialData || !initialData.id) && initialData?.timestamp) {
+        const startTime = initialData.timestamp;
+        const endTime = new Date();
+        const durationMs = endTime.getTime() - startTime.getTime();
+        
+        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000)); // Ensure non-negative
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        
+        const durationString = `Meeting duration was ${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}.`;
         
         const currentNotes = finalNotes.trim();
         if (currentNotes) { 
-             finalNotes = `${currentNotes}\n${endTimeString}`;
-        }
-         else { 
-            finalNotes = endTimeString;
+             finalNotes = `${currentNotes}\n${durationString}`;
+        } else { 
+            finalNotes = durationString;
         }
     }
     
@@ -431,7 +436,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
       hasTDSReading: data.hasTDSReading,
       tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
-      futureMeetingSet: data.futureMeetingSet, // New field
+      futureMeetingSet: data.futureMeetingSet, 
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
