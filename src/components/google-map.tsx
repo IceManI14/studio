@@ -40,25 +40,26 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
 
   useEffect(() => {
     if (validVisits.length > 0) {
-      const latitudes = validVisits.map(v => v.latitude!);
-      const longitudes = validVisits.map(v => v.longitude!);
+      // Find the latest visit by timestamp
+      const latestVisit = validVisits.reduce((latest, current) => {
+        return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
+      });
 
-      const avgLat = latitudes.reduce((sum, lat) => sum + lat, 0) / latitudes.length;
-      const avgLng = longitudes.reduce((sum, lng) => sum + lng, 0) / longitudes.length;
-      setMapCenter({ lat: avgLat, lng: avgLng });
-
-      if (validVisits.length === 1) {
-        setZoomLevel(12);
+      if (latestVisit.latitude !== undefined && latestVisit.longitude !== undefined) {
+        setMapCenter({ lat: latestVisit.latitude, lng: latestVisit.longitude });
+        setZoomLevel(15); // Zoom in closely on the latest pin
       } else {
-        const latDiff = Math.max(...latitudes) - Math.min(...latitudes);
-        const lngDiff = Math.max(...longitudes) - Math.min(...longitudes);
-        const maxDiff = Math.max(latDiff, lngDiff);
-
-        if (maxDiff < 0.1) setZoomLevel(12);
-        else if (maxDiff < 0.5) setZoomLevel(10);
-        else if (maxDiff < 2) setZoomLevel(8);
-        else if (maxDiff < 5) setZoomLevel(6);
-        else setZoomLevel(4);
+        // Fallback if latest visit somehow has no coords (should be filtered by validVisits)
+        // Or if all visits are at the exact same time (edge case), it takes the first one.
+        // If no valid coords at all in the 'latest' (unlikely due to filter), use default.
+        const firstValidVisitWithCoords = validVisits.find(v => v.latitude !== undefined && v.longitude !== undefined);
+        if (firstValidVisitWithCoords) {
+            setMapCenter({lat: firstValidVisitWithCoords.latitude!, lng: firstValidVisitWithCoords.longitude!});
+            setZoomLevel(15);
+        } else {
+            setMapCenter(defaultCenter);
+            setZoomLevel(4);
+        }
       }
     } else {
       setMapCenter(defaultCenter);
@@ -179,3 +180,4 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
 };
 
 export default GoogleMapComponent;
+
