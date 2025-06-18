@@ -14,8 +14,8 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-image.`);
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests for file uploads.`);
+    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
   if (!process.env.GCP_PROJECT_ID || !process.env.CLOUD_STORAGE_BUCKET_NAME) {
@@ -113,10 +113,10 @@ export default async (req, res) => {
       const readStream = fs.createReadStream(file.filepath);
       readStream.on('error', (readStreamError) => {
         if (responseSent) return;
-        console.error('Error reading file from temporary path:', readStreamError);
+        console.error('Error reading file from temporary path:', file.filepath, readStreamError);
         blobStream.end(); 
         responseSent = true;
-        res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message });
+        res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message, tempPath: file.filepath });
       });
       readStream.pipe(blobStream);
     } catch (pipeError) {

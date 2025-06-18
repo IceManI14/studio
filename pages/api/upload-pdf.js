@@ -14,8 +14,8 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-pdf.`);
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    console.warn(`Method ${req.method} not allowed for /api/upload-pdf. This endpoint only accepts POST requests for file uploads.`);
+    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
   if (!process.env.GCP_PROJECT_ID || !process.env.CLOUD_STORAGE_BUCKET_NAME) {
@@ -82,9 +82,9 @@ export default async (req, res) => {
       blob.makePublic()
         .then(() => {
           if (responseSent) return;
+          const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
           console.log(`PDF uploaded successfully: ${publicUrl}`);
           responseSent = true;
-          const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
           res.status(200).json({ message: 'PDF uploaded successfully', url: publicUrl });
         })
         .catch((makePublicError) => {
@@ -105,10 +105,10 @@ export default async (req, res) => {
       const readStream = fs.createReadStream(file.filepath);
       readStream.on('error', (readStreamError) => {
         if (responseSent) return;
-        console.error('Error reading PDF file from temporary path:', readStreamError);
+        console.error('Error reading PDF file from temporary path:', file.filepath, readStreamError);
         blobStream.end(); // Important to end blobStream if readStream fails
         responseSent = true;
-        res.status(500).json({ message: 'Failed to read uploaded PDF file from server disk.', details: readStreamError.message });
+        res.status(500).json({ message: 'Failed to read uploaded PDF file from server disk.', details: readStreamError.message, tempPath: file.filepath });
       });
       readStream.pipe(blobStream);
     } catch (pipeError) {
