@@ -16,7 +16,7 @@ const ChatWithVisitsInputSchema = z.object({
   userMessage: z.string().describe('The latest message from the user.'),
   visitsContext: z.string().describe('A summary of recent company visits relevant to the conversation. Each visit is separated by "---".'),
   modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-1.5-flash-latest").'),
-  pdfUrl: z.string().url().optional().describe('An optional URL to a PDF document for analysis. The AI will use this for context if provided.'),
+  pdfUrl: z.string().url().optional().describe("An optional URL to a PDF document for analysis, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
 
@@ -102,3 +102,4 @@ const chatWithVisitsFlow = ai.defineFlow(
     return output;
   }
 );
+

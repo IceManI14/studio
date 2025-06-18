@@ -236,3 +236,4 @@ export async function getAiChatResponseAction(
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
 }
+

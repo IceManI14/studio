@@ -542,7 +542,7 @@ export default function HomePage() {
     let messageText = chatInput.trim();
     let pdfUrlForAi: string | undefined = undefined;
     
-    setIsAiResponding(true); // Set AI responding early
+    setIsAiResponding(true); 
 
     if (selectedPdf) {
       setIsUploadingPdf(true);
@@ -560,7 +560,6 @@ export default function HomePage() {
         const uploadResult = await response.json();
         pdfUrlForAi = uploadResult.url;
         toast({ title: 'PDF Attached', description: `${selectedPdf.name} uploaded and sent to AI.`, duration: 3000});
-        // Append a note about the PDF to the user's message for clarity in chat history
         messageText += ` (Attached PDF: ${selectedPdf.name})`;
       } catch (uploadError: any) {
         toast({ title: 'PDF Upload Failed', description: uploadError.message, variant: 'destructive' });
@@ -569,7 +568,7 @@ export default function HomePage() {
         return;
       } finally {
         setIsUploadingPdf(false);
-        setSelectedPdf(null); // Clear after attempting upload
+        setSelectedPdf(null); 
         if (pdfInputRef.current) pdfInputRef.current.value = '';
       }
     }
@@ -888,7 +887,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))}
-                  {isAiResponding && !isUploadingPdf && ( // Only show AI loader if not uploading PDF, upload has its own indicator
+                  {isAiResponding && !isUploadingPdf && ( 
                     <div className="flex justify-start mb-4">
                         <div className="flex items-end gap-2 max-w-[75%]">
                             <Avatar className="h-8 w-8 self-start">
@@ -1051,3 +1050,4 @@ export default function HomePage() {
     </div>
   );
 }
+

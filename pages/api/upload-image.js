@@ -14,7 +14,7 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests for file uploads.`);
+    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests for file uploads. Check client-side request method.`);
     return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
@@ -128,3 +128,4 @@ export default async (req, res) => {
     }
   });
 };
+

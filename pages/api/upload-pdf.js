@@ -14,7 +14,7 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-pdf. This endpoint only accepts POST requests for file uploads.`);
+    console.warn(`Method ${req.method} not allowed for /api/upload-pdf. This endpoint only accepts POST requests for file uploads. Check client-side request method.`);
     return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
@@ -78,7 +78,7 @@ export default async (req, res) => {
     });
 
     blobStream.on('finish', () => {
-      if (responseSent) return; // If an error happened during stream pipe, response might have been sent
+      if (responseSent) return; 
       blob.makePublic()
         .then(() => {
           if (responseSent) return;
@@ -102,11 +102,12 @@ export default async (req, res) => {
     });
 
     try {
+      console.log('Attempting to read PDF from temporary path:', file.filepath);
       const readStream = fs.createReadStream(file.filepath);
       readStream.on('error', (readStreamError) => {
         if (responseSent) return;
         console.error('Error reading PDF file from temporary path:', file.filepath, readStreamError);
-        blobStream.end(); // Important to end blobStream if readStream fails
+        blobStream.end(); 
         responseSent = true;
         res.status(500).json({ message: 'Failed to read uploaded PDF file from server disk.', details: readStreamError.message, tempPath: file.filepath });
       });
@@ -114,9 +115,10 @@ export default async (req, res) => {
     } catch (pipeError) {
       if (responseSent) return;
       console.error('Error setting up PDF file stream pipe:', pipeError);
-      blobStream.end(); // Ensure stream is closed
+      blobStream.end(); 
       responseSent = true;
       res.status(500).json({ message: 'Internal server error during PDF file processing.', details: pipeError.message });
     }
   });
 };
+
