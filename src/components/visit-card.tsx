@@ -135,7 +135,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex justify-between items-center w-full mb-1">
+        <div className="flex items-center w-full">
           <div className="flex-none">
             {visit.visitNumber && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -143,11 +143,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </Badge>
             )}
           </div>
-          <div className="flex-grow text-center">
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
-            )}
-          </div>
+          <div className="flex-grow"></div> {/* Spacer */}
           <div className="flex-none">
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -157,6 +153,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         </div>
       
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+          <div className="w-full text-center mt-1">
+            <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
+          </div>
+        )}
+
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex justify-center items-center w-full mt-1">
             {[1, 2, 3, 4, 5].map((starValue) => (
@@ -173,12 +175,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        <div className="flex justify-between items-center w-full mt-2">
+        <div className="flex justify-between items-start w-full mt-2">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center">
+                <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
@@ -356,4 +358,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
