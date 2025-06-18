@@ -712,7 +712,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         {selectedSalesperson && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow mb-0">
                 <h2 className="text-lg font-semibold text-foreground text-center">
                     Welcome {selectedSalesperson.name}! Good Luck Today!
                 </h2>
@@ -721,7 +721,7 @@ export default function HomePage() {
         <header className="flex flex-col items-center space-y-4">
           <div className="flex flex-col items-center">
             <h1
-              className="text-4xl sm:text-5xl font-headline font-bold text-primary drop-shadow-sm text-center"
+              className="text-6xl sm:text-7xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
                 textShadow: [
                   '-1px -1px 0 hsl(var(--accent))',
