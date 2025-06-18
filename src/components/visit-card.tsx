@@ -122,13 +122,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         message: (
           <div className="text-left">
             <p className="mb-0.5">• EPA MAXIMUM CONTAMINANT LEVEL.</p>
-            <p className="mb-0.5">• Techs may need to install a pre-filter!</p>
-            <p>• Salesperson must mention that there may be a need for more service calls @ $149 each visit.</p>
+            <p className="mb-0.5">• <span className="text-primary font-semibold">Techs</span> may need to install a pre-filter!</p>
+            <p>• <span className="text-primary font-semibold">Salesperson</span> must mention that there may be a need for more service calls @ $149 each visit.</p>
           </div>
         ), 
         variant: "destructive" as const, 
-        icon: <ShieldAlert className="mr-1 h-3 w-3 self-start mt-0.5" />, // Adjusted icon alignment
-        className: "" // Destructive variant handles its own styling
+        icon: <ShieldAlert className="mr-1 h-3 w-3 self-start mt-0.5" />,
+        className: "" 
       };
     }
     return {
