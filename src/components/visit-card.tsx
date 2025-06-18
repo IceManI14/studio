@@ -176,8 +176,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {/* Company Name, Date, Location, Interested Unit - centered below stars */}
-        <div className="flex flex-col items-center space-y-1 w-full mt-2">
+        {/* Company Name, Date, Location, Interested Unit - aligned left below stars */}
+        <div className="flex flex-col items-start space-y-1 w-full mt-2">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
@@ -186,7 +186,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
             {visit.interestedUnit && (
-              <div className="p-2 bg-green-500/10 rounded-md border border-green-500/30 mt-1">
+              <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
                 <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
                   <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
                 </h4>
