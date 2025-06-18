@@ -712,7 +712,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         {selectedSalesperson && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow mb-0">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
                 <h2 className="text-lg font-semibold text-foreground text-center">
                     Welcome {selectedSalesperson.name}! Good Luck Today!
                 </h2>
@@ -754,7 +754,7 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} size="sm" className="shadow-md hover:shadow-lg transition-shadow">
+                    <Button onClick={handleOpenAddVisitForm} variant="outline" size="sm" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
