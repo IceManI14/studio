@@ -169,6 +169,22 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((starValue) => (
+                  <Star
+                    key={starValue}
+                    className={cn(
+                      "h-4 w-4",
+                      starValue <= (visit.partnershipConfidence ?? 0)
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-muted-foreground/50"
+                    )}
+                  />
+                ))}
+                 <span className="ml-2 text-xs text-muted-foreground">(Partnership Confidence)</span>
+              </div>
+            )}
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-3 w-3" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
@@ -179,23 +195,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </p>
             )}
         </div>
-        <div className="flex flex-col space-y-1 mt-1">
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex items-center">
-              {[1, 2, 3, 4, 5].map((starValue) => (
-                <Star
-                  key={starValue}
-                  className={cn(
-                    "h-4 w-4",
-                    starValue <= (visit.partnershipConfidence ?? 0)
-                      ? "text-yellow-400 fill-yellow-400"
-                      : "text-muted-foreground/50"
-                  )}
-                />
-              ))}
-               <span className="ml-2 text-xs text-muted-foreground">(Partnership Confidence)</span>
-            </div>
-          )}
+        <div className="flex flex-col space-y-1 mt-2">
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             {getCompetitorDisplay()}
