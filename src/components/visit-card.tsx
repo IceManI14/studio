@@ -214,7 +214,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue} PPM` : 'Yes (No Value)') : 'Not Yet'}
+            TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
           </div>
            <div className="flex items-center text-xs text-muted-foreground">
             {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -247,10 +247,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
            <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
-            </h4>
-            <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
+            <div className="flex justify-between items-center mb-1">
+              <h4 className="font-medium text-foreground flex items-center">
+                <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
+              </h4>
+              <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
+            </div>
             {tdsInfo && (
               <Badge
                 variant={tdsInfo.variant}
