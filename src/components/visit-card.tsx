@@ -119,10 +119,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       };
     } else if (tds > 500) {
       return {
-        message: "EPA MAXIMUM CONTAMINANT LEVEL. Techs may need to install a pre-filter! Salesperson must mention that there may be a need for more service calls @ $149 each visit.",
+        message: (
+          <div className="text-left text-xs">
+            <p className="font-semibold uppercase">Warning</p>
+            <p className="font-medium mt-0.5">EPA Maximum Contaminant Level Exceeded ({tds} PPM)</p>
+            <ul className="list-disc list-inside mt-1 space-y-0.5">
+              <li>Techs may need to install a pre-filter.</li>
+              <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
+            </ul>
+          </div>
+        ),
         variant: "destructive" as const,
-        icon: <ShieldAlert className="mr-1 h-3 w-3" />,
-        className: ""
+        icon: <ShieldAlert className="mr-1 h-4 w-4" />,
+        className: "items-start" 
       };
     }
     return {
@@ -227,7 +236,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </h4>
             <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
             {tdsInfo && (
-              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex items-center", tdsInfo.className)}>
+              <Badge 
+                variant={tdsInfo.variant} 
+                className={cn(
+                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex",
+                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start", // Adjust alignment for multi-line messages
+                  tdsInfo.className
+                )}
+              >
                 {tdsInfo.icon}
                 <span className="ml-1">{tdsInfo.message}</span>
               </Badge>
