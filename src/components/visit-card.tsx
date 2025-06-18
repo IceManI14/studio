@@ -166,9 +166,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </Badge>
         </div>
         <div className="flex-grow space-y-1">
-            <CardTitle className="font-headline text-xl text-primary flex items-center">
-                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-            </CardTitle>
+            <div className="flex justify-between items-baseline">
+                <CardTitle className="font-headline text-xl text-primary flex items-center">
+                    <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+                </CardTitle>
+                {visit.latitude && visit.longitude && (
+                    <p className="text-xs text-muted-foreground flex items-center ml-2 whitespace-nowrap">
+                        <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                    </p>
+                )}
+            </div>
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((starValue) => (
@@ -189,11 +196,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <CalendarDays className="mr-2 h-3 w-3" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
-            {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center">
-                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                </p>
-            )}
         </div>
         <div className="flex flex-col space-y-1 mt-2">
           <div className="flex items-center text-xs text-muted-foreground">
