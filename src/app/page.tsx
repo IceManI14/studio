@@ -405,6 +405,7 @@ export default function HomePage() {
       interestedUnit: undefined,
       hasTDSReading: false,
       tdsValue: undefined,
+      futureMeetingSet: false,
     });
     setIsVisitFormOpen(true);
   };
@@ -712,9 +713,7 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center space-y-4">
           <div className="flex flex-col items-center">
-            <div className="mb-2">
-              <Image src="/logo.png" alt="Optimum Logo" width={250} height={60} priority />
-            </div>
+            
             <h1
               className="text-4xl sm:text-5xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
