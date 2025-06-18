@@ -156,12 +156,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <div className="flex-grow">
+            <div className="flex-grow space-y-1">
+                {visit.visitNumber && (
+                  <Badge variant="outline" className="text-xs font-semibold px-1.5 py-0.5 self-start">
+                    <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                  </Badge>
+                )}
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
                     <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
                 </CardTitle>
                  {visit.latitude && visit.longitude && (
-                    <p className="text-xs text-muted-foreground flex items-center mt-1">
+                    <p className="text-xs text-muted-foreground flex items-center">
                         <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                     </p>
                 )}
@@ -206,16 +211,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue} PPM` : 'Yes (No Value)') : 'Not Yet'}
           </div>
         </div>
-        <CardDescription className="flex items-center justify-between text-sm mt-2">
+        <CardDescription className="flex items-center text-sm mt-2">
           <div className="flex items-center">
             <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
             {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
           </div>
-          {visit.visitNumber && (
-            <Badge variant="outline" className="ml-2 text-xs font-semibold px-1.5 py-0.5">
-              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-            </Badge>
-          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
@@ -358,4 +358,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
