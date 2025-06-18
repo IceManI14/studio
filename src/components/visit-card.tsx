@@ -155,16 +155,42 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex justify-between items-start mb-1">
-          {visit.visitNumber && (
-            <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5 self-start">
-              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-            </Badge>
+        {/* Centered Top Section for Confidence */}
+        <div className="flex flex-col items-center w-full mb-3">
+          <div className="flex justify-center items-center gap-2 flex-wrap mb-1">
+            {visit.visitNumber && (
+              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+              </Badge>
+            )}
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
+            )}
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
+                {starRatingBadge.text}
+              </Badge>
+            )}
+          </div>
+
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="flex justify-center items-center mt-1">
+              {[1, 2, 3, 4, 5].map((starValue) => (
+                <Star
+                  key={starValue}
+                  className={cn(
+                    "h-5 w-5", // Star icons
+                    starValue <= (visit.partnershipConfidence ?? 0)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-muted-foreground/50"
+                  )}
+                />
+              ))}
+            </div>
           )}
-          <Badge variant={starRatingBadge.variant} className="ml-auto whitespace-nowrap">
-              {starRatingBadge.text}
-          </Badge>
         </div>
+
+        {/* Company Info and Timestamp */}
         <div className="flex-grow space-y-1">
             <div className="flex justify-between items-baseline">
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
@@ -176,27 +202,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </p>
                 )}
             </div>
-             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <div className="flex items-center">
-                {[1, 2, 3, 4, 5].map((starValue) => (
-                  <Star
-                    key={starValue}
-                    className={cn(
-                      "h-4 w-4",
-                      starValue <= (visit.partnershipConfidence ?? 0)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-muted-foreground/50"
-                    )}
-                  />
-                ))}
-                 <span className="ml-2 text-xs text-muted-foreground">(Partnership Confidence)</span>
-              </div>
-            )}
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-3 w-3" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
         </div>
+
+        {/* Other Details Section */}
         <div className="flex flex-col space-y-1 mt-2">
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
