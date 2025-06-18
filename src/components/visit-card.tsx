@@ -135,7 +135,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-         <div className="flex items-center w-full justify-between">
+        <div className="flex items-center justify-between w-full mb-1">
           <div className="flex-none">
             {visit.visitNumber && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -143,7 +143,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </Badge>
             )}
           </div>
-          <div className="flex-grow"></div> {/* This will push the right-side badge to the far right */}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
+          )}
           <div className="flex-none">
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -152,12 +154,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
           </div>
         </div>
-      
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="w-full text-center mt-1">
-            <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
-          </div>
-        )}
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex justify-center items-center w-full mt-1">
@@ -194,7 +190,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
              {visit.interestedUnit && (
               <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
                 <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
-                  <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
+                   Unit of Interest: {visit.interestedUnit}
                 </h4>
               </div>
             )}
@@ -238,6 +234,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 layout="fill"
                 objectFit="contain"
                 className="rounded-md border"
+                data-ai-hint="business card"
               />
             </div>
           </div>
@@ -358,3 +355,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
