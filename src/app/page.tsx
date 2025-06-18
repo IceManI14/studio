@@ -734,7 +734,7 @@ export default function HomePage() {
             </div>
           )}
         </header>
-
+        
         {selectedSalesperson && (
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-3 p-3 bg-card rounded-lg shadow">
                 <h2 className="text-lg font-semibold text-foreground text-center">
@@ -755,7 +755,7 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                    <Button onClick={handleOpenAddVisitForm} size="sm" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
