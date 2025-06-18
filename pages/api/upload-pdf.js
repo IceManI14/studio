@@ -48,6 +48,9 @@ export default async (req, res) => {
       return res.status(400).json({ message: 'No PDF file provided in the upload. Ensure the FormData field name is "pdfFile".' });
     }
 
+    // Log details of the received file
+    console.log(`Received file for PDF upload: originalFilename='${file.originalFilename}', mimetype='${file.mimetype}', size=${file.size} bytes, tempPath='${file.filepath}'`);
+
     const allowedTypes = ['application/pdf'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
       if (responseSent) return;
@@ -98,7 +101,7 @@ export default async (req, res) => {
           res.status(500).json({
             message: 'PDF uploaded but failed to make public. Check bucket/object permissions and server logs.',
             details: makePublicError.message,
-            url: privateUrl, 
+            url: privateUrl,
             isPrivate: true
           });
         });
