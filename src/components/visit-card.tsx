@@ -121,8 +121,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       return {
         message: (
           <div className="text-left text-xs w-full">
-            <p className="font-semibold uppercase text-center text-base">Warning</p>
-            <p className="font-medium mt-0.5 text-center">EPA Maximum Contaminant Level Exceeded ({tds} PPM)</p>
+            <p className="font-semibold uppercase text-center text-base">Warning!!!!!!</p>
+            <p className="font-medium mt-0.5 text-center">
+              EPA Maximum Contaminant Level Exceeded
+            </p>
+            <p className="font-medium text-center">
+              ({tds} PPM)
+            </p>
             <ul className="list-disc list-inside mt-1 space-y-0.5">
               <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
               <li>Techs may need to install a pre-filter.</li>
