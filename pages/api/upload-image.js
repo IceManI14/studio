@@ -27,10 +27,14 @@ export default async (req, res) => {
   const bucketName = process.env.CLOUD_STORAGE_BUCKET_NAME;
 
   const form = formidable({ multiples: false });
+  let responseSent = false; // Flag to prevent multiple responses
 
   form.parse(req, async (err, fields, files) => {
+    if (responseSent) return;
+
     if (err) {
       console.error('Error parsing form data:', err);
+      responseSent = true;
       return res.status(500).json({ message: 'Error parsing uploaded file data.', details: err.message });
     }
 
@@ -38,13 +42,17 @@ export default async (req, res) => {
     const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
 
     if (!file) {
+      if (responseSent) return;
       console.warn('No image file uploaded in the "image" field.');
+      responseSent = true;
       return res.status(400).json({ message: 'No image file provided in the upload.' });
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
+      if (responseSent) return;
       console.warn(`Invalid file type attempt: ${file.mimetype}`);
+      responseSent = true;
       return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed. Received: ${file.mimetype}` });
     }
 
@@ -71,21 +79,28 @@ export default async (req, res) => {
     });
 
     blobStream.on('error', (uploadError) => {
+      if (responseSent) return;
       console.error('Error streaming image to Cloud Storage:', uploadError);
+      responseSent = true;
       res.status(500).json({ message: 'Failed to upload image to Cloud Storage. This could be a permission issue or network problem. Check server logs.', details: uploadError.message });
     });
 
     blobStream.on('finish', () => {
+      if (responseSent) return; 
       blob.makePublic()
         .then(() => {
+          if (responseSent) return;
           const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
           console.log(`Image uploaded successfully: ${publicUrl}`);
+          responseSent = true;
           res.status(200).json({ message: 'Image uploaded successfully', url: publicUrl });
         })
         .catch((makePublicError) => {
+          if (responseSent) return;
           console.error('Error making image public after upload:', makePublicError);
+          responseSent = true;
           const privateUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
-          res.status(500).json({ // Changed to 500 as making it public is often critical
+          res.status(500).json({ 
             message: 'Image uploaded but failed to make public. Check bucket/object permissions. The file might be in the bucket but not accessible via public URL.',
             details: makePublicError.message,
             url: privateUrl,
@@ -97,14 +112,18 @@ export default async (req, res) => {
     try {
       const readStream = fs.createReadStream(file.filepath);
       readStream.on('error', (readStreamError) => {
+        if (responseSent) return;
         console.error('Error reading file from temporary path:', readStreamError);
-        blobStream.end(); // Important to end blobStream if readStream fails
+        blobStream.end(); 
+        responseSent = true;
         res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message });
       });
       readStream.pipe(blobStream);
     } catch (pipeError) {
+      if (responseSent) return;
       console.error('Error setting up file stream pipe:', pipeError);
-      blobStream.end(); // Ensure stream is closed
+      blobStream.end(); 
+      responseSent = true;
       res.status(500).json({ message: 'Internal server error during file processing.', details: pipeError.message });
     }
   });
