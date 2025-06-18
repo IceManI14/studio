@@ -3,8 +3,8 @@
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
-import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords';
-import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow';
+import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords.ts';
+import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -165,12 +165,13 @@ export async function getCompanyNameFromCoordsAction(
             suggestedCompanyName: result.suggestedCompanyName, 
             confidenceScore: result.confidenceScore 
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error in getCompanyNameFromCoordsAction:", error);
         if (error instanceof z.ZodError) {
             return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
         }
-        return { error: 'Failed to suggest company name. An unexpected error occurred.' };
+        const errorMessage = error?.message ? `: ${error.message}` : '. An unexpected error occurred.';
+        return { error: `Failed to suggest company name${errorMessage}` };
     }
 }
 
