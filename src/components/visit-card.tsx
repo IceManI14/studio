@@ -143,9 +143,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </Badge>
             )}
           </div>
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
-          )}
+          <div className="flex-grow" /> {/* Spacer */}
           <div className="flex-none">
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -155,6 +153,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         </div>
 
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="text-center text-xs text-muted-foreground mt-1">
+                (Partnership Confidence)
+            </div>
+        )}
+        
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex justify-center items-center w-full mt-1">
             {[1, 2, 3, 4, 5].map((starValue) => (
@@ -355,4 +359,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
