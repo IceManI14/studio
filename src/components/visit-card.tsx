@@ -142,9 +142,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
           
-          <div className="flex-grow flex justify-center items-center">
-             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <div className="flex">
+          {/* Stars and Label Group - Centered */}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
+            <div className="flex flex-col items-center flex-grow">
+              <div className="flex"> {/* Star Icons */}
                 {[1, 2, 3, 4, 5].map((starValue) => (
                   <Star
                     key={starValue}
@@ -157,8 +158,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   />
                 ))}
               </div>
-            )}
-          </div>
+              <div className="text-xs text-muted-foreground mt-1"> {/* Label */}
+                (Partnership Confidence)
+              </div>
+            </div>
+          ) : (
+            <div className="flex-grow"></div> /* Spacer if no stars/label */
+          )}
             
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
              <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border-accent hover:bg-accent/90">
@@ -166,14 +172,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
-
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-             <div className="text-center text-xs text-muted-foreground mt-1 mb-2">
-                (Partnership Confidence)
-            </div>
-        )}
         
-        <div className="flex justify-between items-start w-full mb-1">
+        {/* Company Name and Location Info */}
+        <div className="flex justify-between items-start w-full mt-2"> {/* Added mt-2 for spacing from stars/label group */}
           <CardTitle className="font-headline text-xl text-primary flex items-center">
               <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
           </CardTitle>
@@ -184,6 +185,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </div>
         
+        {/* Date and Unit of Interest */}
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
