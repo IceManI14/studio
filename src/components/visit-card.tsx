@@ -138,7 +138,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         ),
         variant: "destructive" as const,
         icon: <ShieldAlert className="mr-1 h-4 w-4" />,
-        className: "items-start" 
+        className: "items-start"
       };
     }
     return {
@@ -155,16 +155,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        {/* Centered Top Section for Confidence */}
         <div className="flex flex-col items-center w-full mb-3">
           <div className="flex justify-between items-center w-full mb-1">
             {visit.visitNumber && (
-              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5 self-start">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
-            )}
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
             )}
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
@@ -179,7 +175,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Star
                   key={starValue}
                   className={cn(
-                    "h-5 w-5", // Star icons
+                    "h-5 w-5",
                     starValue <= (visit.partnershipConfidence ?? 0)
                       ? "text-yellow-400 fill-yellow-400"
                       : "text-muted-foreground/50"
@@ -188,9 +184,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               ))}
             </div>
           )}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <span className="text-xs text-muted-foreground mt-1">(Partnership Confidence)</span>
+          )}
         </div>
 
-        {/* Company Info and Timestamp */}
         <div className="flex-grow space-y-1">
             <div className="flex justify-between items-baseline">
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
@@ -202,13 +200,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </p>
                 )}
             </div>
-            <div className="flex items-center text-sm text-muted-foreground">
-                <CalendarDays className="mr-2 h-3 w-3" />
+             <div className="flex items-center text-sm text-muted-foreground">
+                <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
         </div>
 
-        {/* Other Details Section */}
         <div className="flex flex-col space-y-1 mt-2">
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -264,8 +261,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <Badge
                 variant={tdsInfo.variant}
                 className={cn(
-                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex", 
-                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start", 
+                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex",
+                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
                   tdsInfo.className
                 )}
               >
