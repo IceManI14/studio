@@ -135,7 +135,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex items-center w-full">
+         <div className="flex items-center w-full justify-between">
           <div className="flex-none">
             {visit.visitNumber && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -143,7 +143,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </Badge>
             )}
           </div>
-          <div className="flex-grow"></div> {/* Spacer */}
+          <div className="flex-grow"></div> {/* This will push the right-side badge to the far right */}
           <div className="flex-none">
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
@@ -174,24 +174,24 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             ))}
           </div>
         )}
-
+        
         <div className="flex justify-between items-start w-full mt-2">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2">
+                <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2 text-right">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
         </div>
-        
+
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
-            {visit.interestedUnit && (
+             {visit.interestedUnit && (
               <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
                 <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
                   <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
@@ -270,7 +270,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         {visit.contactInfo?.info && (
           <div className="p-2 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Info className="mr-2 h-4 w-4 text-primary" /> Contact Info
+              <Info className="mr-2 h-4 w-4 text-primary" /> Decision Maker Info
             </h4>
             <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.contactInfo.info}</p>
           </div>
