@@ -119,9 +119,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       };
     } else if (tds > 500) {
       return { 
-        message: "EPA MAXIMUM CONTAMINANT LEVEL. Techs may need to install a pre-filter! Salesperson must mention that there may be a need for more service calls @ $149 each visit.", 
+        message: (
+          <div className="text-left">
+            <p className="mb-0.5">• EPA MAXIMUM CONTAMINANT LEVEL.</p>
+            <p className="mb-0.5">• Techs may need to install a pre-filter!</p>
+            <p>• Salesperson must mention that there may be a need for more service calls @ $149 each visit.</p>
+          </div>
+        ), 
         variant: "destructive" as const, 
-        icon: <ShieldAlert className="mr-1 h-3 w-3" />,
+        icon: <ShieldAlert className="mr-1 h-3 w-3 self-start mt-0.5" />, // Adjusted icon alignment
         className: "" // Destructive variant handles its own styling
       };
     }
@@ -227,9 +233,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </h4>
             <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
             {tdsInfo && (
-              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5", tdsInfo.className)}>
+              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex items-start", tdsInfo.className)}>
                 {tdsInfo.icon}
-                {tdsInfo.message}
+                <span className="ml-1">{tdsInfo.message}</span>
               </Badge>
             )}
           </div>
