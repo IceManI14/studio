@@ -57,26 +57,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const hasDecisionMakerInfo = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact;
 
-  const getStarRatingBadgeInfo = () => {
-    const pConfidence = visit.partnershipConfidence ?? 0;
-    let text = "Not Rated";
-    let variant: "default" | "outline" | "secondary" = "secondary";
-
-    if (pConfidence >= 1 && pConfidence <= 5) {
-      text = `${pConfidence} Star${pConfidence > 1 ? 's' : ''}`;
-      if (pConfidence >= 4) {
-        variant = "default";
-      } else if (pConfidence === 3) {
-        variant = "outline";
-      } else {
-        variant = "secondary";
-      }
-    }
-    return { text, variant };
-  };
-
-  const starRatingBadge = getStarRatingBadgeInfo();
-
   const getTDSInfo = () => {
     if (!visit.hasTDSReading || typeof visit.tdsValue !== 'number') {
       return null;
@@ -155,15 +135,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex flex-col items-center w-full">
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="w-full text-center mb-1">
+        {visit.visitNumber && (
+          <div className="self-start"> {/* Top-left aligned */}
+            <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+            </Badge>
+          </div>
+        )}
+      
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+          <div className="flex flex-col items-center w-full">
+            <div className="w-full text-center">
               <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
             </div>
-          )}
-          
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex justify-center items-center w-full">
+            <div className="flex justify-center items-center w-full mt-1">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
                   key={starValue}
@@ -176,47 +161,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 />
               ))}
             </div>
-          )}
-
-          <div className="flex justify-between items-center w-full mt-1">
-            {visit.visitNumber && (
-              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
-            )}
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
-                {starRatingBadge.text}
-              </Badge>
-            )}
           </div>
-        </div>
+        )}
 
-        <div className="flex-grow space-y-1 mt-2">
-            <div className="flex justify-between items-baseline">
-                <CardTitle className="font-headline text-xl text-primary flex items-center">
-                    <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-                </CardTitle>
-                {visit.latitude && visit.longitude && (
-                    <p className="text-xs text-muted-foreground flex items-center ml-2 whitespace-nowrap">
-                        <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                    </p>
-                )}
-            </div>
+        <div className="flex flex-col items-center space-y-1 w-full"> {/* Company Name, Date, Location, Interested Unit */}
+            <CardTitle className="font-headline text-xl text-primary flex items-center">
+                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+            </CardTitle>
+            {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
              <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
             {visit.interestedUnit && (
               <div className="p-2 bg-green-500/10 rounded-md border border-green-500/30">
-                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center">
+                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
                   <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
                 </h4>
               </div>
             )}
         </div>
 
-        <div className="flex flex-col space-y-1 mt-2">
+        <div className="flex flex-col space-y-1"> {/* Competitors, Biz Card, TDS, Meeting Set */}
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             {getCompetitorDisplay()}
@@ -374,3 +344,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
