@@ -713,7 +713,6 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center space-y-4">
           <div className="flex flex-col items-center">
-            
             <h1
               className="text-4xl sm:text-5xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -736,6 +735,14 @@ export default function HomePage() {
           )}
         </header>
 
+        {selectedSalesperson && (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-3 p-3 bg-card rounded-lg shadow">
+                <h2 className="text-lg font-semibold text-foreground text-center">
+                    Welcome {selectedSalesperson.name}! Good Luck Today!
+                </h2>
+            </div>
+        )}
+
         <Tabs defaultValue="field-day" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6 border bg-transparent p-1 rounded-md">
             <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
@@ -747,11 +754,6 @@ export default function HomePage() {
 
           <TabsContent value="field-day">
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-3 p-3 bg-card rounded-lg shadow">
-                    <h2 className="text-lg font-semibold text-foreground text-center">
-                      Welcome {selectedSalesperson.name}! Good Luck Today!
-                    </h2>
-                </div>
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleOpenAddVisitForm} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
