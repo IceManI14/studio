@@ -4,8 +4,8 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, CalendarIcon } from 'lucide-react';
-import { format, formatInTimeZone } from 'date-fns-tz';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
@@ -162,7 +162,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
             )}
-             {/* Spacer to push visit number to left and rating badge to right if both exist, else they center if only one exists */}
             {(visit.visitNumber && visit.partnershipConfidence && visit.partnershipConfidence > 0) && <div className="flex-grow"></div>}
             
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
@@ -194,7 +193,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </div>
 
-        <div className="flex-grow space-y-1 mt-2">
+        <div className="flex-grow space-y-1 mt-0">
             <div className="flex justify-between items-baseline">
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
                     <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -209,6 +208,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
             </div>
+            {visit.interestedUnit && (
+              <div className="p-2 bg-green-500/10 rounded-md border border-green-500/30">
+                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-1">
+                  <PackageCheck className="mr-2 h-4 w-4" /> Potential Unit Interest
+                </h4>
+                <p className="text-green-600 dark:text-green-300 text-sm">{visit.interestedUnit}</p>
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col space-y-1 mt-2">
@@ -298,15 +305,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {visit.interestedUnit && (
-          <div className="p-3 bg-green-500/10 rounded-md border border-green-500/30">
-            <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-1">
-              <PackageCheck className="mr-2 h-4 w-4" /> Potential Unit Interest
-            </h4>
-            <p className="text-green-600 dark:text-green-300">{visit.interestedUnit}</p>
-          </div>
-        )}
-
         {visit.notes && (
            <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -378,3 +376,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
