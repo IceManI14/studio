@@ -55,7 +55,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return 'Competitors Not Discussed';
   };
 
-  const hasDecisionMakerInfo = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact;
+  const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || visit.contactInfo?.info;
+
 
   const getTDSInfo = () => {
     if (!visit.hasTDSReading || typeof visit.tdsValue !== 'number') {
@@ -156,6 +157,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 />
               ))}
             </div>
+             <div className="text-center text-xs text-muted-foreground mt-1">
+                (Partnership Confidence)
+            </div>
           </div>
             
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
@@ -165,11 +169,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
 
-        <div className="text-center text-xs text-muted-foreground mt-0 mb-2">
-            (Partnership Confidence)
-        </div>
-        
-        <div className="flex justify-between items-start w-full">
+        <div className="flex justify-between items-start w-full mt-2">
           <CardTitle className="font-headline text-xl text-primary flex items-center">
               <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
           </CardTitle>
@@ -279,23 +279,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {visit.contactInfo?.info && (
-          <div className="p-2 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Info className="mr-2 h-4 w-4 text-primary" /> Decision Maker Info
-            </h4>
-            <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.contactInfo.info}</p>
-          </div>
-        )}
-
-        {hasDecisionMakerInfo && (
+        {hasDecisionMakerDetails && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
             </h4>
             {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
             {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-            {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
+            {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
+            {visit.contactInfo?.info && visit.contactInfo.info !== visit.decisionMakerContact &&
+              <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+            }
+            {visit.contactInfo?.info && !visit.decisionMakerContact &&
+              <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+            }
           </div>
         )}
 
@@ -353,4 +350,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
