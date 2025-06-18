@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -110,6 +110,7 @@ const visitFormSchema = z.object({
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+  futureMeetingSet: z.boolean().optional(), // New field
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false; 
@@ -171,6 +172,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: undefined,
       hasTDSReading: false,
       tdsValue: undefined,
+      futureMeetingSet: false, // New field
     },
   });
 
@@ -199,6 +201,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: initialData.interestedUnit || undefined,
         hasTDSReading: initialData.hasTDSReading || false,
         tdsValue: initialData.tdsValue,
+        futureMeetingSet: initialData.futureMeetingSet || false, // New field
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -221,6 +224,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
+        futureMeetingSet: false, // New field
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -427,6 +431,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
       hasTDSReading: data.hasTDSReading,
       tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
+      futureMeetingSet: data.futureMeetingSet, // New field
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -733,6 +738,27 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="futureMeetingSet"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="futureMeetingSet"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="futureMeetingSet" className="cursor-pointer font-normal flex items-center">
+                      <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
 
 
             <FormField

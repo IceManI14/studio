@@ -28,6 +28,7 @@ export interface SaveVisitPayload {
   interestedUnit?: string; // Unit the company is potentially interested in
   hasTDSReading?: boolean;
   tdsValue?: number;
+  futureMeetingSet?: boolean; // New field
   // For updates, to know if critical fields changed
   originalCompanyName?: string;
   originalNotes?: string;
@@ -55,6 +56,7 @@ const saveVisitPayloadSchema = z.object({
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+  futureMeetingSet: z.boolean().optional(), // New field
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -135,6 +137,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       interestedUnit: validatedPayload.interestedUnit,
       hasTDSReading: validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
+      futureMeetingSet: validatedPayload.futureMeetingSet, // New field
     };
 
     return { visit };
