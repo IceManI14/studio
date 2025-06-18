@@ -137,13 +137,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader>
         <div className="flex justify-between items-center w-full mb-1">
           {visit.visitNumber ? (
-            <Badge variant="outline" className="text-base font-semibold px-1.5 py-0.5">
+            <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
               <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
           
           <div className="flex-grow flex justify-center items-center">
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((starValue) => (
                   <Star
@@ -161,18 +161,18 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
             
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-             <Badge className="text-base font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border-accent hover:bg-accent/90">
+             <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border-accent hover:bg-accent/90">
               {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="text-center text-xs text-muted-foreground mt-1 mb-2">
+             <div className="text-center text-xs text-muted-foreground mt-1 mb-2">
                 (Partnership Confidence)
             </div>
         )}
-
+        
         <div className="flex justify-between items-start w-full mb-1">
           <CardTitle className="font-headline text-xl text-primary flex items-center">
               <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
