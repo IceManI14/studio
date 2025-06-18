@@ -157,7 +157,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader>
         {/* Centered Top Section for Confidence */}
         <div className="flex flex-col items-center w-full mb-3">
-          <div className="flex justify-center items-center gap-2 flex-wrap mb-1">
+          <div className="flex justify-between items-center w-full mb-1">
             {visit.visitNumber && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
@@ -231,11 +231,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
            <div className="flex items-center text-xs text-muted-foreground">
             {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
-            {visit.futureMeetingSet && visit.futureMeetingDate && (
-              <span className="ml-1 flex items-center text-green-600 dark:text-green-400">
-                 (<CalendarIcon className="h-3 w-3 mr-1" /> {format(new Date(visit.futureMeetingDate), 'MMM d, yyyy')})
-              </span>
-            )}
           </div>
         </div>
       </CardHeader>
@@ -381,3 +376,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
