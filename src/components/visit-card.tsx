@@ -154,12 +154,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="text-center text-xs text-muted-foreground mt-1">
-                (Partnership Confidence)
-            </div>
-        )}
-        
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex justify-center items-center w-full mt-1">
             {[1, 2, 3, 4, 5].map((starValue) => (
               <Star
@@ -173,6 +167,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               />
             ))}
           </div>
+        )}
+        
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="text-center text-xs text-muted-foreground mt-1">
+                (Partnership Confidence)
+            </div>
         )}
         
         <div className="flex justify-between items-start w-full mt-2">
