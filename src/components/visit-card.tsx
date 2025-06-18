@@ -120,9 +120,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     } else if (tds > 500) {
       return {
         message: (
-          <div className="text-left text-xs">
-            <p className="font-semibold uppercase">Warning</p>
-            <p className="font-medium mt-0.5">EPA Maximum Contaminant Level Exceeded ({tds} PPM)</p>
+          <div className="text-left text-xs w-full">
+            <p className="font-semibold uppercase text-center text-base">Warning</p>
+            <p className="font-medium mt-0.5 text-center">EPA Maximum Contaminant Level Exceeded ({tds} PPM)</p>
             <ul className="list-disc list-inside mt-1 space-y-0.5">
               <li>Techs may need to install a pre-filter.</li>
               <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
@@ -131,7 +131,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         ),
         variant: "destructive" as const,
         icon: <ShieldAlert className="mr-1 h-4 w-4" />,
-        className: "items-start" 
+        className: "items-start"
       };
     }
     return {
@@ -236,11 +236,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </h4>
             <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
             {tdsInfo && (
-              <Badge 
-                variant={tdsInfo.variant} 
+              <Badge
+                variant={tdsInfo.variant}
                 className={cn(
                   "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex",
-                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start", // Adjust alignment for multi-line messages
+                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start", 
                   tdsInfo.className
                 )}
               >
