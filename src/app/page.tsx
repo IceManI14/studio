@@ -754,12 +754,12 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="outline" size="sm" className="shadow-md hover:shadow-lg transition-shadow">
+                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="shadow-md hover:shadow-lg transition-shadow">
+                        <Button variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow">
                           <Sunset className="mr-2 h-5 w-5" /> End Day!
                         </Button>
                       </AlertDialogTrigger>
