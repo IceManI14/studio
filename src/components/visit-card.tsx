@@ -155,25 +155,25 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex justify-between items-start">
-            <div className="flex-grow space-y-1">
-                {visit.visitNumber && (
-                  <Badge variant="outline" className="text-xs font-semibold px-1.5 py-0.5 self-start">
-                    <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-                  </Badge>
-                )}
-                <CardTitle className="font-headline text-xl text-primary flex items-center">
-                    <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-                </CardTitle>
-                 {visit.latitude && visit.longitude && (
-                    <p className="text-xs text-muted-foreground flex items-center">
-                        <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                    </p>
-                )}
-            </div>
-            <Badge variant={starRatingBadge.variant} className="ml-2 whitespace-nowrap">
-                {starRatingBadge.text}
+        <div className="flex justify-between items-start mb-1">
+          {visit.visitNumber && (
+            <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5 self-start">
+              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
             </Badge>
+          )}
+          <Badge variant={starRatingBadge.variant} className="ml-auto whitespace-nowrap">
+              {starRatingBadge.text}
+          </Badge>
+        </div>
+        <div className="flex-grow space-y-1">
+            <CardTitle className="font-headline text-xl text-primary flex items-center">
+                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+            </CardTitle>
+              {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
         </div>
         <div className="flex flex-col space-y-1 mt-1">
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
