@@ -135,15 +135,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex items-center w-full mb-1">
+         <div className="flex justify-between items-center w-full mb-1">
           {visit.visitNumber ? (
             <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
               <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
             </Badge>
-          ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>} {/* Ensure space if no visit number */}
+          ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
 
           <div className="flex-grow flex justify-center items-center">
-              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((starValue) => (
                   <Star
@@ -161,19 +161,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
             
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-            <Badge variant="outline" className="text-base font-semibold px-1.5 py-0.5">
+             <Badge className="text-base font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border-accent hover:bg-accent/90">
               {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
             </Badge>
-          ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>} {/* Ensure space if no star badge */}
+          ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="text-center text-xs text-muted-foreground mt-1">
+            <div className="text-center text-xs text-muted-foreground mt-1 mb-2">
                 (Partnership Confidence)
             </div>
         )}
         
-        <div className="flex justify-between items-start w-full mt-2">
+        <div className="flex justify-between items-start w-full">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
@@ -184,7 +184,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
         </div>
 
-        <div className="flex flex-col items-start space-y-1 w-full mt-1"> {/* Changed items-center to items-start */}
+        <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
