@@ -135,47 +135,44 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        {/* TOP LINE: Visit Number (left) --- Stars (center) --- Star Count Badge (right) */}
         <div className="flex items-center w-full mb-1">
-            {visit.visitNumber ? (
-              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
-            ) : <div className="w-auto px-1.5 py-0.5"></div> /* Spacer for alignment if no visit number */}
+          {visit.visitNumber ? (
+            <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+            </Badge>
+          ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>} {/* Ensure space if no visit number */}
 
-            <div className="flex-grow flex justify-center items-center">
-                 {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((starValue) => (
-                      <Star
-                        key={starValue}
-                        className={cn(
-                          "h-5 w-5",
-                          starValue <= (visit.partnershipConfidence ?? 0)
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-muted-foreground/50"
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
-            </div>
+          <div className="flex-grow flex justify-center items-center">
+              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((starValue) => (
+                  <Star
+                    key={starValue}
+                    className={cn(
+                      "h-5 w-5",
+                      starValue <= (visit.partnershipConfidence ?? 0)
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
             
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-              <Badge variant="outline" className="text-base font-semibold px-1.5 py-0.5">
-                {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
-              </Badge>
-            ) : <div className="w-auto px-1.5 py-0.5"></div> /* Spacer for alignment if no star badge */}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
+            <Badge variant="outline" className="text-base font-semibold px-1.5 py-0.5">
+              {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
+            </Badge>
+          ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>} {/* Ensure space if no star badge */}
         </div>
 
-        {/* (Partnership Confidence) LABEL - centered below stars */}
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
             <div className="text-center text-xs text-muted-foreground mt-1">
                 (Partnership Confidence)
             </div>
         )}
         
-        {/* Company Name (left) and Location Info (right) */}
         <div className="flex justify-between items-start w-full mt-2">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -187,9 +184,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
         </div>
 
-
-        {/* Date, Unit of Interest - This block is now centered */}
-        <div className="flex flex-col items-center space-y-1 w-full mt-1">
+        <div className="flex flex-col items-start space-y-1 w-full mt-1"> {/* Changed items-center to items-start */}
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
@@ -203,7 +198,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
         </div>
 
-        {/* Other boolean checks - aligned left */}
         <div className="flex flex-col items-start space-y-1 mt-3">
           <div className="flex items-center text-xs text-muted-foreground">
             {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
