@@ -4,8 +4,8 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
-import { formatInTimeZone } from 'date-fns-tz';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Image as ImageIcon, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, CalendarIcon } from 'lucide-react';
+import { format, formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
@@ -214,9 +214,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `${visit.tdsValue} PPM` : 'Yes (No Value)') : 'Not Yet'}
           </div>
-          <div className="flex items-center text-xs text-muted-foreground">
-            {visit.futureMeetingSet ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+           <div className="flex items-center text-xs text-muted-foreground">
+            {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
             Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
+            {visit.futureMeetingSet && visit.futureMeetingDate && (
+              <span className="ml-1 flex items-center text-green-600 dark:text-green-400">
+                 (<CalendarIcon className="h-3 w-3 mr-1" /> {format(new Date(visit.futureMeetingDate), 'MMM d, yyyy')})
+              </span>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -316,11 +321,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         )}
 
         {visit.notesSummary && (
-          <div className="p-3 bg-accent/10 rounded-md border border-accent/50">
+          <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-primary flex items-center mb-1">
               <Sparkles className="mr-2 h-4 w-4" /> Notes Summary
             </h4>
-            <p className="text-accent/75 whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+            <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
           </div>
         )}
         {!visit.notesSummary && visit.notes && (
