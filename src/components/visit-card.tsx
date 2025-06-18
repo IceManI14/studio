@@ -150,7 +150,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
           </div>
           <div className="flex-none">
-            {/* Spacer to balance the badge, if badge exists and label exists. Width should ideally match badge. */}
             {visit.visitNumber && visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
                <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5 invisible">
                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
@@ -176,11 +175,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {/* Company Name, Date, Location, Interested Unit - aligned left below stars */}
-        <div className="flex flex-col items-start space-y-1 w-full mt-2">
+        {/* Company Name (left) and Lat/Lng (right) */}
+        <div className="flex justify-between items-center w-full mt-2">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
+            {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
+        </div>
+
+        {/* Date, Interested Unit - aligned left below Company/LatLng line */}
+        <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
@@ -191,11 +199,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
                 </h4>
               </div>
-            )}
-            {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                </p>
             )}
         </div>
 
@@ -358,3 +361,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
