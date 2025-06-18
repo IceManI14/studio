@@ -124,8 +124,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <p className="font-semibold uppercase text-center text-base">Warning</p>
             <p className="font-medium mt-0.5 text-center">EPA Maximum Contaminant Level Exceeded ({tds} PPM)</p>
             <ul className="list-disc list-inside mt-1 space-y-0.5">
-              <li>Techs may need to install a pre-filter.</li>
               <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
+              <li>Techs may need to install a pre-filter.</li>
             </ul>
           </div>
         ),
@@ -351,3 +351,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
