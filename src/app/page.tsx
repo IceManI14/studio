@@ -116,6 +116,9 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+        return; // Don't run on server
+    }
     const storedSalespersonId = localStorage.getItem(SELECTED_SALESPERSON_ID_KEY);
     if (storedSalespersonId) {
       const foundSalesperson = SALESPEOPLE.find(s => s.id === storedSalespersonId);
@@ -128,6 +131,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+        return; // Don't run on server
+    }
+
     if (!selectedSalesperson) {
       setVisits([]); 
       setSubmittedSuggestions([]); 
@@ -238,7 +245,7 @@ export default function HomePage() {
   }, [selectedSalesperson, toast]);
 
   useEffect(() => {
-    if (!selectedSalesperson) return;
+    if (typeof window === 'undefined' || !selectedSalesperson) return;
     const visitsStorageKey = getVisitsStorageKey();
     if (!visitsStorageKey) return;
 
@@ -267,7 +274,7 @@ export default function HomePage() {
   }, [visits, coldCallCount, selectedSalesperson, toast]);
 
   useEffect(() => {
-    if (!selectedSalesperson) return;
+    if (typeof window === 'undefined' || !selectedSalesperson) return;
     const coldCallCountStorageKey = getColdCallCountStorageKey();
     if (!coldCallCountStorageKey) return;
     localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
@@ -369,7 +376,9 @@ export default function HomePage() {
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
-    localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
+    }
     setColdCallCount(0); 
     setIsVisitFormOpen(false);
     setCurrentEditingVisit(undefined);
@@ -442,12 +451,14 @@ export default function HomePage() {
     const numberOfVisits = visits.length;
     setColdCallCount(0);
     const coldCallCountStorageKey = getColdCallCountStorageKey();
-    if (coldCallCountStorageKey) {
+    if (coldCallCountStorageKey && typeof window !== 'undefined') {
       localStorage.setItem(coldCallCountStorageKey, '0');
     }
     const today = new Date().toISOString().split('T')[0];
     const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson?.id}_${today}`;
-    localStorage.removeItem(milestoneKey);
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem(milestoneKey);
+    }
 
     toast({
       title: "Field Day Ended",
@@ -467,7 +478,7 @@ export default function HomePage() {
     }
 
     const suggestionsStorageKey = getSuggestionsStorageKey();
-    if (suggestionsStorageKey) {
+    if (suggestionsStorageKey && typeof window !== 'undefined') {
       const newSuggestionObject: SubmittedSuggestion = {
         text: suggestionText.trim(),
         salespersonName: selectedSalesperson.name,
@@ -518,7 +529,9 @@ export default function HomePage() {
     });
     const gmailLink = `${gmailBaseUrl}&${params.toString()}`;
     
-    window.open(gmailLink, '_blank');
+    if (typeof window !== 'undefined') {
+        window.open(gmailLink, '_blank');
+    }
   };
 
   const handleEmailChris = () => {
@@ -565,7 +578,9 @@ export default function HomePage() {
     });
     const gmailLink = `${gmailBaseUrl}&${params.toString()}`;
     
-    window.open(gmailLink, '_blank');
+    if (typeof window !== 'undefined') {
+        window.open(gmailLink, '_blank');
+    }
 
     toast({
       title: "Opening Gmail...",
