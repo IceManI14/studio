@@ -162,7 +162,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
             )}
-            {(visit.visitNumber && visit.partnershipConfidence && visit.partnershipConfidence > 0) && <div className="flex-grow"></div>}
             
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
@@ -210,10 +209,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
             {visit.interestedUnit && (
               <div className="p-2 bg-green-500/10 rounded-md border border-green-500/30">
-                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-1">
-                  <PackageCheck className="mr-2 h-4 w-4" /> Potential Unit Interest
+                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-0.5">
+                  <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
                 </h4>
-                <p className="text-green-600 dark:text-green-300 text-sm">{visit.interestedUnit}</p>
               </div>
             )}
         </div>
@@ -334,7 +332,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         {visit.notesSummary && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Sparkles className="mr-2 h-4 w-4" /> Notes Summary
+              <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
             </h4>
             <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
           </div>
