@@ -162,7 +162,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
             )}
-            
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <span className="text-xs text-muted-foreground">
+                (Partnership Confidence)
+              </span>
+            )}
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
                 {starRatingBadge.text}
@@ -185,14 +189,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               ))}
             </div>
           )}
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <span className="text-xs text-muted-foreground">
-              (Partnership Confidence)
-            </span>
-          )}
         </div>
 
-        <div className="flex-grow space-y-1 mt-0">
+        <div className="flex-grow space-y-1 mt-2">
             <div className="flex justify-between items-baseline">
                 <CardTitle className="font-headline text-xl text-primary flex items-center">
                     <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
