@@ -155,29 +155,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        {/* Partnership Confidence text at the top */}
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="w-full text-center mb-1">
-            <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
-          </div>
-        )}
-
         <div className="flex flex-col items-center w-full">
-          {/* Line for Visit # and Star Rating Badge */}
-          <div className="flex justify-between items-center w-full mb-1">
-            {visit.visitNumber && (
-              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
-            )}
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
-                {starRatingBadge.text}
-              </Badge>
-            )}
-          </div>
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="w-full text-center mb-1">
+              <span className="text-xs text-muted-foreground">(Partnership Confidence)</span>
+            </div>
+          )}
           
-          {/* Star Icons */}
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
             <div className="flex justify-center items-center w-full">
               {[1, 2, 3, 4, 5].map((starValue) => (
@@ -193,6 +177,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               ))}
             </div>
           )}
+
+          <div className="flex justify-between items-center w-full mt-1">
+            {visit.visitNumber && (
+              <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
+                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+              </Badge>
+            )}
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <Badge variant={starRatingBadge.variant} className="whitespace-nowrap">
+                {starRatingBadge.text}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex-grow space-y-1 mt-2">
@@ -212,7 +209,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
             {visit.interestedUnit && (
               <div className="p-2 bg-green-500/10 rounded-md border border-green-500/30">
-                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center mb-0.5">
+                <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center">
                   <PackageCheck className="mr-2 h-4 w-4" /> Unit of Interest: {visit.interestedUnit}
                 </h4>
               </div>
