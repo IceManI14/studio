@@ -47,7 +47,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
 
       if (latestVisit.latitude !== undefined && latestVisit.longitude !== undefined) {
         setMapCenter({ lat: latestVisit.latitude, lng: latestVisit.longitude });
-        setZoomLevel(25); // Zoom in on the latest pin
+        setZoomLevel(20); // Zoom in on the latest pin
       } else {
         // Fallback if latest visit somehow has no coords (should be filtered by validVisits)
         // Or if all visits are at the exact same time (edge case), it takes the first one.
@@ -55,7 +55,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
         const firstValidVisitWithCoords = validVisits.find(v => v.latitude !== undefined && v.longitude !== undefined);
         if (firstValidVisitWithCoords) {
             setMapCenter({lat: firstValidVisitWithCoords.latitude!, lng: firstValidVisitWithCoords.longitude!});
-            setZoomLevel(25); // Zoom in on the pin
+            setZoomLevel(20); // Zoom in on the pin
         } else {
             setMapCenter(defaultCenter);
             setZoomLevel(4);
