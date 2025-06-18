@@ -541,10 +541,9 @@ export default function HomePage() {
     }
 
     const chrisEmail = "chrisc@drinkoptimum.com";
-    const currentDate = format(new Date(), 'MMMM d, yyyy');
-    const subject = `Visits for the day! - ${selectedSalesperson.name} - ${currentDate}`;
+    const subject = `Salesperson for the current day visits`; // Updated subject line
     
-    let body = `Hello Chris,\n\nHere is the daily route information for ${selectedSalesperson.name} for ${currentDate}.\n\n`;
+    let body = `Hello Chris,\n\nPlease find the visit data for ${selectedSalesperson.name} for the current day.\n\n`;
     body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
     body += `A summary is also included below:\n\n`;
     
