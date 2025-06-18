@@ -135,16 +135,35 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex items-center justify-between w-full mb-1">
-          <div className="flex-none">
+        {/* TOP LINE: Visit Number (left) --- Stars (center) --- Star Count Badge (right) */}
+        <div className="flex items-center w-full mb-1">
+          <div className="flex-none w-1/4"> {/* Allocate some space for left badge */}
             {visit.visitNumber && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
             )}
           </div>
-          <div className="flex-grow" /> {/* Spacer */}
-          <div className="flex-none">
+
+          <div className="flex-grow flex justify-center items-center"> {/* Stars container */}
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <div className="flex"> {/* Inner flex for stars themselves */}
+                {[1, 2, 3, 4, 5].map((starValue) => (
+                  <Star
+                    key={starValue}
+                    className={cn(
+                      "h-5 w-5",
+                      starValue <= (visit.partnershipConfidence ?? 0)
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-none w-1/4 flex justify-end"> {/* Allocate space and align right badge */}
             {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
               <Badge variant="outline" className="text-sm font-semibold px-1.5 py-0.5">
                 {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
@@ -153,39 +172,26 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         </div>
 
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex justify-center items-center w-full mt-1">
-            {[1, 2, 3, 4, 5].map((starValue) => (
-              <Star
-                key={starValue}
-                className={cn(
-                  "h-5 w-5",
-                  starValue <= (visit.partnershipConfidence ?? 0)
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-muted-foreground/50"
-                )}
-              />
-            ))}
-          </div>
-        )}
-        
+        {/* (Partnership Confidence) LABEL - remains below the top line */}
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
             <div className="text-center text-xs text-muted-foreground mt-1">
                 (Partnership Confidence)
             </div>
         )}
         
+        {/* Company Name and Location Info */}
         <div className="flex justify-between items-start w-full mt-2">
-            <CardTitle className="font-headline text-xl text-primary flex items-center">
-                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-            </CardTitle>
-            {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2 text-right">
-                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                </p>
-            )}
+          <CardTitle className="font-headline text-xl text-primary flex items-center">
+              <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+          </CardTitle>
+          {visit.latitude && visit.longitude && (
+              <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2 text-right">
+                  <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+              </p>
+          )}
         </div>
 
+        {/* Date, Unit of Interest */}
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
