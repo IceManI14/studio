@@ -246,8 +246,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         )}
 
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
-           <div className="p-3 bg-secondary/30 rounded-md">
-            <div className="flex justify-between items-center mb-1">
+           <div className="p-2 bg-secondary/30 rounded-md text-center">
+            <div className="flex justify-center items-center space-x-2 mb-1">
               <h4 className="font-medium text-foreground flex items-center">
                 <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
               </h4>
@@ -257,7 +257,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <Badge
                 variant={tdsInfo.variant}
                 className={cn(
-                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex",
+                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex", 
                   typeof tdsInfo.message === 'string' ? "items-center" : "items-start", 
                   tdsInfo.className
                 )}
@@ -369,4 +369,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
