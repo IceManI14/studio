@@ -14,12 +14,12 @@ export const config = {
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests for file uploads. Check client-side request method.`);
-    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
+    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests. Origin: ${req.headers.referer || 'Unknown'}`);
+    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted for image uploads.' });
   }
 
   if (!process.env.GCP_PROJECT_ID || !process.env.CLOUD_STORAGE_BUCKET_NAME) {
-    console.error('GCP_PROJECT_ID or CLOUD_STORAGE_BUCKET_NAME is not set in environment variables.');
+    console.error('GCP_PROJECT_ID or CLOUD_STORAGE_BUCKET_NAME is not set in environment variables. This is a critical server configuration error.');
     return res.status(500).json({ message: 'Server configuration error: Missing critical environment variables (Cloud Project ID or Storage Bucket Name).' });
   }
 
@@ -32,31 +32,30 @@ export default async (req, res) => {
   form.parse(req, async (err, fields, files) => {
     if (responseSent) return;
 
+    const fileArray = files.image; // 'image' is the field name in FormData
+    const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
+
     if (err) {
-      console.error('Error parsing form data:', err);
+      console.error('Error parsing form data for image upload:', err, { originalFilename: file?.originalFilename, mimetype: file?.mimetype });
       responseSent = true;
       return res.status(500).json({ message: 'Error parsing uploaded file data.', details: err.message });
     }
-
-    const fileArray = files.image; // 'image' is the field name in FormData
-    const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
 
     if (!file) {
       if (responseSent) return;
       console.warn('No image file uploaded in the "image" field.');
       responseSent = true;
-      return res.status(400).json({ message: 'No image file provided in the upload.' });
+      return res.status(400).json({ message: 'No image file provided in the upload. Ensure the FormData field name is "image".' });
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
       if (responseSent) return;
-      console.warn(`Invalid file type attempt: ${file.mimetype}`);
+      console.warn(`Invalid file type attempt for image: ${file.mimetype}. Original filename: ${file.originalFilename}`);
       responseSent = true;
       return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed. Received: ${file.mimetype}` });
     }
 
-    // Better fallback for extension if originalFilename is missing
     let extension = '.png'; // Default extension
     if (file.originalFilename) {
       extension = path.extname(file.originalFilename);
@@ -68,6 +67,7 @@ export default async (req, res) => {
     }
     const uniqueFileName = `${uuidv4()}${extension}`;
 
+    console.log(`Attempting to upload image: ${file.originalFilename || 'unknown_filename'} as ${uniqueFileName} to bucket ${bucketName}. Temp path: ${file.filepath}`);
 
     const bucket = storage.bucket(bucketName);
     const blob = bucket.file(uniqueFileName);
@@ -80,13 +80,13 @@ export default async (req, res) => {
 
     blobStream.on('error', (uploadError) => {
       if (responseSent) return;
-      console.error('Error streaming image to Cloud Storage:', uploadError);
+      console.error('Error streaming image to Cloud Storage:', uploadError, {fileName: uniqueFileName, bucket: bucketName});
       responseSent = true;
-      res.status(500).json({ message: 'Failed to upload image to Cloud Storage. This could be a permission issue or network problem. Check server logs.', details: uploadError.message });
+      res.status(500).json({ message: 'Failed to upload image to Cloud Storage.', details: uploadError.message });
     });
 
     blobStream.on('finish', () => {
-      if (responseSent) return; 
+      if (responseSent) return;
       blob.makePublic()
         .then(() => {
           if (responseSent) return;
@@ -97,11 +97,11 @@ export default async (req, res) => {
         })
         .catch((makePublicError) => {
           if (responseSent) return;
-          console.error('Error making image public after upload:', makePublicError);
+          console.error('Error making image public after upload:', makePublicError, {fileName: uniqueFileName, bucket: bucketName});
           responseSent = true;
           const privateUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
-          res.status(500).json({ 
-            message: 'Image uploaded but failed to make public. Check bucket/object permissions. The file might be in the bucket but not accessible via public URL.',
+          res.status(500).json({
+            message: 'Image uploaded but failed to make public. Check bucket/object permissions.',
             details: makePublicError.message,
             url: privateUrl,
             isPrivate: true
@@ -113,19 +113,18 @@ export default async (req, res) => {
       const readStream = fs.createReadStream(file.filepath);
       readStream.on('error', (readStreamError) => {
         if (responseSent) return;
-        console.error('Error reading file from temporary path:', file.filepath, readStreamError);
-        blobStream.end(); 
+        console.error('Error reading image file from temporary path:', readStreamError, {tempPath: file.filepath, originalFilename: file.originalFilename});
+        blobStream.end();
         responseSent = true;
-        res.status(500).json({ message: 'Failed to read uploaded file from server disk.', details: readStreamError.message, tempPath: file.filepath });
+        res.status(500).json({ message: 'Failed to read uploaded image file from server disk.', details: readStreamError.message, tempPath: file.filepath });
       });
       readStream.pipe(blobStream);
     } catch (pipeError) {
       if (responseSent) return;
-      console.error('Error setting up file stream pipe:', pipeError);
-      blobStream.end(); 
+      console.error('Error setting up image file stream pipe:', pipeError, {originalFilename: file.originalFilename});
+      blobStream.end();
       responseSent = true;
-      res.status(500).json({ message: 'Internal server error during file processing.', details: pipeError.message });
+      res.status(500).json({ message: 'Internal server error during image file processing.', details: pipeError.message });
     }
   });
 };
-
