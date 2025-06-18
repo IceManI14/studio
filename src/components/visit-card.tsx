@@ -36,7 +36,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     try {
       const result = await summarizeVisitNotes({ notes: visit.notes });
       const updatedVisit = { ...visit, notesSummary: result.summary };
-      onUpdateVisit(updatedVisit); 
+      onUpdateVisit(updatedVisit);
       toast({ title: "Notes Re-summarized", description: "Summary has been updated."});
     } catch (error) {
       toast({ title: "Error Summarizing", description: "Could not re-summarize notes.", variant: "destructive" });
@@ -44,7 +44,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       setIsSummarizing(false);
     }
   };
-  
+
   const getCompetitorDisplay = () => {
     if (visit.discussedCompetitors) {
       if (visit.competitorName) {
@@ -68,7 +68,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         variant = "default";
       } else if (pConfidence === 3) {
         variant = "outline";
-      } else { 
+      } else {
         variant = "secondary";
       }
     }
@@ -83,52 +83,46 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     }
     const tds = visit.tdsValue;
     if (tds <= 50) {
-      return { 
-        message: "Optimum Water Quality. Ideal for RO/DI.", 
-        variant: "default" as const, 
+      return {
+        message: "Optimum Water Quality. Ideal for RO/DI.",
+        variant: "default" as const,
         icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
         className: "bg-green-500 hover:bg-green-600 text-white border-green-600"
       };
     } else if (tds > 50 && tds <= 100) {
-      return { 
-        message: "High Quality Bottled Water.", 
-        variant: "default" as const, 
+      return {
+        message: "High Quality Bottled Water.",
+        variant: "default" as const,
         icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
         className: "bg-blue-500 hover:bg-blue-600 text-white border-blue-600"
       };
     } else if (tds > 100 && tds <= 150) {
-      return { 
-        message: "Spring Water.", 
-        variant: "secondary" as const, 
+      return {
+        message: "Spring Water.",
+        variant: "secondary" as const,
         icon: <Wind className="mr-1 h-3 w-3" /> ,
         className: "bg-sky-500 hover:bg-sky-600 text-white border-sky-600"
       };
     } else if (tds > 150 && tds <= 275) {
-      return { 
-        message: "Marginally Acceptable Water.", 
-        variant: "outline" as const, 
+      return {
+        message: "Marginally Acceptable Water.",
+        variant: "outline" as const,
         icon: <AlertTriangle className="mr-1 h-3 w-3" />,
         className: "text-yellow-700 border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50"
       };
     } else if (tds > 275 && tds <= 500) {
-      return { 
-        message: "HIGH TDS Water (Tap/Mineral Spring).", 
-        variant: "outline" as const, 
+      return {
+        message: "HIGH TDS Water (Tap/Mineral Spring).",
+        variant: "outline" as const,
         icon: <AlertTriangle className="mr-1 h-3 w-3" />,
         className: "text-orange-700 border-orange-500 bg-orange-50 hover:bg-orange-100 dark:text-orange-400 dark:border-orange-600 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
       };
     } else if (tds > 500) {
-      return { 
-        message: (
-          <div className="text-left">
-            <p className="mb-0.5">• EPA MAXIMUM CONTAMINANT LEVEL.</p>
-            <p className="mb-0.5">• <span className="text-primary font-semibold">Techs</span> may need to install a pre-filter!</p>
-            <p>• <span className="text-primary font-semibold">Salesperson</span> must mention that there may be a need for more service calls @ $149 each visit.</p>
-          </div>
-        ), 
-        variant: "destructive" as const, 
-        icon: <ShieldAlert className="mr-1 h-3 w-3 self-start mt-0.5" />,
-        className: "" 
+      return {
+        message: "EPA MAXIMUM CONTAMINANT LEVEL. Techs may need to install a pre-filter! Salesperson must mention that there may be a need for more service calls @ $149 each visit.",
+        variant: "destructive" as const,
+        icon: <ShieldAlert className="mr-1 h-3 w-3" />,
+        className: ""
       };
     }
     return {
@@ -215,10 +209,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <ImageIcon className="mr-2 h-4 w-4 text-primary" /> Business Card
             </h4>
             <div className="relative w-full aspect-[1.6/1] max-w-xs mx-auto mt-2">
-              <NextImage 
-                src={visit.businessCardImageUrl} 
-                alt="Business Card" 
-                layout="fill" 
+              <NextImage
+                src={visit.businessCardImageUrl}
+                alt="Business Card"
+                layout="fill"
                 objectFit="contain"
                 className="rounded-md border"
               />
@@ -233,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </h4>
             <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
             {tdsInfo && (
-              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex items-start", tdsInfo.className)}>
+              <Badge variant={tdsInfo.variant} className={cn("text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 flex items-center", tdsInfo.className)}>
                 {tdsInfo.icon}
                 <span className="ml-1">{tdsInfo.message}</span>
               </Badge>
@@ -249,7 +243,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.contactInfo.info}</p>
           </div>
         )}
-        
+
         {hasDecisionMakerInfo && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -278,7 +272,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
           </div>
         )}
-        
+
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -341,5 +335,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    
