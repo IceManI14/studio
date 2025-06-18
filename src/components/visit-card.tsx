@@ -142,39 +142,34 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
           
-          {/* Stars and Label Group - Centered */}
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-            <div className="flex flex-col items-center flex-grow">
-              <div className="flex"> {/* Star Icons */}
-                {[1, 2, 3, 4, 5].map((starValue) => (
-                  <Star
-                    key={starValue}
-                    className={cn(
-                      "h-5 w-5",
-                      starValue <= (visit.partnershipConfidence ?? 0)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1"> {/* Label */}
-                (Partnership Confidence)
-              </div>
+          <div className="flex flex-col items-center flex-grow mx-1">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((starValue) => (
+                <Star
+                  key={starValue}
+                  className={cn(
+                    "h-5 w-5",
+                    starValue <= (visit.partnershipConfidence ?? 0)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-muted-foreground/50"
+                  )}
+                />
+              ))}
             </div>
-          ) : (
-            <div className="flex-grow"></div> /* Spacer if no stars/label */
-          )}
+          </div>
             
           {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-             <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border-accent hover:bg-accent/90">
+             <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border border-accent hover:bg-accent/90">
               {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
             </Badge>
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
+
+        <div className="text-center text-xs text-muted-foreground mt-0 mb-2">
+            (Partnership Confidence)
+        </div>
         
-        {/* Company Name and Location Info */}
-        <div className="flex justify-between items-start w-full mt-2"> {/* Added mt-2 for spacing from stars/label group */}
+        <div className="flex justify-between items-start w-full">
           <CardTitle className="font-headline text-xl text-primary flex items-center">
               <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
           </CardTitle>
@@ -185,7 +180,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </div>
         
-        {/* Date and Unit of Interest */}
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
@@ -244,6 +238,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
+        {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
+              Competitor Intel <span className="text-accent">{`{${visit.competitorName}}`}</span>
+            </h4>
+            {COMPETITOR_DETAILS[visit.competitorName].title && (
+                <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+            )}
+            <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+              {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
            <div className="p-2 bg-secondary/30 rounded-md text-center">
             <div className="flex justify-center items-center space-x-2 mb-1">
@@ -294,23 +305,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
             </h4>
             <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-          </div>
-        )}
-
-        {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-          <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-              Competitor Intel <span className="text-accent">{`{${visit.competitorName}}`}</span>
-            </h4>
-            {COMPETITOR_DETAILS[visit.competitorName].title && (
-                <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-            )}
-            <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-              {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                <li key={index}>{detail}</li>
-              ))}
-            </ul>
           </div>
         )}
 
