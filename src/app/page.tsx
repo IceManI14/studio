@@ -96,6 +96,9 @@ export default function HomePage() {
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
+  const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const isAutoScrollingRef = useRef(false);
+
 
   const getVisitsStorageKey = (): string | null => {
     if (!selectedSalesperson) return null;
@@ -301,6 +304,67 @@ export default function HomePage() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
+
+  useEffect(() => {
+    callDayCardRefs.current = Array(sortedVisitsForCallDay.length).fill(null);
+  }, [sortedVisitsForCallDay.length]);
+
+  useEffect(() => {
+    if (sortedVisitsForCallDay.length === 0 || typeof window === 'undefined' || !window.IntersectionObserver) {
+      return;
+    }
+  
+    const observerOptions = {
+      root: null, 
+      rootMargin: '0px',
+      threshold: 0.1, 
+    };
+  
+    const observerCallback: IntersectionObserverCallback = (entries) => {
+      if (isAutoScrollingRef.current) return;
+  
+      entries.forEach((entry) => {
+        const targetElement = entry.target as HTMLDivElement;
+        const cardIndex = parseInt(targetElement.dataset.cardIndex || '-1', 10);
+  
+        if (cardIndex === -1 || cardIndex >= sortedVisitsForCallDay.length - 1) {
+          return; 
+        }
+  
+        if (!entry.isIntersecting && entry.boundingClientRect.y < 0) {
+          const nextCardRef = callDayCardRefs.current[cardIndex + 1];
+          if (nextCardRef) {
+            const nextCardRect = nextCardRef.getBoundingClientRect();
+            if (nextCardRect.top > window.innerHeight * 0.2 && nextCardRect.top > entry.boundingClientRect.bottom) {
+              isAutoScrollingRef.current = true;
+              nextCardRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              setTimeout(() => {
+                isAutoScrollingRef.current = false;
+              }, 700); 
+            }
+          }
+        }
+      });
+    };
+  
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+  
+    const currentRefs = callDayCardRefs.current;
+    currentRefs.forEach((cardEl) => {
+      if (cardEl) {
+        observer.observe(cardEl);
+      }
+    });
+  
+    return () => {
+      currentRefs.forEach((cardEl) => {
+        if (cardEl) {
+          observer.unobserve(cardEl);
+        }
+      });
+      observer.disconnect();
+    };
+  }, [sortedVisitsForCallDay]);
 
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
@@ -790,14 +854,23 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {sortedVisitsForCallDay.map(visit => (
-                    <VisitCard
+                  {sortedVisitsForCallDay.map((visit, index) => (
+                    <div 
                       key={visit.id}
-                      visit={visit}
-                      onEdit={handleEditVisit}
-                      onDelete={handleDeleteVisit}
-                      onUpdateVisit={handleUpdateVisitInList}
-                    />
+                      ref={(el) => {
+                        if (index < callDayCardRefs.current.length) {
+                           callDayCardRefs.current[index] = el;
+                        }
+                      }}
+                      data-card-index={index.toString()}
+                    >
+                      <VisitCard
+                        visit={visit}
+                        onEdit={handleEditVisit}
+                        onDelete={handleDeleteVisit}
+                        onUpdateVisit={handleUpdateVisitInList}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
