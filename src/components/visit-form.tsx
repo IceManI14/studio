@@ -40,7 +40,7 @@ const COMPETITORS_LIST = [
   "Culligan-Quench",
   "Ready Refresh/Primo",
   "WB Mason",
-  "Other", 
+  "Other",
 ];
 
 const DEFAULT_COOLER_TYPES_LIST = [
@@ -110,15 +110,15 @@ const visitFormSchema = z.object({
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
-  futureMeetingSet: z.boolean().optional(), 
+  futureMeetingSet: z.boolean().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
-    return false; 
+    return false;
   }
   return true;
 }, {
   message: "TDS value (0-1500) is required when TDS Reading is checked.",
-  path: ["tdsValue"], 
+  path: ["tdsValue"],
 });
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -134,7 +134,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
-  
+
   const [currentLatitude, setCurrentLatitude] = useState<number | undefined>(initialData?.latitude);
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
   const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
@@ -174,7 +174,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: undefined,
       hasTDSReading: false,
       tdsValue: undefined,
-      futureMeetingSet: false, 
+      futureMeetingSet: false,
     },
   });
 
@@ -211,7 +211,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: initialData.interestedUnit || undefined,
         hasTDSReading: initialData.hasTDSReading || false,
         tdsValue: initialData.tdsValue,
-        futureMeetingSet: initialData.futureMeetingSet || false, 
+        futureMeetingSet: initialData.futureMeetingSet || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -219,7 +219,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } else {
       form.reset({
         companyName: '',
-        notes: '', 
+        notes: '',
         latitude: undefined,
         longitude: undefined,
         partnershipConfidence: undefined,
@@ -234,7 +234,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
-        futureMeetingSet: false, 
+        futureMeetingSet: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -287,15 +287,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       // Stop camera stream
       stopCameraStream();
     };
-  
-    if (!isOpen) { 
+
+    if (!isOpen) {
       stopAudioAndCamera();
       setBusinessCardPreviewUrl(null);
       setCustomCoolerNameInput('');
       setIsCameraViewVisible(false);
     }
-  
-    return () => { 
+
+    return () => {
       stopAudioAndCamera();
     };
   }, [isOpen]);
@@ -314,7 +314,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         } catch (error) {
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
-          setIsCameraViewVisible(false); 
+          setIsCameraViewVisible(false);
           toast({
             variant: 'destructive',
             title: 'Camera Access Denied',
@@ -334,7 +334,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         videoRef.current.srcObject = null;
       }
     };
-  }, [isCameraViewVisible, toast]);
+  }, [isCameraViewVisible]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,16 +347,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
-      setIsCameraViewVisible(false); 
+      setIsCameraViewVisible(false);
       stopCameraStream();
     }
   };
 
   const handleRemoveImage = () => {
     setBusinessCardPreviewUrl(null);
-    form.setValue('businessCardImageUrl', null, {shouldValidate: true}); 
+    form.setValue('businessCardImageUrl', null, {shouldValidate: true});
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; 
+      fileInputRef.current.value = '';
     }
     setIsCameraViewVisible(false);
     stopCameraStream();
@@ -390,7 +390,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
         toast({ title: "Image Captured", description: "Business card image captured from camera." });
       }
-      handleToggleCameraView(); 
+      handleToggleCameraView();
     } else {
         toast({ title: "Capture Error", description: "Camera not ready or permission denied.", variant: "destructive"});
     }
@@ -410,8 +410,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       toast({ title: "Error", description: result.error, variant: "destructive" });
     } else if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
       form.setValue('companyName', result.suggestedCompanyName);
-      toast({ 
-        title: "Company Suggested", 
+      toast({
+        title: "Company Suggested",
         description: `Found: ${result.suggestedCompanyName} (Confidence: ${(result.confidenceScore ?? 0) * 100}%)`
       });
     } else {
@@ -431,7 +431,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 ...currentCoolerOptions.slice(otherIndex)
             ];
         } else {
-            updatedOptions = [...currentCoolerOptions, newName, 'Other']; 
+            updatedOptions = [...currentCoolerOptions, newName, 'Other'];
         }
         setCurrentCoolerOptions(updatedOptions);
         form.setValue('coolerType', newName, { shouldValidate: true });
@@ -454,21 +454,21 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const startTime = initialData.timestamp;
         const endTime = new Date();
         const durationMs = endTime.getTime() - startTime.getTime();
-        
-        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000)); 
+
+        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        
+
         const durationString = `Meeting duration was ${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}.`;
-        
+
         const currentNotes = finalNotes.trim();
-        if (currentNotes) { 
+        if (currentNotes) {
              finalNotes = `${currentNotes}\n${durationString}`;
-        } else { 
+        } else {
             finalNotes = durationString;
         }
     }
-    
+
     const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
 
     const payload: SaveVisitPayload = {
@@ -489,13 +489,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
       hasTDSReading: data.hasTDSReading,
       tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
-      futureMeetingSet: data.futureMeetingSet, 
+      futureMeetingSet: data.futureMeetingSet,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
       originalBusinessCardImageUrl: initialData?.businessCardImageUrl, // This will be a Data URI if it existed
-      visitNumber: initialData?.visitNumber, 
+      visitNumber: initialData?.visitNumber,
     };
 
     const result = await saveVisitAction(payload);
@@ -512,11 +512,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         description: `${result.visit.companyName} details saved successfully.`,
       });
       onSave(result.visit);
-      onClose(); 
+      onClose();
     }
     setIsSaving(false);
   };
-  
+
 
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
@@ -539,12 +539,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
           toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
-          audioChunksRef.current = []; 
+          audioChunksRef.current = [];
         }
         if (mediaRecorderRef.current?.stream) {
              mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
         }
-        setIsRecordingNotes(false); 
+        setIsRecordingNotes(false);
       };
 
       mediaRecorderRef.current.start();
@@ -589,10 +589,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <div className="flex items-center gap-2">
                         <Input placeholder="e.g., Acme Corp" {...field} />
-                        <Button 
-                            type="button" 
-                            onClick={handleSuggestCompany} 
-                            variant="outline" 
+                        <Button
+                            type="button"
+                            onClick={handleSuggestCompany}
+                            variant="outline"
                             size="sm"
                             disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
                         >
@@ -604,7 +604,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="partnershipConfidence"
@@ -645,7 +645,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value || ''} 
+                      value={field.value || ''}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -682,7 +682,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onCheckedChange={(checked) => {
                         field.onChange(checked);
                         if (!checked) {
-                           handleRemoveImage(); 
+                           handleRemoveImage();
                         }
                       }}
                       id="hasBusinessCard"
@@ -722,7 +722,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       </Button>
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-2 mt-2">
                     <Input
                       id="businessCardImage"
@@ -733,17 +733,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       ref={fileInputRef}
                       disabled={isCameraViewVisible}
                     />
-                    <Button 
-                        type="button" 
-                        onClick={handleToggleCameraView} 
-                        variant="outline" 
-                        size="icon" 
+                    <Button
+                        type="button"
+                        onClick={handleToggleCameraView}
+                        variant="outline"
+                        size="icon"
                         aria-label={isCameraViewVisible ? "Close Camera" : "Take Photo"}
                     >
                         <CameraIcon className="h-4 w-4" />
                     </Button>
                 </div>
-                
+
                 {isCameraViewVisible && (
                   <div className="mt-2 space-y-2">
                     {hasCameraPermission === false && (
@@ -754,12 +754,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </AlertDescription>
                         </Alert>
                     )}
-                    <video 
-                        ref={videoRef} 
-                        className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })} 
-                        autoPlay 
-                        muted 
-                        playsInline 
+                    <video
+                        ref={videoRef}
+                        className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })}
+                        muted
+                        playsInline
                     />
                     {hasCameraPermission && (
                         <Button type="button" onClick={handleCaptureImage} className="w-full">
@@ -880,7 +879,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
-            
+
             {discussedCompetitorsValue && (
               <div className="space-y-3 p-3 border rounded-md bg-secondary/30">
                 <FormField
@@ -889,10 +888,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   render={({ field }) => (
                     <FormItem>
                        <FormLabel>Competitor Name</FormLabel>
-                      <Select 
+                      <Select
                         onValueChange={(value) => {
                           field.onChange(value);
-                        }} 
+                        }}
                         defaultValue={field.value}
                         value={field.value || ''}
                        >
@@ -941,10 +940,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             onChange={(e) => setCustomCoolerNameInput(e.target.value)}
                             className="h-9 flex-grow"
                           />
-                          <Button 
-                            type="button" 
-                            size="sm" 
-                            onClick={handleAddCustomCooler} 
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleAddCustomCooler}
                             disabled={!customCoolerNameInput.trim()}
                             className="h-9"
                           >
@@ -1001,7 +1000,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             </div>
-            
+
 
             <FormField
               control={form.control}
@@ -1021,11 +1020,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       className="mt-1 min-h-[100px]"
                       {...field}
                       onFocus={(e) => {
-                        field.onFocus(e); 
+                        field.onFocus(e);
                         handleNotesFocus();
                       }}
                       onBlur={(e) => {
-                        field.onBlur(e); 
+                        field.onBlur(e);
                         handleNotesBlur();
                       }}
                     />
