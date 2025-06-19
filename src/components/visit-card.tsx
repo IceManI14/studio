@@ -134,10 +134,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader> {/* Removed explicit flex-row classes, defaults to flex-col */}
+    <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader>
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full"> {/* Removed mb-3 */}
+          <div className="flex flex-col items-center w-full">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
@@ -159,16 +159,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4">
-            <div className="flex justify-between items-center mb-1">
-              <div>
-                {visit.visitNumber ? (
-                  <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-                    <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-                  </Badge>
-                ) : (
-                  <div className="h-6" /> 
-                )}
-              </div>
+            <div>
+              {visit.visitNumber ? (
+                <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
+                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                </Badge>
+              ) : (
+                <div className="h-6" /> 
+              )}
             </div>
             
             <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
@@ -176,7 +174,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </CardTitle>
             
             {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center mt-1 text-right">
+                <p className="text-xs text-muted-foreground flex items-center mt-1">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
