@@ -59,6 +59,13 @@ export default async (req, res) => {
       return res.status(400).json({ message: `Invalid file type. Only PDF (application/pdf) is allowed. Received: ${file.mimetype}` });
     }
 
+    if (file.size === 0) {
+      if (responseSent) return;
+      console.warn(`Uploaded file ${file.originalFilename || 'unknown_filename'} is empty (0 bytes). Aborting upload.`);
+      responseSent = true;
+      return res.status(400).json({ message: `Uploaded file is empty. Please select a valid file.` });
+    }
+
     const extension = '.pdf';
     const uniqueFileName = `${uuidv4()}${extension}`;
 

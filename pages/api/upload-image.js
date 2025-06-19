@@ -59,6 +59,13 @@ export default async (req, res) => {
       return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed. Received: ${file.mimetype}` });
     }
 
+    if (file.size === 0) {
+      if (responseSent) return;
+      console.warn(`Uploaded file ${file.originalFilename || 'unknown_filename'} is empty (0 bytes). Aborting upload.`);
+      responseSent = true;
+      return res.status(400).json({ message: `Uploaded file is empty. Please select a valid file.` });
+    }
+
     let extension = '.png'; // Default extension
     if (file.originalFilename) {
       extension = path.extname(file.originalFilename);
