@@ -1,6 +1,14 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
+// Remove the direct import of Toaster
+// import { Toaster } from "@/components/ui/toaster";
+import dynamic from 'next/dynamic';
+
+// Dynamically import Toaster. Since Toaster itself is a Client Component (uses 'use client'),
+// Next.js will automatically handle it as a client boundary without needing ssr: false here.
+const DynamicToaster = dynamic(() => 
+  import('@/components/ui/toaster').then((mod) => mod.Toaster)
+);
 
 export const metadata: Metadata = {
   title: 'Optimum Trailblazer',
@@ -22,7 +30,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         {children}
-        <Toaster />
+        <DynamicToaster /> {/* Use the dynamically imported Toaster */}
       </body>
     </html>
   );
