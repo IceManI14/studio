@@ -723,17 +723,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {selectedSalesperson && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
-                <h2 className="text-lg font-semibold text-foreground text-center">
-                    Welcome {selectedSalesperson.name}! Good Luck Today!
-                </h2>
-            </div>
-        )}
         <header className="flex flex-col items-center space-y-4">
           <div className="flex flex-col items-center mb-4">
             <Image
-              src="https://placehold.co/295x70.png" 
+              src="/logo.png" 
               alt="Optimum Clearly Pure Water Logo"
               width={295}
               height={70}
@@ -762,6 +755,14 @@ export default function HomePage() {
             </div>
           )}
         </header>
+
+        {selectedSalesperson && (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
+                <h2 className="text-lg font-semibold text-foreground text-center">
+                    Welcome {selectedSalesperson.name}! Good Luck Today!
+                </h2>
+            </div>
+        )}
         
         <Tabs defaultValue="field-day" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted p-1 text-muted-foreground">
