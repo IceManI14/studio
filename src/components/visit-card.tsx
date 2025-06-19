@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
@@ -24,6 +25,7 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const { toast } = useToast();
   const timeZone = 'America/New_York'; // For EST/EDT
 
@@ -135,53 +137,39 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader> {/* CardHeader is flex flex-col space-y-1.5 p-6 */}
-        {/* Top Row: Visit # (Left), Stars (Center) */}
-        <div className="flex items-center w-full mb-3">
-          {/* Left: Visit # */}
-          <div className="flex-shrink-0">
+      <CardHeader>
+        <div className="flex-shrink-0 mb-2">
             {visit.visitNumber ? (
               <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
               </Badge>
             ) : (
-              <div className="h-5 w-10" /> /* Placeholder for consistent height & balance */
+              <div className="h-5" /> 
             )}
-          </div>
-
-          {/* Center: Stars */}
-          <div className="flex-1 flex justify-center"> {/* Use flex-1 to allow true centering */}
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-              <div className="flex flex-col items-center">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((starValue) => (
-                    <Star
-                      key={starValue}
-                      className={cn(
-                        "h-5 w-5",
-                        starValue <= (visit.partnershipConfidence ?? 0)
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-muted-foreground/50"
-                      )}
-                    />
-                  ))}
-                </div>
-                <div className="text-center text-xs text-muted-foreground mt-0.5">
-                  (Partnership Confidence)
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Invisible Right placeholder for balance if business card is not on this line */}
-          <div className="flex-shrink-0 w-10 invisible"> {/* Ensures center element is truly centered */}
-             {visit.visitNumber ? ( <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5"> <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}</Badge>) : ( <div className="h-5 w-10" /> )}
-          </div>
         </div>
+
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+          <div className="flex flex-col items-center w-full mb-3">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((starValue) => (
+                <Star
+                  key={starValue}
+                  className={cn(
+                    "h-5 w-5",
+                    starValue <= (visit.partnershipConfidence ?? 0)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-muted-foreground/50"
+                  )}
+                />
+              ))}
+            </div>
+            <div className="text-center text-xs text-muted-foreground mt-0.5">
+              (Partnership Confidence)
+            </div>
+          </div>
+        )}
         
-        {/* Main Header Content Row: Company Details (Left), Business Card Image (Right) */}
-        <div className="flex flex-row justify-between items-start w-full mt-2"> {/* Added mt-2 for spacing from above row */}
-          {/* Left side: company name, coords, date, etc. */}
+        <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -233,19 +221,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           </div>
 
-          {/* Right side: business card image */}
           {visit.businessCardImageUrl && visit.hasBusinessCard && (
-            <div className="w-40 flex-shrink-0 flex items-center justify-center ml-4">
-              <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
-                <NextImage
-                  src={visit.businessCardImageUrl}
-                  alt="Business Card"
-                  layout="fill"
-                  objectFit="contain"
-                  data-ai-hint="business card professional"
-                />
-              </div>
-            </div>
+            <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
+              <DialogTrigger asChild>
+                <button className="w-40 flex-shrink-0 flex items-center justify-center ml-4 focus:outline-none group" aria-label="View business card">
+                  <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                    <NextImage
+                      src={visit.businessCardImageUrl}
+                      alt="Business Card Thumbnail"
+                      layout="fill"
+                      objectFit="contain"
+                      data-ai-hint="business card professional"
+                    />
+                  </div>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl p-2 bg-background">
+                <div className="relative w-full aspect-[1.6/1]">
+                  <NextImage
+                    src={visit.businessCardImageUrl}
+                    alt="Business Card - Zoomed View"
+                    layout="fill"
+                    objectFit="contain"
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </CardHeader>
@@ -362,3 +363,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
+
+    
