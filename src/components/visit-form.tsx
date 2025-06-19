@@ -392,14 +392,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             body: formData,
           });
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to upload image');
+            let errorDetail = `Upload service responded with status ${response.status}`;
+            try {
+              const errorData = await response.json();
+              errorDetail = errorData.message || errorDetail; 
+            } catch (jsonParseError) {
+              const textResponse = await response.text().catch(() => "Could not read error response body.");
+              console.error("Upload failed. Server response was not valid JSON. Status:", response.status, "Body:", textResponse);
+              errorDetail = `Server error (${response.status}). Check server logs.`;
+            }
+            throw new Error(errorDetail);
           }
           const uploadResult = await response.json();
           finalBusinessCardImageUrl = uploadResult.url;
           toast({ title: 'Business Card Uploaded', description: 'Image saved successfully.' });
         } catch (error: any) {
-          toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
+          let errorMessage = "An unexpected error occurred during upload.";
+          if (error && error.message) {
+            errorMessage = error.message;
+          } else if (typeof error === 'string') {
+            errorMessage = error;
+          }
+          toast({ title: 'Upload Failed', description: errorMessage, variant: 'destructive' });
           setIsSaving(false);
           setIsUploading(false);
           return; 
@@ -407,11 +421,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           setIsUploading(false);
         }
       } else if (form.getValues('businessCardImageUrl') === undefined && initialData?.businessCardImageUrl) {
-        
         if (!businessCardPreviewUrl) finalBusinessCardImageUrl = undefined;
-
       } else {
-         
         finalBusinessCardImageUrl = businessCardPreviewUrl || initialData?.businessCardImageUrl;
       }
     } else {
