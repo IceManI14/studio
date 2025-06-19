@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import Image from 'next/image';
 import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader, CardFooter as UiCardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -747,14 +746,6 @@ export default function HomePage() {
             >
               Optimum Trailblazer
             </h1>
-            <Image
-              src="/logo.png"
-              alt="Optimum Clearly Pure Water Logo"
-              width={295}
-              height={56}
-              priority
-              data-ai-hint="company logo"
-            />
           </div>
         </header>
 
