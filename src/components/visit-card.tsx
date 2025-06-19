@@ -137,25 +137,28 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row justify-between items-start">
         <div className="flex-grow pr-4">
-          {visit.visitNumber ? (
-            <div className="mb-1">
-              <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
+          <div className="flex justify-between items-center mb-1">
+            <div>
+              {visit.visitNumber ? (
+                <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
+                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                </Badge>
+              ) : (
+                <div className="h-6" /> 
+              )}
             </div>
-          ) : (
-            <div className="h-6 mb-1" /> 
-          )}
-          
-          <div className="flex justify-end items-start w-full mb-1">
-            <div className="flex flex-col items-end">
+            <div>
               {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
                 <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border border-accent hover:bg-accent/90">
                   {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
                 </Badge>
               ) : <div className="h-[calc(1.25rem+2px)] w-auto px-1.5 py-0.5 min-w-[40px]" />}
-
-              <div className="flex flex-col items-center mt-1">
+            </div>
+          </div>
+          
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="flex justify-end w-full mb-1">
+              <div className="flex flex-col items-center">
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((starValue) => (
                     <Star
@@ -169,12 +172,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     />
                   ))}
                 </div>
-                <div className="text-center text-xs text-muted-foreground mt-1">
+                <div className="text-center text-xs text-muted-foreground mt-0.5">
                     (Partnership Confidence)
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
               <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
