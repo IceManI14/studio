@@ -134,215 +134,221 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
 
   return (
-    <Card className="flex flex-row shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <div className="flex-grow flex flex-col">
-        <CardHeader>
-          <div className="flex justify-between items-start w-full mb-1">
-            {visit.visitNumber ? (
-              <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
-            ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
-            
-            <div className="flex flex-col items-center flex-grow mx-1">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((starValue) => (
-                  <Star
-                    key={starValue}
-                    className={cn(
-                      "h-5 w-5",
-                      starValue <= (visit.partnershipConfidence ?? 0)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
-              <div className="text-center text-xs text-muted-foreground mt-1">
-                  (Partnership Confidence)
-              </div>
-            </div>
+    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader>
+        <div className="flex flex-row justify-between items-start">
+          {/* Left side of header */}
+          <div className="flex-grow pr-4">
+            <div className="flex justify-between items-start w-full mb-1">
+              {visit.visitNumber ? (
+                <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
+                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                </Badge>
+              ) : <div className="w-auto px-1.5 py-0.5 min-w-[20px]"></div>}
               
-            {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
-              <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border border-accent hover:bg-accent/90">
-                {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
-              </Badge>
-            ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
-          </div>
-
-          <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
-              <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-          </CardTitle>
-          
-          {visit.latitude && visit.longitude && (
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-              </p>
-          )}
-          
-          <div className="flex flex-col items-start space-y-1 w-full mt-3">
-              <div className="flex items-center text-sm text-muted-foreground">
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+              <div className="flex flex-col items-center flex-grow mx-1">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((starValue) => (
+                    <Star
+                      key={starValue}
+                      className={cn(
+                        "h-5 w-5",
+                        starValue <= (visit.partnershipConfidence ?? 0)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-muted-foreground/50"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="text-center text-xs text-muted-foreground mt-1">
+                    (Partnership Confidence)
+                </div>
               </div>
-              {visit.interestedUnit && (
-                <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
-                  <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
-                    Unit of Interest: {visit.interestedUnit}
-                  </h4>
+                
+              {visit.partnershipConfidence && visit.partnershipConfidence > 0 ? (
+                <Badge className="text-sm font-semibold px-1.5 py-0.5 bg-accent text-accent-foreground border border-accent hover:bg-accent/90">
+                  {visit.partnershipConfidence} Star{visit.partnershipConfidence > 1 ? 's' : ''}
+                </Badge>
+              ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
+            </div>
+
+            <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
+                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+            </CardTitle>
+            
+            {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center mt-1 text-right">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
+            
+            <div className="flex flex-col items-start space-y-1 w-full mt-3">
+                <div className="flex items-center text-sm text-muted-foreground">
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                </div>
+                {visit.interestedUnit && (
+                  <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
+                    <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
+                      Unit of Interest: {visit.interestedUnit}
+                    </h4>
+                  </div>
+                )}
+            </div>
+
+            <div className="flex flex-col items-start space-y-1 mt-3">
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                {getCompetitorDisplay()}
+              </div>
+              {visit.coolerType && visit.discussedCompetitors && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                    <Box className="mr-2 h-4 w-4 text-blue-500" />
+                    Cooler: {visit.coolerType}
                 </div>
               )}
-          </div>
-
-          <div className="flex flex-col items-start space-y-1 mt-3">
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              {getCompetitorDisplay()}
-            </div>
-            {visit.coolerType && visit.discussedCompetitors && (
               <div className="flex items-center text-xs text-muted-foreground">
-                  <Box className="mr-2 h-4 w-4 text-blue-500" />
-                  Cooler: {visit.coolerType}
+                {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
               </div>
-            )}
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
+              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="flex-grow space-y-3 text-sm">
-          {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-            <div className="p-3 bg-secondary/30 rounded-md">
-              <h4 className="font-medium text-foreground flex items-center mb-1">
-                <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-                Competitor Intel <span className="text-accent">{`{${visit.competitorName}}`}</span>
-              </h4>
-              {COMPETITOR_DETAILS[visit.competitorName].title && (
-                  <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-              )}
-              <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-                {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                  <li key={index}>{detail}</li>
-                ))}
-              </ul>
-            </div>
-          )}
 
-          {visit.hasTDSReading && visit.tdsValue !== undefined && (
-            <div className="p-2 bg-secondary/30 rounded-md text-center">
-              <div className="flex justify-center items-center space-x-2 mb-1">
-                <h4 className="font-medium text-foreground flex items-center">
-                  <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
-                </h4>
-                <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
+          {/* Right side of header - Business Card Image */}
+          {visit.businessCardImageUrl && visit.hasBusinessCard && (
+            <div className="w-40 flex-shrink-0 flex items-center justify-center">
+              <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
+                <NextImage
+                  src={visit.businessCardImageUrl}
+                  alt="Business Card"
+                  layout="fill"
+                  objectFit="contain"
+                />
               </div>
-              {tdsInfo && (
-                <Badge
-                  variant={tdsInfo.variant}
-                  className={cn(
-                    "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex",
-                    typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
-                    tdsInfo.className
-                  )}
-                >
-                  {tdsInfo.icon}
-                  <span className="ml-1">{tdsInfo.message}</span>
-                </Badge>
-              )}
             </div>
           )}
-
-          {hasDecisionMakerDetails && (
-            <div className="p-3 bg-secondary/30 rounded-md">
-              <h4 className="font-medium text-foreground flex items-center mb-1">
-                <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
-              </h4>
-              {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
-              {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-              {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
-               {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
-                <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-              }
-              {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
-                <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-              }
-            </div>
-          )}
-
-          {visit.notes && (
-            <div className="p-3 bg-secondary/30 rounded-md">
-              <h4 className="font-medium text-foreground flex items-center mb-1">
-                <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
-              </h4>
-              <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-            </div>
-          )}
-
-          {visit.notesSummary && (
-            <div className="p-3 bg-secondary/30 rounded-md">
-              <h4 className="font-medium text-foreground flex items-center mb-1">
-                <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
-              </h4>
-              <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
-            </div>
-          )}
-          {!visit.notesSummary && visit.notes && (
-            <Button variant="link" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="text-accent p-0 h-auto">
-              {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {isSummarizing ? 'Summarizing...' : 'Summarize Notes'}
-            </Button>
-          )}
-
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-          <Button variant="outline" size="sm" onClick={() => onEdit(visit)} aria-label={`Edit visit to ${visit.companyName}`}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <AlertDialog>
-              <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" aria-label={`Delete visit to ${visit.companyName}`}>
-                      <Trash2 className="h-4 w-4" />
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
-                      </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-          </AlertDialog>
-        </CardFooter>
-      </div>
-      {visit.businessCardImageUrl && visit.hasBusinessCard && (
-        <div className="w-56 flex-shrink-0 p-3 flex items-center justify-center border-l bg-card">
-          <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden">
-            <NextImage
-              src={visit.businessCardImageUrl}
-              alt="Business Card"
-              layout="fill"
-              objectFit="contain"
-              className="border"
-            />
-          </div>
         </div>
-      )}
+      </CardHeader>
+      <CardContent className="flex-grow space-y-3 text-sm">
+        {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
+              Competitor Intel <span className="text-accent">{`{${visit.competitorName}}`}</span>
+            </h4>
+            {COMPETITOR_DETAILS[visit.competitorName].title && (
+                <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+            )}
+            <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+              {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {visit.hasTDSReading && visit.tdsValue !== undefined && (
+          <div className="p-2 bg-secondary/30 rounded-md text-center">
+            <div className="flex justify-center items-center space-x-2 mb-1">
+              <h4 className="font-medium text-foreground flex items-center">
+                <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
+              </h4>
+              <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
+            </div>
+            {tdsInfo && (
+              <Badge
+                variant={tdsInfo.variant}
+                className={cn(
+                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex",
+                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
+                  tdsInfo.className
+                )}
+              >
+                {tdsInfo.icon}
+                <span className="ml-1">{tdsInfo.message}</span>
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {hasDecisionMakerDetails && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
+            </h4>
+            {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
+            {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+            {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
+             {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
+              <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+            }
+            {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
+              <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+            }
+          </div>
+        )}
+
+        {visit.notes && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
+            </h4>
+            <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
+          </div>
+        )}
+
+        {visit.notesSummary && (
+          <div className="p-3 bg-secondary/30 rounded-md">
+            <h4 className="font-medium text-foreground flex items-center mb-1">
+              <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
+            </h4>
+            <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+          </div>
+        )}
+        {!visit.notesSummary && visit.notes && (
+          <Button variant="link" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="text-accent p-0 h-auto">
+            {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {isSummarizing ? 'Summarizing...' : 'Summarize Notes'}
+          </Button>
+        )}
+
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
+        <Button variant="outline" size="sm" onClick={() => onEdit(visit)} aria-label={`Edit visit to ${visit.companyName}`}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" aria-label={`Delete visit to ${visit.companyName}`}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
     </Card>
   );
 };
 
 export default VisitCard;
+
+    
