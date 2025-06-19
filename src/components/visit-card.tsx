@@ -137,7 +137,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="relative"> {/* Added relative for absolute positioning of image */}
+      <CardHeader className="relative space-y-1.5"> {/* Added relative for absolute positioning of image */}
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex flex-col items-center w-full"> {/* Centered stars */}
             <div className="flex">
@@ -159,7 +159,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
         
-        <div className="flex-shrink-0"> {/* Visit Number Badge Container, top-left by default due to CardHeader flow */}
+        <div className="flex-shrink-0">
             {visit.visitNumber ? (
               <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
@@ -169,7 +169,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
         </div>
         
-        {/* Main Row for Company Details */}
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
@@ -221,15 +220,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
             </div>
           </div>
-          {/* Business Card Image was here, now moved */}
         </div>
 
-        {/* Absolutely Positioned Business Card Image */}
         {visit.businessCardImageUrl && visit.hasBusinessCard && (
           <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
             <DialogTrigger asChild>
               <button 
-                className="absolute top-4 right-4 w-32 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
+                className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
                 aria-label="View business card"
               >
                 <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
