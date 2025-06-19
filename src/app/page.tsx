@@ -729,7 +729,7 @@ export default function HomePage() {
               src="/logo.png" 
               alt="Optimum Clearly Pure Water Logo"
               width={295}
-              height={70}
+              height={56}
               className="mb-3"
               priority
               data-ai-hint="company logo"
