@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader as UiDialogHeader, DialogTitle as UiDialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Renamed to avoid conflict
+import { Dialog, DialogContent, DialogHeader as UiDialogHeader, DialogTitle as UiDialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import NextImage from 'next/image'; // Corrected import for NextImage
+import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
 
 interface VisitCardProps {
@@ -219,40 +219,40 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           </div>
 
-           {visit.businessCardImageUrl && visit.hasBusinessCard && (
-            <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
-                <DialogTrigger asChild>
-                <button 
-                    className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
-                    aria-label="View business card"
-                >
-                    <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                    <NextImage
-                        src={visit.businessCardImageUrl}
-                        alt="Business Card Thumbnail"
-                        layout="fill"
-                        objectFit="contain"
-                        data-ai-hint="business card professional"
-                    />
-                    </div>
-                </button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-xl p-2 bg-background">
-                    <UiDialogHeader>
-                        <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
-                    </UiDialogHeader>
-                    <div className="relative w-full aspect-[1.6/1] mt-2">
-                        <NextImage
-                        src={visit.businessCardImageUrl}
-                        alt="Business Card - Zoomed View"
-                        layout="fill"
-                        objectFit="contain"
-                        />
-                    </div>
-                </DialogContent>
-            </Dialog>
-            )}
         </div>
+         {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
+              <DialogTrigger asChild>
+              <button 
+                  className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
+                  aria-label="View business card"
+              >
+                  <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                  <NextImage
+                      src={visit.businessCardImageUrl}
+                      alt="Business Card Thumbnail"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      data-ai-hint="business card professional"
+                  />
+                  </div>
+              </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl p-2 bg-background">
+                  <UiDialogHeader>
+                      <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
+                  </UiDialogHeader>
+                  <div className="relative w-full aspect-[1.6/1] mt-2">
+                      <NextImage
+                      src={visit.businessCardImageUrl}
+                      alt="Business Card - Zoomed View"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      />
+                  </div>
+              </DialogContent>
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm pt-3">
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
