@@ -169,33 +169,30 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           ) : <div className="w-auto px-1.5 py-0.5 min-w-[40px]"></div>}
         </div>
 
-        <div className="flex justify-between items-start w-full mt-2">
-          <div className="flex-grow">
-            <CardTitle className="font-headline text-xl text-primary flex items-center">
-                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-            </CardTitle>
-            {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center text-right mt-1">
-                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                </p>
-            )}
-          </div>
-          
-          {visit.businessCardImageUrl && visit.hasBusinessCard && (
-            <div className="ml-4 flex-shrink-0 w-32">
-              <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
-                <NextImage
-                  src={visit.businessCardImageUrl}
-                  alt="Business Card"
-                  layout="fill"
-                  objectFit="contain"
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
+            <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+        </CardTitle>
         
-        <div className="flex flex-col items-start space-y-1 w-full mt-1">
+        {visit.latitude && visit.longitude && (
+            <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+            </p>
+        )}
+        
+        {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <div className="mt-2">
+            <div className="relative w-full max-w-xs mx-auto aspect-[1.6/1] rounded-md overflow-hidden border">
+              <NextImage
+                src={visit.businessCardImageUrl}
+                alt="Business Card"
+                layout="fill"
+                objectFit="contain"
+              />
+            </div>
+          </div>
+        )}
+        
+        <div className="flex flex-col items-start space-y-1 w-full mt-3">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
