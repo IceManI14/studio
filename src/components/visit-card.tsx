@@ -180,6 +180,21 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </div>
         
+        {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <div className="rounded-md mt-3">
+            <div className="relative w-full aspect-[1.6/1] max-w-xs mx-auto">
+              <NextImage
+                src={visit.businessCardImageUrl}
+                alt="Business Card"
+                layout="fill"
+                objectFit="contain"
+                className="rounded-md border"
+                data-ai-hint="business card"
+              />
+            </div>
+          </div>
+        )}
+        
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarDays className="mr-2 h-4 w-4" />
@@ -220,24 +235,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
-        {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <div className="p-3 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <ImageIcon className="mr-2 h-4 w-4 text-primary" /> Business Card
-            </h4>
-            <div className="relative w-full aspect-[1.6/1] max-w-xs mx-auto mt-2">
-              <NextImage
-                src={visit.businessCardImageUrl}
-                alt="Business Card"
-                layout="fill"
-                objectFit="contain"
-                className="rounded-md border"
-                data-ai-hint="business card"
-              />
-            </div>
-          </div>
-        )}
-        
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -290,7 +287,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
               <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
             }
-            {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact &&
+            {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
               <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
             }
           </div>
@@ -350,4 +347,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
