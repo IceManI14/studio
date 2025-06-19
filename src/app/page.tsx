@@ -85,9 +85,7 @@ export default function HomePage() {
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-     { id: 'ai_welcome', sender: 'ai', text: 'Hello! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?', timestamp: new Date() }
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
@@ -124,11 +122,22 @@ export default function HomePage() {
       const foundSalesperson = SALESPEOPLE.find(s => s.id === storedSalespersonId);
       if (foundSalesperson) {
         setSelectedSalesperson(foundSalesperson);
+         // If salesperson is loaded from storage AND chat is empty, set initial message
+        if (chatMessages.length === 0) {
+            setChatMessages([
+                { 
+                    id: 'ai_welcome_restored_user', 
+                    sender: 'ai', 
+                    text: `Welcome back ${foundSalesperson.name}! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?`, 
+                    timestamp: new Date() // Client-side date
+                }
+            ]);
+        }
       } else {
         localStorage.removeItem(SELECTED_SALESPERSON_ID_KEY); 
       }
     }
-  }, []);
+  }, []); // Runs once on mount to check localStorage
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1141,4 +1150,3 @@ export default function HomePage() {
     </div>
   );
 }
-
