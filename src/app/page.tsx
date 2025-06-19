@@ -724,16 +724,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center space-y-4">
-          <div className="flex flex-col items-center mb-4">
-            <Image
-              src="/logo.png" 
-              alt="Optimum Clearly Pure Water Logo"
-              width={295}
-              height={56}
-              className="mb-3"
-              priority
-              data-ai-hint="company logo"
-            />
+          <div className="flex flex-row items-center justify-center mb-4 space-x-4">
             <h1
               className="text-6xl sm:text-7xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -747,6 +738,14 @@ export default function HomePage() {
             >
               Optimum Trailblazer
             </h1>
+            <Image
+              src="/logo.png"
+              alt="Optimum Clearly Pure Water Logo"
+              width={295}
+              height={56}
+              priority
+              data-ai-hint="company logo"
+            />
           </div>
           {selectedSalesperson && (
             <div className="flex items-center justify-center text-sm text-muted-foreground bg-card p-2 rounded-md shadow-sm w-full max-w-xs">
