@@ -555,7 +555,7 @@ export default function HomePage() {
         if (visit.notesSummary) {
           body += `\n   Summary: ${visit.notesSummary}`;
         }
-        if (visit.contactInfo?.info) {
+        if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") {
           body += `\n   Contact: ${visit.contactInfo.info}`;
         }
         if (visit.partnershipConfidence) {
@@ -731,7 +731,16 @@ export default function HomePage() {
             </div>
         )}
         <header className="flex flex-col items-center space-y-4">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center mb-4">
+            <Image
+              src="https://placehold.co/295x70.png" 
+              alt="Optimum Clearly Pure Water Logo"
+              width={295}
+              height={70}
+              className="mb-3"
+              priority
+              data-ai-hint="company logo"
+            />
             <h1
               className="text-6xl sm:text-7xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -755,12 +764,12 @@ export default function HomePage() {
         </header>
         
         <Tabs defaultValue="field-day" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 border bg-transparent p-1 rounded-md">
-            <TabsTrigger value="field-day"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
-            <TabsTrigger value="call-day"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
-            <TabsTrigger value="visits"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
-            <TabsTrigger value="ai-chat"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Debbie</TabsTrigger>
-            <TabsTrigger value="about"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted p-1 text-muted-foreground">
+            <TabsTrigger value="field-day" className="border border-border data-[state=active]:border-transparent"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
+            <TabsTrigger value="call-day" className="border border-border data-[state=active]:border-transparent"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
+            <TabsTrigger value="visits" className="border border-border data-[state=active]:border-transparent"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
+            <TabsTrigger value="ai-chat" className="border border-border data-[state=active]:border-transparent"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Debbie</TabsTrigger>
+            <TabsTrigger value="about" className="border border-border data-[state=active]:border-transparent"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
           </TabsList>
 
           <TabsContent value="field-day">
