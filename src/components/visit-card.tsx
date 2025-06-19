@@ -140,8 +140,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader className="relative space-y-1.5 pb-3">
         {visit.visitNumber && (
             <div className="absolute top-4 left-4 z-10">
-                <Badge variant="secondary" className="text-2xl font-semibold px-3 py-1.5">
-                    <Hash className="mr-3 h-7 w-7" />{visit.visitNumber}
+                <Badge variant="secondary" className="text-xl font-semibold px-2.5 py-1">
+                    <Hash className="mr-2 h-5 w-5" />{visit.visitNumber}
                 </Badge>
             </div>
         )}
@@ -169,7 +169,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
         <div className="flex flex-row justify-between items-start w-full pt-2">
           <div className="flex-grow pr-4 space-y-1.5">
-            <CardTitle className="font-headline text-xl text-primary flex items-center">
+            <CardTitle className="font-headline text-2xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
