@@ -221,7 +221,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
         {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <div className="p-3 bg-secondary/30 rounded-md">
+          <div className="p-3 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
               <ImageIcon className="mr-2 h-4 w-4 text-primary" /> Business Card
             </h4>
