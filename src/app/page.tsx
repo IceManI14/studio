@@ -723,8 +723,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="flex flex-col items-center space-y-4">
-          <div className="flex flex-row items-center justify-center mb-4 space-x-4">
+        <header className="flex justify-end w-full py-4">
+          <div className="flex flex-row items-center space-x-4">
             <h1
               className="text-6xl sm:text-7xl font-headline font-bold text-primary drop-shadow-sm text-center"
               style={{
@@ -747,12 +747,6 @@ export default function HomePage() {
               data-ai-hint="company logo"
             />
           </div>
-          {selectedSalesperson && (
-            <div className="flex items-center justify-center text-sm text-muted-foreground bg-card p-2 rounded-md shadow-sm w-full max-w-xs">
-              <User className="mr-2 h-4 w-4 text-primary" />
-              Active User: <button onClick={() => setSelectedSalesperson(null)} className="font-semibold text-accent hover:underline ml-1 focus:outline-none">{selectedSalesperson.name} (Switch)</button>
-            </div>
-          )}
         </header>
 
         {selectedSalesperson && (
@@ -760,6 +754,9 @@ export default function HomePage() {
                 <h2 className="text-lg font-semibold text-foreground text-center">
                     Welcome {selectedSalesperson.name}! Good Luck Today!
                 </h2>
+                 <Button onClick={() => setSelectedSalesperson(null)} variant="link" className="text-sm text-accent hover:underline focus:outline-none p-0 h-auto">
+                    (Switch User)
+                </Button>
             </div>
         )}
         
