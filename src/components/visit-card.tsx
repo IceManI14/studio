@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader as UiDialogHeader, DialogTitle as UiDialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Renamed to avoid conflict
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
@@ -137,9 +137,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="relative space-y-1.5"> {/* Added relative for absolute positioning of image */}
+      <CardHeader className="relative space-y-1.5">
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full"> {/* Centered stars */}
+          <div className="flex flex-col items-center w-full">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
@@ -159,7 +159,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
         
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 self-start">
             {visit.visitNumber ? (
               <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
@@ -169,7 +169,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
         </div>
         
-        <div className="flex flex-row justify-between items-start w-full">
+        <div className="flex flex-row justify-between items-start w-full mt-2">
           <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -241,7 +241,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl p-2 bg-background">
-              <div className="relative w-full aspect-[1.6/1]">
+              <UiDialogHeader>
+                <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
+              </UiDialogHeader>
+              <div className="relative w-full aspect-[1.6/1] mt-2">
                 <NextImage
                   src={visit.businessCardImageUrl}
                   alt="Business Card - Zoomed View"
