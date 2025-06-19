@@ -140,8 +140,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader className="relative space-y-1.5 pb-3">
         {visit.visitNumber && (
             <div className="absolute top-4 left-4 z-10">
-                <Badge variant="secondary" className="text-xl font-semibold px-2.5 py-1">
-                    <Hash className="mr-2 h-5 w-5" />{visit.visitNumber}
+                <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
+                    <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
                 </Badge>
             </div>
         )}
@@ -176,7 +176,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               >
                   <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
                   <NextImage
-                      src={visit.businessCardImageUrl} // This will be a Data URI
+                      src={visit.businessCardImageUrl}
                       alt="Business Card Thumbnail"
                       fill
                       style={{ objectFit: 'contain' }}
@@ -191,7 +191,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   </UiDialogHeader>
                   <div className="relative w-full aspect-[1.6/1] mt-2">
                       <NextImage
-                        src={visit.businessCardImageUrl} // This will be a Data URI
+                        src={visit.businessCardImageUrl}
                         alt="Business Card - Zoomed View"
                         data-ai-hint="business card professional"
                         fill
@@ -368,3 +368,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
