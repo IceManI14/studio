@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Visit, Salesperson, ChatMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
@@ -77,7 +77,6 @@ export default function HomePage() {
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const { toast } = useToast();
-  const [sortedVisitsForCallDay, setSortedVisitsForCallDay] = useState<Visit[]>([]);
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
@@ -288,30 +287,29 @@ export default function HomePage() {
     localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
   }, [coldCallCount, selectedSalesperson]);
 
-  useEffect(() => {
-    if (visits.length > 0) {
-      const sorted = [...visits].sort((a, b) => {
-        const confidenceA = a.partnershipConfidence ?? 0;
-        const confidenceB = b.partnershipConfidence ?? 0;
-        const timeA = new Date(a.timestamp).getTime();
-        const timeB = new Date(b.timestamp).getTime();
-
-        let comparison = 0;
-
-        if (sortCriteria === 'partnershipConfidence') {
-          comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
-          if (comparison !== 0) return comparison;
-          return timeB - timeA; 
-        } else { 
-          comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-          if (comparison !== 0) return comparison;
-          return confidenceB - confidenceA; 
-        }
-      });
-      setSortedVisitsForCallDay(sorted);
-    } else {
-      setSortedVisitsForCallDay([]);
+  const sortedVisitsForCallDay = useMemo(() => {
+    if (visits.length === 0) {
+      return [];
     }
+    const sorted = [...visits].sort((a, b) => {
+      const confidenceA = a.partnershipConfidence ?? 0;
+      const confidenceB = b.partnershipConfidence ?? 0;
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+
+      let comparison = 0;
+
+      if (sortCriteria === 'partnershipConfidence') {
+        comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
+        if (comparison !== 0) return comparison;
+        return timeB - timeA; // Secondary sort by time descending
+      } else { // sortCriteria === 'timestamp'
+        comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA; // Secondary sort by confidence descending
+      }
+    });
+    return sorted;
   }, [visits, sortCriteria, sortOrder]);
 
   useEffect(() => {
@@ -1103,7 +1101,7 @@ export default function HomePage() {
                   <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
                     <ol className="list-decimal list-inside space-y-2 text-foreground/90">
                       {submittedSuggestions.map((suggestion, index) => (
-                        <li key={index} className="text-sm leading-relaxed">
+                        <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
                           {suggestion.text}
                           <span className="block text-xs text-muted-foreground mt-0.5">
                             &mdash; by {suggestion.salespersonName} on {format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}
