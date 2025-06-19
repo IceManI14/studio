@@ -138,16 +138,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex-shrink-0"> {/* Visit Number Badge Container */}
-            {visit.visitNumber ? (
-              <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
-                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-              </Badge>
-            ) : (
-              <div className="h-5" /> 
-            )}
-        </div>
-
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex flex-col items-center w-full">
             <div className="flex">
@@ -168,6 +158,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           </div>
         )}
+        
+        <div className="flex-shrink-0"> {/* Visit Number Badge Container */}
+            {visit.visitNumber ? (
+              <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
+                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+              </Badge>
+            ) : (
+              <div className="h-5" /> 
+            )}
+        </div>
         
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4 space-y-1.5">
@@ -363,6 +363,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-
     
