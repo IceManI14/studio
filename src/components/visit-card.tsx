@@ -135,105 +135,106 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="flex flex-row justify-between items-start">
-        <div className="flex-grow pr-4">
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex flex-col items-center w-full mb-3">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((starValue) => (
-                  <Star
-                    key={starValue}
-                    className={cn(
-                      "h-5 w-5",
-                      starValue <= (visit.partnershipConfidence ?? 0)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
-              <div className="text-center text-xs text-muted-foreground mt-0.5">
-                (Partnership Confidence)
-              </div>
+      <CardHeader> {/* Removed explicit flex-row classes, defaults to flex-col */}
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+          <div className="flex flex-col items-center w-full"> {/* Removed mb-3 */}
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((starValue) => (
+                <Star
+                  key={starValue}
+                  className={cn(
+                    "h-5 w-5",
+                    starValue <= (visit.partnershipConfidence ?? 0)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-muted-foreground/50"
+                  )}
+                />
+              ))}
             </div>
-          )}
-
-          <div className="flex justify-between items-center mb-1">
-            <div>
-              {visit.visitNumber ? (
-                <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-                </Badge>
-              ) : (
-                <div className="h-6" /> 
-              )}
-            </div>
-            {/* Removed the "X Stars" Badge as visual stars are now prominent */}
-          </div>
-          
-          <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
-              <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-          </CardTitle>
-          
-          {visit.latitude && visit.longitude && (
-              <p className="text-xs text-muted-foreground flex items-center mt-1 text-right">
-                  <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-              </p>
-          )}
-          
-          <div className="flex flex-col items-start space-y-1 w-full mt-3">
-              <div className="flex items-center text-sm text-muted-foreground">
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-              </div>
-              {visit.interestedUnit && (
-                <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
-                  <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
-                    Unit of Interest: {visit.interestedUnit}
-                  </h4>
-                </div>
-              )}
-          </div>
-
-          <div className="flex flex-col items-start space-y-1 mt-3">
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              {getCompetitorDisplay()}
-            </div>
-            {visit.coolerType && visit.discussedCompetitors && (
-              <div className="flex items-center text-xs text-muted-foreground">
-                  <Box className="mr-2 h-4 w-4 text-blue-500" />
-                  Cooler: {visit.coolerType}
-              </div>
-            )}
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-              Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
-            </div>
-          </div>
-        </div>
-
-        {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <div className="w-40 flex-shrink-0 flex items-center justify-center ml-4">
-            <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
-              <NextImage
-                src={visit.businessCardImageUrl}
-                alt="Business Card"
-                layout="fill"
-                objectFit="contain"
-                data-ai-hint="business card professional"
-              />
+            <div className="text-center text-xs text-muted-foreground mt-0.5">
+              (Partnership Confidence)
             </div>
           </div>
         )}
+
+        <div className="flex flex-row justify-between items-start w-full">
+          <div className="flex-grow pr-4">
+            <div className="flex justify-between items-center mb-1">
+              <div>
+                {visit.visitNumber ? (
+                  <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
+                    <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                  </Badge>
+                ) : (
+                  <div className="h-6" /> 
+                )}
+              </div>
+            </div>
+            
+            <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
+                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+            </CardTitle>
+            
+            {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center mt-1 text-right">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
+            
+            <div className="flex flex-col items-start space-y-1 w-full mt-3">
+                <div className="flex items-center text-sm text-muted-foreground">
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                </div>
+                {visit.interestedUnit && (
+                  <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
+                    <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
+                      Unit of Interest: {visit.interestedUnit}
+                    </h4>
+                  </div>
+                )}
+            </div>
+
+            <div className="flex flex-col items-start space-y-1 mt-3">
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                {getCompetitorDisplay()}
+              </div>
+              {visit.coolerType && visit.discussedCompetitors && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                    <Box className="mr-2 h-4 w-4 text-blue-500" />
+                    Cooler: {visit.coolerType}
+                </div>
+              )}
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
+              </div>
+            </div>
+          </div>
+
+          {visit.businessCardImageUrl && visit.hasBusinessCard && (
+            <div className="w-40 flex-shrink-0 flex items-center justify-center ml-4">
+              <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
+                <NextImage
+                  src={visit.businessCardImageUrl}
+                  alt="Business Card"
+                  layout="fill"
+                  objectFit="contain"
+                  data-ai-hint="business card professional"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
