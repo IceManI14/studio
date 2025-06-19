@@ -136,6 +136,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
+        <div className="flex justify-start w-full">
+          {visit.visitNumber ? (
+            <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
+              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+            </Badge>
+          ) : (
+            <div className="h-6" /> 
+          )}
+        </div>
+        
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
           <div className="flex flex-col items-center w-full">
             <div className="flex">
@@ -159,17 +169,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4">
-            <div>
-              {visit.visitNumber ? (
-                <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-                  <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-                </Badge>
-              ) : (
-                <div className="h-6" /> 
-              )}
-            </div>
-            
-            <CardTitle className="font-headline text-xl text-primary flex items-center mt-2">
+            <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
