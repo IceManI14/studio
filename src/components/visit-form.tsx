@@ -20,13 +20,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { formatInTimeZone } from 'date-fns-tz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const COMPETITORS_LIST = [
@@ -151,6 +152,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
 
+  const [isCameraViewVisible, setIsCameraViewVisible] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
 
   const form = useForm<VisitFormData>({
     resolver: zodResolver(visitFormSchema),
@@ -180,6 +186,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const hasTDSReadingValue = form.watch('hasTDSReading');
+
+  const stopCameraStream = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -231,6 +245,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
     setSelectedFile(null); 
     setCustomCoolerNameInput('');
+    setIsCameraViewVisible(false);
+    setHasCameraPermission(undefined);
   }, [initialData, form, isOpen]);
 
   useEffect(() => {
@@ -261,7 +277,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
 
   useEffect(() => {
-    const stopAudioRecording = () => {
+    const stopAudioAndCamera = () => {
+      // Stop audio recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
@@ -270,19 +287,60 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       }
       audioChunksRef.current = [];
       setIsRecordingNotes(false);
+
+      // Stop camera stream
+      stopCameraStream();
     };
   
     if (!isOpen) { 
-      stopAudioRecording();
+      stopAudioAndCamera();
       setSelectedFile(null);
       setBusinessCardPreviewUrl(null);
       setCustomCoolerNameInput('');
+      setIsCameraViewVisible(false);
     }
   
     return () => { 
-      stopAudioRecording();
+      stopAudioAndCamera();
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    const enableCamera = async () => {
+      if (isCameraViewVisible && videoRef.current) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          setHasCameraPermission(true);
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(playError => console.error("Error playing video:", playError));
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          setIsCameraViewVisible(false); 
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use this feature.',
+          });
+        }
+      }
+    };
+
+    enableCamera();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, [isCameraViewVisible, toast]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -294,6 +352,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       };
       reader.readAsDataURL(file);
       form.setValue('businessCardImageUrl', undefined); 
+      setIsCameraViewVisible(false); 
+      stopCameraStream();
     }
   };
 
@@ -303,6 +363,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     form.setValue('businessCardImageUrl', undefined); 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; 
+    }
+    setIsCameraViewVisible(false);
+    stopCameraStream();
+  };
+
+  const handleToggleCameraView = () => {
+    if (isCameraViewVisible) {
+      stopCameraStream();
+      setIsCameraViewVisible(false);
+    } else {
+      // Clear any existing image/file selection when opening camera
+      setSelectedFile(null);
+      setBusinessCardPreviewUrl(null);
+      form.setValue('businessCardImageUrl', undefined);
+      if (fileInputRef.current) {
+         fileInputRef.current.value = '';
+      }
+      setIsCameraViewVisible(true);
+    }
+  };
+
+  const handleCaptureImage = () => {
+    if (videoRef.current && canvasRef.current && hasCameraPermission) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const capturedFile = new File([blob], `business-card-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            setSelectedFile(capturedFile);
+            setBusinessCardPreviewUrl(URL.createObjectURL(blob));
+            form.setValue('businessCardImageUrl', undefined);
+            toast({ title: "Image Captured", description: "Business card image captured from camera." });
+          } else {
+            toast({ title: "Capture Failed", description: "Could not create image blob.", variant: "destructive" });
+          }
+        }, 'image/jpeg', 0.9);
+      }
+      handleToggleCameraView(); // Close camera after capture
+    } else {
+        toast({ title: "Capture Error", description: "Camera not ready or permission denied.", variant: "destructive"});
     }
   };
 
@@ -365,7 +470,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const endTime = new Date();
         const durationMs = endTime.getTime() - startTime.getTime();
         
-        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000)); // Ensure non-negative
+        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000)); 
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         
@@ -470,7 +575,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         description: `${result.visit.companyName} details saved successfully.`,
       });
       onSave(result.visit);
-      onClose();
+      onClose(); // This will trigger the useEffect cleanup for camera and audio
     }
     setIsSaving(false);
   };
@@ -658,13 +763,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {hasBusinessCardValue && (
               <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
                 <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
-                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !selectedFile)) && (
+                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !selectedFile)) && !isCameraViewVisible && (
                   <div className="mt-2 relative w-full aspect-[1.6/1] max-w-xs mx-auto group">
                     <Image
                       src={businessCardPreviewUrl || initialData!.businessCardImageUrl!}
                       alt="Business card preview"
-                      layout="fill"
-                      objectFit="contain"
+                      fill
+                      style={{ objectFit: 'contain' }}
                       className="rounded-md border"
                     />
                      <Button
@@ -679,8 +784,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       </Button>
                   </div>
                 )}
-                <FormControl>
-                  <div className="flex items-center gap-2 mt-2">
+                
+                <div className="flex items-center gap-2 mt-2">
                     <Input
                       id="businessCardImage"
                       type="file"
@@ -688,13 +793,50 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onChange={handleFileChange}
                       className="flex-grow"
                       ref={fileInputRef}
-                      disabled={isUploading}
+                      disabled={isUploading || isCameraViewVisible}
                     />
+                    <Button 
+                        type="button" 
+                        onClick={handleToggleCameraView} 
+                        variant="outline" 
+                        size="icon" 
+                        disabled={isUploading}
+                        aria-label={isCameraViewVisible ? "Close Camera" : "Take Photo"}
+                    >
+                        <CameraIcon className="h-4 w-4" />
+                    </Button>
                     {isUploading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+                </div>
+                
+                {isCameraViewVisible && (
+                  <div className="mt-2 space-y-2">
+                    {hasCameraPermission === false && (
+                       <Alert variant="destructive">
+                          <AlertTitle>Camera Access Denied</AlertTitle>
+                          <AlertDescription>
+                            Please allow camera access in your browser settings to use this feature. You might need to refresh the page after granting permission.
+                          </AlertDescription>
+                        </Alert>
+                    )}
+                    {/* Video element will be shown/hidden by the parent 'isCameraViewVisible' and its own style if permission is denied */}
+                    <video 
+                        ref={videoRef} 
+                        className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })} 
+                        autoPlay 
+                        muted 
+                        playsInline 
+                    />
+                    {hasCameraPermission && (
+                        <Button type="button" onClick={handleCaptureImage} className="w-full" disabled={isUploading}>
+                            <CameraIcon className="mr-2 h-4 w-4" /> Capture
+                        </Button>
+                    )}
                   </div>
-                </FormControl>
+                )}
+                <canvas ref={canvasRef} className="hidden"></canvas>
+
                 <FormDescription>
-                  Upload an image of the business card. Max 5MB.
+                  Upload an image or take a photo of the business card. Max 5MB.
                 </FormDescription>
                 <FormMessage>{form.formState.errors.businessCardImageUrl?.message}</FormMessage>
               </FormItem>
@@ -959,10 +1101,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isUploading}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isUploading || isCameraViewVisible}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isUploading}>
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isUploading || isCameraViewVisible}>
                 {(isSaving || isSuggestingCompany || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
