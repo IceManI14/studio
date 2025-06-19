@@ -12,7 +12,7 @@ import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import NextImage from 'next/image'; // Renamed to avoid conflict with lucide-react Image icon
+import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
 
 interface VisitCardProps {
@@ -170,30 +170,30 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-between items-start w-full mt-2">
-          <CardTitle className="font-headline text-xl text-primary flex items-center">
-              <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
-          </CardTitle>
-          {visit.latitude && visit.longitude && (
-              <p className="text-xs text-muted-foreground flex items-center shrink-0 ml-2 text-right">
-                  <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-              </p>
+          <div className="flex-grow">
+            <CardTitle className="font-headline text-xl text-primary flex items-center">
+                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+            </CardTitle>
+            {visit.latitude && visit.longitude && (
+                <p className="text-xs text-muted-foreground flex items-center text-right mt-1">
+                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                </p>
+            )}
+          </div>
+          
+          {visit.businessCardImageUrl && visit.hasBusinessCard && (
+            <div className="ml-4 flex-shrink-0 w-32">
+              <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
+                <NextImage
+                  src={visit.businessCardImageUrl}
+                  alt="Business Card"
+                  layout="fill"
+                  objectFit="contain"
+                />
+              </div>
+            </div>
           )}
         </div>
-        
-        {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <div className="rounded-md mt-3">
-            <div className="relative w-full aspect-[1.6/1] max-w-xs mx-auto">
-              <NextImage
-                src={visit.businessCardImageUrl}
-                alt="Business Card"
-                layout="fill"
-                objectFit="contain"
-                className="rounded-md border"
-                data-ai-hint="business card"
-              />
-            </div>
-          </div>
-        )}
         
         <div className="flex flex-col items-start space-y-1 w-full mt-1">
             <div className="flex items-center text-sm text-muted-foreground">
