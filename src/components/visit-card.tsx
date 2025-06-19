@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader as UiDialogHeader, DialogTitle as UiDialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -133,6 +133,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   };
 
   const tdsInfo = getTDSInfo();
+  const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
 
 
   return (
@@ -174,30 +175,53 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
                   aria-label="View business card"
               >
+                {isHtmlCard ? (
+                    <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                        <FileType className="w-7 h-7 mb-1" />
+                        <span className="text-xs text-center">View Digital Card</span>
+                    </div>
+                ) : (
                   <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                  <NextImage
-                      src={visit.businessCardImageUrl}
-                      alt="Business Card Thumbnail"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      data-ai-hint="business card professional"
-                  />
-                  </div>
-              </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-xl p-2 bg-background">
-                  <UiDialogHeader>
-                      <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
-                  </UiDialogHeader>
-                  <div className="relative w-full aspect-[1.6/1] mt-2">
-                      <NextImage
+                    <NextImage
                         src={visit.businessCardImageUrl}
-                        alt="Business Card - Zoomed View"
-                        data-ai-hint="business card professional"
+                        alt="Business Card Thumbnail"
                         fill
                         style={{ objectFit: 'contain' }}
-                      />
+                        data-ai-hint="business card professional"
+                    />
                   </div>
+                )}
+              </button>
+              </DialogTrigger>
+              <DialogContent 
+                className={cn(
+                  "p-2 bg-background",
+                  isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
+                )}
+              >
+                  <UiDialogHeader>
+                      <UiDialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</UiDialogTitle>
+                  </UiDialogHeader>
+                  {isHtmlCard ? (
+                    <div className="flex-grow w-full h-full overflow-hidden">
+                      <iframe
+                        srcDoc={visit.businessCardImageUrl}
+                        className="w-full h-full border-0"
+                        title="Digital Business Card"
+                        sandbox="allow-scripts allow-same-origin" // allow-scripts is needed for embedded JS like particles.js
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative w-full aspect-[1.6/1] mt-2">
+                        <NextImage
+                          src={visit.businessCardImageUrl}
+                          alt="Business Card - Zoomed View"
+                          data-ai-hint="business card professional"
+                          fill
+                          style={{ objectFit: 'contain' }}
+                        />
+                    </div>
+                  )}
               </DialogContent>
           </Dialog>
         )}
