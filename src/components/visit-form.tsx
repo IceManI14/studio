@@ -20,11 +20,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Upload, Image as ImageIcon, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { formatInTimeZone } from 'date-fns-tz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -101,7 +100,7 @@ const visitFormSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
-  businessCardImageUrl: z.string().url().optional().nullable(),
+  businessCardImageUrl: z.string().optional().nullable(), // Will store Data URI
   discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
@@ -145,9 +144,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
@@ -204,7 +201,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         longitude: initialData.longitude,
         partnershipConfidence: initialData.partnershipConfidence,
         hasBusinessCard: initialData.hasBusinessCard || false,
-        businessCardImageUrl: initialData.businessCardImageUrl || null,
+        businessCardImageUrl: initialData.businessCardImageUrl || null, // Will be Data URI if exists
         discussedCompetitors: initialData.discussedCompetitors || false,
         competitorName: initialData.competitorName || undefined,
         coolerType: initialData.coolerType || undefined,
@@ -243,7 +240,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setCurrentLongitude(undefined);
       setBusinessCardPreviewUrl(null);
     }
-    setSelectedFile(null); 
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
     setHasCameraPermission(undefined);
@@ -294,7 +290,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   
     if (!isOpen) { 
       stopAudioAndCamera();
-      setSelectedFile(null);
       setBusinessCardPreviewUrl(null);
       setCustomCoolerNameInput('');
       setIsCameraViewVisible(false);
@@ -345,22 +340,21 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBusinessCardPreviewUrl(reader.result as string);
+        const dataUri = reader.result as string;
+        setBusinessCardPreviewUrl(dataUri);
+        form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
-      form.setValue('businessCardImageUrl', undefined); 
       setIsCameraViewVisible(false); 
       stopCameraStream();
     }
   };
 
   const handleRemoveImage = () => {
-    setSelectedFile(null);
     setBusinessCardPreviewUrl(null);
-    form.setValue('businessCardImageUrl', undefined); 
+    form.setValue('businessCardImageUrl', null, {shouldValidate: true}); 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; 
     }
@@ -373,10 +367,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       stopCameraStream();
       setIsCameraViewVisible(false);
     } else {
-      // Clear any existing image/file selection when opening camera
-      setSelectedFile(null);
       setBusinessCardPreviewUrl(null);
-      form.setValue('businessCardImageUrl', undefined);
+      form.setValue('businessCardImageUrl', null, {shouldValidate: true});
       if (fileInputRef.current) {
          fileInputRef.current.value = '';
       }
@@ -393,19 +385,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       const context = canvas.getContext('2d');
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const capturedFile = new File([blob], `business-card-${Date.now()}.jpg`, { type: 'image/jpeg' });
-            setSelectedFile(capturedFile);
-            setBusinessCardPreviewUrl(URL.createObjectURL(blob));
-            form.setValue('businessCardImageUrl', undefined);
-            toast({ title: "Image Captured", description: "Business card image captured from camera." });
-          } else {
-            toast({ title: "Capture Failed", description: "Could not create image blob.", variant: "destructive" });
-          }
-        }, 'image/jpeg', 0.9);
+        const dataUri = canvas.toDataURL('image/jpeg', 0.9);
+        setBusinessCardPreviewUrl(dataUri);
+        form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
+        toast({ title: "Image Captured", description: "Business card image captured from camera." });
       }
-      handleToggleCameraView(); // Close camera after capture
+      handleToggleCameraView(); 
     } else {
         toast({ title: "Capture Error", description: "Camera not ready or permission denied.", variant: "destructive"});
     }
@@ -484,55 +469,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     
-    let finalBusinessCardImageUrl = initialData?.businessCardImageUrl;
-
-    if (data.hasBusinessCard) {
-      if (selectedFile) {
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('image', selectedFile);
-        try {
-          const response = await fetch('/api/upload-image', {
-            method: 'POST',
-            body: formData,
-          });
-          if (!response.ok) {
-            let errorDetail = `Upload service responded with status ${response.status}`;
-            try {
-              const errorData = await response.json();
-              errorDetail = errorData.message || errorDetail; 
-            } catch (jsonParseError) {
-              const textResponse = await response.text().catch(() => "Could not read error response body.");
-              console.error("Upload failed. Server response was not valid JSON. Status:", response.status, "Body:", textResponse);
-              errorDetail = `Server error (${response.status}). Check server logs.`;
-            }
-            throw new Error(errorDetail);
-          }
-          const uploadResult = await response.json();
-          finalBusinessCardImageUrl = uploadResult.url;
-          toast({ title: 'Business Card Uploaded', description: 'Image saved successfully.' });
-        } catch (error: any) {
-          let errorMessage = "An unexpected error occurred during upload.";
-          if (error && error.message) {
-            errorMessage = error.message;
-          } else if (typeof error === 'string') {
-            errorMessage = error;
-          }
-          toast({ title: 'Upload Failed', description: errorMessage, variant: 'destructive' });
-          setIsSaving(false);
-          setIsUploading(false);
-          return; 
-        } finally {
-          setIsUploading(false);
-        }
-      } else if (form.getValues('businessCardImageUrl') === undefined && initialData?.businessCardImageUrl) {
-        if (!businessCardPreviewUrl) finalBusinessCardImageUrl = undefined;
-      } else {
-        finalBusinessCardImageUrl = businessCardPreviewUrl || initialData?.businessCardImageUrl;
-      }
-    } else {
-      finalBusinessCardImageUrl = undefined;
-    }
+    const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
 
     const payload: SaveVisitPayload = {
       id: initialData?.id,
@@ -557,7 +494,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
-      originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
+      originalBusinessCardImageUrl: initialData?.businessCardImageUrl, // This will be a Data URI if it existed
       visitNumber: initialData?.visitNumber, 
     };
 
@@ -575,7 +512,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         description: `${result.visit.companyName} details saved successfully.`,
       });
       onSave(result.visit);
-      onClose(); // This will trigger the useEffect cleanup for camera and audio
+      onClose(); 
     }
     setIsSaving(false);
   };
@@ -763,11 +700,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {hasBusinessCardValue && (
               <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
                 <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
-                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !selectedFile)) && !isCameraViewVisible && (
+                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !form.getValues('businessCardImageUrl'))) && !isCameraViewVisible && (
                   <div className="mt-2 relative w-full aspect-[1.6/1] max-w-xs mx-auto group">
                     <Image
                       src={businessCardPreviewUrl || initialData!.businessCardImageUrl!}
                       alt="Business card preview"
+                      data-ai-hint="business card professional"
                       fill
                       style={{ objectFit: 'contain' }}
                       className="rounded-md border"
@@ -793,19 +731,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onChange={handleFileChange}
                       className="flex-grow"
                       ref={fileInputRef}
-                      disabled={isUploading || isCameraViewVisible}
+                      disabled={isCameraViewVisible}
                     />
                     <Button 
                         type="button" 
                         onClick={handleToggleCameraView} 
                         variant="outline" 
                         size="icon" 
-                        disabled={isUploading}
                         aria-label={isCameraViewVisible ? "Close Camera" : "Take Photo"}
                     >
                         <CameraIcon className="h-4 w-4" />
                     </Button>
-                    {isUploading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
                 </div>
                 
                 {isCameraViewVisible && (
@@ -818,7 +754,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </AlertDescription>
                         </Alert>
                     )}
-                    {/* Video element will be shown/hidden by the parent 'isCameraViewVisible' and its own style if permission is denied */}
                     <video 
                         ref={videoRef} 
                         className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })} 
@@ -827,7 +762,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         playsInline 
                     />
                     {hasCameraPermission && (
-                        <Button type="button" onClick={handleCaptureImage} className="w-full" disabled={isUploading}>
+                        <Button type="button" onClick={handleCaptureImage} className="w-full">
                             <CameraIcon className="mr-2 h-4 w-4" /> Capture
                         </Button>
                     )}
@@ -836,7 +771,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <canvas ref={canvasRef} className="hidden"></canvas>
 
                 <FormDescription>
-                  Upload an image or take a photo of the business card. Max 5MB.
+                  Upload an image or take a photo of the business card. Max 5MB (approx for Data URI).
                 </FormDescription>
                 <FormMessage>{form.formState.errors.businessCardImageUrl?.message}</FormMessage>
               </FormItem>
@@ -1101,11 +1036,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isUploading || isCameraViewVisible}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isUploading || isCameraViewVisible}>
-                {(isSaving || isSuggestingCompany || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible}>
+                {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>

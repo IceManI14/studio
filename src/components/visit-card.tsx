@@ -27,7 +27,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const { toast } = useToast();
-  const timeZone = 'America/New_York'; // For EST/EDT
+  const timeZone = 'America/New_York'; 
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -167,6 +167,41 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
+        {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
+              <DialogTrigger asChild>
+              <button 
+                  className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
+                  aria-label="View business card"
+              >
+                  <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                  <NextImage
+                      src={visit.businessCardImageUrl} // This will be a Data URI
+                      alt="Business Card Thumbnail"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      data-ai-hint="business card professional"
+                  />
+                  </div>
+              </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl p-2 bg-background">
+                  <UiDialogHeader>
+                      <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
+                  </UiDialogHeader>
+                  <div className="relative w-full aspect-[1.6/1] mt-2">
+                      <NextImage
+                        src={visit.businessCardImageUrl} // This will be a Data URI
+                        alt="Business Card - Zoomed View"
+                        data-ai-hint="business card professional"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                      />
+                  </div>
+              </DialogContent>
+          </Dialog>
+        )}
+
         <div className="flex flex-row justify-between items-start w-full pt-2">
           <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-2xl text-primary flex items-center">
@@ -218,41 +253,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
             </div>
           </div>
-
         </div>
-         {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
-              <DialogTrigger asChild>
-              <button 
-                  className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
-                  aria-label="View business card"
-              >
-                  <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                  <NextImage
-                      src={visit.businessCardImageUrl}
-                      alt="Business Card Thumbnail"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      data-ai-hint="business card professional"
-                  />
-                  </div>
-              </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-xl p-2 bg-background">
-                  <UiDialogHeader>
-                      <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
-                  </UiDialogHeader>
-                  <div className="relative w-full aspect-[1.6/1] mt-2">
-                      <NextImage
-                      src={visit.businessCardImageUrl}
-                      alt="Business Card - Zoomed View"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      />
-                  </div>
-              </DialogContent>
-          </Dialog>
-        )}
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm pt-3">
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
@@ -367,5 +368,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    

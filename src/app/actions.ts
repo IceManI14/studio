@@ -17,24 +17,23 @@ export interface SaveVisitPayload {
   longitude?: number;
   partnershipConfidence?: number;
   hasBusinessCard?: boolean;
-  businessCardImageUrl?: string;
+  businessCardImageUrl?: string | null; // Can be Data URI
   discussedCompetitors?: boolean;
   competitorName?: string;
   coolerType?: string;
   decisionMakerName?: string;
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
-  visitNumber?: number; // Sequential number of the visit
-  interestedUnit?: string; // Unit the company is potentially interested in
+  visitNumber?: number; 
+  interestedUnit?: string; 
   hasTDSReading?: boolean;
   tdsValue?: number;
-  futureMeetingSet?: boolean; // New field
-  // For updates, to know if critical fields changed
+  futureMeetingSet?: boolean; 
   originalCompanyName?: string;
   originalNotes?: string;
   existingContactInfo?: ContactInfo; 
   existingNotesSummary?: string;
-  originalBusinessCardImageUrl?: string;
+  originalBusinessCardImageUrl?: string | null; // Can be Data URI
 }
 
 const saveVisitPayloadSchema = z.object({
@@ -45,7 +44,7 @@ const saveVisitPayloadSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
-  businessCardImageUrl: z.string().url().optional().nullable(),
+  businessCardImageUrl: z.string().optional().nullable(), // Accepts Data URI or other strings
   discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
@@ -56,7 +55,7 @@ const saveVisitPayloadSchema = z.object({
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
-  futureMeetingSet: z.boolean().optional(), // New field
+  futureMeetingSet: z.boolean().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -64,15 +63,10 @@ const saveVisitPayloadSchema = z.object({
     confidence: z.number(),
   }).optional(),
   existingNotesSummary: z.string().optional(),
-  originalBusinessCardImageUrl: z.string().url().optional().nullable(),
+  originalBusinessCardImageUrl: z.string().optional().nullable(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null)) {
     return false; 
-  }
-  if (!data.hasTDSReading && data.tdsValue !== undefined && data.tdsValue !== null) {
-    // This case is tricky - if not hasTDSReading, tdsValue should ideally be ignored or cleared.
-    // For now, schema validation will pass if tdsValue is present but hasTDSReading is false.
-    // The form logic should handle clearing tdsValue if hasTDSReading is unchecked.
   }
   return true;
 }, {
@@ -126,7 +120,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       notesSummary: summary,
       partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl === null ? undefined : validatedPayload.businessCardImageUrl,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl ?? undefined, // Use Data URI from payload
       discussedCompetitors: validatedPayload.discussedCompetitors,
       competitorName: validatedPayload.competitorName,
       coolerType: validatedPayload.coolerType,
@@ -137,7 +131,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       interestedUnit: validatedPayload.interestedUnit,
       hasTDSReading: validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
-      futureMeetingSet: validatedPayload.futureMeetingSet, // New field
+      futureMeetingSet: validatedPayload.futureMeetingSet,
     };
 
     return { visit };
