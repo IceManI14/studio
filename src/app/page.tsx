@@ -577,16 +577,18 @@ export default function HomePage() {
     body += `\n\nBest regards,\n${selectedSalesperson.name || 'Optimum Trailblazer App'}`;
 
     const params = new URLSearchParams();
-    params.append('subject', subject);
+    params.append('to', chrisEmail);
+    params.append('su', subject);
     params.append('body', body);
-    const mailtoLink = `mailto:${chrisEmail}?${params.toString()}`;
+    
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&${params.toString()}`;
     
     if (typeof window !== 'undefined') {
-        window.location.href = mailtoLink;
+        window.open(gmailLink, '_blank');
     }
 
     toast({
-      title: "Opening email client...",
+      title: "Opening Gmail...",
       description: "Please manually attach the exported PDF to the email before sending.",
     });
   };
