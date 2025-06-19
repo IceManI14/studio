@@ -13,7 +13,7 @@ import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import NextImage from 'next/image';
+import NextImage from 'next/image'; // Corrected import for NextImage
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
 
 interface VisitCardProps {
@@ -137,17 +137,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="relative space-y-1.5">
+      <CardHeader className="relative space-y-1.5 pb-3">
         {visit.visitNumber && (
             <div className="absolute top-4 left-4 z-10">
-                <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
-                    <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+                <Badge variant="secondary" className="text-2xl font-semibold px-3 py-1.5">
+                    <Hash className="mr-3 h-7 w-7" />{visit.visitNumber}
                 </Badge>
             </div>
         )}
-
+        
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full">
+          <div className="flex flex-col items-center w-full pt-2">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
@@ -166,8 +166,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           </div>
         )}
-        
-        <div className="flex flex-row justify-between items-start w-full mt-2">
+
+        <div className="flex flex-row justify-between items-start w-full pt-2">
           <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -238,23 +238,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-xl p-2 bg-background">
-                <UiDialogHeader>
-                    <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
-                </UiDialogHeader>
-                <div className="relative w-full aspect-[1.6/1] mt-2">
-                    <NextImage
-                    src={visit.businessCardImageUrl}
-                    alt="Business Card - Zoomed View"
-                    layout="fill"
-                    objectFit="contain"
-                    />
-                </div>
+                    <UiDialogHeader>
+                        <UiDialogTitle>Business Card - Zoomed View</UiDialogTitle>
+                    </UiDialogHeader>
+                    <div className="relative w-full aspect-[1.6/1] mt-2">
+                        <NextImage
+                        src={visit.businessCardImageUrl}
+                        alt="Business Card - Zoomed View"
+                        layout="fill"
+                        objectFit="contain"
+                        />
+                    </div>
                 </DialogContent>
             </Dialog>
             )}
         </div>
       </CardHeader>
-      <CardContent className="flex-grow space-y-3 text-sm">
+      <CardContent className="flex-grow space-y-3 text-sm pt-3">
         {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -367,4 +367,5 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
     
