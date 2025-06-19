@@ -135,39 +135,53 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader>
-        <div className="flex justify-start w-full">
-          {visit.visitNumber ? (
-            <Badge variant="secondary" className="text-base font-semibold px-1.5 py-0.5">
-              <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
-            </Badge>
-          ) : (
-            <div className="h-6" /> 
-          )}
+      <CardHeader> {/* CardHeader is flex flex-col space-y-1.5 p-6 */}
+        {/* Top Row: Visit # (Left), Stars (Center) */}
+        <div className="flex items-center w-full mb-3">
+          {/* Left: Visit # */}
+          <div className="flex-shrink-0">
+            {visit.visitNumber ? (
+              <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
+                <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
+              </Badge>
+            ) : (
+              <div className="h-5 w-10" /> /* Placeholder for consistent height & balance */
+            )}
+          </div>
+
+          {/* Center: Stars */}
+          <div className="flex-1 flex justify-center"> {/* Use flex-1 to allow true centering */}
+            {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+              <div className="flex flex-col items-center">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((starValue) => (
+                    <Star
+                      key={starValue}
+                      className={cn(
+                        "h-5 w-5",
+                        starValue <= (visit.partnershipConfidence ?? 0)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-muted-foreground/50"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="text-center text-xs text-muted-foreground mt-0.5">
+                  (Partnership Confidence)
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Invisible Right placeholder for balance if business card is not on this line */}
+          <div className="flex-shrink-0 w-10 invisible"> {/* Ensures center element is truly centered */}
+             {visit.visitNumber ? ( <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5"> <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}</Badge>) : ( <div className="h-5 w-10" /> )}
+          </div>
         </div>
         
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((starValue) => (
-                <Star
-                  key={starValue}
-                  className={cn(
-                    "h-5 w-5",
-                    starValue <= (visit.partnershipConfidence ?? 0)
-                      ? "text-yellow-400 fill-yellow-400"
-                      : "text-muted-foreground/50"
-                  )}
-                />
-              ))}
-            </div>
-            <div className="text-center text-xs text-muted-foreground mt-0.5">
-              (Partnership Confidence)
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-row justify-between items-start w-full">
+        {/* Main Header Content Row: Company Details (Left), Business Card Image (Right) */}
+        <div className="flex flex-row justify-between items-start w-full mt-2"> {/* Added mt-2 for spacing from above row */}
+          {/* Left side: company name, coords, date, etc. */}
           <div className="flex-grow pr-4">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
@@ -219,6 +233,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
           </div>
 
+          {/* Right side: business card image */}
           {visit.businessCardImageUrl && visit.hasBusinessCard && (
             <div className="w-40 flex-shrink-0 flex items-center justify-center ml-4">
               <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border">
@@ -347,5 +362,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    
