@@ -773,7 +773,7 @@ export default function HomePage() {
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1">
-                        <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door
+                        <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door!
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -800,7 +800,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card rounded-lg shadow">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                        When you click "Hit New Door" this app will help you streamline your efforts
+                        When you click "Hit New Door!" this app will help you streamline your efforts
                     </Button>
                     </div>
                 ) : (
@@ -1141,3 +1141,4 @@ export default function HomePage() {
     </div>
   );
 }
+
