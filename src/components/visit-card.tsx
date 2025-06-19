@@ -138,7 +138,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
-        <div className="flex-shrink-0 mb-2">
+        <div className="flex-shrink-0"> {/* Visit Number Badge Container */}
             {visit.visitNumber ? (
               <Badge variant="secondary" className="text-xs font-semibold px-1 py-0.5">
                 <Hash className="mr-1 h-3 w-3" />{visit.visitNumber}
@@ -149,7 +149,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-          <div className="flex flex-col items-center w-full mb-3">
+          <div className="flex flex-col items-center w-full">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
@@ -170,18 +170,18 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         )}
         
         <div className="flex flex-row justify-between items-start w-full">
-          <div className="flex-grow pr-4">
+          <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-xl text-primary flex items-center">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
             {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <p className="text-xs text-muted-foreground flex items-center">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
             
-            <div className="flex flex-col items-start space-y-1 w-full mt-3">
+            <div className="flex flex-col items-start space-y-1 w-full">
                 <div className="flex items-center text-sm text-muted-foreground">
                     <CalendarDays className="mr-2 h-4 w-4" />
                     {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
@@ -195,7 +195,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
             </div>
 
-            <div className="flex flex-col items-start space-y-1 mt-3">
+            <div className="flex flex-col items-start space-y-1">
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 {getCompetitorDisplay()}
