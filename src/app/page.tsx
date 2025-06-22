@@ -617,17 +617,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="flex justify-center w-full py-4">
+        <header className="flex flex-col items-center justify-center w-full py-4 gap-4">
           <h1 className="text-5xl sm:text-7xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
-        </header>
-
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
             <h2 className="text-lg font-semibold text-foreground text-center">
-                Good Luck Today!
+              Good Luck Today!
             </h2>
-        </div>
+          </div>
+        </header>
         
         <Tabs defaultValue="field-day" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
