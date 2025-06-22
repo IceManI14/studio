@@ -3,78 +3,53 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Nunito', sans-serif;
 }
 
 @layer base {
   :root {
-    --background: 220 17% 95%; /* Light grey #F0F2F5 */
-    --foreground: 0 0% 3.9%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 217 89% 60%; /* Vibrant blue #4285F4 */
-    --primary-foreground: 0 0% 100%; /* White for good contrast on blue */
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 36 100% 50%; /* Warm orange #FF9800 */
-    --accent-foreground: 0 0% 9%; /* Dark text for good contrast on orange */
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 217 89% 60%; /* Using primary color for ring */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
+ 
   .dark {
-    --background: 220 40% 10%; /* Very Dark Desaturated Blue */
-    --foreground: 30 50% 95%; /* Light Cream/Off-white */
-    --card: 220 30% 15%; /* Slightly Lighter Dark Blue */
-    --card-foreground: 30 50% 95%;
-    --popover: 220 30% 15%;
-    --popover-foreground: 30 50% 95%;
-    --primary: 210 70% 45%; /* Deep, Rich Blue */
-    --primary-foreground: 30 50% 95%; /* Light Cream for text on primary */
-    --secondary: 220 25% 20%; /* Darker Grey-Blue */
-    --secondary-foreground: 30 50% 90%; /* Slightly darker cream */
-    --muted: 220 20% 25%; /* Darker Muted Blue */
-    --muted-foreground: 30 30% 70%; /* Greyer Cream */
-    --accent: 40 80% 60%; /* Warm Gold/Brass */
-    --accent-foreground: 220 40% 10%; /* Dark text for good contrast on accent */
-    --destructive: 0 70% 55%; /* Classic red, adjusted for dark mode */
-    --destructive-foreground: 0 0% 100%; /* White */
-    --border: 220 30% 25%; /* Subtle Dark Blue-Grey Border */
-    --input: 220 30% 25%;
-    --ring: 40 80% 60%; /* Gold/Brass for focus ring */
-    --chart-1: 210 70% 55%; /* Nautical Blues & Teals */
-    --chart-2: 190 60% 45%;
-    --chart-3: 40 70% 50%;  /* Gold Accent */
-    --chart-4: 200 65% 65%;
-    --chart-5: 30 60% 70%;  /* Sandy Gold */
-    --sidebar-background: 220 35% 12%; /* Deep Navy for Sidebar */
-    --sidebar-foreground: 30 50% 90%; /* Light Cream text */
-    --sidebar-primary: 40 80% 60%;    /* Gold for active/primary items */
-    --sidebar-primary-foreground: 220 40% 10%; /* Dark text on gold */
-    --sidebar-accent: 220 30% 20%;     /* Subtle hover */
-    --sidebar-accent-foreground: 30 50% 95%; /* Light cream for hover text */
-    --sidebar-border: 220 30% 22%;     /* Darker border for sidebar */
-    --sidebar-ring: 40 80% 60%;       /* Gold for focus rings in sidebar */
+    --background: 240 10% 4%; /* Near-black */
+    --foreground: 210 40% 98%; /* White */
+    --card: 243 79% 58% / 0.05;
+    --card-foreground: 210 40% 98%;
+    --popover: 242 47% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 243 79% 65%; /* Indigo */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 265 83% 65%; /* Violet */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 242 47% 20%; /* Muted dark blue */
+    --muted-foreground: 220 15% 65%;
+    --accent: 326 83% 61%; /* Pink */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 243 79% 58% / 0.2; /* Semi-transparent indigo border */
+    --input: 243 79% 58% / 0.15;
+    --ring: 326 83% 61%; /* Pink ring for focus */
   }
 }
 
@@ -84,6 +59,19 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a2e4a 50%, #2e1a4a 100%);
+  }
+}
+
+@layer utilities {
+  .aurora-text {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #a855f7 50%, #ec4899 75%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .aurora-glow {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--secondary) / 0.2);
   }
 }
 

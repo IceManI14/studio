@@ -578,12 +578,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] bg-card/80 backdrop-blur-md border-primary/30">
         <DialogHeader>
-          <DialogTitle className="font-headline">
+          <DialogTitle className="font-headline text-primary">
             {initialData?.id ? 'Edit Potential Partner' : 'New Potential Partner'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-foreground/80">
             {initialData?.id ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
@@ -650,7 +650,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   control={form.control}
                   name="interestedUnit"
                   render={({ field }) => (
-                    <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                    <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
                       <FormLabel className="flex items-center">
                         <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
                       </FormLabel>
@@ -710,7 +710,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             {hasBusinessCardValue && (
-              <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+              <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
                 <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
                 {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !form.getValues('businessCardImageUrl'))) && !isCameraViewVisible && (
                   <div className="mt-2 relative w-full aspect-[1.6/1] max-w-xs mx-auto group">
@@ -820,7 +820,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 control={form.control}
                 name="tdsValue"
                 render={({ field }) => (
-                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
                     <FormLabel htmlFor="tdsValue" className="flex items-center">
                       <Droplets className="mr-2 h-5 w-5 text-primary" /> TDS Value (0-1500)
                     </FormLabel>
@@ -875,7 +875,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 control={form.control}
                 name="futureMeetingDateTime"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
                     <FormLabel>Meeting Date & Time</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -994,7 +994,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             {discussedCompetitorsValue && (
-              <div className="space-y-3 p-3 border rounded-md bg-secondary/30">
+              <div className="space-y-3 p-3 border rounded-md bg-background/10">
                 <FormField
                   control={form.control}
                   name="competitorName"
@@ -1071,7 +1071,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               </div>
             )}
 
-            <div className="space-y-3 pt-2 p-3 border rounded-md bg-secondary/30">
+            <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
               <Label className="font-medium text-base">Decision Maker Info (Optional)</Label>
                <FormField
                 control={form.control}
@@ -1151,7 +1151,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible}>
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible} className="aurora-glow">
                 {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}

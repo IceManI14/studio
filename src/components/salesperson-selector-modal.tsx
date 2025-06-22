@@ -15,7 +15,7 @@ const SalespersonSelectorModal: React.FC<SalespersonSelectorModalProps> = ({ sal
   return (
     <Dialog open={true} onOpenChange={() => { /* Controlled by parent rendering */ }}>
       <DialogContent 
-        className="sm:max-w-[425px] shadow-2xl" 
+        className="sm:max-w-[425px] shadow-2xl bg-card/80 backdrop-blur-md border-primary/30" 
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -24,7 +24,7 @@ const SalespersonSelectorModal: React.FC<SalespersonSelectorModalProps> = ({ sal
             <UserCheck className="mr-3 h-8 w-8" />
             Select Your Profile
           </DialogTitle>
-          <DialogDescription className="text-base pt-2">
+          <DialogDescription className="text-base pt-2 text-foreground/80">
             Please choose your profile to continue. Your activities and logs will be saved under your name.
           </DialogDescription>
         </DialogHeader>
@@ -35,7 +35,7 @@ const SalespersonSelectorModal: React.FC<SalespersonSelectorModalProps> = ({ sal
               onClick={() => onSelectSalesperson(salesperson)}
               variant="outline"
               size="lg"
-              className="w-full justify-start text-md py-7 rounded-lg hover:bg-primary/10 focus:ring-2 focus:ring-primary"
+              className="w-full justify-start text-md py-7 rounded-lg bg-primary/10 hover:bg-primary/20 focus:ring-2 focus:ring-primary"
             >
               {salesperson.name}
             </Button>

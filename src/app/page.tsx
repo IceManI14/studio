@@ -726,7 +726,7 @@ export default function HomePage() {
 
   if (!selectedSalesperson) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <SalespersonSelectorModal
           salespeople={SALESPEOPLE}
           onSelectSalesperson={handleSelectSalesperson}
@@ -736,28 +736,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="flex justify-end w-full py-4">
-          <div className="flex flex-row items-center space-x-4">
-            <h1
-              className="text-6xl sm:text-7xl font-headline font-bold text-primary drop-shadow-sm text-center"
-              style={{
-                textShadow: [
-                  '-1px -1px 0 hsl(var(--accent))',
-                  '1px -1px 0 hsl(var(--accent))',
-                  '-1px 1px 0 hsl(var(--accent))',
-                  '1px 1px 0 hsl(var(--accent))',
-                ].join(', '),
-              }}
-            >
-              Optimum Trailblazer
-            </h1>
-          </div>
+    <div className="min-h-screen">
+      <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+        <header className="flex justify-center w-full py-4">
+          <h1 className="text-5xl sm:text-7xl font-headline font-bold text-center aurora-text">
+            Optimum Trailblazer
+          </h1>
         </header>
 
         {selectedSalesperson && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
                 <h2 className="text-lg font-semibold text-foreground text-center">
                     Good Luck Today {selectedSalesperson.name}!
                 </h2>
@@ -768,23 +756,23 @@ export default function HomePage() {
         )}
         
         <Tabs defaultValue="field-day" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted p-1 text-muted-foreground">
-            <TabsTrigger value="field-day" className="border border-border data-[state=active]:border-transparent"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
-            <TabsTrigger value="call-day" className="border border-border data-[state=active]:border-transparent"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
-            <TabsTrigger value="visits" className="border border-border data-[state=active]:border-transparent"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
-            <TabsTrigger value="ai-chat" className="border border-border data-[state=active]:border-transparent"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Debbie</TabsTrigger>
-            <TabsTrigger value="about" className="border border-border data-[state=active]:border-transparent"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
+            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><MapPin className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Visits</TabsTrigger>
+            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><Bot className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Debbie</TabsTrigger>
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><InfoIcon className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />About</TabsTrigger>
           </TabsList>
 
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1">
+                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1 aurora-glow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door!
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1">
+                        <Button variant="destructive" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1">
                           <Sunset className="mr-2 h-5 w-5" /> End Day!
                         </Button>
                       </AlertDialogTrigger>
@@ -804,7 +792,7 @@ export default function HomePage() {
                 </div>
 
                 {visits.length === 0 && coldCallCount === 0 ? (
-                    <div className="text-center py-10 bg-card rounded-lg shadow">
+                    <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
                         When you click "Hit New Door!" this app will help you streamline your efforts
@@ -829,13 +817,13 @@ export default function HomePage() {
 
           <TabsContent value="call-day">
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card rounded-lg shadow">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-semibold text-foreground text-center">
                   Call Day Priority List
                 </h2>
               </div>
 
-              <div className="p-4 bg-card rounded-lg shadow mb-6">
+              <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
                   <h3 className="text-lg font-medium text-foreground">Sort Options</h3>
@@ -875,7 +863,7 @@ export default function HomePage() {
               </div>
 
               {sortedVisitsForCallDay.length === 0 ? (
-                <div className="text-center py-10 bg-card rounded-lg shadow">
+                <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">No visits to display. Log visits in "Field Day" first.</p>
                 </div>
               ) : (
@@ -908,7 +896,7 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="visits">
-            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
+            <section aria-labelledby="map-section-title" className="p-6 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
                       <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Visits Map
@@ -934,7 +922,7 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="ai-chat">
-            <UiCard className="w-full max-w-2xl mx-auto shadow-xl">
+            <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card/60 backdrop-blur-sm border-primary/20">
               <UiCardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1064,7 +1052,7 @@ export default function HomePage() {
 
 
           <TabsContent value="about">
-            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
+            <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
               <div>
                 <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
                   <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
@@ -1172,7 +1160,7 @@ export default function HomePage() {
           onSave={handleSaveVisit}
           initialData={currentEditingVisit}
         />
-      </main>
+      </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Personalized for {selectedSalesperson.name}.</p>
       </footer>
