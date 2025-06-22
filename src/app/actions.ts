@@ -29,6 +29,7 @@ export interface SaveVisitPayload {
   hasTDSReading?: boolean;
   tdsValue?: number;
   futureMeetingSet?: boolean; 
+  futureMeetingDateTime?: Date;
   originalCompanyName?: string;
   originalNotes?: string;
   existingContactInfo?: ContactInfo; 
@@ -56,6 +57,7 @@ const saveVisitPayloadSchema = z.object({
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
+  futureMeetingDateTime: z.date().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -132,6 +134,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       hasTDSReading: validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
       futureMeetingSet: validatedPayload.futureMeetingSet,
+      futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
     };
 
     return { visit };
@@ -234,4 +237,3 @@ export async function getAiChatResponseAction(
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
 }
-

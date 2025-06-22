@@ -20,10 +20,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -111,6 +114,7 @@ const visitFormSchema = z.object({
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
+  futureMeetingDateTime: z.date().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false;
@@ -175,6 +179,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       hasTDSReading: false,
       tdsValue: undefined,
       futureMeetingSet: false,
+      futureMeetingDateTime: undefined,
     },
   });
 
@@ -183,6 +188,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const hasTDSReadingValue = form.watch('hasTDSReading');
+  const futureMeetingSetValue = form.watch('futureMeetingSet');
 
   const stopCameraStream = () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -212,6 +218,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         hasTDSReading: initialData.hasTDSReading || false,
         tdsValue: initialData.tdsValue,
         futureMeetingSet: initialData.futureMeetingSet || false,
+        futureMeetingDateTime: initialData.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -235,6 +242,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         hasTDSReading: false,
         tdsValue: undefined,
         futureMeetingSet: false,
+        futureMeetingDateTime: undefined,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -334,7 +342,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         videoRef.current.srcObject = null;
       }
     };
-  }, [isCameraViewVisible]);
+  }, [isCameraViewVisible, toast]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -490,6 +498,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       hasTDSReading: data.hasTDSReading,
       tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
       futureMeetingSet: data.futureMeetingSet,
+      futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -839,7 +848,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        const boolValue = !!checked;
+                        field.onChange(boolValue);
+                        if (!boolValue) {
+                           form.setValue('futureMeetingDateTime', undefined);
+                        }
+                      }}
                       id="futureMeetingSet"
                     />
                   </FormControl>
@@ -851,6 +866,101 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
+
+            {futureMeetingSetValue && (
+              <FormField
+                control={form.control}
+                name="futureMeetingDateTime"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                    <FormLabel>Meeting Date & Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP 'at' h:mm a")
+                            ) : (
+                              <span>Pick a date and time</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            const current = field.value || new Date();
+                            const newDate = date || current;
+                            newDate.setHours(current.getHours());
+                            newDate.setMinutes(current.getMinutes());
+                            field.onChange(newDate);
+                          }}
+                          disabled={(date) =>
+                            date < new Date(new Date().setDate(new Date().getDate() - 1))
+                          }
+                          initialFocus
+                        />
+                        <div className="p-3 border-t border-border">
+                          <div className="flex items-center gap-2">
+                             <Label>Time</Label>
+                            <Select
+                              value={field.value ? String(field.value.getHours()) : '9'}
+                              onValueChange={(value) => {
+                                const newDate = field.value ? new Date(field.value) : new Date();
+                                newDate.setHours(parseInt(value));
+                                field.onChange(newDate);
+                              }}
+                            >
+                              <SelectTrigger className="w-[80px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 12 }, (_, i) => i + 8).map(hour => (
+                                   <SelectItem key={hour} value={String(hour)}>{String(hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour)).padStart(2, '0')} {hour < 12 || hour === 24 ? 'AM' : 'PM'}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            :
+                            <Select
+                              value={field.value ? String(field.value.getMinutes()).padStart(2, '0') : '00'}
+                               onValueChange={(value) => {
+                                const newDate = field.value ? new Date(field.value) : new Date();
+                                newDate.setMinutes(parseInt(value));
+
+                                field.onChange(newDate);
+                              }}
+                            >
+                              <SelectTrigger className="w-[80px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="00">00</SelectItem>
+                                <SelectItem value="15">15</SelectItem>
+                                <SelectItem value="30">30</SelectItem>
+                                <SelectItem value="45">45</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Select date/time for the follow-up meeting.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
 
             <FormField
@@ -1052,4 +1162,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

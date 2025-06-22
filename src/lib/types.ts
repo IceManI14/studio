@@ -26,7 +26,8 @@ export interface Visit {
   interestedUnit?: string; // Unit the company is potentially interested in
   hasTDSReading?: boolean;
   tdsValue?: number;
-  futureMeetingSet?: boolean; // New field
+  futureMeetingSet?: boolean;
+  futureMeetingDateTime?: Date;
 }
 
 export interface Salesperson {
@@ -41,4 +42,3 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
-
