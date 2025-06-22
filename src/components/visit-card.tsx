@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 interface VisitCardProps {
   visit: Visit;
@@ -244,23 +245,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </p>
           </div>
         )}
-        
-        {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-          <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-              Competitor Intel <span className="text-accent">{`{${visit.competitorName}}`}</span>
-            </h4>
-            {COMPETITOR_DETAILS[visit.competitorName].title && (
-                <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-            )}
-            <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-              {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                <li key={index}>{detail}</li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
           <div className="p-2 bg-secondary/30 rounded-md text-center">
@@ -347,41 +331,77 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </Dialog>
           </div>
         )}
+        
+        <Accordion type="multiple" collapsible className="w-full">
+          {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+            <AccordionItem value="competitor-intel">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
+                  Competitor Intel <span className="text-accent ml-1">{`{${visit.competitorName}}`}</span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {COMPETITOR_DETAILS[visit.competitorName].title && (
+                    <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+                )}
+                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+                  {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
-        {hasDecisionMakerDetails && (
-          <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
-            </h4>
-            {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
-            {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-            {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
-             {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
-              <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-            }
-            {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
-              <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-            }
-          </div>
-        )}
+          {hasDecisionMakerDetails && (
+            <AccordionItem value="decision-maker">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
+                {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+                {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
+                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
+                  <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                }
+                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
+                  <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                }
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
-        {visit.notes && (
-          <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
-            </h4>
-            <p className="text-muted-foreground max-h-20 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-          </div>
-        )}
+          {visit.notes && (
+            <AccordionItem value="original-notes">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
-        {visit.notesSummary && (
-          <div className="p-3 bg-secondary/30 rounded-md">
-            <h4 className="font-medium text-foreground flex items-center mb-1">
-              <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
-            </h4>
-            <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
-          </div>
-        )}
+          {visit.notesSummary && (
+            <AccordionItem value="notes-summary">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
+
         {!visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
