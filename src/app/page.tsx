@@ -445,7 +445,7 @@ export default function HomePage() {
     });
   };
 
-  const handleEmailChris = () => {
+  const handleEmailManager = () => {
     const chrisEmail = "chrisc@drinkoptimum.com";
     const subject = `Salesperson for the current day visits`;
     
@@ -641,12 +641,12 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1 aurora-glow">
+                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door!
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="flex-1 aurora-glow">
+                        <Button variant="default" size="sm" className="flex-1">
                           <Sunset className="mr-2 h-5 w-5" /> End Day!
                         </Button>
                       </AlertDialogTrigger>
@@ -782,8 +782,8 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-2 justify-center">
                  <ExportPdfButton visits={visits} className="h-8 px-2 text-xs" />
                  <ExportButton visits={visits} className="h-8 px-2 text-xs" />
-                 <Button onClick={handleEmailChris} variant="default" size="sm" className="h-8 px-2 text-xs">
-                   Email Chris
+                 <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs">
+                   Email Manager
                  </Button>
               </div>
               
@@ -820,7 +820,7 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
-                <ScrollArea className="h-[300px] w-full p-4 border-t border-b">
+                <ScrollArea className="h-[200px] w-full p-4 border-t border-b">
                   {chatMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
                       <div className={`flex items-end gap-2 max-w-[75%]`}>
