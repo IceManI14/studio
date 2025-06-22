@@ -739,7 +739,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex justify-center w-full py-4">
-          <h1 className="text-5xl sm:text-7xl font-headline font-bold text-center aurora-text">
+          <h1 className="text-5xl sm:text-7xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
         </header>
@@ -1059,7 +1059,7 @@ export default function HomePage() {
                 </h2>
                 <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
                   This app is intended to help you streamline your efforts in acquiring new clients and partners alike.
-                  It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
+                  It will help you organize the data you collect and also help you guide you on your journey as you build Optimum Water Bridges.
                 </p>
                 <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
                    <li>
