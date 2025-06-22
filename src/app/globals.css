@@ -43,13 +43,13 @@ body {
     --secondary-foreground: 210 40% 98%;
     --muted: 242 47% 20%; /* Muted dark blue */
     --muted-foreground: 220 15% 65%;
-    --accent: 326 83% 61%; /* Pink */
+    --accent: 187 95% 43%; /* Turquoise */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 51%;
     --destructive-foreground: 210 40% 98%;
     --border: 243 79% 58% / 0.2; /* Semi-transparent indigo border */
     --input: 243 79% 58% / 0.15;
-    --ring: 326 83% 61%; /* Pink ring for focus */
+    --ring: 187 95% 43%; /* Turquoise ring for focus */
   }
 }
 
