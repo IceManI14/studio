@@ -128,12 +128,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
-
+  const defaultAccordionValues = [
+    visit.notesSummary ? 'summary' : undefined,
+    visit.notes ? 'notes' : undefined,
+  ].filter(Boolean) as string[];
 
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border border-primary/40",
+        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2 border-primary/40",
         !isZoomedView && 'cursor-pointer'
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
@@ -223,6 +226,143 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         </div>
       </CardHeader>
+
+      {isZoomedView && (
+        <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
+          <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-2">
+            {/* AI Summary */}
+            {visit.notesSummary && (
+              <AccordionItem value="summary">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <FileText className="mr-2 h-5 w-5" /> AI Summary
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notesSummary}</p>
+                  <Button variant="ghost" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="mt-2 text-primary hover:bg-primary/10">
+                    {isSummarizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Re-summarize
+                  </Button>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Full Notes */}
+            {visit.notes && (
+              <AccordionItem value="notes">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <Info className="mr-2 h-5 w-5" /> Visit Notes
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notes}</p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Decision Maker */}
+            {hasDecisionMakerDetails && (
+              <AccordionItem value="dm-info">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <Contact className="mr-2 h-5 w-5" /> Decision Maker & Contact
+                </AccordionTrigger>
+                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                  {visit.decisionMakerName && <p><strong>Name:</strong> {visit.decisionMakerName}</p>}
+                  {visit.decisionMakerTitle && <p><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+                  {visit.decisionMakerContact && <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
+                  {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && (
+                    <div className="pt-2 border-t mt-2">
+                      <p><strong>Scraped Info:</strong> {visit.contactInfo.info}</p>
+                      <p className="text-xs text-muted-foreground"><strong>Confidence:</strong> {Math.round(visit.contactInfo.confidence * 100)}%</p>
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Competitor Info */}
+            {visit.discussedCompetitors && (
+              <AccordionItem value="competitor">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <Swords className="mr-2 h-5 w-5" /> Competitor Info
+                </AccordionTrigger>
+                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                  <p><strong>Competitor:</strong> {visit.competitorName || 'Not specified'}</p>
+                  <p><strong>Cooler Type:</strong> {visit.coolerType || 'Not specified'}</p>
+                  {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+                    <div className="pt-2 mt-2 border-t">
+                      <h4 className="font-semibold mb-1">{COMPETITOR_DETAILS[visit.competitorName].title || `About ${visit.competitorName}`}</h4>
+                      <ul className="list-disc list-inside text-xs space-y-1">
+                        {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, i) => <li key={i}>{detail}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Business Card */}
+            {visit.businessCardImageUrl && (
+              <AccordionItem value="business-card">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <FileType className="mr-2 h-5 w-5" /> Business Card
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  {isHtmlCard ? (
+                    <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md">
+                      <p>Cannot display business card. The saved data appears to be HTML content instead of an image. This can happen if the image capture process was interrupted or failed. Please try re-uploading the business card image.</p>
+                    </div>
+                  ) : (
+                    <div className="relative w-full aspect-[1.77] max-w-sm mx-auto">
+                      <NextImage
+                        src={visit.businessCardImageUrl}
+                        alt="Business card"
+                        data-ai-hint="business card professional"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        className="rounded-md border bg-muted"
+                      />
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* TDS Info */}
+            {tdsInfo && (
+              <AccordionItem value="tds-info">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <Droplets className="mr-2 h-5 w-5" /> TDS Reading Details
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  <Badge variant={tdsInfo.variant} className={cn("text-sm h-auto whitespace-normal text-left w-full justify-start", tdsInfo.className)}>
+                    <div className="flex items-start p-1 w-full">
+                      <span className="shrink-0 mt-0.5 mr-2">{tdsInfo.icon}</span>
+                      <span className="flex-1">{tdsInfo.message}</span>
+                    </div>
+                  </Badge>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Future Meeting */}
+            {visit.futureMeetingSet && visit.futureMeetingDateTime && (
+              <AccordionItem value="future-meeting">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <CalendarClock className="mr-2 h-5 w-5" /> Future Meeting
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  <p className="text-sm text-muted-foreground">
+                    A follow-up meeting is scheduled for: <br />
+                    <span className="font-semibold text-foreground">
+                      {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'eeee, MMMM d, yyyy \'at\' h:mm a')}
+                    </span>
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
+        </CardContent>
+      )}
+
       <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
         <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
           <Edit className="h-4 w-4" />
