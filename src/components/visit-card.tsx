@@ -133,7 +133,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300",
+        "flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300",
         !isZoomedView && 'cursor-pointer',
         isZoomedView && 'max-h-[90vh] overflow-y-auto'
       )}
