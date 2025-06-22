@@ -142,8 +142,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader className="space-y-2 pb-3">
         <div className="flex justify-between items-start min-h-[3rem]">
             {/* Left side: Visit number and toggleable date */}
-            <div className="flex flex-col items-start">
-              <div onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} className="cursor-pointer">
+            <div className="flex flex-col items-start" onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} >
+              <div className="cursor-pointer">
                   {visit.visitNumber && (
                       <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
                           <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
@@ -214,7 +214,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading: {visit.hasTDSReading ? `${visit.tdsValue ?? 'N/A'} PPM` : 'Not Yet'}
+                TDS Reading: {visit.hasTDSReading ? `${visit.tdsValue} PPM` : 'Not Yet'}
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -225,161 +225,163 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm pt-3">
-        <Accordion type="multiple" className="w-full">
-          {hasDecisionMakerDetails && (
-            <AccordionItem value="decision-maker">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
-                {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-                {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
-                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
-                  <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-                }
-                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
-                  <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-                }
-              </AccordionContent>
-            </AccordionItem>
-          )}
+        {isZoomedView && (
+          <Accordion type="multiple" className="w-full">
+            {hasDecisionMakerDetails && (
+              <AccordionItem value="decision-maker">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
+                  {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+                  {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
+                  {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
+                    <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                  }
+                  {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
+                    <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                  }
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-             <AccordionItem value="future-meeting">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <CalendarClock className="mr-2 h-4 w-4 text-primary" />
-                  Future Meeting Details
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground">
-                  {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
+            {visit.futureMeetingSet && visit.futureMeetingDateTime && (
+              <AccordionItem value="future-meeting">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <CalendarClock className="mr-2 h-4 w-4 text-primary" />
+                    Future Meeting Details
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-muted-foreground">
+                    {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {visit.hasTDSReading && visit.tdsValue !== undefined && tdsInfo && (
-            <AccordionItem value="tds-analysis">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Analysis: {visit.tdsValue} PPM
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                 <Badge
-                    variant={tdsInfo.variant}
-                    className={cn(
-                      "text-xs mt-1 whitespace-normal h-auto py-1.5 px-2 flex w-full",
-                      typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
-                      tdsInfo.className
-                    )}
-                  >
-                    {tdsInfo.icon}
-                    <div className="ml-2 w-full">{tdsInfo.message}</div>
-                  </Badge>
-              </AccordionContent>
-            </AccordionItem>
-          )}
+            {visit.hasTDSReading && visit.tdsValue !== undefined && tdsInfo && (
+              <AccordionItem value="tds-analysis">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Analysis: {visit.tdsValue} PPM
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <Badge
+                      variant={tdsInfo.variant}
+                      className={cn(
+                        "text-xs mt-1 whitespace-normal h-auto py-1.5 px-2 flex w-full",
+                        typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
+                        tdsInfo.className
+                      )}
+                    >
+                      {tdsInfo.icon}
+                      <div className="ml-2 w-full">{tdsInfo.message}</div>
+                    </Badge>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {visit.hasBusinessCard && visit.businessCardImageUrl && (
-            <AccordionItem value="business-card">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Contact className="mr-2 h-4 w-4 text-primary" />
-                  Business Card
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="flex justify-center p-2">
-                {isHtmlCard ? (
-                  <div className="w-full h-[400px] overflow-hidden rounded-md border">
-                    <iframe
-                      srcDoc={visit.businessCardImageUrl}
-                      className="w-full h-full border-0"
-                      title="Digital Business Card"
-                      sandbox="allow-scripts allow-same-origin"
-                    />
-                  </div>
-                ) : (
-                  <div className="relative w-full max-w-sm aspect-[1.6/1] mx-auto">
-                    <NextImage
-                      src={visit.businessCardImageUrl}
-                      alt="Business Card"
-                      data-ai-hint="business card professional"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      className="rounded-md"
-                    />
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          )}
+            {visit.hasBusinessCard && visit.businessCardImageUrl && (
+              <AccordionItem value="business-card">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <Contact className="mr-2 h-4 w-4 text-primary" />
+                    Business Card
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="flex justify-center p-2">
+                  {isHtmlCard ? (
+                    <div className="w-full h-[400px] overflow-hidden rounded-md border">
+                      <iframe
+                        srcDoc={visit.businessCardImageUrl}
+                        className="w-full h-full border-0"
+                        title="Digital Business Card"
+                        sandbox="allow-scripts allow-same-origin"
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative w-full max-w-sm aspect-[1.6/1] mx-auto">
+                      <NextImage
+                        src={visit.businessCardImageUrl}
+                        alt="Business Card"
+                        data-ai-hint="business card professional"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        className="rounded-md"
+                      />
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {visit.discussedCompetitors && visit.coolerType && (
-            <AccordionItem value="cooler-info">
-               <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Box className="mr-2 h-4 w-4 text-blue-500" />
-                  <span>Competitor Cooler: <span className="text-accent font-semibold">{visit.coolerType}</span></span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] ? (
-                  <>
-                    <p className="text-sm font-semibold mb-1">Intel on {visit.competitorName}:</p>
-                    {COMPETITOR_DETAILS[visit.competitorName].title && (
-                      <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-                    )}
-                    <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-                      {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                        <li key={index}>{detail}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No specific intel available for this competitor.</p>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          )}
-          
-          {(visit.notesSummary || visit.notes) && (
-            <AccordionItem value="notes-section">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <FileText className="mr-2 h-4 w-4 text-primary" /> Notes
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-3">
-                {visit.notesSummary && (
-                  <div>
-                    <h4 className="font-medium text-sm text-foreground flex items-center mb-1">
-                      <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
-                      AI Summary
-                    </h4>
-                    <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
-                  </div>
-                )}
+            {visit.discussedCompetitors && visit.coolerType && (
+              <AccordionItem value="cooler-info">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <Box className="mr-2 h-4 w-4 text-blue-500" />
+                    <span>Competitor Cooler: <span className="text-accent font-semibold">{visit.coolerType}</span></span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] ? (
+                    <>
+                      <p className="text-sm font-semibold mb-1">Intel on {visit.competitorName}:</p>
+                      {COMPETITOR_DETAILS[visit.competitorName].title && (
+                        <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+                      )}
+                      <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+                        {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                          <li key={index}>{detail}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No specific intel available for this competitor.</p>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            
+            {(visit.notesSummary || visit.notes) && (
+              <AccordionItem value="notes-section">
+                <AccordionTrigger>
+                  <span className="font-medium text-foreground flex items-center">
+                    <FileText className="mr-2 h-4 w-4 text-primary" /> Notes
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3">
+                  {visit.notesSummary && (
+                    <div>
+                      <h4 className="font-medium text-sm text-foreground flex items-center mb-1">
+                        <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
+                        AI Summary
+                      </h4>
+                      <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+                    </div>
+                  )}
 
-                {visit.notesSummary && visit.notes && <Separator />}
+                  {visit.notesSummary && visit.notes && <Separator />}
 
-                {visit.notes && (
-                  <div>
-                    <h4 className="font-medium text-sm text-foreground mb-1">Original Notes</h4>
-                    <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
+                  {visit.notes && (
+                    <div>
+                      <h4 className="font-medium text-sm text-foreground mb-1">Original Notes</h4>
+                      <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
+        )}
         
-        {!visit.notesSummary && visit.notes && (
+        {!visit.notesSummary && visit.notes && isZoomedView && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isSummarizing ? 'Summarizing...' : 'Summarize Notes'}
