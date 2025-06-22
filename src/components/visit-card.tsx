@@ -133,7 +133,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300",
+        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300",
         !isZoomedView && 'cursor-pointer',
         isZoomedView && 'max-h-[90vh] overflow-y-auto'
       )}
@@ -253,7 +253,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger>
                   <span className="font-medium text-foreground flex items-center">
                     <CalendarClock className="mr-2 h-4 w-4 text-primary" />
-                    Future Meeting Details
+                    Future Meeting Set
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -381,7 +381,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </Accordion>
         )}
         
-        {!visit.notesSummary && visit.notes && isZoomedView && (
+        {isZoomedView && !visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isSummarizing ? 'Summarizing...' : 'Summarize Notes'}
