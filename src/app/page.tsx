@@ -811,7 +811,7 @@ export default function HomePage() {
                     </Button>
                     </div>
                 ) : (
-                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-start">
                     {visits.map(visit => (
                         <VisitCard
                         key={visit.id}
@@ -879,7 +879,7 @@ export default function HomePage() {
                   <p className="text-xl text-muted-foreground mb-4">No visits to display. Log visits in "Field Day" first.</p>
                 </div>
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-start">
                   {sortedVisitsForCallDay.map((visit, index) => (
                     <div 
                       key={visit.id}
