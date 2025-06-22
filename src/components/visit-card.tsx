@@ -129,6 +129,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const defaultAccordionValues = [
+    visit.futureMeetingSet && visit.futureMeetingDateTime ? 'future-meeting' : undefined,
     visit.notesSummary ? 'summary' : undefined,
     visit.notes ? 'notes' : undefined,
   ].filter(Boolean) as string[];
@@ -230,6 +231,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       {isZoomedView && (
         <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
           <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-2">
+            {/* Future Meeting */}
+            {visit.futureMeetingSet && visit.futureMeetingDateTime && (
+              <AccordionItem value="future-meeting">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <CalendarClock className="mr-2 h-5 w-5" /> Future Meeting
+                </AccordionTrigger>
+                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                  <p className="text-sm text-muted-foreground">
+                    A follow-up meeting is scheduled for: <br />
+                    <span className="font-semibold text-foreground">
+                      {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'eeee, MMMM d, yyyy \'at\' h:mm a')}
+                    </span>
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
             {/* AI Summary */}
             {visit.notesSummary && (
               <AccordionItem value="summary">
@@ -339,23 +357,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                       <span className="flex-1">{tdsInfo.message}</span>
                     </div>
                   </Badge>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Future Meeting */}
-            {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-              <AccordionItem value="future-meeting">
-                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
-                  <CalendarClock className="mr-2 h-5 w-5" /> Future Meeting
-                </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
-                  <p className="text-sm text-muted-foreground">
-                    A follow-up meeting is scheduled for: <br />
-                    <span className="font-semibold text-foreground">
-                      {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'eeee, MMMM d, yyyy \'at\' h:mm a')}
-                    </span>
-                  </p>
                 </AccordionContent>
               </AccordionItem>
             )}
