@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 const COMPETITORS_LIST = [
@@ -151,6 +152,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
+  const [openAccordion, setOpenAccordion] = useState<string[]>([]);
 
   const [isCameraViewVisible, setIsCameraViewVisible] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
@@ -194,6 +196,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       videoRef.current.srcObject = null;
     }
   };
+
+  useEffect(() => {
+    if (watchedCompetitorName) {
+      setOpenAccordion(['cooler-type']);
+    } else {
+      setOpenAccordion([]);
+    }
+  }, [watchedCompetitorName]);
 
   useEffect(() => {
     if (initialData) {
@@ -1007,7 +1017,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 name="competitorName"
                 render={({ field }) => (
                   <FormItem>
-                     <FormLabel>Competitor Name</FormLabel>
+                    <FormLabel>Competitor Name</FormLabel>
                     <Select
                       onValueChange={(value) => {
                         if (value === '_none_') {
@@ -1017,8 +1027,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           field.onChange(value);
                         }
                       }}
-                      value={field.value}
-                     >
+                      value={field.value || '_none_'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a competitor (if any)" />
@@ -1038,49 +1048,55 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
               {watchedCompetitorName && (
-                <FormField
-                  control={form.control}
-                  name="coolerType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cooler Type Observed</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Cooler Type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currentCoolerOptions.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {field.value === 'Other' && (
-                        <div className="mt-2 space-y-2 flex items-center gap-2">
-                          <Input
-                            placeholder="Enter custom cooler name"
-                            value={customCoolerNameInput}
-                            onChange={(e) => setCustomCoolerNameInput(e.target.value)}
-                            className="h-9 flex-grow"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={handleAddCustomCooler}
-                            disabled={!customCoolerNameInput.trim()}
-                            className="h-9"
-                          >
-                            <PlusSquare className="mr-1 h-4 w-4" /> Add
-                          </Button>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <Accordion type="multiple" value={openAccordion} onValueChange={setOpenAccordion} className="w-full">
+                    <AccordionItem value="cooler-type" className="border-b-0">
+                        <AccordionTrigger className="p-0 hover:no-underline text-sm font-medium">Cooler Type Observed</AccordionTrigger>
+                        <AccordionContent className="pt-2">
+                           <FormField
+                              control={form.control}
+                              name="coolerType"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select Cooler Type" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {currentCoolerOptions.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                          {type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {field.value === 'Other' && (
+                                    <div className="mt-2 space-y-2 flex items-center gap-2">
+                                      <Input
+                                        placeholder="Enter custom cooler name"
+                                        value={customCoolerNameInput}
+                                        onChange={(e) => setCustomCoolerNameInput(e.target.value)}
+                                        className="h-9 flex-grow"
+                                      />
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={handleAddCustomCooler}
+                                        disabled={!customCoolerNameInput.trim()}
+                                        className="h-9"
+                                      >
+                                        <PlusSquare className="mr-1 h-4 w-4" /> Add
+                                      </Button>
+                                    </div>
+                                  )}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
               )}
             </div>
 
