@@ -4,10 +4,9 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
@@ -28,7 +27,6 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const { toast } = useToast();
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
@@ -243,6 +241,40 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </AccordionItem>
           )}
 
+          {visit.hasBusinessCard && visit.businessCardImageUrl && (
+            <AccordionItem value="business-card">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <Contact className="mr-2 h-4 w-4 text-primary" />
+                  Business Card
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="flex justify-center p-2">
+                {isHtmlCard ? (
+                  <div className="w-full h-[400px] overflow-hidden rounded-md border">
+                    <iframe
+                      srcDoc={visit.businessCardImageUrl}
+                      className="w-full h-full border-0"
+                      title="Digital Business Card"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative w-full max-w-sm aspect-[1.6/1] mx-auto">
+                    <NextImage
+                      src={visit.businessCardImageUrl}
+                      alt="Business Card"
+                      data-ai-hint="business card professional"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      className="rounded-md"
+                    />
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
           {visit.futureMeetingSet && visit.futureMeetingDateTime && (
             <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
               <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
@@ -330,69 +362,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
           </div>
         )}
-
-        <div className="flex justify-center">
-          {visit.businessCardImageUrl && visit.hasBusinessCard && (
-            <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
-                  <DialogTrigger asChild>
-                  <button 
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
-                      aria-label="View business card"
-                  >
-                    {isHtmlCard ? (
-                        <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                            <FileType className="w-7 h-7 mb-1" />
-                            <span className="text-xs text-center">View Digital Card</span>
-                        </div>
-                    ) : (
-                      <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                        <NextImage
-                            src={visit.businessCardImageUrl}
-                            alt="Business Card Thumbnail"
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            data-ai-hint="business card professional"
-                        />
-                      </div>
-                    )}
-                  </button>
-                  </DialogTrigger>
-                  <DialogContent 
-                    onClick={(e) => e.stopPropagation()}
-                    className={cn(
-                      "p-2 bg-background",
-                      isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
-                    )}
-                  >
-                      <DialogHeader>
-                          <DialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</DialogTitle>
-                      </DialogHeader>
-                      {isHtmlCard ? (
-                        <div className="flex-grow w-full h-full overflow-hidden">
-                          <iframe
-                            srcDoc={visit.businessCardImageUrl}
-                            className="w-full h-full border-0"
-                            title="Digital Business Card"
-                            sandbox="allow-scripts allow-same-origin"
-                          />
-                        </div>
-                      ) : (
-                        <div className="relative w-full aspect-[1.6/1] mt-2">
-                            <NextImage
-                              src={visit.businessCardImageUrl}
-                              alt="Business Card - Zoomed View"
-                              data-ai-hint="business card professional"
-                              fill
-                              style={{ objectFit: 'contain' }}
-                            />
-                        </div>
-                      )}
-                  </DialogContent>
-              </Dialog>
-          )}
-        </div>
-
 
         {!visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
