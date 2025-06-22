@@ -946,7 +946,7 @@ export default function HomePage() {
                         The "Call Day" tab provides a prioritized list of your visits, helping you focus your follow-up calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.
                       </li>
                       <li>
-                        "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by and as you log as much info as you can.
+                        "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by. So log as much info as you can.
                       </li>
                     </ul>
                   </AccordionContent>
