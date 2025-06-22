@@ -668,7 +668,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                        When you click "Hit New Door!" this app will help streamline your efforts
+                        When you click "Hit New Door!" this app will help streamline efforts
                     </Button>
                     </div>
                 ) : (
@@ -938,6 +938,9 @@ export default function HomePage() {
                   </li>
                    <li>
                     When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
+                  </li>
+                  <li>
+                    "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by and as you log as much info as you can.
                   </li>
                 </ul>
               </div>
