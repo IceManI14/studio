@@ -645,7 +645,7 @@ export default function HomePage() {
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1 bg-muted text-primary-foreground hover:bg-muted/90">
+                        <Button variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1 aurora-glow">
                           <Sunset className="mr-2 h-5 w-5" /> End Day!
                         </Button>
                       </AlertDialogTrigger>
