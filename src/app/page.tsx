@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage, Salesperson } from '@/lib/types';
+import type { Visit, ChatMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -817,7 +817,7 @@ export default function HomePage() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
+                <p className="text-sm text-muted-foreground pt-2">I will utilize any and all information that you give me regarding Optimum Water and their future potential partners!</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
                 <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
@@ -926,7 +926,7 @@ export default function HomePage() {
                 </h2>
                 <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
                   This app is intended to help you streamline your efforts in acquiring new clients and partners alike.
-                  It will help you organize the data you collect and also help you guide you on your journey as you build Optimum Water Bridges.
+                  It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
                 </p>
                 <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
                    <li>
