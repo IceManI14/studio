@@ -104,7 +104,6 @@ const visitFormSchema = z.object({
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
   businessCardImageUrl: z.string().optional().nullable(), // Will store Data URI
-  discussedCompetitors: z.boolean().optional(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
   decisionMakerName: z.string().optional(),
@@ -169,7 +168,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       businessCardImageUrl: null,
-      discussedCompetitors: false,
       competitorName: undefined,
       coolerType: undefined,
       decisionMakerName: '',
@@ -183,7 +181,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     },
   });
 
-  const discussedCompetitorsValue = form.watch('discussedCompetitors');
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
@@ -208,7 +205,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         partnershipConfidence: initialData.partnershipConfidence,
         hasBusinessCard: initialData.hasBusinessCard || false,
         businessCardImageUrl: initialData.businessCardImageUrl || null, // Will be Data URI if exists
-        discussedCompetitors: initialData.discussedCompetitors || false,
         competitorName: initialData.competitorName || undefined,
         coolerType: initialData.coolerType || undefined,
         decisionMakerName: initialData.decisionMakerName || '',
@@ -232,7 +228,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         partnershipConfidence: undefined,
         hasBusinessCard: false,
         businessCardImageUrl: null,
-        discussedCompetitors: false,
         competitorName: undefined,
         coolerType: undefined,
         decisionMakerName: '',
@@ -528,9 +523,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
       businessCardImageUrl: finalBusinessCardImageUrl,
-      discussedCompetitors: data.discussedCompetitors,
-      competitorName: data.discussedCompetitors ? data.competitorName : undefined,
-      coolerType: data.discussedCompetitors ? data.coolerType : undefined,
+      discussedCompetitors: !!data.competitorName,
+      competitorName: data.competitorName,
+      coolerType: data.competitorName ? data.coolerType : undefined,
       decisionMakerName: data.decisionMakerName,
       decisionMakerTitle: data.decisionMakerTitle,
       decisionMakerContact: data.decisionMakerContact,
@@ -1005,66 +1000,42 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
             )}
 
-
-            <FormField
-              control={form.control}
-              name="discussedCompetitors"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        if (!checked) {
-                          form.setValue('competitorName', undefined);
-                          form.setValue('coolerType', undefined);
+            <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
+              <Label className="font-medium text-base">Competitor Info (Optional)</Label>
+              <FormField
+                control={form.control}
+                name="competitorName"
+                render={({ field }) => (
+                  <FormItem>
+                     <FormLabel>Competitor Name</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        if (!value) {
+                           form.setValue('coolerType', undefined);
                         }
                       }}
-                      id="discussedCompetitors"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="discussedCompetitors" className="cursor-pointer font-normal">
-                      Competitor Present?
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {discussedCompetitorsValue && (
-              <div className="space-y-3 p-3 border rounded-md bg-background/10">
-                <FormField
-                  control={form.control}
-                  name="competitorName"
-                  render={({ field }) => (
-                    <FormItem>
-                       <FormLabel>Competitor Name</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                        }}
-                        defaultValue={field.value}
-                        value={field.value || ''}
-                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a competitor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {COMPETITORS_LIST.map((competitor) => (
-                            <SelectItem key={competitor} value={competitor}>
-                              {competitor}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      value={field.value || ''}
+                     >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a competitor (if any)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {COMPETITORS_LIST.map((competitor) => (
+                          <SelectItem key={competitor} value={competitor}>
+                            {competitor}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {watchedCompetitorName && (
                 <FormField
                   control={form.control}
                   name="coolerType"
@@ -1108,8 +1079,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     </FormItem>
                   )}
                 />
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
               <Label className="font-medium text-base">Decision Maker Info (Optional)</Label>
