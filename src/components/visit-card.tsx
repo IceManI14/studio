@@ -237,6 +237,76 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm pt-3">
+        <Accordion type="multiple" className="w-full">
+          {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+            <AccordionItem value="competitor-intel">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
+                  Competitor Intel <span className="text-accent ml-1">{`{${visit.competitorName}}`}</span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {COMPETITOR_DETAILS[visit.competitorName].title && (
+                    <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+                )}
+                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+                  {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {hasDecisionMakerDetails && (
+            <AccordionItem value="decision-maker">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
+                {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+                {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
+                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
+                  <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                }
+                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
+                  <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
+                }
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {visit.notes && (
+            <AccordionItem value="original-notes">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {visit.notesSummary && (
+            <AccordionItem value="notes-summary">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
+        
         {visit.futureMeetingSet && visit.futureMeetingDateTime && (
           <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
             <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
@@ -331,76 +401,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </Dialog>
           </div>
         )}
-        
-        <Accordion type="multiple" className="w-full">
-          {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-            <AccordionItem value="competitor-intel">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-                  Competitor Intel <span className="text-accent ml-1">{`{${visit.competitorName}}`}</span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {COMPETITOR_DETAILS[visit.competitorName].title && (
-                    <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-                )}
-                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-                  {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {hasDecisionMakerDetails && (
-            <AccordionItem value="decision-maker">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <UserCircle className="mr-2 h-4 w-4 text-primary" /> Decision Maker
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {visit.decisionMakerName && <p className="text-muted-foreground"><strong>Name:</strong> {visit.decisionMakerName}</p>}
-                {visit.decisionMakerTitle && <p className="text-muted-foreground"><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-                {visit.decisionMakerContact && <p className="text-muted-foreground"><strong>Direct Contact:</strong> {visit.decisionMakerContact}</p>}
-                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && visit.contactInfo.info !== visit.decisionMakerContact &&
-                  <p className="text-muted-foreground"><strong>General/Scraped Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-                }
-                {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && !visit.decisionMakerContact && visit.decisionMakerName &&
-                  <p className="text-muted-foreground"><strong>Contact:</strong> <span className="whitespace-pre-wrap break-words">{visit.contactInfo.info}</span></p>
-                }
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {visit.notes && (
-            <AccordionItem value="original-notes">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {visit.notesSummary && (
-            <AccordionItem value="notes-summary">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
 
         {!visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
