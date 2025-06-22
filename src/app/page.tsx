@@ -940,6 +940,9 @@ export default function HomePage() {
                     When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you have visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
                   </li>
                   <li>
+                    The "Call Day" tab provides a prioritized list of your visits, helping you focus your follow-up calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.
+                  </li>
+                  <li>
                     "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by and as you log as much info as you can.
                   </li>
                 </ul>
