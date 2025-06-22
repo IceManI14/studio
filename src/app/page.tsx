@@ -640,12 +640,12 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1 aurora-glow">
+                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1 aurora-glow">
                         <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door!
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="shadow-md hover:shadow-lg transition-shadow flex-1 aurora-glow">
+                        <Button variant="default" size="sm" className="flex-1 aurora-glow">
                           <Sunset className="mr-2 h-5 w-5" /> End Day!
                         </Button>
                       </AlertDialogTrigger>
