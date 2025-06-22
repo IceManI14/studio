@@ -618,7 +618,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full py-4 gap-4">
-          <h1 className="text-5xl sm:text-7xl font-headline font-bold text-center aurora-text drop-shadow-lg">
+          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg [text-shadow:0_0_5px_#06b6d4]">
             Optimum Trailblazer
           </h1>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
