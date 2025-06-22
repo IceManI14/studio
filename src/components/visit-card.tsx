@@ -259,6 +259,29 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </AccordionItem>
           )}
 
+          {visit.hasTDSReading && visit.tdsValue !== undefined && tdsInfo && (
+            <AccordionItem value="tds-analysis">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Analysis: {visit.tdsValue} PPM
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                 <Badge
+                    variant={tdsInfo.variant}
+                    className={cn(
+                      "text-xs mt-1 whitespace-normal h-auto py-1.5 px-2 flex w-full",
+                      typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
+                      tdsInfo.className
+                    )}
+                  >
+                    {tdsInfo.icon}
+                    <div className="ml-2 w-full">{tdsInfo.message}</div>
+                  </Badge>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
           {visit.hasBusinessCard && visit.businessCardImageUrl && (
             <AccordionItem value="business-card">
               <AccordionTrigger>
@@ -352,30 +375,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </Accordion>
         
-        {visit.hasTDSReading && visit.tdsValue !== undefined && (
-          <div className="p-2 bg-secondary/30 rounded-md text-center">
-            <div className="flex justify-center items-center space-x-2 mb-1">
-              <h4 className="font-medium text-foreground flex items-center">
-                <Droplets className="mr-2 h-4 w-4 text-primary" /> TDS Reading Analysis
-              </h4>
-              <p className="text-muted-foreground font-semibold">{visit.tdsValue} PPM</p>
-            </div>
-            {tdsInfo && (
-              <Badge
-                variant={tdsInfo.variant}
-                className={cn(
-                  "text-xs mt-1 whitespace-normal h-auto py-1 px-1.5 inline-flex",
-                  typeof tdsInfo.message === 'string' ? "items-center" : "items-start",
-                  tdsInfo.className
-                )}
-              >
-                {tdsInfo.icon}
-                <span className="ml-1">{tdsInfo.message}</span>
-              </Badge>
-            )}
-          </div>
-        )}
-
         {!visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
