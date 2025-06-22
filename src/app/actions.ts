@@ -154,7 +154,7 @@ const getCompanyNameFromCoordsPayloadSchema = z.object({
 
 export async function getCompanyNameFromCoordsAction(
     payload: { latitude?: number; longitude?: number }
-): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; error?: string }> {
+): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; address?: string; phone?: string; error?: string }> {
     try {
         const validatedPayload = getCompanyNameFromCoordsPayloadSchema.parse(payload);
         const result = await getCompanyNameFromCoords({
@@ -163,7 +163,9 @@ export async function getCompanyNameFromCoordsAction(
         });
         return { 
             suggestedCompanyName: result.suggestedCompanyName, 
-            confidenceScore: result.confidenceScore 
+            confidenceScore: result.confidenceScore,
+            address: result.address,
+            phone: result.phone,
         };
     } catch (error: any) {
         console.error("Error in getCompanyNameFromCoordsAction:", error);

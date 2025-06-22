@@ -406,25 +406,65 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
 
   const handleSuggestCompany = async () => {
-    if (currentLatitude === undefined || currentLongitude === undefined) {
-      toast({ title: "Location needed", description: "Please log location to suggest company.", variant: "default" });
+    setIsSuggestingCompany(true);
+
+    if (!navigator.geolocation) {
+      setIsSuggestingCompany(false);
+      toast({
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support this feature.",
+        variant: "destructive",
+      });
       return;
     }
-    setIsSuggestingCompany(true);
-    const result = await getCompanyNameFromCoordsAction({ latitude: currentLatitude, longitude: currentLongitude });
-    setIsSuggestingCompany(false);
 
-    if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
-    } else if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
-      form.setValue('companyName', result.suggestedCompanyName);
-      toast({
-        title: "Company Suggested",
-        description: `Found: ${result.suggestedCompanyName} (Confidence: ${(result.confidenceScore ?? 0) * 100}%)`
-      });
-    } else {
-      toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
-    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        setCurrentLatitude(lat);
+        setCurrentLongitude(lon);
+        form.setValue('latitude', lat, { shouldValidate: true });
+        form.setValue('longitude', lon, { shouldValidate: true });
+
+        const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+
+        setIsSuggestingCompany(false);
+
+        if (result.error) {
+          toast({ title: "Error", description: result.error, variant: "destructive" });
+        } else {
+            if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
+                form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
+                toast({
+                    title: "Company Suggested",
+                    description: `Found: ${result.suggestedCompanyName} (Confidence: ${Math.round((result.confidenceScore ?? 0) * 100)}%)`
+                });
+            } else {
+                toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+            }
+
+            if (result.phone) {
+                form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
+            }
+
+            if (result.address) {
+                const currentNotes = form.getValues('notes') || '';
+                const newNotes = `Suggested Address: ${result.address}\\n\\n${currentNotes}`;
+                form.setValue('notes', newNotes, { shouldValidate: true });
+            }
+        }
+      },
+      (error) => {
+        setIsSuggestingCompany(false);
+        let errorMessage = "Could not retrieve location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Location access denied. Please enable it in your browser settings.";
+        }
+        toast({ title: "Location Error", description: errorMessage, variant: "destructive" });
+      }
+    );
   };
 
   const handleAddCustomCooler = () => {
@@ -471,7 +511,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
         const currentNotes = finalNotes.trim();
         if (currentNotes) {
-             finalNotes = `${currentNotes}\n${durationString}`;
+             finalNotes = `${currentNotes}\\n${durationString}`;
         } else {
             finalNotes = durationString;
         }
@@ -603,7 +643,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             onClick={handleSuggestCompany}
                             variant="outline"
                             size="sm"
-                            disabled={isSuggestingCompany || currentLatitude === undefined || currentLongitude === undefined}
+                            disabled={isSuggestingCompany}
                         >
                           {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Suggest'}
                         </Button>
