@@ -622,20 +622,20 @@ export default function HomePage() {
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
             <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
               Good Luck Today!
             </h2>
           </div>
         </header>
         
-        <Tabs defaultValue="field-day" className="w-full -mt-10">
+        <Tabs defaultValue="field-day" className="w-full -mt-12">
           <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
-            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><PlusCircle className="mr-2 h-4 w-4" />Field Day</TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><ListChecks className="mr-2 h-4 w-4" />Call Day</TabsTrigger>
-            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><MapPin className="mr-2 h-4 w-4" />Visits</TabsTrigger>
-            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><Bot className="mr-2 h-4 w-4" />Debbie</TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><InfoIcon className="mr-2 h-4 w-4" />About</TabsTrigger>
+            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2"><PlusCircle className="h-4 w-4" />Field Day</TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2"><ListChecks className="h-4 w-4" />Call Day</TabsTrigger>
+            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2"><MapPin className="h-4 w-4" />Visits</TabsTrigger>
+            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2"><Bot className="h-4 w-4" />Debbie</TabsTrigger>
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2"><InfoIcon className="h-4 w-4" />About</TabsTrigger>
           </TabsList>
 
           <TabsContent value="field-day">
