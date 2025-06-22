@@ -644,39 +644,42 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             {partnershipConfidenceValue && partnershipConfidenceValue >= 4 && (
-              <FormField
-                control={form.control}
-                name="interestedUnit"
-                render={({ field }) => (
-                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
-                    <FormLabel className="flex items-center">
-                      <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ''}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a cooler they are interested in" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {OUR_COOLERS_LIST.map((cooler) => (
-                          <SelectItem key={cooler} value={cooler}>
-                            {cooler}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select the type of cooler the company showed interest in.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <Label>Data Gathered:</Label>
+                <FormField
+                  control={form.control}
+                  name="interestedUnit"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-secondary/30">
+                      <FormLabel className="flex items-center">
+                        <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a cooler they are interested in" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {OUR_COOLERS_LIST.map((cooler) => (
+                            <SelectItem key={cooler} value={cooler}>
+                              {cooler}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select the type of cooler the company showed interest in.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             )}
 
 
