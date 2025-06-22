@@ -180,13 +180,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         )}
 
         <div className="flex flex-row justify-between items-start w-full">
-          <div className="flex-grow pr-4 space-y-1.5">
-            <CardTitle className="font-headline text-2xl text-primary flex items-center">
+          <div className="flex-grow space-y-1.5">
+            <CardTitle className="font-headline text-2xl text-primary flex items-center justify-center w-full">
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
             {visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center">
+                <p className="text-xs text-muted-foreground flex items-center justify-center w-full">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
@@ -241,6 +241,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </AccordionItem>
           )}
 
+          {visit.futureMeetingSet && visit.futureMeetingDateTime && (
+            <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
+              <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
+                <CalendarClock className="mr-2 h-4 w-4" />
+                Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
+              </p>
+            </div>
+          )}
+
           {visit.hasBusinessCard && visit.businessCardImageUrl && (
             <AccordionItem value="business-card">
               <AccordionTrigger>
@@ -273,15 +282,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
               </AccordionContent>
             </AccordionItem>
-          )}
-
-          {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-            <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
-              <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
-                <CalendarClock className="mr-2 h-4 w-4" />
-                Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
-              </p>
-            </div>
           )}
 
           {visit.discussedCompetitors && visit.coolerType && (
