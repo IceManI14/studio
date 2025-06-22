@@ -623,7 +623,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
-            <h2 className="text-lg font-semibold text-foreground text-center">
+            <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
               Good Luck Today!
             </h2>
           </div>
