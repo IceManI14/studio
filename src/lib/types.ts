@@ -30,12 +30,6 @@ export interface Visit {
   futureMeetingDateTime?: Date;
 }
 
-export interface Salesperson {
-  id: string;
-  name: string;
-  territory?: string[];
-}
-
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';

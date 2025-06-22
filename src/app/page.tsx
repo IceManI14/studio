@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, Salesperson, ChatMessage } from '@/lib/types';
+import type { Visit, ChatMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays } from 'date-fns';
-import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +41,6 @@ import { getAiChatResponseAction } from '@/app/actions';
 
 interface SubmittedSuggestion {
   text: string;
-  salespersonName: string;
   timestamp: string;
 }
 
@@ -51,34 +49,11 @@ const AVAILABLE_AI_MODELS = [
   { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
 
-const SALESPEOPLE: Salesperson[] = [
-  { id: 'sales_1', name: 'Jim Karat' },
-  { id: 'sales_2', name: 'Chris Canestrari' },
-  { 
-    id: 'sales_3', 
-    name: 'Paul W. Lyman',
-    territory: [
-      "Auburn", "Chester", "Kingston", "Seabrook", "Exeter", "Stratham", 
-      "Newmarket", "Durham", "Portsmouth", "Deerfield", "Nottingham", 
-      "Hampton", "Rye", "Sandown", "Raymond", "Hampstead", "Dover", 
-      "Tilton", "Belmont", "Franklin", "Laconia", "New Hampton", 
-      "Meredith", "Gilford", "Kittery", "York", "Ogunquit", "Wells", "Kennebunk"
-    ]
-  },
-  { id: 'sales_4', name: 'Sarah Kessel' },
-  { id: 'sales_5', name: 'George Maroon' },
-  { id: 'sales_6', name: 'Tom Brady' },
-  { id: 'sales_7', name: 'Sam' },
-];
-const SELECTED_SALESPERSON_ID_KEY = 'optimumTrailblazerSelectedSalespersonId';
-
-
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
   const [coldCallCount, setColdCallCount] = useState<number>(0);
-  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const { toast } = useToast();
@@ -89,7 +64,14 @@ export default function HomePage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { 
+        id: 'ai_welcome_init', 
+        sender: 'ai', 
+        text: `Welcome! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?`, 
+        timestamp: new Date()
+    }
+  ]);
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
@@ -102,121 +84,57 @@ export default function HomePage() {
   const isAutoScrollingRef = useRef(false);
 
 
-  const getVisitsStorageKey = (): string | null => {
-    if (!selectedSalesperson) return null;
-    return `trailblazerVisits_${selectedSalesperson.id}`;
-  };
+  const getVisitsStorageKey = (): string => 'trailblazerVisits';
+  const getSuggestionsStorageKey = (): string => 'trailblazerSuggestions';
+  const getColdCallCountStorageKey = (): string => 'trailblazerColdCallCount';
 
-  const getSuggestionsStorageKey = (): string | null => {
-    if (!selectedSalesperson) return null;
-    return `trailblazerSuggestions_${selectedSalesperson.id}`;
-  };
-
-  const getColdCallCountStorageKey = (): string | null => {
-    if (!selectedSalesperson) return null;
-    return `trailblazerColdCallCount_${selectedSalesperson.id}`;
-  };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-        return; 
-    }
-    const storedSalespersonId = localStorage.getItem(SELECTED_SALESPERSON_ID_KEY);
-    if (storedSalespersonId) {
-      const foundSalesperson = SALESPEOPLE.find(s => s.id === storedSalespersonId);
-      if (foundSalesperson) {
-        setSelectedSalesperson(foundSalesperson);
-         // If salesperson is loaded from storage AND chat is empty, set initial message
-        if (chatMessages.length === 0) {
-            setChatMessages([
-                { 
-                    id: 'ai_welcome_restored_user', 
-                    sender: 'ai', 
-                    text: `Welcome back ${foundSalesperson.name}! I am your Optimum Trailblazer AI Assistant. How can I help you plan your day or analyze visit data?`, 
-                    timestamp: new Date() // Client-side date
-                }
-            ]);
-        }
-      } else {
-        localStorage.removeItem(SELECTED_SALESPERSON_ID_KEY); 
-      }
-    }
-  }, []); // Runs once on mount to check localStorage
 
   useEffect(() => {
     if (typeof window === 'undefined') {
         return; 
     }
 
-    if (!selectedSalesperson) {
-      setVisits([]); 
-      setSubmittedSuggestions([]); 
-      setColdCallCount(0);
-      setUserCurrentLatitude(undefined);
-      setUserCurrentLongitude(undefined);
-      return;
-    }
     const visitsStorageKey = getVisitsStorageKey();
     const suggestionsStorageKey = getSuggestionsStorageKey();
     const coldCallCountStorageKey = getColdCallCountStorageKey();
 
-    if (visitsStorageKey) {
-      const storedVisits = localStorage.getItem(visitsStorageKey);
-      if (storedVisits) {
-        try {
-          const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
-            ...visit,
-            timestamp: new Date(visit.timestamp),
-            visitNumber: visit.visitNumber,
-          }));
-          setVisits(parsedVisits);
-        } catch (error) {
-          console.error("Failed to parse visits from localStorage", error);
-          localStorage.removeItem(visitsStorageKey);
-          setVisits([]);
-        }
-      } else {
+    // Load Visits
+    const storedVisits = localStorage.getItem(visitsStorageKey);
+    if (storedVisits) {
+      try {
+        const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
+          ...visit,
+          timestamp: new Date(visit.timestamp),
+          visitNumber: visit.visitNumber,
+        }));
+        setVisits(parsedVisits);
+      } catch (error) {
+        console.error("Failed to parse visits from localStorage", error);
+        localStorage.removeItem(visitsStorageKey);
         setVisits([]);
       }
     }
 
-    if (suggestionsStorageKey) {
-      const storedSuggestionsRaw = localStorage.getItem(suggestionsStorageKey);
-      if (storedSuggestionsRaw) {
-        try {
-          const parsedSuggestions = JSON.parse(storedSuggestionsRaw);
-          const transformedSuggestions = parsedSuggestions.map((item: any) => {
-            if (typeof item === 'string') {
-              return {
-                text: item,
-                salespersonName: selectedSalesperson.name,
-                timestamp: new Date(0).toISOString(), 
-              };
-            }
-            return item;
-          });
-          setSubmittedSuggestions(transformedSuggestions);
-        } catch (error) {
-          console.error("Failed to parse suggestions from localStorage", error);
-          localStorage.removeItem(suggestionsStorageKey);
-          setSubmittedSuggestions([]);
-        }
-      } else {
+    // Load Suggestions
+    const storedSuggestionsRaw = localStorage.getItem(suggestionsStorageKey);
+    if (storedSuggestionsRaw) {
+      try {
+        const parsedSuggestions = JSON.parse(storedSuggestionsRaw);
+        setSubmittedSuggestions(parsedSuggestions);
+      } catch (error) {
+        console.error("Failed to parse suggestions from localStorage", error);
+        localStorage.removeItem(suggestionsStorageKey);
         setSubmittedSuggestions([]);
       }
     }
 
-    if (coldCallCountStorageKey) {
-      const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
-      if (storedColdCallCount) {
-        setColdCallCount(parseInt(storedColdCallCount, 10) || 0);
-      } else {
-        setColdCallCount(0);
-      }
-    } else {
-      setColdCallCount(0);
+    // Load Cold Call Count
+    const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
+    if (storedColdCallCount) {
+      setColdCallCount(parseInt(storedColdCallCount, 10) || 0);
     }
-
+    
+    // Get Geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -228,8 +146,6 @@ export default function HomePage() {
           });
         },
         (error) => {
-          setUserCurrentLatitude(undefined);
-          setUserCurrentLongitude(undefined);
           let errorMessage = "Could not retrieve location.";
           if (error.code === error.PERMISSION_DENIED) {
             errorMessage = "Location access denied. Please enable it in your browser settings.";
@@ -251,16 +167,13 @@ export default function HomePage() {
         description: "Your browser does not support geolocation.",
         variant: "default"
       });
-      setUserCurrentLatitude(undefined);
-      setUserCurrentLongitude(undefined);
     }
 
-  }, [selectedSalesperson, toast]);
+  }, [toast]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !selectedSalesperson) return;
+    if (typeof window === 'undefined') return;
     const visitsStorageKey = getVisitsStorageKey();
-    if (!visitsStorageKey) return;
 
     if (visits.length > 0 || localStorage.getItem(visitsStorageKey)) {
         localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
@@ -268,7 +181,7 @@ export default function HomePage() {
 
     if (coldCallCount >= 30) {
       const today = new Date().toISOString().split('T')[0];
-      const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson.id}_${today}`;
+      const milestoneKey = `thirtyDoorsMilestoneAchieved_${today}`;
 
       if (!localStorage.getItem(milestoneKey)) {
         toast({
@@ -284,14 +197,13 @@ export default function HomePage() {
         localStorage.setItem(milestoneKey, 'true');
       }
     }
-  }, [visits, coldCallCount, selectedSalesperson, toast]);
+  }, [visits, coldCallCount, toast]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !selectedSalesperson) return;
+    if (typeof window === 'undefined') return;
     const coldCallCountStorageKey = getColdCallCountStorageKey();
-    if (!coldCallCountStorageKey) return;
     localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
-  }, [coldCallCount, selectedSalesperson]);
+  }, [coldCallCount]);
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visits.length === 0) {
@@ -385,19 +297,6 @@ export default function HomePage() {
     };
   }, [sortedVisitsForCallDay]);
 
-
-  const handleSelectSalesperson = (salesperson: Salesperson) => {
-    setSelectedSalesperson(salesperson);
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(SELECTED_SALESPERSON_ID_KEY, salesperson.id);
-    }
-    setColdCallCount(0); 
-    setIsVisitFormOpen(false);
-    setCurrentEditingVisit(undefined);
-    setChatMessages([ { id: 'ai_welcome_new_user', sender: 'ai', text: `Hello ${salesperson.name}! I am your Optimum Trailblazer AI Assistant. How can I help you?`, timestamp: new Date() }]);
-    toast({ title: `Profile Switched: ${salesperson.name}`, description: "Your view has been updated." });
-  };
-
   const handleOpenAddVisitForm = () => {
     const newVisitNumber = coldCallCount + 1;
     setColdCallCount(prevCount => prevCount + 1);
@@ -463,24 +362,24 @@ export default function HomePage() {
     const numberOfVisits = visits.length;
     setColdCallCount(0);
     const coldCallCountStorageKey = getColdCallCountStorageKey();
-    if (coldCallCountStorageKey && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       localStorage.setItem(coldCallCountStorageKey, '0');
     }
     const today = new Date().toISOString().split('T')[0];
-    const milestoneKey = `thirtyDoorsMilestoneAchieved_${selectedSalesperson?.id}_${today}`;
+    const milestoneKey = `thirtyDoorsMilestoneAchieved_${today}`;
     if (typeof window !== 'undefined') {
         localStorage.removeItem(milestoneKey);
     }
 
     toast({
       title: "Field Day Ended",
-      description: `Great work ${selectedSalesperson?.name}! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
+      description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
     });
     setIsEndDayConfirmOpen(false);
   };
 
   const handleSubmitSuggestion = () => {
-    if (suggestionText.trim() === '' || !selectedSalesperson) {
+    if (suggestionText.trim() === '') {
       toast({
         title: 'Empty Suggestion',
         description: 'Please type your suggestion before submitting.',
@@ -493,7 +392,6 @@ export default function HomePage() {
     if (suggestionsStorageKey && typeof window !== 'undefined') {
       const newSuggestionObject: SubmittedSuggestion = {
         text: suggestionText.trim(),
-        salespersonName: selectedSalesperson.name,
         timestamp: new Date().toISOString(),
       };
       const newSuggestionsArray = [...submittedSuggestions, newSuggestionObject];
@@ -502,7 +400,6 @@ export default function HomePage() {
     }
 
     console.log('App Suggestion:', {
-      salesperson: selectedSalesperson.name,
       suggestion: suggestionText.trim(),
       timestamp: new Date().toISOString(),
     });
@@ -514,7 +411,7 @@ export default function HomePage() {
   };
 
   const handleEmailSuggestions = () => {
-    if (!selectedSalesperson || submittedSuggestions.length === 0) {
+    if (submittedSuggestions.length === 0) {
       toast({
         title: 'No Suggestions to Email',
         description: 'There are no submitted suggestions to send.',
@@ -527,7 +424,6 @@ export default function HomePage() {
     let body = `Suggestions for the Optimum Trailblazer App:\n\n`;
     submittedSuggestions.forEach((suggestion, index) => {
       body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
-      body += `   Submitted by: ${suggestion.salespersonName}\n`;
       body += `   Date: ${format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}\n\n`;
     });
 
@@ -548,15 +444,10 @@ export default function HomePage() {
   };
 
   const handleEmailChris = () => {
-    if (!selectedSalesperson) {
-        toast({ title: "No Salesperson Selected", description: "Please select a salesperson profile first.", variant: "default" });
-        return;
-    }
-
     const chrisEmail = "chrisc@drinkoptimum.com";
     const subject = `Salesperson for the current day visits`;
     
-    let body = `Hello Chris,\n\nPlease find the visit data for ${selectedSalesperson.name} for the current day.\n\n`;
+    let body = `Hello Chris,\n\nPlease find the visit data for the current day.\n\n`;
     body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
     body += `A summary is also included below:\n\n`;
     
@@ -580,7 +471,7 @@ export default function HomePage() {
       body += "No visits were logged today.\n";
     }
     
-    body += `\n\nBest regards,\n${selectedSalesperson.name || 'Optimum Trailblazer App'}`;
+    body += `\n\nBest regards,\nOptimum Trailblazer App`;
 
     const params = new URLSearchParams();
     params.append('to', chrisEmail);
@@ -628,7 +519,7 @@ export default function HomePage() {
   };
 
   const handleSendChatMessage = async () => {
-    if (chatInput.trim() === '' || !selectedSalesperson || isAiResponding || isUploadingPdf) return;
+    if (chatInput.trim() === '' || isAiResponding || isUploadingPdf) return;
 
     let messageText = chatInput.trim();
     let pdfUrlForAi: string | undefined = undefined;
@@ -722,18 +613,6 @@ export default function HomePage() {
     }
   };
 
-
-  if (!selectedSalesperson) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <SalespersonSelectorModal
-          salespeople={SALESPEOPLE}
-          onSelectSalesperson={handleSelectSalesperson}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
@@ -743,16 +622,11 @@ export default function HomePage() {
           </h1>
         </header>
 
-        {selectedSalesperson && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
-                <h2 className="text-lg font-semibold text-foreground text-center">
-                    Good Luck Today {selectedSalesperson.name}!
-                </h2>
-                 <Button onClick={() => setSelectedSalesperson(null)} variant="link" className="text-sm text-accent hover:underline focus:outline-none p-0 h-auto">
-                    (Switch User)
-                </Button>
-            </div>
-        )}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
+            <h2 className="text-lg font-semibold text-foreground text-center">
+                Good Luck Today!
+            </h2>
+        </div>
         
         <Tabs defaultValue="field-day" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
@@ -799,16 +673,16 @@ export default function HomePage() {
                     </div>
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                    {visits.map(visit => (
-                        <VisitCard
-                        key={visit.id}
-                        visit={visit}
-                        onEdit={handleEditVisit}
-                        onDelete={handleDeleteVisit}
-                        onUpdateVisit={handleUpdateVisitInList}
-                        onZoom={setZoomedVisit}
-                        />
-                    ))}
+                      {visits.map(visit => (
+                          <VisitCard
+                          key={visit.id}
+                          visit={visit}
+                          onEdit={handleEditVisit}
+                          onDelete={handleDeleteVisit}
+                          onUpdateVisit={handleUpdateVisitInList}
+                          onZoom={setZoomedVisit}
+                          />
+                      ))}
                     </div>
                 )}
             </div>
@@ -888,9 +762,6 @@ export default function HomePage() {
                   ))}
                 </div>
               )}
-              <p className="mt-4 text-sm text-muted-foreground text-center">
-                Logged in as: {selectedSalesperson.name}
-              </p>
             </div>
           </TabsContent>
 
@@ -902,7 +773,7 @@ export default function HomePage() {
                   </h2>
                   {visits.length > 0 && (
                       <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                          {selectedSalesperson.name} Visits: {visits.length}
+                          Your Visits: {visits.length}
                       </Badge>
                   )}
               </div>
@@ -916,7 +787,6 @@ export default function HomePage() {
               </div>
               
               <GoogleMapComponent visits={visits} />
-               <p className="mt-4 text-sm text-muted-foreground text-center">Visits for: {selectedSalesperson.name}</p>
             </section>
           </TabsContent>
 
@@ -968,7 +838,7 @@ export default function HomePage() {
                         {message.sender === 'user' && (
                           <Avatar className="h-8 w-8 self-start">
                             <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
-                            <AvatarFallback>{selectedSalesperson?.name.substring(0, 1) || 'U'}</AvatarFallback>
+                            <AvatarFallback>U</AvatarFallback>
                           </Avatar>
                         )}
                       </div>
@@ -1044,9 +914,6 @@ export default function HomePage() {
                 </div>
               </UiCardFooter>
             </UiCard>
-             <p className="mt-4 text-sm text-muted-foreground text-center">
-                Chatting as: {selectedSalesperson.name}
-              </p>
           </TabsContent>
 
 
@@ -1102,7 +969,7 @@ export default function HomePage() {
                         <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
                           {suggestion.text}
                           <span className="block text-xs text-muted-foreground mt-0.5">
-                            &mdash; by {suggestion.salespersonName} on {format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}
+                            &mdash; on {format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}
                           </span>
                         </li>
                       ))}
@@ -1113,10 +980,6 @@ export default function HomePage() {
                   </Button>
                 </div>
               )}
-
-              <p className="text-sm text-muted-foreground mt-auto pt-4">
-                Currently logged in as: {selectedSalesperson.name}
-              </p>
             </div>
           </TabsContent>
         </Tabs>
@@ -1161,7 +1024,7 @@ export default function HomePage() {
         />
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
-        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Personalized for {selectedSalesperson.name}.</p>
+        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
       </footer>
     </div>
   );
