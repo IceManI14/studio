@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { Separator } from './ui/separator';
 
 interface VisitCardProps {
   visit: Visit;
@@ -311,29 +312,33 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </AccordionContent>
             </AccordionItem>
           )}
-
-          {visit.notes && (
-            <AccordionItem value="original-notes">
+          
+          {(visit.notesSummary || visit.notes) && (
+            <AccordionItem value="notes-section">
               <AccordionTrigger>
                 <span className="font-medium text-foreground flex items-center">
-                  <FileText className="mr-2 h-4 w-4 text-primary" /> Original Notes
+                  <FileText className="mr-2 h-4 w-4 text-primary" /> Notes
                 </span>
               </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
+              <AccordionContent className="space-y-3">
+                {visit.notesSummary && (
+                  <div>
+                    <h4 className="font-medium text-sm text-foreground flex items-center mb-1">
+                      <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
+                      AI Summary
+                    </h4>
+                    <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+                  </div>
+                )}
 
-          {visit.notesSummary && (
-            <AccordionItem value="notes-summary">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Sparkles className="mr-2 h-4 w-4 text-foreground" /> Notes Summary
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground whitespace-pre-wrap break-words">{visit.notesSummary}</p>
+                {visit.notesSummary && visit.notes && <Separator />}
+
+                {visit.notes && (
+                  <div>
+                    <h4 className="font-medium text-sm text-foreground mb-1">Original Notes</h4>
+                    <p className="text-muted-foreground max-h-28 overflow-y-auto whitespace-pre-wrap break-words">{visit.notes}</p>
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
           )}
