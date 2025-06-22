@@ -759,7 +759,7 @@ export default function HomePage() {
         {selectedSalesperson && (
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-card rounded-lg shadow">
                 <h2 className="text-lg font-semibold text-foreground text-center">
-                    Good Luck Today!
+                    Good Luck Today {selectedSalesperson.name}!
                 </h2>
                  <Button onClick={() => setSelectedSalesperson(null)} variant="link" className="text-sm text-accent hover:underline focus:outline-none p-0 h-auto">
                     (Switch User)
