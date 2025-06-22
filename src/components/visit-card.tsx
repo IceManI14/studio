@@ -21,9 +21,11 @@ interface VisitCardProps {
   onEdit: (visit: Visit) => void;
   onDelete: (visitId: string) => void;
   onUpdateVisit: (updatedVisit: Visit) => void;
+  onZoom?: (visit: Visit) => void;
+  isZoomedView?: boolean;
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const { toast } = useToast();
@@ -137,7 +139,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
 
   return (
-    <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card 
+      className={cn(
+        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300",
+        !isZoomedView && 'cursor-pointer'
+      )}
+      onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
+    >
       <CardHeader className="relative space-y-1.5 pb-3">
         {visit.visitNumber && (
             <div className="absolute top-4 left-4 z-10">
@@ -268,6 +276,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
                 <DialogTrigger asChild>
                 <button 
+                    onClick={(e) => e.stopPropagation()}
                     className="w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
                     aria-label="View business card"
                 >
@@ -290,6 +299,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </button>
                 </DialogTrigger>
                 <DialogContent 
+                  onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "p-2 bg-background",
                     isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
@@ -358,7 +368,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
         {!visit.notesSummary && visit.notes && (
-          <Button variant="link" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="text-accent p-0 h-auto">
+          <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isSummarizing ? 'Summarizing...' : 'Summarize Notes'}
           </Button>
@@ -366,16 +376,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-        <Button variant="outline" size="sm" onClick={() => onEdit(visit)} aria-label={`Edit visit to ${visit.companyName}`}>
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
           <Edit className="h-4 w-4" />
         </Button>
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" aria-label={`Delete visit to ${visit.companyName}`}>
+                <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>

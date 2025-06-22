@@ -26,6 +26,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader, CardFooter as UiCardFooter } from '@/components/ui/card';
@@ -82,6 +86,7 @@ export default function HomePage() {
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -812,6 +817,7 @@ export default function HomePage() {
                         onEdit={handleEditVisit}
                         onDelete={handleDeleteVisit}
                         onUpdateVisit={handleUpdateVisitInList}
+                        onZoom={setZoomedVisit}
                         />
                     ))}
                     </div>
@@ -887,6 +893,7 @@ export default function HomePage() {
                         onEdit={handleEditVisit}
                         onDelete={handleDeleteVisit}
                         onUpdateVisit={handleUpdateVisitInList}
+                        onZoom={setZoomedVisit}
                       />
                     </div>
                   ))}
@@ -1125,6 +1132,29 @@ export default function HomePage() {
           </TabsContent>
         </Tabs>
 
+        <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
+          <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
+            {zoomedVisit && (
+              <VisitCard
+                visit={zoomedVisit}
+                onEdit={(v) => {
+                  setZoomedVisit(null);
+                  handleEditVisit(v);
+                }}
+                onDelete={(id) => {
+                  setZoomedVisit(null);
+                  handleDeleteVisit(id);
+                }}
+                onUpdateVisit={(updated) => {
+                  handleUpdateVisitInList(updated);
+                  setZoomedVisit(updated);
+                }}
+                isZoomedView={true}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         <VisitForm
           isOpen={isVisitFormOpen}
           onClose={() => {
@@ -1141,4 +1171,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 
