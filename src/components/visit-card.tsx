@@ -243,12 +243,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
 
           {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-            <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
-              <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
-                <CalendarClock className="mr-2 h-4 w-4" />
-                Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
-              </p>
-            </div>
+            <AccordionItem value="future-meeting">
+              <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <CalendarClock className="mr-2 h-4 w-4 text-primary" />
+                  Future Meeting Details
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
           )}
 
           {visit.hasBusinessCard && visit.businessCardImageUrl && (
