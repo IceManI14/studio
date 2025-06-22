@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -947,7 +946,7 @@ export default function HomePage() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground pt-2">Ask questions about your visits or get planning help. Recent visits and attached PDFs are used as context.</p>
+                <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
                 <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
