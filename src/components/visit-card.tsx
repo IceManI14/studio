@@ -140,13 +140,21 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     >
       <CardHeader className="space-y-2 pb-3">
         <div className="flex justify-between items-start min-h-[3rem]">
-            {/* Visit number on the left */}
-            <div onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} className="cursor-pointer">
-                {visit.visitNumber && (
-                    <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
-                        <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
-                    </Badge>
-                )}
+            {/* Left side: Visit number and toggleable date */}
+            <div className="flex flex-col items-start">
+              <div onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} className="cursor-pointer">
+                  {visit.visitNumber && (
+                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
+                          <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
+                      </Badge>
+                  )}
+              </div>
+              {isDateVisible && (
+                  <div className="flex items-center text-xs text-muted-foreground mt-1">
+                      <CalendarDays className="mr-1 h-3 w-3" />
+                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                  </div>
+              )}
             </div>
             {/* Confidence stars on the right */}
             <div>
@@ -173,13 +181,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
         </div>
         
-        {isDateVisible && (
-            <div className="flex items-center text-sm text-muted-foreground pt-1">
-                <CalendarDays className="mr-2 h-4 w-4" />
-                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-            </div>
-        )}
-
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow space-y-1.5">
             <CardTitle className="font-headline text-2xl text-primary flex items-center justify-center w-full">
