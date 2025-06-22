@@ -51,16 +51,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     }
   };
 
-  const getCompetitorDisplay = () => {
-    if (visit.discussedCompetitors) {
-      if (visit.competitorName) {
-        return <>Competitor <span className="text-accent">{`{${visit.competitorName}}`}</span></>;
-      }
-      return 'Competitors Discussed (Unspecified)';
-    }
-    return 'Competitors Not Discussed';
-  };
-
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
 
 
@@ -214,10 +204,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
 
             <div className="flex flex-col items-start space-y-1">
-              <div className="flex items-center text-xs text-muted-foreground">
-                {visit.discussedCompetitors ? <Swords className="mr-2 h-4 w-4 text-orange-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                {getCompetitorDisplay()}
-              </div>
               {visit.coolerType && visit.discussedCompetitors && (
                 <div className="flex items-center text-xs text-muted-foreground">
                     <Box className="mr-2 h-4 w-4 text-blue-500" />
@@ -246,8 +232,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <AccordionItem value="competitor-intel">
               <AccordionTrigger>
                 <span className="font-medium text-foreground flex items-center">
-                  <ShieldAlert className="mr-2 h-4 w-4 text-primary" />
-                  Competitor Intel <span className="text-accent ml-1">{`{${visit.competitorName}}`}</span>
+                  <Swords className="mr-2 h-4 w-4 text-orange-500" />
+                  <span>Competitor: <span className="text-accent font-semibold">{visit.competitorName}</span></span>
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -283,6 +269,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </AccordionContent>
             </AccordionItem>
           )}
+          
+          {visit.futureMeetingSet && visit.futureMeetingDateTime && (
+            <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
+              <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
+                <CalendarClock className="mr-2 h-4 w-4" />
+                Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
+              </p>
+            </div>
+          )}
 
           {visit.notes && (
             <AccordionItem value="original-notes">
@@ -311,15 +306,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
         </Accordion>
         
-        {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-          <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
-            <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
-              <CalendarClock className="mr-2 h-4 w-4" />
-              Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
-            </p>
-          </div>
-        )}
-
         {visit.hasTDSReading && visit.tdsValue !== undefined && (
           <div className="p-2 bg-secondary/30 rounded-md text-center">
             <div className="flex justify-center items-center space-x-2 mb-1">
@@ -344,67 +330,68 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <div className="flex justify-center">
+        <div className="flex justify-center">
+          {visit.businessCardImageUrl && visit.hasBusinessCard && (
             <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
-                <DialogTrigger asChild>
-                <button 
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
-                    aria-label="View business card"
-                >
-                  {isHtmlCard ? (
-                      <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                          <FileType className="w-7 h-7 mb-1" />
-                          <span className="text-xs text-center">View Digital Card</span>
-                      </div>
-                  ) : (
-                    <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                      <NextImage
-                          src={visit.businessCardImageUrl}
-                          alt="Business Card Thumbnail"
-                          fill
-                          style={{ objectFit: 'contain' }}
-                          data-ai-hint="business card professional"
-                      />
-                    </div>
-                  )}
-                </button>
-                </DialogTrigger>
-                <DialogContent 
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(
-                    "p-2 bg-background",
-                    isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
-                  )}
-                >
-                    <DialogHeader>
-                        <DialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</DialogTitle>
-                    </DialogHeader>
+                  <DialogTrigger asChild>
+                  <button 
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
+                      aria-label="View business card"
+                  >
                     {isHtmlCard ? (
-                      <div className="flex-grow w-full h-full overflow-hidden">
-                        <iframe
-                          srcDoc={visit.businessCardImageUrl}
-                          className="w-full h-full border-0"
-                          title="Digital Business Card"
-                          sandbox="allow-scripts allow-same-origin"
-                        />
-                      </div>
+                        <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                            <FileType className="w-7 h-7 mb-1" />
+                            <span className="text-xs text-center">View Digital Card</span>
+                        </div>
                     ) : (
-                      <div className="relative w-full aspect-[1.6/1] mt-2">
-                          <NextImage
+                      <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                        <NextImage
                             src={visit.businessCardImageUrl}
-                            alt="Business Card - Zoomed View"
-                            data-ai-hint="business card professional"
+                            alt="Business Card Thumbnail"
                             fill
                             style={{ objectFit: 'contain' }}
-                          />
+                            data-ai-hint="business card professional"
+                        />
                       </div>
                     )}
-                </DialogContent>
-            </Dialog>
-          </div>
-        )}
+                  </button>
+                  </DialogTrigger>
+                  <DialogContent 
+                    onClick={(e) => e.stopPropagation()}
+                    className={cn(
+                      "p-2 bg-background",
+                      isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
+                    )}
+                  >
+                      <DialogHeader>
+                          <DialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</DialogTitle>
+                      </DialogHeader>
+                      {isHtmlCard ? (
+                        <div className="flex-grow w-full h-full overflow-hidden">
+                          <iframe
+                            srcDoc={visit.businessCardImageUrl}
+                            className="w-full h-full border-0"
+                            title="Digital Business Card"
+                            sandbox="allow-scripts allow-same-origin"
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative w-full aspect-[1.6/1] mt-2">
+                            <NextImage
+                              src={visit.businessCardImageUrl}
+                              alt="Business Card - Zoomed View"
+                              data-ai-hint="business card professional"
+                              fill
+                              style={{ objectFit: 'contain' }}
+                            />
+                        </div>
+                      )}
+                  </DialogContent>
+              </Dialog>
+          )}
+        </div>
+
 
         {!visit.notesSummary && visit.notes && (
           <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleSummarizeAgain(); }} disabled={isSummarizing} className="text-accent p-0 h-auto">
