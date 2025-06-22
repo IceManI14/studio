@@ -817,7 +817,7 @@ export default function HomePage() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground pt-2">I will utilize any and all information that you give me regarding Optimum Water and their future potential partners!</p>
+                <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
                 <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
@@ -925,7 +925,7 @@ export default function HomePage() {
                   <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
                 </h2>
                 <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
-                  This app is intended to help you streamline your efforts in acquiring new clients and partners alike.
+                  This app is intended to help streamline your efforts in acquiring new clients and partners alike.
                   It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
                 </p>
                 <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
@@ -936,6 +936,9 @@ export default function HomePage() {
                   </li>
                   <li>
                     When you "log the meeting" the app creates a visit card that stores very important information for your future. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
+                  </li>
+                   <li>
+                    When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
                   </li>
                 </ul>
               </div>
