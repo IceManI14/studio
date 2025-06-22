@@ -31,6 +31,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const { toast } = useToast();
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
+  const [isCoordsVisible, setIsCoordsVisible] = useState(false);
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -148,13 +149,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                           <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
                       </Badge>
                   )}
+                  {isDateVisible && (
+                      <div className="flex items-center text-xs text-muted-foreground mt-1">
+                          <CalendarDays className="mr-1 h-3 w-3" />
+                          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                      </div>
+                  )}
               </div>
-              {isDateVisible && (
-                  <div className="flex items-center text-xs text-muted-foreground mt-1">
-                      <CalendarDays className="mr-1 h-3 w-3" />
-                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-                  </div>
-              )}
             </div>
             {/* Confidence stars on the right */}
             <div>
@@ -183,11 +184,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow space-y-1.5">
-            <CardTitle className="font-headline text-2xl text-primary flex items-center justify-center w-full">
+            <CardTitle 
+              className="font-headline text-2xl text-primary flex items-center justify-center w-full cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
+            >
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
-            {visit.latitude && visit.longitude && (
+            {isCoordsVisible && visit.latitude && visit.longitude && (
                 <p className="text-xs text-muted-foreground flex items-center justify-center w-full">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
@@ -210,7 +214,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Yes (${visit.tdsValue} PPM)` : 'Yes (No Value)') : 'Not Yet'}
+                TDS Reading: {visit.hasTDSReading ? `Yes (${visit.tdsValue ?? 'N/A'} PPM)` : 'Not Yet'}
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -244,7 +248,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           )}
 
           {visit.futureMeetingSet && visit.futureMeetingDateTime && (
-            <AccordionItem value="future-meeting">
+             <AccordionItem value="future-meeting">
               <AccordionTrigger>
                 <span className="font-medium text-foreground flex items-center">
                   <CalendarClock className="mr-2 h-4 w-4 text-primary" />
