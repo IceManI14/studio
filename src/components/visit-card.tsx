@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader as UiDialogHeader, DialogTitle as UiDialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { useState } from 'react';
@@ -168,64 +168,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
-        {visit.businessCardImageUrl && visit.hasBusinessCard && (
-          <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
-              <DialogTrigger asChild>
-              <button 
-                  className="absolute top-4 right-4 w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
-                  aria-label="View business card"
-              >
-                {isHtmlCard ? (
-                    <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                        <FileType className="w-7 h-7 mb-1" />
-                        <span className="text-xs text-center">View Digital Card</span>
-                    </div>
-                ) : (
-                  <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-                    <NextImage
-                        src={visit.businessCardImageUrl}
-                        alt="Business Card Thumbnail"
-                        fill
-                        style={{ objectFit: 'contain' }}
-                        data-ai-hint="business card professional"
-                    />
-                  </div>
-                )}
-              </button>
-              </DialogTrigger>
-              <DialogContent 
-                className={cn(
-                  "p-2 bg-background",
-                  isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
-                )}
-              >
-                  <UiDialogHeader>
-                      <UiDialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</UiDialogTitle>
-                  </UiDialogHeader>
-                  {isHtmlCard ? (
-                    <div className="flex-grow w-full h-full overflow-hidden">
-                      <iframe
-                        srcDoc={visit.businessCardImageUrl}
-                        className="w-full h-full border-0"
-                        title="Digital Business Card"
-                        sandbox="allow-scripts allow-same-origin" // allow-scripts is needed for embedded JS like particles.js
-                      />
-                    </div>
-                  ) : (
-                    <div className="relative w-full aspect-[1.6/1] mt-2">
-                        <NextImage
-                          src={visit.businessCardImageUrl}
-                          alt="Business Card - Zoomed View"
-                          data-ai-hint="business card professional"
-                          fill
-                          style={{ objectFit: 'contain' }}
-                        />
-                    </div>
-                  )}
-              </DialogContent>
-          </Dialog>
-        )}
-
         <div className="flex flex-row justify-between items-start w-full pt-2">
           <div className="flex-grow pr-4 space-y-1.5">
             <CardTitle className="font-headline text-2xl text-primary flex items-center">
@@ -321,6 +263,66 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
         )}
 
+        {visit.businessCardImageUrl && visit.hasBusinessCard && (
+          <div className="flex justify-center">
+            <Dialog open={isZoomModalOpen} onOpenChange={setIsZoomModalOpen}>
+                <DialogTrigger asChild>
+                <button 
+                    className="w-36 flex-shrink-0 flex items-center justify-center focus:outline-none group" 
+                    aria-label="View business card"
+                >
+                  {isHtmlCard ? (
+                      <div className="flex flex-col items-center justify-center w-full h-full aspect-[1.6/1] rounded-md border bg-secondary text-secondary-foreground p-2 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                          <FileType className="w-7 h-7 mb-1" />
+                          <span className="text-xs text-center">View Digital Card</span>
+                      </div>
+                  ) : (
+                    <div className="relative w-full aspect-[1.6/1] rounded-md overflow-hidden border group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+                      <NextImage
+                          src={visit.businessCardImageUrl}
+                          alt="Business Card Thumbnail"
+                          fill
+                          style={{ objectFit: 'contain' }}
+                          data-ai-hint="business card professional"
+                      />
+                    </div>
+                  )}
+                </button>
+                </DialogTrigger>
+                <DialogContent 
+                  className={cn(
+                    "p-2 bg-background",
+                    isHtmlCard ? "sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl h-[90vh] flex flex-col" : "sm:max-w-xl"
+                  )}
+                >
+                    <DialogHeader>
+                        <DialogTitle>{isHtmlCard ? "Digital Business Card" : "Business Card - Zoomed View"}</DialogTitle>
+                    </DialogHeader>
+                    {isHtmlCard ? (
+                      <div className="flex-grow w-full h-full overflow-hidden">
+                        <iframe
+                          srcDoc={visit.businessCardImageUrl}
+                          className="w-full h-full border-0"
+                          title="Digital Business Card"
+                          sandbox="allow-scripts allow-same-origin"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative w-full aspect-[1.6/1] mt-2">
+                          <NextImage
+                            src={visit.businessCardImageUrl}
+                            alt="Business Card - Zoomed View"
+                            data-ai-hint="business card professional"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                          />
+                      </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
         {hasDecisionMakerDetails && (
           <div className="p-3 bg-secondary/30 rounded-md">
             <h4 className="font-medium text-foreground flex items-center mb-1">
@@ -393,3 +395,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
 export default VisitCard;
 
+    
