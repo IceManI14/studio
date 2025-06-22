@@ -204,12 +204,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
 
             <div className="flex flex-col items-start space-y-1">
-              {visit.coolerType && visit.discussedCompetitors && (
-                <div className="flex items-center text-xs text-muted-foreground">
-                    <Box className="mr-2 h-4 w-4 text-blue-500" />
-                    Cooler: {visit.coolerType}
-                </div>
-              )}
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
@@ -228,27 +222,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm pt-3">
         <Accordion type="multiple" className="w-full">
-          {visit.discussedCompetitors && visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-            <AccordionItem value="competitor-intel">
-              <AccordionTrigger>
-                <span className="font-medium text-foreground flex items-center">
-                  <Swords className="mr-2 h-4 w-4 text-orange-500" />
-                  <span>Competitor: <span className="text-accent font-semibold">{visit.competitorName}</span></span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {COMPETITOR_DETAILS[visit.competitorName].title && (
-                    <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
-                )}
-                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
-                  {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
           {hasDecisionMakerDetails && (
             <AccordionItem value="decision-maker">
               <AccordionTrigger>
@@ -269,7 +242,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </AccordionContent>
             </AccordionItem>
           )}
-          
+
           {visit.futureMeetingSet && visit.futureMeetingDateTime && (
             <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/30 text-xs">
               <p className="font-semibold text-blue-700 dark:text-blue-400 flex items-center">
@@ -277,6 +250,34 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 Meeting: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'EEE, MMM d, yyyy @ p')}
               </p>
             </div>
+          )}
+
+          {visit.discussedCompetitors && visit.coolerType && (
+            <AccordionItem value="cooler-info">
+               <AccordionTrigger>
+                <span className="font-medium text-foreground flex items-center">
+                  <Box className="mr-2 h-4 w-4 text-blue-500" />
+                  <span>Competitor Cooler: <span className="text-accent font-semibold">{visit.coolerType}</span></span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] ? (
+                  <>
+                    <p className="text-sm font-semibold mb-1">Intel on {visit.competitorName}:</p>
+                    {COMPETITOR_DETAILS[visit.competitorName].title && (
+                      <p className="text-sm text-muted-foreground italic mb-1">{COMPETITOR_DETAILS[visit.competitorName].title}</p>
+                    )}
+                    <ul className="list-disc list-inside text-muted-foreground space-y-0.5 text-xs">
+                      {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, index) => (
+                        <li key={index}>{detail}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No specific intel available for this competitor.</p>
+                )}
+              </AccordionContent>
+            </AccordionItem>
           )}
 
           {visit.notes && (
