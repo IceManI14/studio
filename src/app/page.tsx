@@ -1,14 +1,15 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -668,7 +669,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                     <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                     <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                        When you click "Hit New Door!" this app will help you streamline your efforts
+                        When you click "Hit New Door!" this app will help streamline your efforts
                     </Button>
                     </div>
                 ) : (
