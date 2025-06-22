@@ -618,7 +618,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="flex flex-col items-center justify-center w-full py-4 gap-4">
+        <header className="flex flex-col items-center justify-center w-full py-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
@@ -629,7 +629,7 @@ export default function HomePage() {
           </div>
         </header>
         
-        <Tabs defaultValue="field-day" className="w-full -mt-8">
+        <Tabs defaultValue="field-day" className="w-full -mt-2">
           <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
