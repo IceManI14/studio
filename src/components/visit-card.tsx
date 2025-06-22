@@ -31,6 +31,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const { toast } = useToast();
   const timeZone = 'America/New_York'; 
+  const [isDateVisible, setIsDateVisible] = useState(false);
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -151,7 +152,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       <CardHeader className="space-y-2 pb-3">
         <div className="flex justify-between items-start min-h-[3rem]">
             {/* Visit number on the left */}
-            <div>
+            <div onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} className="cursor-pointer">
                 {visit.visitNumber && (
                     <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
                         <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
@@ -182,6 +183,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
             </div>
         </div>
+        
+        {isDateVisible && (
+            <div className="flex items-center text-sm text-muted-foreground pt-1">
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+            </div>
+        )}
 
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow pr-4 space-y-1.5">
@@ -196,10 +204,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             )}
             
             <div className="flex flex-col items-start space-y-1 w-full">
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-                </div>
                 {visit.interestedUnit && (
                   <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
                     <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
