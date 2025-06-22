@@ -1100,48 +1100,56 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             </div>
 
-            <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
-              <Label className="font-medium text-base">Decision Maker Info (Optional)</Label>
-               <FormField
-                control={form.control}
-                name="decisionMakerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-normal">Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Jane Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="decisionMakerTitle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-normal">Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Office Manager" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="decisionMakerContact"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-normal">Contact (Email/Phone Ext.)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., jane@example.com or x123" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="dm-info" className="border rounded-md bg-background/10 p-3">
+                    <AccordionTrigger className="p-0 hover:no-underline font-medium text-base">
+                        Decision Maker Info (Optional)
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                        <div className="space-y-3">
+                           <FormField
+                            control={form.control}
+                            name="decisionMakerName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-normal">Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., Jane Doe" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="decisionMakerTitle"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-normal">Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., Office Manager" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="decisionMakerContact"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-normal">Contact (Email/Phone Ext.)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., jane@example.com or x123" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
 
 
             <FormField
