@@ -128,11 +128,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
-  const defaultAccordionValues = [
-    visit.futureMeetingSet && visit.futureMeetingDateTime ? 'future-meeting' : undefined,
-    visit.notesSummary ? 'summary' : undefined,
-    visit.notes ? 'notes' : undefined,
-  ].filter(Boolean) as string[];
 
   return (
     <Card 
@@ -230,7 +225,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
       {isZoomedView && (
         <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
-          <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-2">
+          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-2">
             {/* Future Meeting */}
             {visit.futureMeetingSet && visit.futureMeetingDateTime && (
               <AccordionItem value="future-meeting">
