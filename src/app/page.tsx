@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -1135,22 +1137,28 @@ export default function HomePage() {
         <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
             {zoomedVisit && (
-              <VisitCard
-                visit={zoomedVisit}
-                onEdit={(v) => {
-                  setZoomedVisit(null);
-                  handleEditVisit(v);
-                }}
-                onDelete={(id) => {
-                  setZoomedVisit(null);
-                  handleDeleteVisit(id);
-                }}
-                onUpdateVisit={(updated) => {
-                  handleUpdateVisitInList(updated);
-                  setZoomedVisit(updated);
-                }}
-                isZoomedView={true}
-              />
+              <>
+                <DialogTitle className="sr-only">Visit Details: {zoomedVisit.companyName}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.
+                </DialogDescription>
+                <VisitCard
+                  visit={zoomedVisit}
+                  onEdit={(v) => {
+                    setZoomedVisit(null);
+                    handleEditVisit(v);
+                  }}
+                  onDelete={(id) => {
+                    setZoomedVisit(null);
+                    handleDeleteVisit(id);
+                  }}
+                  onUpdateVisit={(updated) => {
+                    handleUpdateVisitInList(updated);
+                    setZoomedVisit(updated);
+                  }}
+                  isZoomedView={true}
+                />
+              </>
             )}
           </DialogContent>
         </Dialog>
@@ -1171,5 +1179,6 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
