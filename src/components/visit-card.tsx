@@ -9,7 +9,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
@@ -32,6 +32,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
   const [isCoordsVisible, setIsCoordsVisible] = useState(false);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -225,7 +226,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
       {isZoomedView && (
         <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
-          <Accordion type="multiple" defaultValue={[]} className="w-full space-y-2">
+          <Accordion type="multiple" value={openAccordionItems} onValueChange={setOpenAccordionItems} className="w-full space-y-2">
             {/* Future Meeting */}
             {visit.futureMeetingSet && visit.futureMeetingDateTime && (
               <AccordionItem value="future-meeting">

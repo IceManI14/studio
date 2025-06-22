@@ -622,14 +622,14 @@ export default function HomePage() {
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-4">
             <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
               Good Luck Today!
             </h2>
           </div>
         </header>
         
-        <Tabs defaultValue="field-day" className="w-full -mt-2">
+        <Tabs defaultValue="field-day" className="w-full -mt-10">
           <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><PlusCircle className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Field Day</TabsTrigger>
             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"><ListChecks className="mr-2 h-4 w-4 sm:hidden lg:inline-block" />Call Day</TabsTrigger>
@@ -920,7 +920,7 @@ export default function HomePage() {
 
           <TabsContent value="about">
             <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
-              <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="text-2xl font-headline font-semibold text-primary flex items-center hover:no-underline">
                     <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
