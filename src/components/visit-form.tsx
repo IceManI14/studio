@@ -1010,12 +1010,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                      <FormLabel>Competitor Name</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
-                        if (!value) {
-                           form.setValue('coolerType', undefined);
+                        if (value === '_none_') {
+                          field.onChange(undefined);
+                          form.setValue('coolerType', undefined);
+                        } else {
+                          field.onChange(value);
                         }
                       }}
-                      value={field.value || ''}
+                      value={field.value}
                      >
                       <FormControl>
                         <SelectTrigger>
@@ -1023,7 +1025,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="_none_">None</SelectItem>
                         {COMPETITORS_LIST.map((competitor) => (
                           <SelectItem key={competitor} value={competitor}>
                             {competitor}
