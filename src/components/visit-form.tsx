@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -799,6 +799,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     >
                         <CameraIcon className="h-4 w-4" />
                     </Button>
+                </div>
+                
+                <div className="mt-2">
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {
+                        if (typeof window !== 'undefined') {
+                            window.open('geniusscan://', '_blank');
+                            toast({ title: 'Opening Genius Scan', description: 'After scanning, come back and upload the image from your photos.' });
+                        }
+                    }}
+                  >
+                      <ScanLine className="mr-2 h-4 w-4" />
+                      Activate Genius Scan
+                  </Button>
                 </div>
 
                 {isCameraViewVisible && (
