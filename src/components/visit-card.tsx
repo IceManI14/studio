@@ -210,7 +210,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Value Logged` : 'Yes (No Value)') : 'Not Yet'}
+                TDS Reading: {visit.hasTDSReading ? (visit.tdsValue !== undefined ? `Yes (${visit.tdsValue} PPM)` : 'Yes (No Value)') : 'Not Yet'}
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
