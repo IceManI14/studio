@@ -819,7 +819,7 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
               </UiCardHeader>
               <UiCardContent className="p-0">
-                <ScrollArea className="h-[450px] w-full p-4 border-t border-b">
+                <ScrollArea className="h-[300px] w-full p-4 border-t border-b">
                   {chatMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
                       <div className={`flex items-end gap-2 max-w-[75%]`}>
