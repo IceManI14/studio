@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction } from '@/app/actions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface SubmittedSuggestion {
   text: string;
@@ -919,34 +920,38 @@ export default function HomePage() {
 
           <TabsContent value="about">
             <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
-              <div>
-                <h2 className="text-2xl font-headline font-semibold text-primary flex items-center">
-                  <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
-                </h2>
-                <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
-                  This app is intended to help streamline your efforts in acquiring new clients and partners alike.
-                  It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
-                </p>
-                <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1">
-                   <li>
-                    When you "hit new door", the app begins to scrape the web for the company data at which you are currently located.
-                    It will hopefully give a a quick run down of what you are up against as a salesperson,
-                    and potentially help you get to the decision maker more efficiently.
-                  </li>
-                  <li>
-                    When you "Log the meeting!" the app creates a visit card that stores very important information for your future planning. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
-                  </li>
-                   <li>
-                    When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you have visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
-                  </li>
-                  <li>
-                    The "Call Day" tab provides a prioritized list of your visits, helping you focus your follow-up calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.
-                  </li>
-                  <li>
-                    "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by and as you log as much info as you can.
-                  </li>
-                </ul>
-              </div>
+              <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-2xl font-headline font-semibold text-primary flex items-center hover:no-underline">
+                    <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
+                      This app is intended to help streamline your efforts in acquiring new clients and partners alike.
+                      It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
+                    </p>
+                    <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1 pl-4">
+                      <li>
+                        When you "hit new door", the app begins to scrape the web for the company data at which you are currently located.
+                        It will hopefully give a a quick run down of what you are up against as a salesperson,
+                        and potentially help you get to the decision maker more efficiently.
+                      </li>
+                      <li>
+                        When you "Log the meeting!" the app creates a visit card that stores very important information for your future planning. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
+                      </li>
+                      <li>
+                        When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you have visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
+                      </li>
+                      <li>
+                        The "Call Day" tab provides a prioritized list of your visits, helping you focus your follow-up calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.
+                      </li>
+                      <li>
+                        "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by and as you log as much info as you can.
+                      </li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
               <div className="w-full pt-4 border-t">
                 <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
