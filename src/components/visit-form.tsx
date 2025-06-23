@@ -1016,9 +1016,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Select date/time for the follow-up meeting.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
