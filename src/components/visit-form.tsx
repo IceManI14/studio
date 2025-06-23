@@ -150,6 +150,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tdsInputRef = useRef<HTMLInputElement>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
   const [openAccordion, setOpenAccordion] = useState<string[]>([]);
@@ -188,6 +189,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const hasTDSReadingValue = form.watch('hasTDSReading');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
+
+  useEffect(() => {
+    if (hasTDSReadingValue) {
+      // A small delay ensures the element is rendered and can be focused.
+      const timer = setTimeout(() => {
+        tdsInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [hasTDSReadingValue]);
 
   const stopCameraStream = () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -889,9 +900,19 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         id="tdsValue"
                         type="number"
                         placeholder="Enter TDS value"
-                        {...field}
-                        onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                        value={field.value === undefined ? '' : field.value}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        disabled={field.disabled}
+                        ref={(e) => {
+                          field.ref(e);
+                          tdsInputRef.current = e;
+                        }}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === "" ? undefined : parseFloat(e.target.value)
+                          )
+                        }
+                        value={field.value === undefined ? "" : field.value}
                       />
                     </FormControl>
                     <FormDescription>
@@ -1181,7 +1202,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       placeholder="Details about the visit, key discussion points, etc."
                       className="mt-1 min-h-[100px]"
                       {...field}
-                      onFocus={handleNotesFocus}
                       onBlur={() => {
                         field.onBlur();
                         handleNotesBlur();
