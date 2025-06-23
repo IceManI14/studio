@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -40,8 +40,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { db } from '@/lib/firebase';
+import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
+import { isGenkitConfigured } from '@/ai/genkit';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
 
 interface SubmittedSuggestion {
   text: string;
@@ -89,6 +92,7 @@ export default function HomePage() {
 
 
   const updateColdCallCount = async (newCount: number) => {
+    if (!db) return;
     const statsDocRef = doc(db, 'app-state', 'daily-stats');
     try {
       await setDoc(statsDocRef, { coldCallCount: newCount }, { merge: true });
@@ -134,6 +138,8 @@ export default function HomePage() {
         variant: "default"
       });
     }
+
+    if (!firebaseConfigured || !db) return;
 
     // Firestore listener for visits
     const visitsQuery = query(collection(db, 'visits'), orderBy('timestamp', 'desc'));
@@ -182,9 +188,9 @@ export default function HomePage() {
 
 
     return () => {
-      unsubscribeVisits();
-      unsubscribeSuggestions();
-      unsubscribeStats();
+      unsubscribeVisits && unsubscribeVisits();
+      unsubscribeSuggestions && unsubscribeSuggestions();
+      unsubscribeStats && unsubscribeStats();
     };
 
   }, [toast]);
@@ -194,6 +200,7 @@ export default function HomePage() {
       const today = new Date().toISOString().split('T')[0];
       
       const checkAndSetMilestone = async () => {
+        if (!db) return;
         const statsDocRef = doc(db, 'app-state', 'daily-stats');
         try {
             const docSnap = await getDoc(statsDocRef);
@@ -357,6 +364,7 @@ export default function HomePage() {
   };
 
   const handleSaveVisit = async (visit: Visit) => {
+    if (!db) return;
     try {
       const visitData = {
           ...visit,
@@ -373,6 +381,7 @@ export default function HomePage() {
   };
 
   const handleDeleteVisit = async (visitId: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "visits", visitId));
         toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
@@ -386,12 +395,13 @@ export default function HomePage() {
     const numberOfVisits = visits.length;
     await updateColdCallCount(0);
     
-    try {
-        const statsDocRef = doc(db, 'app-state', 'daily-stats');
-        await updateDoc(statsDocRef, { milestoneAchievedDate: null });
-    } catch (e) {
-        // It's okay if the doc doesn't exist or this fails.
-        console.warn("Could not reset milestone date", e);
+    if (db) {
+        try {
+            const statsDocRef = doc(db, 'app-state', 'daily-stats');
+            await updateDoc(statsDocRef, { milestoneAchievedDate: null });
+        } catch (e) {
+            console.warn("Could not reset milestone date", e);
+        }
     }
 
     toast({
@@ -402,7 +412,7 @@ export default function HomePage() {
   };
 
   const handleSubmitSuggestion = async () => {
-    if (suggestionText.trim() === '') {
+    if (suggestionText.trim() === '' || !db) {
       toast({
         title: 'Empty Suggestion',
         description: 'Please type your suggestion before submitting.',
@@ -632,6 +642,30 @@ export default function HomePage() {
     }
   };
 
+  if (!firebaseConfigured) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 bg-background">
+        <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-destructive">Firebase Configuration Error</h1>
+        <p className="mt-2 text-muted-foreground max-w-md">
+          Your application is missing valid Firebase credentials. Please add your Firebase project configuration to your <strong>.env</strong> file.
+        </p>
+        <p className="mt-4 text-sm text-muted-foreground">The app will not function correctly until this is resolved.</p>
+        <div className="mt-4 p-4 bg-muted rounded-md text-left text-xs text-muted-foreground w-full max-w-lg">
+          <p>You need to set the following variables in your `.env` file:</p>
+          <pre className="mt-2 whitespace-pre-wrap">
+            {`NEXT_PUBLIC_FIREBASE_API_KEY="YOUR_KEY_HERE"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_DOMAIN_HERE"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID_HERE"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="YOUR_BUCKET_HERE"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="YOUR_SENDER_ID_HERE"
+NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
+          </pre>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
@@ -824,6 +858,15 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="ai-chat">
+            {!isGenkitConfigured ? (
+              <Alert variant="destructive" className="max-w-2xl mx-auto">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>AI Features Disabled</AlertTitle>
+                <AlertDescription>
+                  The AI assistant is currently unavailable because the Google API Key has not been configured. Please set the `GOOGLE_API_KEY` in your .env file to enable this feature.
+                </AlertDescription>
+              </Alert>
+            ) : (
             <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card/60 backdrop-blur-sm border-primary/20">
               <UiCardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -947,6 +990,7 @@ export default function HomePage() {
                 </div>
               </UiCardFooter>
             </UiCard>
+            )}
           </TabsContent>
 
 

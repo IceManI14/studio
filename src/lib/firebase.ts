@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,14 +11,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-let app;
-if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-} else {
-    app = getApp();
+function isConfigValid(config: Record<string, any>): boolean {
+    return Object.values(config).every(value => typeof value === 'string' && value && !value.includes('YOUR_'));
 }
 
-const db = getFirestore(app);
+export const firebaseConfigured = isConfigValid(firebaseConfig);
+
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+
+if (firebaseConfigured) {
+    try {
+        app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+        db = getFirestore(app);
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+    }
+} else {
+    console.warn("\n⚠️ Firebase is not configured. Real-time sync and data persistence will be disabled. Please set Firebase credentials in your .env file.\n");
+}
 
 export { db };
