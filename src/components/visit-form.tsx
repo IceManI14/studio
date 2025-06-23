@@ -1187,12 +1187,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       placeholder="Details about the visit, key discussion points, etc."
                       className="mt-1 min-h-[100px]"
                       {...field}
-                      onFocus={(e) => {
-                        field.onFocus(e);
-                        handleNotesFocus();
-                      }}
-                      onBlur={(e) => {
-                        field.onBlur(e);
+                      onFocus={handleNotesFocus}
+                      onBlur={() => {
+                        field.onBlur();
                         handleNotesBlur();
                       }}
                     />
