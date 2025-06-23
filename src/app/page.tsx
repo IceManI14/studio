@@ -698,11 +698,14 @@ export default function HomePage() {
                 </div>
 
                 {visits.length === 0 && coldCallCount === 0 ? (
-                    <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                    <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
-                    <Button onClick={handleOpenAddVisitForm} variant="secondary">
-                        When you click "Hit New Door!" this app will help streamline efforts
-                    </Button>
+                    <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
+                      <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
+                      <p className="text-muted-foreground mb-4">
+                          When you click "Hit New Door!" this app will help streamline efforts
+                      </p>
+                      <Button onClick={handleOpenAddVisitForm} variant="secondary">
+                          Get Started
+                      </Button>
                     </div>
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
