@@ -10,55 +10,55 @@ interface GoogleMapComponentProps {
   visits: Visit[];
 }
 
+interface GoogleMapLoaderProps {
+  visits: Visit[];
+  apiKey: string;
+}
+
 const mapContainerStyle = {
   width: '100%',
-  height: '400px', // You can adjust this
-  borderRadius: '0.5rem', // Matches ShadCN's rounded-lg
-  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', // Matches shadow-md
+  height: '400px',
+  borderRadius: '0.5rem',
+  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
 };
 
-// A default center (e.g., center of the US)
 const defaultCenter = {
   lat: 39.8283,
   lng: -98.5795,
 };
 
-const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey }) => {
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
-    libraries: ['marker'], 
+    googleMapsApiKey: apiKey,
+    libraries: ['marker'],
   });
 
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoomLevel, setZoomLevel] = useState(4);
 
-  const validVisits = useMemo(() => 
-    visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number')
-  , [visits]);
+  const validVisits = useMemo(() =>
+    visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
+    [visits]
+  );
 
   useEffect(() => {
     if (validVisits.length > 0) {
-      // Find the latest visit by timestamp
       const latestVisit = validVisits.reduce((latest, current) => {
         return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
       });
 
       if (latestVisit.latitude !== undefined && latestVisit.longitude !== undefined) {
         setMapCenter({ lat: latestVisit.latitude, lng: latestVisit.longitude });
-        setZoomLevel(20); // Zoom in on the latest pin
+        setZoomLevel(20);
       } else {
-        // Fallback if latest visit somehow has no coords (should be filtered by validVisits)
-        // Or if all visits are at the exact same time (edge case), it takes the first one.
-        // If no valid coords at all in the 'latest' (unlikely due to filter), use default.
         const firstValidVisitWithCoords = validVisits.find(v => v.latitude !== undefined && v.longitude !== undefined);
         if (firstValidVisitWithCoords) {
-            setMapCenter({lat: firstValidVisitWithCoords.latitude!, lng: firstValidVisitWithCoords.longitude!});
-            setZoomLevel(20); // Zoom in on the pin
+          setMapCenter({ lat: firstValidVisitWithCoords.latitude!, lng: firstValidVisitWithCoords.longitude! });
+          setZoomLevel(20);
         } else {
-            setMapCenter(defaultCenter);
-            setZoomLevel(4);
+          setMapCenter(defaultCenter);
+          setZoomLevel(4);
         }
       }
     } else {
@@ -76,66 +76,55 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   }, []);
 
   if (loadError) {
-    const isApiTargetBlockedError = loadError.message && 
-                                   (loadError.message.includes('ApiTargetBlockedMapError') || 
-                                    loadError.message.includes('API target is not authorized'));
+    const isApiTargetBlockedError = loadError.message &&
+      (loadError.message.includes('ApiTargetBlockedMapError') ||
+        loadError.message.includes('API target is not authorized'));
 
     return (
-        <div className="flex flex-col items-center justify-center h-96 bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
-            <AlertTriangle className="w-12 h-12 mb-4" />
-            <p className="text-lg font-semibold">Error loading Google Maps.</p>
-            
-            {isApiTargetBlockedError ? (
-              <>
-                <p className="text-sm mt-2 font-medium">
-                  This is likely an API key configuration issue (`ApiTargetBlockedMapError` or similar).
-                </p>
-                <p className="text-xs mt-2">Please check the following in your Google Cloud Console for the API key used in `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`:</p>
-                <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-                  <li><strong>API Restrictions:</strong> Ensure "Maps JavaScript API" is enabled for this key.</li>
-                  <li><strong>Application Restrictions (HTTP referrers):</strong> If enabled, make sure your current website URL (e.g., `localhost:3000`, your Cloud Workstations URL, or your production domain) is added to the list of allowed referrers. Common patterns for development: `localhost:*` or `YOUR_DOMAIN.cloudworkstations.dev/*`.</li>
-                  <li>Ensure "Maps JavaScript API" is enabled in your Google Cloud project under "APIs & Services" &gt; "Library".</li>
-                  <li>Verify billing is enabled for the Google Cloud project.</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                <p className="text-sm mt-2">
-                  This can happen for several reasons:
-                </p>
-                <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-                  <li>The Google Maps API key (`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in your `.env` file) might be incorrect, missing, or not yet propagated.</li>
-                  <li>The "Maps JavaScript API" might not be enabled in your Google Cloud Console for your project.</li>
-                  <li>Billing might not be enabled for the Google Cloud project associated with the API key.</li>
-                  <li>API key restrictions (HTTP referrers or API service restrictions) might be misconfigured.</li>
-                </ul>
-              </>
-            )}
-             <p className="text-sm mt-3">
-              For more specific details, open your browser's developer console (F12) and check for error messages.
+      <div className="flex flex-col items-center justify-center h-96 bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
+        <AlertTriangle className="w-12 h-12 mb-4" />
+        <p className="text-lg font-semibold">Error loading Google Maps.</p>
+
+        {isApiTargetBlockedError ? (
+          <>
+            <p className="text-sm mt-2 font-medium">
+              This is likely an API key configuration issue (`ApiTargetBlockedMapError` or similar).
             </p>
-            {loadError.message && <p className="text-xs mt-2 italic">Reported library error: {loadError.message}</p>}
-        </div>
+            <p className="text-xs mt-2">Please check the following in your Google Cloud Console for the API key used in `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`:</p>
+            <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+              <li><strong>API Restrictions:</strong> Ensure "Maps JavaScript API" is enabled for this key.</li>
+              <li><strong>Application Restrictions (HTTP referrers):</strong> If enabled, make sure your current website URL (e.g., `localhost:3000`, your Cloud Workstations URL, or your production domain) is added to the list of allowed referrers. Common patterns for development: `localhost:*` or `YOUR_DOMAIN.cloudworkstations.dev/*`.</li>
+              <li>Ensure "Maps JavaScript API" is enabled in your Google Cloud project under "APIs & Services" &gt; "Library".</li>
+              <li>Verify billing is enabled for the Google Cloud project.</li>
+            </ul>
+          </>
+        ) : (
+          <>
+            <p className="text-sm mt-2">
+              This can happen for several reasons:
+            </p>
+            <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+              <li>The Google Maps API key might be incorrect or not yet propagated.</li>
+              <li>The "Maps JavaScript API" might not be enabled in your Google Cloud Console for your project.</li>
+              <li>Billing might not be enabled for the Google Cloud project associated with the API key.</li>
+              <li>API key restrictions (HTTP referrers or API service restrictions) might be misconfigured.</li>
+            </ul>
+          </>
+        )}
+        <p className="text-sm mt-3">
+          For more specific details, open your browser's developer console (F12) and check for error messages.
+        </p>
+        {loadError.message && <p className="text-xs mt-2 italic">Reported library error: {loadError.message}</p>}
+      </div>
     );
   }
 
   if (!isLoaded) {
     return (
-        <div className="flex items-center justify-center h-96 bg-secondary/50 rounded-lg shadow-md border">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="ml-4 text-lg text-muted-foreground">Loading Map...</p>
-        </div>
-    );
-  }
-  
-  if (!apiKey) {
-    return (
-        <div className="flex flex-col items-center justify-center h-96 bg-secondary/10 border border-amber-500 rounded-lg p-4 text-amber-700 dark:text-amber-400 text-center">
-            <MapPin className="w-12 h-12 mb-4" />
-            <p className="text-lg font-semibold">Google Maps API Key is missing.</p>
-            <p className="text-sm mt-2">Please add your `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to your .env file, restart your development server, and ensure your browser has picked up the change (you might need to clear cache or do a hard refresh).</p>
-             <p className="text-xs mt-2">Ensure the key is enabled for the "Maps JavaScript API" in your Google Cloud Console and that billing is active for the project.</p>
-        </div>
+      <div className="flex items-center justify-center h-96 bg-secondary/50 rounded-lg shadow-md border">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg text-muted-foreground">Loading Map...</p>
+      </div>
     );
   }
 
@@ -179,5 +168,29 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   );
 };
 
-export default GoogleMapComponent;
 
+const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+    const reason = !apiKey || apiKey.trim() === '' ? 'missing' : 'a placeholder';
+    return (
+        <div className="flex flex-col items-center justify-center h-96 bg-secondary/10 border border-amber-500 rounded-lg p-4 text-amber-700 dark:text-amber-400 text-center">
+            <MapPin className="w-12 h-12 mb-4" />
+            <p className="text-lg font-semibold">Google Maps API Key is {reason}.</p>
+            {reason === 'missing' ? (
+              <p className="text-sm mt-2">Please add your `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to your .env file.</p>
+            ) : (
+              <p className="text-sm mt-2">Please replace the placeholder value for `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in your .env file with a valid key.</p>
+            )}
+            <p className="text-xs mt-2">After updating the .env file, you may need to restart your development server and do a hard refresh of this page.</p>
+            <p className="text-xs mt-2">Also ensure the key is enabled for the "Maps JavaScript API" in your Google Cloud Console and that billing is active for the project.</p>
+        </div>
+    );
+  }
+
+  return <GoogleMapLoader visits={visits} apiKey={apiKey} />;
+};
+
+
+export default GoogleMapComponent;
