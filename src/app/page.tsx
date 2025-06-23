@@ -42,7 +42,6 @@ import { getAiChatResponseAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
-import { isGenkitConfigured } from '@/ai/genkit';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 
@@ -89,6 +88,8 @@ export default function HomePage() {
 
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
+
+  const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
 
   const updateColdCallCount = async (newCount: number) => {
