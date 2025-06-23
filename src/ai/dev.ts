@@ -1,6 +1,6 @@
 
-import { config } from 'dotenv';
-config(); // Load .env file
+// Next.js automatically loads .env files.
+// Manual loading with `dotenv` is not needed and can cause conflicts.
 
 // Check if the GOOGLE_API_KEY is set and log its status
 if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY !== "YOUR_GOOGLE_API_KEY_HERE" && process.env.GOOGLE_API_KEY.trim() !== "") {
