@@ -717,9 +717,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Select the type of cooler the company showed interest in.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
