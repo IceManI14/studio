@@ -40,10 +40,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { db } from '@/lib/firebase';
+import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 
 interface SubmittedSuggestion {
   text: string;
-  timestamp: string;
+  timestamp: Date;
 }
 
 const AVAILABLE_AI_MODELS = [
@@ -86,56 +88,18 @@ export default function HomePage() {
   const isAutoScrollingRef = useRef(false);
 
 
-  const getVisitsStorageKey = (): string => 'trailblazerVisits';
-  const getSuggestionsStorageKey = (): string => 'trailblazerSuggestions';
-  const getColdCallCountStorageKey = (): string => 'trailblazerColdCallCount';
+  const updateColdCallCount = async (newCount: number) => {
+    const statsDocRef = doc(db, 'app-state', 'daily-stats');
+    try {
+      await setDoc(statsDocRef, { coldCallCount: newCount }, { merge: true });
+    } catch (error) {
+      console.error("Error updating cold call count:", error);
+      toast({ title: 'Sync Error', description: 'Failed to update cold call count.', variant: 'destructive'});
+    }
+  };
 
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-        return; 
-    }
-
-    const visitsStorageKey = getVisitsStorageKey();
-    const suggestionsStorageKey = getSuggestionsStorageKey();
-    const coldCallCountStorageKey = getColdCallCountStorageKey();
-
-    // Load Visits
-    const storedVisits = localStorage.getItem(visitsStorageKey);
-    if (storedVisits) {
-      try {
-        const parsedVisits = JSON.parse(storedVisits).map((visit: any) => ({
-          ...visit,
-          timestamp: new Date(visit.timestamp),
-          visitNumber: visit.visitNumber,
-        }));
-        setVisits(parsedVisits);
-      } catch (error) {
-        console.error("Failed to parse visits from localStorage", error);
-        localStorage.removeItem(visitsStorageKey);
-        setVisits([]);
-      }
-    }
-
-    // Load Suggestions
-    const storedSuggestionsRaw = localStorage.getItem(suggestionsStorageKey);
-    if (storedSuggestionsRaw) {
-      try {
-        const parsedSuggestions = JSON.parse(storedSuggestionsRaw);
-        setSubmittedSuggestions(parsedSuggestions);
-      } catch (error) {
-        console.error("Failed to parse suggestions from localStorage", error);
-        localStorage.removeItem(suggestionsStorageKey);
-        setSubmittedSuggestions([]);
-      }
-    }
-
-    // Load Cold Call Count
-    const storedColdCallCount = localStorage.getItem(coldCallCountStorageKey);
-    if (storedColdCallCount) {
-      setColdCallCount(parseInt(storedColdCallCount, 10) || 0);
-    }
-    
     // Get Geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -171,41 +135,92 @@ export default function HomePage() {
       });
     }
 
+    // Firestore listener for visits
+    const visitsQuery = query(collection(db, 'visits'), orderBy('timestamp', 'desc'));
+    const unsubscribeVisits = onSnapshot(visitsQuery, (querySnapshot) => {
+      const visitsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          timestamp: data.timestamp.toDate(),
+          futureMeetingDateTime: data.futureMeetingDateTime?.toDate(),
+        } as Visit;
+      });
+      setVisits(visitsData);
+    }, (error) => {
+      console.error("Error fetching visits:", error);
+      toast({ title: 'Sync Error', description: 'Could not load visits data.', variant: 'destructive' });
+    });
+    
+    const suggestionsQuery = query(collection(db, 'suggestions'), orderBy('timestamp', 'desc'));
+    const unsubscribeSuggestions = onSnapshot(suggestionsQuery, (snapshot) => {
+      const suggestionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          text: data.text,
+          timestamp: data.timestamp.toDate()
+        } as SubmittedSuggestion;
+      });
+      setSubmittedSuggestions(suggestionsData);
+    }, (error) => {
+      console.error("Error fetching suggestions:", error);
+      toast({ title: 'Sync Error', description: 'Could not load suggestions.', variant: 'destructive' });
+    });
+
+    const statsDocRef = doc(db, 'app-state', 'daily-stats');
+    const unsubscribeStats = onSnapshot(statsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setColdCallCount(docSnap.data().coldCallCount || 0);
+        } else {
+            setDoc(statsDocRef, { coldCallCount: 0, milestoneAchievedDate: null });
+        }
+    }, (error) => {
+        console.error("Error fetching daily stats:", error);
+        toast({ title: 'Sync Error', description: 'Could not load daily stats.', variant: 'destructive' });
+    });
+
+
+    return () => {
+      unsubscribeVisits();
+      unsubscribeSuggestions();
+      unsubscribeStats();
+    };
+
   }, [toast]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const visitsStorageKey = getVisitsStorageKey();
-
-    if (visits.length > 0 || localStorage.getItem(visitsStorageKey)) {
-        localStorage.setItem(visitsStorageKey, JSON.stringify(visits));
-    }
-
     if (coldCallCount >= 30) {
       const today = new Date().toISOString().split('T')[0];
-      const milestoneKey = `thirtyDoorsMilestoneAchieved_${today}`;
-
-      if (!localStorage.getItem(milestoneKey)) {
-        toast({
-          title: (
-            <div className="flex items-center">
-              <PartyPopper className="mr-2 h-5 w-5 text-accent" />
-              Milestone Achieved!
-            </div>
-          ),
-          description: "Congratulations! You've hit 30 doors today! Keep up the great work!",
-          duration: 7000, 
-        });
-        localStorage.setItem(milestoneKey, 'true');
+      
+      const checkAndSetMilestone = async () => {
+        const statsDocRef = doc(db, 'app-state', 'daily-stats');
+        try {
+            const docSnap = await getDoc(statsDocRef);
+    
+            if (docSnap.exists() && docSnap.data().milestoneAchievedDate === today) {
+              // already achieved today, do nothing
+            } else {
+              // not achieved today, show toast and update doc
+              toast({
+                title: (
+                  <div className="flex items-center">
+                    <PartyPopper className="mr-2 h-5 w-5 text-accent" />
+                    Milestone Achieved!
+                  </div>
+                ),
+                description: "Congratulations! You've hit 30 doors today! Keep up the great work!",
+                duration: 7000, 
+              });
+              await updateDoc(statsDocRef, { milestoneAchievedDate: today });
+            }
+        } catch (error) {
+            console.error("Error checking milestone:", error);
+        }
       }
+      checkAndSetMilestone();
     }
-  }, [visits, coldCallCount, toast]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const coldCallCountStorageKey = getColdCallCountStorageKey();
-    localStorage.setItem(coldCallCountStorageKey, coldCallCount.toString());
-  }, [coldCallCount]);
+  }, [coldCallCount, toast]);
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visits.length === 0) {
@@ -301,7 +316,7 @@ export default function HomePage() {
 
   const handleOpenAddVisitForm = () => {
     const newVisitNumber = coldCallCount + 1;
-    setColdCallCount(prevCount => prevCount + 1);
+    updateColdCallCount(newVisitNumber);
 
     const currentTime = new Date();
 
@@ -337,40 +352,46 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleUpdateVisitInList = (updatedVisit: Visit) => {
-    setVisits(prevVisits =>
-        prevVisits.map(v => v.id === updatedVisit.id ? updatedVisit : v)
-    );
+  const handleUpdateVisitInList = async (updatedVisit: Visit) => {
+    await handleSaveVisit(updatedVisit);
   };
 
-  const handleSaveVisit = (visit: Visit) => {
-    setVisits(prevVisits => {
-      const existingVisitIndex = prevVisits.findIndex(v => v.id === visit.id);
-      if (existingVisitIndex > -1) {
-        const updatedVisits = [...prevVisits];
-        updatedVisits[existingVisitIndex] = visit;
-        return updatedVisits;
-      }
-      return [visit, ...prevVisits].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    });
-  };
+  const handleSaveVisit = async (visit: Visit) => {
+    try {
+      const visitData = {
+          ...visit,
+          timestamp: visit.timestamp,
+          futureMeetingDateTime: visit.futureMeetingDateTime || null,
+      };
 
-  const handleDeleteVisit = (visitId: string) => {
-    setVisits(prevVisits => prevVisits.filter(v => v.id !== visitId));
-    toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
-  };
-
-  const confirmEndDay = () => {
-    const numberOfVisits = visits.length;
-    setColdCallCount(0);
-    const coldCallCountStorageKey = getColdCallCountStorageKey();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(coldCallCountStorageKey, '0');
+      const visitDocRef = doc(db, 'visits', visit.id);
+      await setDoc(visitDocRef, visitData, { merge: true });
+    } catch (error) {
+      console.error("Error saving visit to Firestore:", error);
+      toast({ title: 'Sync Error', description: 'Failed to save visit data.', variant: 'destructive'});
     }
-    const today = new Date().toISOString().split('T')[0];
-    const milestoneKey = `thirtyDoorsMilestoneAchieved_${today}`;
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem(milestoneKey);
+  };
+
+  const handleDeleteVisit = async (visitId: string) => {
+    try {
+        await deleteDoc(doc(db, "visits", visitId));
+        toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
+    } catch (error) {
+        console.error("Error deleting visit:", error);
+        toast({ title: 'Sync Error', description: 'Failed to delete visit.', variant: 'destructive'});
+    }
+  };
+
+  const confirmEndDay = async () => {
+    const numberOfVisits = visits.length;
+    await updateColdCallCount(0);
+    
+    try {
+        const statsDocRef = doc(db, 'app-state', 'daily-stats');
+        await updateDoc(statsDocRef, { milestoneAchievedDate: null });
+    } catch (e) {
+        // It's okay if the doc doesn't exist or this fails.
+        console.warn("Could not reset milestone date", e);
     }
 
     toast({
@@ -380,7 +401,7 @@ export default function HomePage() {
     setIsEndDayConfirmOpen(false);
   };
 
-  const handleSubmitSuggestion = () => {
+  const handleSubmitSuggestion = async () => {
     if (suggestionText.trim() === '') {
       toast({
         title: 'Empty Suggestion',
@@ -390,26 +411,22 @@ export default function HomePage() {
       return;
     }
 
-    const suggestionsStorageKey = getSuggestionsStorageKey();
-    if (suggestionsStorageKey && typeof window !== 'undefined') {
-      const newSuggestionObject: SubmittedSuggestion = {
-        text: suggestionText.trim(),
-        timestamp: new Date().toISOString(),
-      };
-      const newSuggestionsArray = [...submittedSuggestions, newSuggestionObject];
-      setSubmittedSuggestions(newSuggestionsArray);
-      localStorage.setItem(suggestionsStorageKey, JSON.stringify(newSuggestionsArray));
+    const newSuggestionObject: SubmittedSuggestion = {
+      text: suggestionText.trim(),
+      timestamp: new Date(),
+    };
+    
+    try {
+        await addDoc(collection(db, "suggestions"), newSuggestionObject);
+        toast({
+          title: 'Suggestion Submitted!',
+          description: 'Thank you for your feedback.',
+        });
+        setSuggestionText('');
+    } catch (error) {
+        console.error("Error submitting suggestion:", error);
+        toast({ title: 'Sync Error', description: 'Could not submit suggestion.', variant: 'destructive'});
     }
-
-    console.log('App Suggestion:', {
-      suggestion: suggestionText.trim(),
-      timestamp: new Date().toISOString(),
-    });
-    toast({
-      title: 'Suggestion Submitted!',
-      description: 'Thank you for your feedback.',
-    });
-    setSuggestionText('');
   };
 
   const handleEmailSuggestions = () => {
@@ -426,7 +443,7 @@ export default function HomePage() {
     let body = `Suggestions for the Optimum Trailblazer App:\n\n`;
     submittedSuggestions.forEach((suggestion, index) => {
       body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
-      body += `   Date: ${format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}\n\n`;
+      body += `   Date: ${format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}\n\n`;
     });
 
     body += `\n\n---\nEmail generated by Optimum Trailblazer App`;
@@ -629,26 +646,26 @@ export default function HomePage() {
           </div>
         </header>
         
-        <Tabs defaultValue="field-day" className="w-full -mt-12">
+        <Tabs defaultValue="field-day" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 -mt-6">
-            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center sm:justify-start gap-2">
-              <PlusCircle className="h-4 w-4" />
+            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center sm:justify-start gap-2">
-              <ListChecks className="h-4 w-4" />
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
-            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center sm:justify-start gap-2">
-              <MapPin className="h-4 w-4" />
+            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center sm:justify-start gap-2">
-              <Bot className="h-4 w-4" />
+            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
             </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center sm:justify-start gap-2">
-              <InfoIcon className="h-4 w-4" />
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <InfoIcon className="h-5 w-5" />
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
@@ -998,7 +1015,7 @@ export default function HomePage() {
                         <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
                           {suggestion.text}
                           <span className="block text-xs text-muted-foreground mt-0.5">
-                            &mdash; on {format(new Date(suggestion.timestamp), 'MMM d, yyyy, h:mm a')}
+                            &mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}
                           </span>
                         </li>
                       ))}
