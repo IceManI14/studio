@@ -796,8 +796,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         variant="outline"
                         size="icon"
                         aria-label={isCameraViewVisible ? "Close Camera" : "Take Photo"}
+                        className="bg-accent hover:bg-accent/90"
                     >
-                        <CameraIcon className="h-4 w-4" />
+                        <CameraIcon className="h-4 w-4 text-black" />
                     </Button>
                 </div>
                 
