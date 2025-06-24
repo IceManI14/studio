@@ -239,3 +239,23 @@ export async function getAiChatResponseAction(
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
 }
+
+const summarizeNotesSchema = z.object({
+  notes: z.string().min(1, "Notes cannot be empty."),
+});
+
+export async function summarizeNotesAction(
+  payload: z.infer<typeof summarizeNotesSchema>
+): Promise<{ summary?: string; error?: string }> {
+  try {
+    const validatedPayload = summarizeNotesSchema.parse(payload);
+    const result = await summarizeVisitNotes({ notes: validatedPayload.notes });
+    return { summary: result.summary };
+  } catch (error: any) {
+    console.error("Error in summarizeNotesAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    return { error: error.message || 'Failed to summarize notes. An unexpected error occurred.' };
+  }
+}

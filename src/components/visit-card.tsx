@@ -8,7 +8,7 @@ import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkle
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
+import { summarizeNotesAction } from '@/app/actions';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -41,12 +41,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     }
     setIsSummarizing(true);
     try {
-      const result = await summarizeVisitNotes({ notes: visit.notes });
+      const result = await summarizeNotesAction({ notes: visit.notes });
+      if (result.error) {
+        throw new Error(result.error);
+      }
       const updatedVisit = { ...visit, notesSummary: result.summary };
       onUpdateVisit(updatedVisit);
       toast({ title: "Notes Re-summarized", description: "Summary has been updated."});
-    } catch (error) {
-      toast({ title: "Error Summarizing", description: "Could not re-summarize notes.", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Error Summarizing", description: error.message || "Could not re-summarize notes.", variant: "destructive" });
     } finally {
       setIsSummarizing(false);
     }
