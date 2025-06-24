@@ -25,6 +25,17 @@ const nextConfig = {
       !process.env.GOOGLE_API_KEY.includes('YOUR_GOOGLE_API_KEY_HERE')
     )).toString(),
   },
+  webpack: (config, { isServer }) => {
+    // This is to prevent "Module not found: Can't resolve 'fs'" errors.
+    // It happens when packages with server-side dependencies are bundled for the client.
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+      };
+    }
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;
