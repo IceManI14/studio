@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -43,6 +43,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 
 
 interface SubmittedSuggestion {
@@ -53,6 +54,13 @@ interface SubmittedSuggestion {
 const AVAILABLE_AI_MODELS = [
   { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
   { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
+];
+
+const salespeople: Salesperson[] = [
+    { id: '1', name: 'Paul L.', territory: ['Boston', 'Cambridge', 'Quincy', 'South Shore'] },
+    { id: '2', name: 'Chris C.', territory: ['Providence', 'Warwick', 'Cranston', 'Rhode Island'] },
+    { id: '3', name: 'James D.', territory: ['Worcester', 'Springfield', 'Western MA'] },
+    { id: '4', name: 'Corporate', territory: ['All Territories'] },
 ];
 
 export default function HomePage() {
@@ -89,8 +97,17 @@ export default function HomePage() {
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
 
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
+
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
+  const handleSelectSalesperson = (salesperson: Salesperson) => {
+    setSelectedSalesperson(salesperson);
+    toast({
+      title: `Welcome, ${salesperson.name}!`,
+      description: `Your territory for today: ${salesperson.territory.join(', ')}`,
+    });
+  };
 
   const updateColdCallCount = async (newCount: number) => {
     if (!db) return;
@@ -669,16 +686,31 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
 
   return (
     <div className="min-h-screen">
+       {!selectedSalesperson && (
+        <SalespersonSelectorModal
+          salespeople={salespeople}
+          onSelectSalesperson={handleSelectSalesperson}
+        />
+      )}
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full py-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
-            <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
-              Good Luck Today!
-            </h2>
-          </div>
+          {selectedSalesperson ? (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
+                <User className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-headline font-semibold text-foreground text-center">
+                    {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.join(', ')}
+                </h2>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
+              <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
+                Good Luck Today!
+              </h2>
+            </div>
+          )}
         </header>
         
         <Tabs defaultValue="field-day" className="w-full">

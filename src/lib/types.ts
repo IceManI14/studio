@@ -36,3 +36,9 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+export interface Salesperson {
+  id: string;
+  name: string;
+  territory: string[];
+}
