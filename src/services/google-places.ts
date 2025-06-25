@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A service for interacting with the Google Maps Places API.
@@ -34,8 +35,7 @@ const getBestEffortCity = (components: any[] | undefined): string => {
 export async function findPlaceFromLatLng(latitude: number, longitude: number): Promise<PlaceDetails | null> {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey || apiKey.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE')) {
-        console.error("Google Maps API key is not configured.");
-        return null;
+        throw new Error("Google Maps API key is not configured correctly in .env file.");
     }
 
     try {
@@ -57,7 +57,6 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                  const detailsResponse = await client.placeDetails({
                     params: {
                         place_id: closestPlace.place_id,
-                        key: apiKey,
                         fields: ['name', 'formatted_address', 'address_components', 'formatted_phone_number'],
                     },
                 });
@@ -103,9 +102,15 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
     } catch (error: any) {
         console.error('Error fetching data from Google Places API:', error);
-        if (error.response) {
-            console.error('API Error Data:', error.response.data);
+        let userMessage = "An unknown error occurred while connecting to Google Places API.";
+        if (error.response?.data?.error_message) {
+            userMessage = `Google Places API Error: ${error.response.data.error_message}`;
+        } else if (error.response?.data?.status) {
+            userMessage = `Google Places API responded with status: ${error.response.data.status}. This may be an API key issue.`;
+        } else if (error.message) {
+            userMessage = error.message;
         }
-        return null;
+        // Instead of returning null, throw an error that the action can catch.
+        throw new Error(userMessage);
     }
 }

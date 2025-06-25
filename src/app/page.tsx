@@ -183,15 +183,24 @@ export default function HomePage() {
           try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
             if (result.error) {
-              console.warn("Could not fetch city:", result.error);
-              setCurrentCity("Could not determine city.");
+              toast({
+                title: "Location Lookup Failed",
+                description: result.error,
+                variant: "destructive",
+              });
+              setCurrentCity("Location lookup failed");
             } else if (result.city) {
               setCurrentCity(result.city);
             } else {
               setCurrentCity("Location Unknown");
             }
-          } catch (e) {
+          } catch (e: any) {
             console.error("Error fetching city:", e);
+            toast({
+                title: "Client Error",
+                description: "An unexpected error occurred while fetching city data.",
+                variant: "destructive",
+            });
             setCurrentCity("Error fetching city.");
           } finally {
             setIsFetchingCity(false);
