@@ -95,8 +95,12 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
             info: contactResult.contactInfo,
             confidence: contactResult.confidenceScore,
         };
-      } catch (e) {
+      } catch (e: any) {
         console.warn("Failed to scrape contact info:", e);
+        const errorMessage = e?.message?.toLowerCase() || '';
+        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+            throw new Error("AI API Key is invalid. Cannot fetch contact info.");
+        }
         contactDetails = { info: "No contact info found on web!", confidence: 0 };
       }
     }
@@ -105,8 +109,12 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       try {
         const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
         summary = summaryResult.summary;
-      } catch (e) {
+      } catch (e: any) {
         console.warn("Failed to summarize notes:", e);
+        const errorMessage = e?.message?.toLowerCase() || '';
+        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+            throw new Error("AI API Key is invalid. Cannot summarize notes.");
+        }
         summary = "Could not summarize notes.";
       }
     }
@@ -138,10 +146,14 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     };
 
     return { visit };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in saveVisitAction:", error);
     if (error instanceof z.ZodError) {
         return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key is invalid')) {
+        return { error: "Failed to save visit. The AI API key is invalid or expired. Please check your configuration." };
     }
     return { error: 'Failed to save visit. An unexpected error occurred.' };
   }
@@ -172,8 +184,12 @@ export async function getCompanyNameFromCoordsAction(
         if (error instanceof z.ZodError) {
             return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
         }
-        const errorMessage = error?.message ? `: ${error.message}` : '. An unexpected error occurred.';
-        return { error: `Failed to suggest company name${errorMessage}` };
+        const errorMessage = error?.message?.toLowerCase() || '';
+        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+            return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
+        }
+        const userErrorMessage = error?.message ? `: ${error.message}` : '. An unexpected error occurred.';
+        return { error: `Failed to suggest company name${userErrorMessage}` };
     }
 }
 
@@ -231,10 +247,14 @@ export async function getAiChatResponseAction(
     });
 
     return { aiResponse: result.aiResponse };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in getAiChatResponseAction:", error);
     if (error instanceof z.ZodError) {
       return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
     }
     return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
   }
@@ -255,6 +275,10 @@ export async function summarizeNotesAction(
     console.error("Error in summarizeNotesAction:", error);
     if (error instanceof z.ZodError) {
       return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
     }
     return { error: error.message || 'Failed to summarize notes. An unexpected error occurred.' };
   }
