@@ -468,8 +468,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
           form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
           toast({
-              title: "Company Suggested",
-              description: `Found: ${result.suggestedCompanyName}`
+              title: "Company Found",
+              description: `Located: ${result.suggestedCompanyName}`
           });
         } else {
           toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
@@ -707,7 +707,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             size="sm"
                             disabled={isSuggestingCompany}
                         >
-                          {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Suggest'}
+                          {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
                         </Button>
                     </div>
                   </FormControl>
