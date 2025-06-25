@@ -4,6 +4,16 @@ export interface ContactInfo {
   confidence: number;
 }
 
+export interface Territory {
+  name: string;
+  bounds: {
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  };
+}
+
 export interface Visit {
   id: string;
   timestamp: Date;
@@ -40,5 +50,5 @@ export interface ChatMessage {
 export interface Salesperson {
   id: string;
   name: string;
-  territory: string[];
+  territory: Territory[];
 }

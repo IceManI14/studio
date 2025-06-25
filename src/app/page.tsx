@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage, Salesperson } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -57,10 +57,30 @@ const AVAILABLE_AI_MODELS = [
 ];
 
 const salespeople: Salesperson[] = [
-    { id: '1', name: 'Paul L.', territory: ['Boston', 'Cambridge', 'Quincy', 'South Shore'] },
-    { id: '2', name: 'Chris C.', territory: ['Providence', 'Warwick', 'Cranston', 'Rhode Island'] },
-    { id: '3', name: 'James D.', territory: ['Worcester', 'Springfield', 'Western MA'] },
-    { id: '4', name: 'Corporate', territory: ['All Territories'] },
+    { 
+        id: '1', 
+        name: 'Paul L.', 
+        territory: [
+            { name: 'Boston, Cambridge, Quincy', bounds: { minLat: 42.22, maxLat: 42.40, minLng: -71.18, maxLng: -70.98 } },
+            { name: 'South Shore', bounds: { minLat: 42.00, maxLat: 42.22, minLng: -71.05, maxLng: -70.60 } }
+        ] 
+    },
+    { 
+        id: '2', 
+        name: 'Chris C.', 
+        territory: [
+            { name: 'Providence, Warwick, Cranston', bounds: { minLat: 41.65, maxLat: 41.88, minLng: -71.55, maxLng: -71.35 } }
+        ] 
+    },
+    { 
+        id: '3', 
+        name: 'James D.', 
+        territory: [
+            { name: 'Worcester & Springfield Area', bounds: { minLat: 42.05, maxLat: 42.35, minLng: -72.65, maxLng: -71.70 } }
+        ] 
+    },
+    { id: '4', name: 'Corporate', territory: [{ name: 'All Territories', bounds: { minLat: -90, maxLat: 90, minLng: -180, maxLng: 180 } }] },
+    { id: '5', name: 'John Doe (No Territory)', territory: [] },
 ];
 
 export default function HomePage() {
@@ -98,15 +118,27 @@ export default function HomePage() {
   const isAutoScrollingRef = useRef(false);
 
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
+  const [isTerritoryWarningOpen, setIsTerritoryWarningOpen] = useState(false);
+  const [pendingVisit, setPendingVisit] = useState<Visit | null>(null);
+
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
-    toast({
-      title: `Welcome, ${salesperson.name}!`,
-      description: `Your territory for today: ${salesperson.territory.join(', ')}`,
-    });
+     if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
+      toast({
+        title: `Welcome, ${salesperson.name}!`,
+        description: 'You have no territories assigned. Please contact your manager to have them set up.',
+        variant: 'destructive',
+        duration: 8000,
+      });
+    } else {
+      toast({
+        title: `Welcome, ${salesperson.name}!`,
+        description: `Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}`,
+      });
+    }
   };
 
   const updateColdCallCount = async (newCount: number) => {
@@ -339,13 +371,20 @@ export default function HomePage() {
     };
   }, [sortedVisitsForCallDay]);
 
+  const proceedToCreateVisit = (visit: Visit) => {
+    if (visit.visitNumber) {
+        updateColdCallCount(visit.visitNumber);
+    }
+    setCurrentEditingVisit(visit);
+    setIsVisitFormOpen(true);
+    setPendingVisit(null);
+  };
+
   const handleOpenAddVisitForm = () => {
     const newVisitNumber = coldCallCount + 1;
-    updateColdCallCount(newVisitNumber);
-
     const currentTime = new Date();
-
-    setCurrentEditingVisit({
+    
+    const newVisitData: Visit = {
       id: '',
       timestamp: currentTime,
       companyName: '',
@@ -368,8 +407,26 @@ export default function HomePage() {
       hasTDSReading: false,
       tdsValue: undefined,
       futureMeetingSet: false,
-    });
-    setIsVisitFormOpen(true);
+    };
+
+    if (userCurrentLatitude && userCurrentLongitude && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
+      const hasTerritories = selectedSalesperson.territory.length > 0;
+      if (hasTerritories) {
+        const inTerritory = selectedSalesperson.territory.some(t => 
+          userCurrentLatitude >= t.bounds.minLat &&
+          userCurrentLatitude <= t.bounds.maxLat &&
+          userCurrentLongitude >= t.bounds.minLng &&
+          userCurrentLongitude <= t.bounds.maxLng
+        );
+        if (!inTerritory) {
+          setPendingVisit(newVisitData);
+          setIsTerritoryWarningOpen(true);
+          return;
+        }
+      }
+    }
+    
+    proceedToCreateVisit(newVisitData);
   };
 
   const handleEditVisit = (visit: Visit) => {
@@ -701,7 +758,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
                 <User className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-headline font-semibold text-foreground text-center">
-                    {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.join(', ')}
+                    {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.map(t => t.name).join(', ')}
                 </h2>
             </div>
           ) : (
@@ -1106,6 +1163,28 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
             </div>
           </TabsContent>
         </Tabs>
+        
+        <AlertDialog open={isTerritoryWarningOpen} onOpenChange={setIsTerritoryWarningOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Outside Your Territory</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your current location appears to be outside of your assigned sales territory. Are you sure you want to proceed with creating a visit here?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingVisit(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                if (pendingVisit) {
+                  proceedToCreateVisit(pendingVisit);
+                }
+                setIsTerritoryWarningOpen(false);
+              }}>
+                Proceed Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
