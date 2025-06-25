@@ -23,6 +23,15 @@ const getAddressComponent = (components: any[], type: string) => {
     return component ? component.long_name : '';
 };
 
+const getBestEffortCity = (components: any[] | undefined): string => {
+    if (!components) return '';
+    // Tries to find the most specific location name available by checking multiple types.
+    return getAddressComponent(components, 'locality') ||          // e.g., "Boston"
+           getAddressComponent(components, 'postal_town') ||         // e.g., "Cambridge" (can cover multiple localities)
+           getAddressComponent(components, 'sublocality_level_1') || // e.g., a specific borough or district
+           getAddressComponent(components, 'administrative_area_level_2'); // e.g., "Suffolk County" as a fallback
+}
+
 export async function findPlaceFromLatLng(latitude: number, longitude: number): Promise<PlaceDetails | null> {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey || apiKey.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE')) {
@@ -60,8 +69,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                 const placeDetails = detailsResponse.data.result;
 
                 if (placeDetails) {
-                    const city = getAddressComponent(placeDetails.address_components || [], 'locality') || 
-                                 getAddressComponent(placeDetails.address_components || [], 'postal_town');
+                    const city = getBestEffortCity(placeDetails.address_components);
 
                     return {
                         suggestedCompanyName: placeDetails.name || '',
@@ -73,8 +81,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             }
 
             const address_components = response.data.results[0].address_components;
-            const city = getAddressComponent(address_components, 'locality') || 
-                         getAddressComponent(address_components, 'postal_town');
+            const city = getBestEffortCity(address_components);
 
             return {
                 suggestedCompanyName: '',
