@@ -29,6 +29,18 @@ export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsIn
   return getCompanyNameFromCoordsFlow(input);
 }
 
+const mockCompanyNames = [
+  "Apex Innovations", "Stellar Solutions", "Quantum Dynamics", "FusionForward", "Zenith Enterprises",
+  "Pinnacle Corp", "Momentum Industries", "Synergy Group", "Catalyst Creations", "Precision Pro",
+  "Evergreen Logistics", "Silverline Tech", "Blue-sky Ventures", "Ironclad Security", "Summit Services",
+  "Horizon Manufacturing", "Nexus Data Systems", "Gateway Properties", "Vanguard Financial", "Triton Global"
+];
+
+const mockStreetNames = [
+  "Innovation Drive", "Commerce Street", "Market Avenue", "Enterprise Way", "Tech Park Circle", "Industrial Boulevard",
+  "Founders Lane", "Discovery Court", "Liberty Pike", "Progressive Avenue"
+];
+
 const mockReverseGeocodeTool = ai.defineTool(
   {
     name: 'mockReverseGeocodeTool',
@@ -39,16 +51,32 @@ const mockReverseGeocodeTool = ai.defineTool(
     }),
   },
   async ({ latitude, longitude }) => {
-    // Simulate different responses based on coordinates for variety
+    // Use a simple hashing function on coordinates to get a pseudo-random yet deterministic index for the mocks.
+    const latInt = Math.floor(Math.abs(latitude * 1000)) % 1000;
+    const lonInt = Math.floor(Math.abs(longitude * 1000)) % 1000;
+    
+    const nameIndex = (latInt + lonInt) % mockCompanyNames.length;
+    const streetIndex = (latInt * 3 + lonInt * 7) % mockStreetNames.length;
+
+    const companyName = mockCompanyNames[nameIndex];
+    const streetName = mockStreetNames[streetIndex];
+    const streetNumber = (latInt % 1500) + 1;
+    const phoneSuffix = (lonInt % 9000) + 1000;
+    
+    const address = `${streetNumber} ${streetName}`;
+    const phone = `(555) 555-${phoneSuffix.toString().padStart(4, '0')}`;
+
+    // Simulate different detailed responses for specific regions, and a more dynamic generic response.
     if (latitude > 40 && longitude < -100) { // e.g., West USA
       return { locationDescription: `Area around 123 Innovation Drive, Tech City, CA. Contact: (555) 555-0101. Primary business: "Future Systems Inc.". Also nearby: "Cafe Bytes".` };
     } else if (latitude < 30 && longitude > -90) { // e.g., Southeast USA
       return { locationDescription: `Vicinity of 456 Commerce St, Business Hub, FL. Tel: (555) 555-0102. Known establishments: "Ocean Breeze Logistics".` };
-    } else { // Generic
-      return { locationDescription: `Location at coordinates ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Potential business: "Main Street Business" at 100 Main Street. Phone: (555) 555-0103. May be residential.`};
+    } else { // Generic but dynamic response
+      return { locationDescription: `Location at ${address}. Identified business: "${companyName}". Contact phone: ${phone}.` };
     }
   }
 );
+
 
 const prompt = ai.definePrompt({
   name: 'getCompanyNameFromCoordsPrompt',
@@ -62,7 +90,7 @@ Extract the most likely primary company name, its address, and its phone number.
 - If a clear company name is present, provide it.
 - If the location seems residential or no specific company is identifiable, return an empty string for 'suggestedCompanyName'.
 - If an address or phone number is present, extract it. Otherwise, leave the fields blank.
-- Provide a confidence score (a number between 0.0 for no confidence and 1.0 for high confidence) for your identification.
+- Provide a confidence score (a number between 0.0 for no confidence and 1.0 for high confidence) for your identification. For these mock suggestions, use a confidence score between 0.7 and 0.9.
 
 Your response must be in the format specified by the output schema.
 `,
@@ -82,6 +110,12 @@ const getCompanyNameFromCoordsFlow = ai.defineFlow(
     if (!output) {
         return { suggestedCompanyName: '', confidenceScore: 0.1 };
     }
+    // For mocked data, let's assign a dynamic-looking confidence score
+    if (output.suggestedCompanyName) {
+        const hash = (output.suggestedCompanyName.charCodeAt(0) || 7) * (output.suggestedCompanyName.charCodeAt(1) || 3);
+        output.confidenceScore = 0.7 + (hash % 21) / 100; // e.g., 0.7 to 0.9
+    }
+    
     return output;
   }
 );
