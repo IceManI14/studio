@@ -224,11 +224,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setCurrentCity(null);
         try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-            if (result.address) {
-                const parts = result.address.split(',');
-                // Assuming city is the second part: "123 Street, City, ST" -> "City"
-                const city = parts.length > 1 ? parts[1].trim() : result.address;
-                setCurrentCity(city);
+            if (result.city) {
+                setCurrentCity(result.city);
             } else {
                 setCurrentCity("Location Unknown");
             }
