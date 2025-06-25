@@ -424,6 +424,43 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleSuggestCompany = async () => {
     setIsSuggestingCompany(true);
 
+    const suggestFromCoords = async (lat: number, lon: number) => {
+      setCurrentLatitude(lat);
+      setCurrentLongitude(lon);
+      form.setValue('latitude', lat, { shouldValidate: true });
+      form.setValue('longitude', lon, { shouldValidate: true });
+
+      const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+      setIsSuggestingCompany(false);
+
+      if (result.error) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      } else {
+        if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
+          form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
+          toast({
+              title: "Company Suggested",
+              description: `Found: ${result.suggestedCompanyName} (Confidence: ${Math.round((result.confidenceScore ?? 0) * 100)}%)`
+          });
+        } else {
+          toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+        }
+        if (result.phone) {
+          form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
+        }
+        if (result.address) {
+          const currentNotes = form.getValues('notes') || '';
+          const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
+          form.setValue('notes', newNotes, { shouldValidate: true });
+        }
+      }
+    };
+
+    if (currentLatitude && currentLongitude) {
+      await suggestFromCoords(currentLatitude, currentLongitude);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setIsSuggestingCompany(false);
       toast({
@@ -435,42 +472,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        
-        setCurrentLatitude(lat);
-        setCurrentLongitude(lon);
-        form.setValue('latitude', lat, { shouldValidate: true });
-        form.setValue('longitude', lon, { shouldValidate: true });
-
-        const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-
-        setIsSuggestingCompany(false);
-
-        if (result.error) {
-          toast({ title: "Error", description: result.error, variant: "destructive" });
-        } else {
-            if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
-                form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
-                toast({
-                    title: "Company Suggested",
-                    description: `Found: ${result.suggestedCompanyName} (Confidence: ${Math.round((result.confidenceScore ?? 0) * 100)}%)`
-                });
-            } else {
-                toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
-            }
-
-            if (result.phone) {
-                form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
-            }
-
-            if (result.address) {
-                const currentNotes = form.getValues('notes') || '';
-                const newNotes = `Suggested Address: ${result.address}\\n\\n${currentNotes}`;
-                form.setValue('notes', newNotes, { shouldValidate: true });
-            }
-        }
+      (position) => {
+        suggestFromCoords(position.coords.latitude, position.coords.longitude);
       },
       (error) => {
         setIsSuggestingCompany(false);
@@ -527,7 +530,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
         const currentNotes = finalNotes.trim();
         if (currentNotes) {
-             finalNotes = `${currentNotes}\\n${durationString}`;
+             finalNotes = `${currentNotes}\n${durationString}`;
         } else {
             finalNotes = durationString;
         }
