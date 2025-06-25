@@ -440,7 +440,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
           toast({
               title: "Company Suggested",
-              description: `Found: ${result.suggestedCompanyName} (Confidence: ${Math.round((result.confidenceScore ?? 0) * 100)}%)`
+              description: `Found: ${result.suggestedCompanyName}`
           });
         } else {
           toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
@@ -451,7 +451,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.address) {
           const currentNotes = form.getValues('notes') || '';
           const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
-          form.setValue('notes', newNotes, { shouldValidate: true });
+          form.setValue('notes', newNotes.replace(/\\n/g, '\n'), { shouldValidate: true });
         }
       }
     };
