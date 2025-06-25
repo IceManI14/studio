@@ -224,12 +224,27 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setIsFetchingCity(true);
         setCurrentCity(null);
         try {
-            const territoryNames = salesperson?.territory.map(t => t.name).join(', ');
+            // Check if current coords are within any of the salesperson's territories.
+            // This is important for when a salesperson is working outside their designated area.
+            const isWithinTerritory = salesperson?.territory.some(t => 
+                lat >= t.bounds.minLat &&
+                lat <= t.bounds.maxLat &&
+                lon >= t.bounds.minLng &&
+                lon <= t.bounds.maxLng
+            );
+
+            // Only provide the territory hint if the user is actually within their assigned territory.
+            // Otherwise, the hint can confuse the AI and lead to incorrect city suggestions.
+            const territoryHint = (salesperson && isWithinTerritory) 
+                ? salesperson.territory.map(t => t.name).join(', ') 
+                : undefined;
+
             const result = await getCompanyNameFromCoordsAction({ 
                 latitude: lat, 
                 longitude: lon,
-                salespersonTerritory: territoryNames,
+                salespersonTerritory: territoryHint,
              });
+
             if (result.city) {
                 setCurrentCity(result.city);
             } else {
@@ -462,7 +477,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       form.setValue('latitude', lat, { shouldValidate: true });
       form.setValue('longitude', lon, { shouldValidate: true });
 
-      const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+      const territoryHint = salesperson?.territory.map(t => t.name).join(', ');
+      const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon, salespersonTerritory: territoryHint });
       setIsSuggestingCompany(false);
 
       if (result.error) {
@@ -484,6 +500,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           const currentNotes = form.getValues('notes') || '';
           const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
           form.setValue('notes', newNotes.replace(/\\n/g, '\n'), { shouldValidate: true });
+        }
+        if (result.city) {
+            setCurrentCity(result.city);
         }
       }
     };
