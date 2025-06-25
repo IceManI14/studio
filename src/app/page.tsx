@@ -29,7 +29,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -38,12 +41,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
+import { DirectionsRenderer, DirectionsService } from '@react-google-maps/api';
 
 
 interface SubmittedSuggestion {
@@ -122,12 +126,19 @@ export default function HomePage() {
   const [isTerritoryWarningOpen, setIsTerritoryWarningOpen] = useState(false);
   const [pendingVisit, setPendingVisit] = useState<Visit | null>(null);
 
+  const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [currentCity, setCurrentCity] = useState<string | null>(null);
+  const [isFetchingCity, setIsFetchingCity] = useState(false);
+
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
-     if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
+     if (salesperson.territory.length > 0 && salesperson.name !== 'Corporate') {
+      setIsDestinationModalOpen(true);
+    } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
       toast({
         title: `Welcome, ${salesperson.name}!`,
         description: 'You have no territories assigned. Please contact your manager to have them set up.',
@@ -158,13 +169,33 @@ export default function HomePage() {
     // Get Geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserCurrentLatitude(position.coords.latitude);
-          setUserCurrentLongitude(position.coords.longitude);
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          setUserCurrentLatitude(lat);
+          setUserCurrentLongitude(lon);
           toast({
             title: "Current Location Acquired",
-            description: `Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`
+            description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`
           });
+          
+          setIsFetchingCity(true);
+          try {
+            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+            if (result.error) {
+              console.warn("Could not fetch city:", result.error);
+              setCurrentCity("Could not determine city.");
+            } else if (result.city) {
+              setCurrentCity(result.city);
+            } else {
+              setCurrentCity("Location Unknown");
+            }
+          } catch (e) {
+            console.error("Error fetching city:", e);
+            setCurrentCity("Error fetching city.");
+          } finally {
+            setIsFetchingCity(false);
+          }
         },
         (error) => {
           let errorMessage = "Could not retrieve location.";
@@ -180,6 +211,7 @@ export default function HomePage() {
             description: errorMessage,
             variant: "default" 
           });
+          setCurrentCity("Location access denied.");
         }
       );
     } else {
@@ -188,6 +220,7 @@ export default function HomePage() {
         description: "Your browser does not support geolocation.",
         variant: "default"
       });
+      setCurrentCity("Geolocation not supported.");
     }
 
     if (!firebaseConfigured || !db) return;
@@ -756,11 +789,25 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
             Optimum Trailblazer
           </h1>
           {selectedSalesperson ? (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
-                <User className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-headline font-semibold text-foreground text-center">
-                    {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.map(t => t.name).join(', ')}
-                </h2>
+            <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
+                <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-headline font-semibold text-foreground text-center">
+                        {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.map(t => t.name).join(', ')}
+                    </h2>
+                </div>
+                {isFetchingCity && (
+                    <div className="flex items-center text-sm text-muted-foreground mt-2">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Determining current city...
+                    </div>
+                )}
+                {currentCity && !isFetchingCity && (
+                    <div className="flex items-center text-md font-medium text-foreground mt-2">
+                        <MapPin className="mr-2 h-4 w-4 text-primary" />
+                        <span>Current City: {currentCity}</span>
+                    </div>
+                )}
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
@@ -826,7 +873,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          When you click "Hit New Door!" this app will help streamline your efforts
+                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> this app will help streamline your efforts
                       </p>
                     </div>
                 ) : (
@@ -944,7 +991,12 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                  </Button>
               </div>
               
-              <GoogleMapComponent visits={visits} />
+              <GoogleMapComponent 
+                visits={visits} 
+                directions={directions}
+                userLatitude={userCurrentLatitude}
+                userLongitude={userCurrentLongitude}
+              />
             </section>
           </TabsContent>
 
@@ -1214,6 +1266,38 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
               </>
             )}
           </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isDestinationModalOpen} onOpenChange={setIsDestinationModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Choose Your Destination</DialogTitle>
+                    <DialogDescription>
+                        Select a territory to get directions for your day.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col space-y-2">
+                    {selectedSalesperson?.territory.map((t) => (
+                        <Button
+                            key={t.name}
+                            variant="outline"
+                            onClick={() => {
+                                const destination = t.name;
+                                if (typeof window !== 'undefined') {
+                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
+                                }
+                                setIsDestinationModalOpen(false);
+                                toast({ title: `Navigating to ${t.name}`, description: "Opening Google Maps in a new tab."});
+                            }}
+                        >
+                           {t.name}
+                        </Button>
+                    ))}
+                </div>
+                 <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)}>Skip</Button>
+                </DialogFooter>
+            </DialogContent>
         </Dialog>
 
         <VisitForm
