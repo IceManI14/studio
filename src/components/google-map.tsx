@@ -87,16 +87,19 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey }) => 
         {isExpiredKeyError ? (
           <>
             <p className="text-sm mt-2 font-medium">
-              The Google Maps API key has expired (`ExpiredKeyMapError`).
+              Your Google Maps API Key has expired.
             </p>
-            <p className="text-xs mt-2">To fix this, you need to generate a new API key from your Google Cloud Console and update it in your project's environment file.</p>
-            <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
-              <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console Credentials page</a>.</li>
-              <li>Create a new API key or regenerate the existing one.</li>
-              <li>Copy the new key.</li>
-              <li>Paste the new key into your <strong>.env</strong> file as the value for `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.</li>
-              <li>Restart your development server.</li>
-            </ul>
+            <p className="text-sm mt-2">To fix this, you must generate a new key from your Google Cloud Console.</p>
+            <div className="text-left mt-4 bg-background/50 p-4 rounded-lg border border-destructive/50">
+              <h3 className="font-semibold text-base mb-2">Action Required:</h3>
+              <ol className="text-sm list-decimal list-inside space-y-2">
+                <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Google Cloud Console Credentials page</a>.</li>
+                <li>Create a new API key (or regenerate the existing one).</li>
+                <li>Copy the new key.</li>
+                <li>Paste it into your <strong>.env</strong> file for the `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` variable.</li>
+                <li>Restart your application server.</li>
+              </ol>
+            </div>
           </>
         ) : isApiTargetBlockedError ? (
           <>
