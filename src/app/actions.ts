@@ -162,18 +162,16 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
 const getCompanyNameFromCoordsPayloadSchema = z.object({
     latitude: z.number(),
     longitude: z.number(),
-    salespersonTerritory: z.string().optional(),
 });
 
 export async function getCompanyNameFromCoordsAction(
-    payload: { latitude?: number; longitude?: number; salespersonTerritory?: string; }
+    payload: { latitude?: number; longitude?: number; }
 ): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; address?: string; city?: string; phone?: string; error?: string }> {
     try {
         const validatedPayload = getCompanyNameFromCoordsPayloadSchema.parse(payload);
         const result = await getCompanyNameFromCoords({
             latitude: validatedPayload.latitude,
             longitude: validatedPayload.longitude,
-            salespersonTerritory: validatedPayload.salespersonTerritory,
         });
         return { 
             suggestedCompanyName: result.suggestedCompanyName, 

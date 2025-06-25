@@ -14,7 +14,6 @@ import {z} from 'genkit';
 const GetCompanyNameFromCoordsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
-  salespersonTerritory: z.string().optional().describe('A comma-separated list of territory names for the salesperson. This provides regional context.'),
 });
 export type GetCompanyNameFromCoordsInput = z.infer<typeof GetCompanyNameFromCoordsInputSchema>;
 
@@ -40,10 +39,6 @@ const prompt = ai.definePrompt({
 GPS Coordinates:
 Latitude: {{{latitude}}}
 Longitude: {{{longitude}}}
-
-{{#if salespersonTerritory}}
-The location is expected to be within one of these sales territories: {{{salespersonTerritory}}}. Use this as a strong hint to improve accuracy.
-{{/if}}
 
 Using your knowledge of global mapping data, perform the following steps:
 1. Identify the most likely business or public establishment at these exact coordinates.
