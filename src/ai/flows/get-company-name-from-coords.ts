@@ -41,6 +41,10 @@ const mockStreetNames = [
   "Founders Lane", "Discovery Court", "Liberty Pike", "Progressive Avenue"
 ];
 
+const mockCities = [
+    "Springfield", "Riverside", "Franklin", "Greenville", "Bristol", "Clinton", "Fairview", "Salem", "Madison", "Georgetown"
+];
+
 const mockReverseGeocodeTool = ai.defineTool(
   {
     name: 'mockReverseGeocodeTool',
@@ -57,13 +61,15 @@ const mockReverseGeocodeTool = ai.defineTool(
     
     const nameIndex = (latInt + lonInt) % mockCompanyNames.length;
     const streetIndex = (latInt * 3 + lonInt * 7) % mockStreetNames.length;
+    const cityIndex = (latInt + lonInt * 2) % mockCities.length;
 
     const companyName = mockCompanyNames[nameIndex];
     const streetName = mockStreetNames[streetIndex];
     const streetNumber = (latInt % 1500) + 1;
     const phoneSuffix = (lonInt % 9000) + 1000;
+    const city = mockCities[cityIndex];
     
-    const address = `${streetNumber} ${streetName}`;
+    const address = `${streetNumber} ${streetName}, ${city}, NH`;
     const phone = `(555) 555-${phoneSuffix.toString().padStart(4, '0')}`;
 
     // Simulate different detailed responses for specific regions, and a more dynamic generic response.

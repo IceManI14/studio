@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -159,6 +159,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [currentCity, setCurrentCity] = useState<string | null>(null);
+  const [isFetchingCity, setIsFetchingCity] = useState(false);
 
 
   const form = useForm<VisitFormData>({
@@ -217,6 +219,33 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [watchedCompetitorName]);
 
   useEffect(() => {
+    const fetchLocationCity = async (lat: number, lon: number) => {
+        setIsFetchingCity(true);
+        setCurrentCity(null);
+        try {
+            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+            if (result.address) {
+                const parts = result.address.split(',');
+                // Assuming city is the second part: "123 Street, City, ST" -> "City"
+                const city = parts.length > 1 ? parts[1].trim() : result.address;
+                setCurrentCity(city);
+            } else {
+                setCurrentCity("Location Unknown");
+            }
+        } catch (e) {
+            console.error("Failed to fetch city", e);
+            setCurrentCity("Could not determine city");
+        } finally {
+            setIsFetchingCity(false);
+        }
+    };
+
+    if (isOpen && initialData?.latitude && initialData?.longitude) {
+        fetchLocationCity(initialData.latitude, initialData.longitude);
+    } else {
+        setCurrentCity(null);
+    }
+
     if (initialData) {
       form.reset({
         companyName: initialData.companyName,
@@ -646,6 +675,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {initialData?.id ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
+        
+        {isFetchingCity && (
+            <div className="flex items-center text-sm text-muted-foreground p-2 -my-2">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Determining current city...
+            </div>
+        )}
+        {currentCity && !isFetchingCity && (
+            <div className="font-semibold text-lg text-primary flex items-center p-2 -my-2">
+                <MapPin className="mr-2 h-5 w-5" />
+                {currentCity}
+            </div>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
             <FormField
