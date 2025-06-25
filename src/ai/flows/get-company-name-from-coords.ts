@@ -1,15 +1,15 @@
 
 'use server';
 /**
- * @fileOverview AI flow to suggest a company name and pertinent details based on GPS coordinates.
+ * @fileOverview A flow to get company details from GPS coordinates using Google Places API.
  *
  * - getCompanyNameFromCoords - A function that suggests a company name from latitude and longitude.
  * - GetCompanyNameFromCoordsInput - The input type for the getCompanyNameFromCoords function.
  * - GetCompanyNameFromCoordsOutput - The return type for the getCompanyNameFromCoords function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { z } from 'genkit';
+import { findPlaceFromLatLng } from '@/services/google-places';
 
 const GetCompanyNameFromCoordsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -27,48 +27,23 @@ const GetCompanyNameFromCoordsOutputSchema = z.object({
 export type GetCompanyNameFromCoordsOutput = z.infer<typeof GetCompanyNameFromCoordsOutputSchema>;
 
 export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsInput): Promise<GetCompanyNameFromCoordsOutput> {
-  return getCompanyNameFromCoordsFlow(input);
-}
+  const placeDetails = await findPlaceFromLatLng(input.latitude, input.longitude);
 
-const prompt = ai.definePrompt({
-  name: 'getCompanyNameFromCoordsPrompt',
-  input: { schema: GetCompanyNameFromCoordsInputSchema },
-  output: { schema: GetCompanyNameFromCoordsOutputSchema },
-  prompt: `You are a highly accurate reverse geocoding expert. Your primary task is to identify the business AND the corresponding city for the given GPS coordinates. It is critical that you return the correct city name.
-
-GPS Coordinates:
-Latitude: {{{latitude}}}
-Longitude: {{{longitude}}}
-
-Using your knowledge of global mapping data, perform the following steps:
-1. Identify the most likely business or public establishment at these exact coordinates.
-2. Determine the full mailing address for this location.
-3. Extract the **city** from the address.
-
-Your final output must be a JSON object that adheres strictly to the output schema. Populate all fields, especially the 'city'.
-
-- **suggestedCompanyName**: The full name of the business. If it's a residential area or no business can be found, return an empty string.
-- **address**: The full street address.
-- **city**: The city where the coordinates are located. This field is mandatory. If you can determine an address, you must be able to determine a city.
-- **phone**: The primary contact phone number for the business, if available.
-- **confidenceScore**: A score from 0.0 to 1.0 indicating your confidence in the identification.
-`,
-});
-
-const getCompanyNameFromCoordsFlow = ai.defineFlow(
-  {
-    name: 'getCompanyNameFromCoordsFlow',
-    inputSchema: GetCompanyNameFromCoordsInputSchema,
-    outputSchema: GetCompanyNameFromCoordsOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    
-    if (!output) {
-      console.error('getCompanyNameFromCoordsPrompt did not return an output for coordinates:', input);
-      return { suggestedCompanyName: '', confidenceScore: 0.0, address: 'Could not determine address.', city: '', phone: '' };
-    }
-    
-    return output;
+  if (placeDetails) {
+    return {
+      suggestedCompanyName: placeDetails.suggestedCompanyName,
+      confidenceScore: placeDetails.suggestedCompanyName ? 1.0 : 0.5,
+      address: placeDetails.address,
+      city: placeDetails.city,
+      phone: placeDetails.phone,
+    };
   }
-);
+
+  return {
+    suggestedCompanyName: '',
+    confidenceScore: 0.0,
+    address: 'Could not determine address.',
+    city: '',
+    phone: '',
+  };
+}
