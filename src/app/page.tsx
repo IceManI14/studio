@@ -61,8 +61,9 @@ const salespeople: Salesperson[] = [
         id: '1', 
         name: 'Paul L.', 
         territory: [
-            { name: 'Boston, Cambridge, Quincy', bounds: { minLat: 42.22, maxLat: 42.40, minLng: -71.18, maxLng: -70.98 } },
-            { name: 'South Shore', bounds: { minLat: 42.00, maxLat: 42.22, minLng: -71.05, maxLng: -70.60 } }
+            { name: 'NH/ME Seacoast', bounds: { minLat: 42.85, maxLat: 43.40, minLng: -71.00, maxLng: -70.50 } },
+            { name: 'Southern NH (Rockingham)', bounds: { minLat: 42.85, maxLat: 43.15, minLng: -71.40, maxLng: -71.00 } },
+            { name: 'NH Lakes Region', bounds: { minLat: 43.40, maxLat: 43.70, minLng: -71.70, maxLng: -71.35 } }
         ] 
     },
     { 
