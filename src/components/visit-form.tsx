@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Visit } from '@/lib/types';
+import type { Visit, Salesperson } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -132,9 +132,10 @@ interface VisitFormProps {
   onClose: () => void;
   onSave: (visit: Visit) => void;
   initialData?: Visit;
+  salesperson: Salesperson | null;
 }
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson }) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
@@ -223,7 +224,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setIsFetchingCity(true);
         setCurrentCity(null);
         try {
-            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+            const territoryNames = salesperson?.territory.map(t => t.name).join(', ');
+            const result = await getCompanyNameFromCoordsAction({ 
+                latitude: lat, 
+                longitude: lon,
+                salespersonTerritory: territoryNames,
+             });
             if (result.city) {
                 setCurrentCity(result.city);
             } else {
@@ -293,7 +299,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
     setHasCameraPermission(undefined);
-  }, [initialData, form, isOpen]);
+  }, [initialData, form, isOpen, salesperson]);
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]

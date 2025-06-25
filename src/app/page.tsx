@@ -1224,6 +1224,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           }}
           onSave={handleSaveVisit}
           initialData={currentEditingVisit}
+          salesperson={selectedSalesperson}
         />
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
