@@ -1104,7 +1104,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                         and potentially help you get to the decision maker more efficiently.
                       </li>
                       <li>
-                        When you "Log the meeting!" the app creates a visit card that stores very important information for your future planning. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
+                        When you <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span> the app creates a visit card that stores very important information for your future planning. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
                       </li>
                       <li>
                         When you "End Day!" the app saves the visit cards you created for the day and tells you how many companies you have visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
