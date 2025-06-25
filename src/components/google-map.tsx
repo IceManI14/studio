@@ -76,16 +76,29 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey }) => 
   }, []);
 
   if (loadError) {
-    const isApiTargetBlockedError = loadError.message &&
-      (loadError.message.includes('ApiTargetBlockedMapError') ||
-        loadError.message.includes('API target is not authorized'));
+    const isApiTargetBlockedError = loadError.message?.includes('ApiTargetBlockedMapError') || loadError.message?.includes('API target is not authorized');
+    const isExpiredKeyError = loadError.message?.includes('ExpiredKeyMapError');
 
     return (
       <div className="flex flex-col items-center justify-center h-96 bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
         <AlertTriangle className="w-12 h-12 mb-4" />
         <p className="text-lg font-semibold">Error loading Google Maps.</p>
 
-        {isApiTargetBlockedError ? (
+        {isExpiredKeyError ? (
+          <>
+            <p className="text-sm mt-2 font-medium">
+              The Google Maps API key has expired (`ExpiredKeyMapError`).
+            </p>
+            <p className="text-xs mt-2">To fix this, you need to generate a new API key from your Google Cloud Console and update it in your project's environment file.</p>
+            <ul className="text-xs list-disc list-inside text-left mt-2 space-y-1">
+              <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console Credentials page</a>.</li>
+              <li>Create a new API key or regenerate the existing one.</li>
+              <li>Copy the new key.</li>
+              <li>Paste the new key into your <strong>.env</strong> file as the value for `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.</li>
+              <li>Restart your development server.</li>
+            </ul>
+          </>
+        ) : isApiTargetBlockedError ? (
           <>
             <p className="text-sm mt-2 font-medium">
               This is likely an API key configuration issue (`ApiTargetBlockedMapError` or similar).
