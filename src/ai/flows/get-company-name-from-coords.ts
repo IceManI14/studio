@@ -45,7 +45,7 @@ const mockReverseGeocodeTool = ai.defineTool(
     } else if (latitude < 30 && longitude > -90) { // e.g., Southeast USA
       return { locationDescription: `Vicinity of 456 Commerce St, Business Hub, FL. Tel: (555) 555-0102. Known establishments: "Ocean Breeze Logistics".` };
     } else { // Generic
-      return { locationDescription: `Location at coordinates ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Potential business: "Local Services Co." at 100 Main Street. Phone: (555) 555-0103. May be residential.`};
+      return { locationDescription: `Location at coordinates ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Potential business: "Main Street Business" at 100 Main Street. Phone: (555) 555-0103. May be residential.`};
     }
   }
 );
