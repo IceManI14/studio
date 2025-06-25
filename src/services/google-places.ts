@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A service for interacting with the Google Maps Places API.
@@ -40,27 +39,24 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
     }
 
     try {
-        const response = await client.reverseGeocode({
+        // Step 1: Use Nearby Search to find the closest established place.
+        // This is more effective for finding business names than reverse geocoding.
+        const nearbySearchResponse = await client.nearbySearch({
             params: {
-                latlng: { latitude, longitude },
+                location: { lat: latitude, lng: longitude },
+                rankby: 'distance', // Prioritizes the very closest results
                 key: apiKey,
-                result_type: [PlaceType2.establishment, PlaceType2.point_of_interest, PlaceType2.street_address],
-                location_type: 'ROOFTOP'
-            },
+            }
         });
+        
+        // If we find a nearby place, use its place_id to get definitive details.
+        if (nearbySearchResponse.data.results && nearbySearchResponse.data.results.length > 0) {
+            const closestPlace = nearbySearchResponse.data.results[0];
 
-        if (response.data.results && response.data.results.length > 0) {
-            const businessResult = response.data.results.find(r => 
-                r.types.includes(PlaceType2.establishment) || 
-                r.types.includes(PlaceType2.point_of_interest)
-            );
-
-            const result = businessResult || response.data.results[0];
-
-            if (result.place_id) {
-                const detailsResponse = await client.placeDetails({
+            if (closestPlace.place_id) {
+                 const detailsResponse = await client.placeDetails({
                     params: {
-                        place_id: result.place_id,
+                        place_id: closestPlace.place_id,
                         key: apiKey,
                         fields: ['name', 'formatted_address', 'address_components', 'formatted_phone_number'],
                     },
@@ -70,28 +66,41 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
                 if (placeDetails) {
                     const city = getBestEffortCity(placeDetails.address_components);
-
                     return {
                         suggestedCompanyName: placeDetails.name || '',
-                        address: placeDetails.formatted_address || result.formatted_address,
+                        address: placeDetails.formatted_address || '',
                         city: city,
                         phone: placeDetails.formatted_phone_number || '',
                     };
                 }
             }
+        }
+        
+        // Step 2: If Nearby Search finds nothing, fall back to Reverse Geocode.
+        // This is good for getting a street address and city when no specific business is found.
+        const reverseGeocodeResponse = await client.reverseGeocode({
+            params: {
+                latlng: { latitude, longitude },
+                key: apiKey,
+            },
+        });
 
-            const address_components = response.data.results[0].address_components;
-            const city = getBestEffortCity(address_components);
-
+        if (reverseGeocodeResponse.data.results && reverseGeocodeResponse.data.results.length > 0) {
+            const firstResult = reverseGeocodeResponse.data.results[0];
+            const city = getBestEffortCity(firstResult.address_components);
+            
             return {
-                suggestedCompanyName: '',
-                address: response.data.results[0].formatted_address,
+                suggestedCompanyName: '', // No specific company, but we have an address
+                address: firstResult.formatted_address,
                 city: city,
                 phone: '',
             };
         }
 
+        // If both methods fail to return anything.
+        console.warn(`No results from Places API for lat: ${latitude}, lng: ${longitude}`);
         return null;
+
     } catch (error: any) {
         console.error('Error fetching data from Google Places API:', error);
         if (error.response) {
