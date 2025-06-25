@@ -33,17 +33,17 @@ const mockCompanyNames = [
   "Apex Innovations", "Stellar Solutions", "Quantum Dynamics", "FusionForward", "Zenith Enterprises",
   "Pinnacle Corp", "Momentum Industries", "Synergy Group", "Catalyst Creations", "Precision Pro",
   "Evergreen Logistics", "Silverline Tech", "Blue-sky Ventures", "Ironclad Security", "Summit Services",
-  "Horizon Manufacturing", "Nexus Data Systems", "Gateway Properties", "Vanguard Financial", "Triton Global"
+  "Horizon Manufacturing", "Nexus Data Systems", "Gateway Properties", "Vanguard Financial", "Triton Global",
+  "Seacoast Supplies", "Granite State Goods", "Pine Tree Provisions", "Lakes Region Logistics"
 ];
 
 const mockStreetNames = [
   "Innovation Drive", "Commerce Street", "Market Avenue", "Enterprise Way", "Tech Park Circle", "Industrial Boulevard",
-  "Founders Lane", "Discovery Court", "Liberty Pike", "Progressive Avenue"
+  "Founders Lane", "Discovery Court", "Liberty Pike", "Progressive Avenue", "Main Street", "Ocean Boulevard", "Lafayette Road", "Route 1"
 ];
 
-const mockCities = [
-    "Springfield", "Riverside", "Franklin", "Greenville", "Bristol", "Clinton", "Fairview", "Salem", "Madison", "Georgetown"
-];
+const mockCitiesNH = ["Auburn", "Chester", "Kingston", "Seabrook", "Exeter", "Stratham", "Newmarket", "Durham", "Portsmouth", "Deerfield", "Nottingham", "Hampton", "Rye", "Sandown", "Raymond", "Hampstead", "Dover", "Tilton", "Belmont", "Franklin", "Laconia", "New Hampton", "Meredith", "Gilford"];
+const mockCitiesME = ["Kittery", "York", "Ogunquit", "Wells", "Kennebunk"];
 
 const mockReverseGeocodeTool = ai.defineTool(
   {
@@ -61,25 +61,32 @@ const mockReverseGeocodeTool = ai.defineTool(
     
     const nameIndex = (latInt + lonInt) % mockCompanyNames.length;
     const streetIndex = (latInt * 3 + lonInt * 7) % mockStreetNames.length;
-    const cityIndex = (latInt + lonInt * 2) % mockCities.length;
+
+    let city: string;
+    let state: string;
+
+    // Simple geographical check for NH/ME border area. Longitude for Kittery, ME is ~ -70.7
+    // This is a rough approximation for mock purposes.
+    if (longitude > -70.8) {
+        state = "ME";
+        const cityIndex = (latInt + lonInt) % mockCitiesME.length;
+        city = mockCitiesME[cityIndex];
+    } else {
+        state = "NH";
+        const cityIndex = (latInt + lonInt) % mockCitiesNH.length;
+        city = mockCitiesNH[cityIndex];
+    }
 
     const companyName = mockCompanyNames[nameIndex];
     const streetName = mockStreetNames[streetIndex];
     const streetNumber = (latInt % 1500) + 1;
     const phoneSuffix = (lonInt % 9000) + 1000;
-    const city = mockCities[cityIndex];
     
-    const address = `${streetNumber} ${streetName}, ${city}, NH`;
+    const address = `${streetNumber} ${streetName}, ${city}, ${state}`;
     const phone = `(555) 555-${phoneSuffix.toString().padStart(4, '0')}`;
 
-    // Simulate different detailed responses for specific regions, and a more dynamic generic response.
-    if (latitude > 40 && longitude < -100) { // e.g., West USA
-      return { locationDescription: `Area around 123 Innovation Drive, Tech City, CA. Contact: (555) 555-0101. Primary business: "Future Systems Inc.". Also nearby: "Cafe Bytes".` };
-    } else if (latitude < 30 && longitude > -90) { // e.g., Southeast USA
-      return { locationDescription: `Vicinity of 456 Commerce St, Business Hub, FL. Tel: (555) 555-0102. Known establishments: "Ocean Breeze Logistics".` };
-    } else { // Generic but dynamic response
-      return { locationDescription: `Location at ${address}. Identified business: "${companyName}". Contact phone: ${phone}.` };
-    }
+    // Return a more dynamic description based on the generated mock data.
+    return { locationDescription: `Location at ${address}. Identified business: "${companyName}". Contact phone: ${phone}.` };
   }
 );
 
