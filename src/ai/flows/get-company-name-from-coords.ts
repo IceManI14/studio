@@ -34,19 +34,24 @@ const prompt = ai.definePrompt({
   name: 'getCompanyNameFromCoordsPrompt',
   input: { schema: GetCompanyNameFromCoordsInputSchema },
   output: { schema: GetCompanyNameFromCoordsOutputSchema },
-  prompt: `You are an expert reverse geocoder. Your task is to identify the most likely business or public place located at the given GPS coordinates.
-  
+  prompt: `You are a highly accurate reverse geocoding expert. Your primary task is to identify the business AND the corresponding city for the given GPS coordinates. It is critical that you return the city name.
+
+GPS Coordinates:
 Latitude: {{{latitude}}}
 Longitude: {{{longitude}}}
 
-Based on these coordinates, please provide the following information:
-1.  **suggestedCompanyName**: The name of the business or place. If it appears to be a residential area or no specific entity can be identified, return an empty string.
-2.  **address**: The full street address of the location.
-3.  **city**: The city of the location.
-4.  **phone**: The primary phone number for the business, if available.
-5.  **confidenceScore**: A score from 0.0 to 1.0 indicating your confidence in the identification. A high confidence score (e.g., >0.8) means you are very certain. A low score (e.g., <0.3) means it's likely a guess or a residential area.
+Using your knowledge of global mapping data, perform the following steps:
+1. Identify the most likely business or public establishment at these exact coordinates.
+2. Determine the full mailing address for this location.
+3. Extract the **city** from the address.
 
-Your response must be in the format specified by the output schema.
+Your final output must be a JSON object that adheres strictly to the output schema. Populate all fields, especially the 'city'.
+
+- **suggestedCompanyName**: The full name of the business. If it's a residential area or no business can be found, return an empty string.
+- **address**: The full street address.
+- **city**: The city where the coordinates are located. This field is mandatory. If you can determine an address, you must be able to determine a city.
+- **phone**: The primary contact phone number for the business, if available.
+- **confidenceScore**: A score from 0.0 to 1.0 indicating your confidence in the identification.
 `,
 });
 
