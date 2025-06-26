@@ -12,6 +12,7 @@ export interface Territory {
     minLng: number;
     maxLng: number;
   };
+  cities?: string[];
 }
 
 export interface Visit {

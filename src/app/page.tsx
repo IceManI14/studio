@@ -64,23 +64,23 @@ const salespeople: Salesperson[] = [
         id: '1', 
         name: 'Paul L.', 
         territory: [
-            { name: 'NH/ME Seacoast', bounds: { minLat: 42.85, maxLat: 43.40, minLng: -71.00, maxLng: -70.50 } },
-            { name: 'Southern NH (Rockingham)', bounds: { minLat: 42.85, maxLat: 43.15, minLng: -71.40, maxLng: -71.00 } },
-            { name: 'NH Lakes Region', bounds: { minLat: 43.40, maxLat: 43.70, minLng: -71.70, maxLng: -71.35 } }
+            { name: 'NH/ME Seacoast', bounds: { minLat: 42.85, maxLat: 43.40, minLng: -71.00, maxLng: -70.50 }, cities: ['Portsmouth, NH', 'Hampton, NH', 'Rye, NH', 'Kittery, ME', 'York, ME'] },
+            { name: 'Southern NH (Rockingham)', bounds: { minLat: 42.85, maxLat: 43.15, minLng: -71.40, maxLng: -71.00 }, cities: ['Salem, NH', 'Derry, NH', 'Londonderry, NH', 'Windham, NH', 'Plaistow, NH'] },
+            { name: 'NH Lakes Region', bounds: { minLat: 43.40, maxLat: 43.70, minLng: -71.70, maxLng: -71.35 }, cities: ['Laconia, NH', 'Gilford, NH', 'Meredith, NH', 'Wolfeboro, NH', 'Center Harbor, NH'] }
         ] 
     },
     { 
         id: '2', 
         name: 'Chris C.', 
         territory: [
-            { name: 'Providence, Warwick, Cranston', bounds: { minLat: 41.65, maxLat: 41.88, minLng: -71.55, maxLng: -71.35 } }
+            { name: 'Providence, Warwick, Cranston', bounds: { minLat: 41.65, maxLat: 41.88, minLng: -71.55, maxLng: -71.35 }, cities: ['Providence, RI', 'Warwick, RI', 'Cranston, RI', 'Johnston, RI'] }
         ] 
     },
     { 
         id: '3', 
         name: 'James D.', 
         territory: [
-            { name: 'Worcester & Springfield Area', bounds: { minLat: 42.05, maxLat: 42.35, minLng: -72.65, maxLng: -71.70 } }
+            { name: 'Worcester & Springfield Area', bounds: { minLat: 42.05, maxLat: 42.35, minLng: -72.65, maxLng: -71.70 }, cities: ['Worcester, MA', 'Springfield, MA', 'Holyoke, MA', 'Chicopee, MA', 'Westfield, MA'] }
         ] 
     },
     { id: '4', name: 'Corporate', territory: [{ name: 'All Territories', bounds: { minLat: -90, maxLat: 90, minLng: -180, maxLng: 180 } }] },
@@ -1291,27 +1291,39 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <DialogHeader>
                     <DialogTitle>Choose Your Destination</DialogTitle>
                     <DialogDescription>
-                        Select a territory to get directions for your day.
+                        Select a city or town from your territories to get directions for the day.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col space-y-2">
+                <Accordion type="multiple" className="w-full max-h-[400px] overflow-y-auto pr-2">
                     {selectedSalesperson?.territory.map((t) => (
-                        <Button
-                            key={t.name}
-                            variant="outline"
-                            onClick={() => {
-                                const destination = t.name;
-                                if (typeof window !== 'undefined') {
-                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
-                                }
-                                setIsDestinationModalOpen(false);
-                                toast({ title: `Navigating to ${t.name}`, description: "Opening Google Maps in a new tab."});
-                            }}
-                        >
-                           {t.name}
-                        </Button>
+                        t.cities && t.cities.length > 0 && (
+                            <AccordionItem value={t.name} key={t.name}>
+                                <AccordionTrigger>{t.name}</AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="flex flex-col space-y-2">
+                                        {t.cities.map(city => (
+                                            <Button
+                                                key={city}
+                                                variant="ghost"
+                                                className="justify-start"
+                                                onClick={() => {
+                                                    const destination = city;
+                                                    if (typeof window !== 'undefined') {
+                                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
+                                                    }
+                                                    setIsDestinationModalOpen(false);
+                                                    toast({ title: `Navigating to ${city}`, description: "Opening Google Maps in a new tab."});
+                                                }}
+                                            >
+                                               {city}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        )
                     ))}
-                </div>
+                </Accordion>
                  <DialogFooter>
                     <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)}>Skip</Button>
                 </DialogFooter>
