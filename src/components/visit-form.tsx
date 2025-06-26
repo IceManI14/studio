@@ -1033,11 +1033,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           mode="single"
                           selected={field.value}
                           onSelect={(date) => {
-                            const current = field.value || new Date();
-                            const newDate = date || current;
-                            newDate.setHours(current.getHours());
-                            newDate.setMinutes(current.getMinutes());
-                            field.onChange(newDate);
+                            if (!date) {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const newDateTime = new Date(date);
+                            if (field.value) {
+                              // A date was already selected, keep the existing time
+                              newDateTime.setHours(field.value.getHours());
+                              newDateTime.setMinutes(field.value.getMinutes());
+                            } else {
+                              // This is the first time a date is selected, default to 9:00 AM
+                              newDateTime.setHours(9);
+                              newDateTime.setMinutes(0);
+                              newDateTime.setSeconds(0);
+                              newDateTime.setMilliseconds(0);
+                            }
+                            field.onChange(newDateTime);
                           }}
                           disabled={(date) =>
                             date < new Date(new Date().setDate(new Date().getDate() - 1))
@@ -1282,3 +1294,5 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
+    
