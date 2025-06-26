@@ -90,28 +90,11 @@ export default async (req, res) => {
 
     blobStream.on('finish', () => {
       if (responseSent) return;
-      console.log(`PDF successfully streamed to GCS: ${uniqueFileName}. Attempting to make public.`);
-      blob.makePublic()
-        .then(() => {
-          if (responseSent) return;
-          const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
-          console.log(`PDF uploaded and made public successfully: ${publicUrl}`);
-          responseSent = true;
-          res.status(200).json({ message: 'PDF uploaded successfully', url: publicUrl });
-        })
-        .catch((makePublicError) => {
-          if (responseSent) return;
-          console.error(`Error making PDF public after upload (Bucket: ${bucketName}, File: ${uniqueFileName}):`, makePublicError);
-          console.error('GCS MAKE PUBLIC ERROR HINT: This could be a permissions issue (e.g., service account needs "Storage Object Viewer" or "Storage Admin" if not already covered by "Storage Object Creator" for making public). Also ensure "Uniform bucket-level access" is not preventing per-object ACLs if you rely on them.');
-          responseSent = true;
-          const privateUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`; // URL might still be valid if object exists but isn't public
-          res.status(500).json({
-            message: 'PDF uploaded but failed to make public. Check bucket/object permissions and server logs.',
-            details: makePublicError.message,
-            url: privateUrl,
-            isPrivate: true
-          });
-        });
+      console.log(`PDF successfully streamed to GCS: ${uniqueFileName}. The file is now uploaded.`);
+      const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
+      console.log(`PDF accessible at public URL: ${publicUrl}. NOTE: This URL is only valid if the bucket has public read access enabled.`);
+      responseSent = true;
+      res.status(200).json({ message: 'PDF uploaded successfully', url: publicUrl });
     });
 
     try {
