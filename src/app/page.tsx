@@ -1346,7 +1346,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                                     toast({
                                                         title: 'AI is finding the best parking spot...',
                                                         description: `Optimizing your route for ${destinationCity}. This may take a moment.`,
-                                                        duration: 10000,
+                                                        duration: 20000,
                                                     });
 
                                                     try {
