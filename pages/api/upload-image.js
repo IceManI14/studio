@@ -1,130 +1,92 @@
-
 // pages/api/upload-image.js
 import { Storage } from '@google-cloud/storage';
-import formidable from 'formidable'; // Using formidable v3
+import formidable from 'formidable';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import fs from 'fs'; // Import fs for createReadStream
+import fs from 'fs';
 
 export const config = {
   api: {
-    bodyParser: false, // Disable Next.js body parser for file uploads
+    bodyParser: false,
   },
+};
+
+const uploadFileToGCS = (filepath, blobStream) => {
+  return new Promise((resolve, reject) => {
+    const readStream = fs.createReadStream(filepath);
+    readStream.on('error', reject);
+    blobStream.on('error', reject);
+    blobStream.on('finish', resolve);
+    readStream.pipe(blobStream);
+  });
 };
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
-    console.warn(`Method ${req.method} not allowed for /api/upload-image. This endpoint only accepts POST requests. Origin: ${req.headers.referer || 'Unknown'}`);
-    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted for image uploads.' });
+    console.warn(`Method ${req.method} not allowed for /api/upload-image.`);
+    return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
   if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || !process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
-    console.error('CRITICAL SERVER CONFIG ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID or NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set in environment variables. Image upload cannot proceed.');
-    return res.status(500).json({ message: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name in .env file. Please check server environment setup.' });
+    console.error('CRITICAL SERVER CONFIG ERROR: Firebase environment variables for Storage are not set.');
+    return res.status(500).json({ message: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name.' });
   }
 
   const storage = new Storage({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const bucket = storage.bucket(bucketName);
 
   const form = formidable({ multiples: false });
-  let responseSent = false; // Flag to prevent multiple responses
 
-  form.parse(req, async (err, fields, files) => {
-    if (responseSent) return;
-
-    const fileArray = files.image; // 'image' is the field name in FormData
+  try {
+    const [fields, files] = await form.parse(req);
+    
+    const fileArray = files.image;
     const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
 
-    if (err) {
-      console.error('Error parsing form data for image upload:', err, { originalFilename: file?.originalFilename, mimetype: file?.mimetype, tempPath: file?.filepath });
-      responseSent = true;
-      return res.status(500).json({ message: 'Error parsing uploaded file data. Check if the file is being sent correctly.', details: err.message });
-    }
-
     if (!file) {
-      if (responseSent) return;
-      console.warn('No image file uploaded in the "image" field. Ensure FormData field name is "image".');
-      responseSent = true;
-      return res.status(400).json({ message: 'No image file provided in the upload. Ensure the FormData field name is "image".' });
+      console.warn('No image file uploaded in the "image" field.');
+      return res.status(400).json({ message: 'No image file provided. Ensure the FormData field name is "image".' });
     }
 
-    // Log details of the received file
-    console.log(`Received file for image upload: originalFilename='${file.originalFilename}', mimetype='${file.mimetype}', size=${file.size} bytes, tempPath='${file.filepath}'`);
+    console.log(`Received file for upload: originalFilename='${file.originalFilename}', mimetype='${file.mimetype}', size=${file.size} bytes`);
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
-      if (responseSent) return;
-      console.warn(`Invalid file type attempt for image: ${file.mimetype}. Original filename: ${file.originalFilename}. Allowed types: ${allowedTypes.join(', ')}`);
-      responseSent = true;
-      return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed. Received: ${file.mimetype}` });
+      console.warn(`Invalid file type attempt: ${file.mimetype}`);
+      return res.status(400).json({ message: `Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.` });
     }
 
-    if (file.size === 0) {
-      if (responseSent) return;
-      console.warn(`Uploaded file ${file.originalFilename || 'unknown_filename'} is empty (0 bytes). Aborting upload.`);
-      responseSent = true;
-      return res.status(400).json({ message: `Uploaded file is empty. Please select a valid file.` });
-    }
-
-    let extension = '.png'; // Default extension
-    if (file.originalFilename) {
-      extension = path.extname(file.originalFilename);
-    } else if (file.mimetype) {
-      const typePart = file.mimetype.split('/')[1];
-      if (typePart) {
-        extension = `.${typePart}`;
-      }
-    }
+    const extension = path.extname(file.originalFilename) || `.${file.mimetype.split('/')[1]}` || '.png';
     const uniqueFileName = `${uuidv4()}${extension}`;
-
-    console.log(`Attempting to upload image: ${file.originalFilename || 'unknown_filename'} (Type: ${file.mimetype}, Size: ${file.size} bytes) as ${uniqueFileName} to bucket ${bucketName}. Temp path: ${file.filepath}`);
-
-    const bucket = storage.bucket(bucketName);
     const blob = bucket.file(uniqueFileName);
     const blobStream = blob.createWriteStream({
-      metadata: {
-        contentType: file.mimetype,
-      },
+      metadata: { contentType: file.mimetype },
       resumable: false,
     });
 
-    blobStream.on('error', (uploadError) => {
-      if (responseSent) return;
-      console.error(`Error streaming image to Google Cloud Storage (Bucket: ${bucketName}, File: ${uniqueFileName}):`, uploadError);
-      console.error('GCS STREAM ERROR HINT: This often indicates a permissions issue. Ensure the service account running this server has "Storage Object Creator" (or "Storage Object Admin") role on the bucket. Also check bucket existence and network connectivity to GCS.');
-      responseSent = true;
-      res.status(500).json({ 
-        message: 'Failed to upload image to Cloud Storage. This is very likely a permissions issue.',
-        details: `The server responded with: "${uploadError.message}". Please ensure the service account for this app has the "Storage Object Creator" role on the "${bucketName}" bucket in your Google Cloud project.`
-      });
-    });
+    console.log(`Uploading ${uniqueFileName} to bucket ${bucketName}...`);
+    await uploadFileToGCS(file.filepath, blobStream);
 
-    blobStream.on('finish', () => {
-      if (responseSent) return;
-      console.log(`Image successfully streamed to GCS: ${uniqueFileName}. The file is now uploaded.`);
-      const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
-      console.log(`Image accessible at public URL: ${publicUrl}. NOTE: This URL is only valid if the bucket has public read access enabled.`);
-      responseSent = true;
-      res.status(200).json({ message: 'Image uploaded successfully', url: publicUrl });
-    });
+    console.log(`Successfully uploaded ${uniqueFileName}.`);
+    const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
+    
+    return res.status(200).json({ message: 'Image uploaded successfully', url: publicUrl });
 
-    try {
-      const readStream = fs.createReadStream(file.filepath);
-      readStream.on('error', (readStreamError) => {
-        if (responseSent) return;
-        console.error(`Error reading image file from temporary path: ${file.filepath}. Original filename: ${file.originalFilename}.`, readStreamError);
-        blobStream.end(); // Important to end the GCS stream if read fails
-        responseSent = true;
-        res.status(500).json({ message: 'Failed to read uploaded image file from server disk. Check server disk space and permissions.', details: readStreamError.message, tempPath: file.filepath });
-      });
-      console.log(`Starting to pipe image from ${file.filepath} to GCS blob ${uniqueFileName}.`);
-      readStream.pipe(blobStream);
-    } catch (pipeError) { // This catch block might be for synchronous errors in setting up the pipe
-      if (responseSent) return;
-      console.error(`Error setting up image file stream pipe (Original Filename: ${file.originalFilename}, Temp Path: ${file.filepath}):`, pipeError);
-      blobStream.end(); // Ensure GCS stream is closed
-      responseSent = true;
-      res.status(500).json({ message: 'Internal server error during image file processing setup.', details: pipeError.message });
+  } catch (error) {
+    console.error('An error occurred during image upload:', error);
+
+    if (error.code === 403 || (error.message && error.message.toLowerCase().includes('forbidden'))) {
+         console.error('GCS PERMISSION ERROR: The service account likely lacks the "Storage Object Creator" role.');
+         return res.status(500).json({ 
+            message: 'Failed to upload image due to a permission issue.',
+            details: `The server responded with a permissions error (Code: ${error.code || 'N/A'}). Please ensure the service account for this app has the "Storage Object Creator" role on the "${bucketName}" bucket in your Google Cloud project.`
+        });
     }
-  });
+
+    return res.status(500).json({ 
+        message: 'Failed to upload image.',
+        details: error.message || 'An unexpected server error occurred.'
+    });
+  }
 };
