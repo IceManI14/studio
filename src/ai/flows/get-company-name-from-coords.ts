@@ -21,7 +21,7 @@ const GetCompanyNameFromCoordsOutputSchema = z.object({
   suggestedCompanyName: z.string().describe('The suggested company name found at the coordinates. Empty if none found.'),
   confidenceScore: z.number().describe('A score between 0.0 and 1.0 indicating the confidence in the suggestion.'),
   address: z.string().optional().describe("The full street address of the company, if found."),
-  city: z.string().optional().describe("The city of the location, if found."),
+  city: z.string().optional().describe("The city or fallback address of the location, if found."),
   phone: z.string().optional().describe("A contact phone number for the company, if found."),
 });
 export type GetCompanyNameFromCoordsOutput = z.infer<typeof GetCompanyNameFromCoordsOutputSchema>;
@@ -30,11 +30,14 @@ export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsIn
   const placeDetails = await findPlaceFromLatLng(input.latitude, input.longitude);
 
   if (placeDetails) {
+    // If the city is not found, fall back to the full address for display.
+    const displayCity = placeDetails.city || placeDetails.address;
+    
     return {
       suggestedCompanyName: placeDetails.suggestedCompanyName,
       confidenceScore: placeDetails.suggestedCompanyName ? 1.0 : 0.5,
       address: placeDetails.address,
-      city: placeDetails.city,
+      city: displayCity,
       phone: placeDetails.phone,
     };
   }
@@ -43,7 +46,7 @@ export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsIn
     suggestedCompanyName: '',
     confidenceScore: 0.0,
     address: 'Could not determine address.',
-    city: '',
+    city: 'Location could not be determined', // Specific message for when no details are found
     phone: '',
   };
 }
