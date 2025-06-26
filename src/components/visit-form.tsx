@@ -155,6 +155,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
   const [openAccordion, setOpenAccordion] = useState<string[]>([]);
+  const [isCoolerSelectOpen, setIsCoolerSelectOpen] = useState(false);
 
   const [isCameraViewVisible, setIsCameraViewVisible] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
@@ -214,8 +215,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   useEffect(() => {
     if (watchedCompetitorName) {
       setOpenAccordion(['cooler-type']);
+      // A small delay to allow the accordion to animate open before opening the select
+      const timer = setTimeout(() => setIsCoolerSelectOpen(true), 250);
+      return () => clearTimeout(timer);
     } else {
       setOpenAccordion([]);
+      setIsCoolerSelectOpen(false);
     }
   }, [watchedCompetitorName]);
 
@@ -1153,7 +1158,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               name="coolerType"
                               render={({ field }) => (
                                 <FormItem>
-                                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                                  <Select
+                                    open={isCoolerSelectOpen}
+                                    onOpenChange={setIsCoolerSelectOpen}
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      setIsCoolerSelectOpen(false);
+                                    }}
+                                    value={field.value || ''}
+                                  >
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select Cooler Type" />
