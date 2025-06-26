@@ -1154,83 +1154,97 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
             )}
           </TabsContent>
 
-
           <TabsContent value="about">
             <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger className="text-2xl font-headline font-semibold text-primary flex items-center hover:no-underline">
-                    <InfoIcon className="mr-3 h-7 w-7" /> About Optimum Trailblazer
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-foreground text-base leading-relaxed mt-2 pl-4">
-                      This app is intended to help streamline your efforts in acquiring new clients and partners alike.
-                      It will help you organize the data you collect and also help guide you on your journey as you build Optimum Water Bridges.
+                <div className="w-full text-center">
+                    <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
+                        <InfoIcon className="mr-3 h-7 w-7" /> App Guide
+                    </h2>
+                    <p className="text-foreground/90 mt-1">
+                        This guide explains the key features of each section of the app.
                     </p>
-                    <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1 pl-4">
-                      <li>
-                        When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> button, the app begins to scrape the web for the company data at which you are currently located.
-                        It will hopefully give a a quick run down of what you are up against as a salesperson,
-                        and potentially help you get to the decision maker more efficiently.
-                      </li>
-                      <li>
-                        When you <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span> the app creates a visit card that stores very important information for your future planning. The more information you add to this, the more powerful the app becomes. The AI chat will have more ammunition to work with! So be as detailed as you can to become a more optimum salesperson.
-                      </li>
-                      <li>
-                        When you <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">End Day!</span> the app saves the visit cards you created for the day and tells you how many companies you have visited. It then gives you the capability to export your visits as a pdf for easy viewing later. This data can easily be sent to your manager for analysis with the "Email manager" button. Saving you time and aggravation.
-                      </li>
-                      <li>
-                        The "Call Day" tab provides a prioritized list of your visits, helping you focus your follow-up calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.
-                      </li>
-                      <li>
-                        "Debbie" is your customized AI agent. You will be surprised at her capabilities, and you are encouraged to challenge her. She will only get more effective and more able as time goes by. So log as much info as you can.
-                      </li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <div className="w-full pt-4 border-t">
-                <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
-                  <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
-                </h3>
-                <div className="space-y-3">
-                  <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
-                  <Textarea
-                    id="appSuggestion"
-                    placeholder="Type your feedback or feature request here..."
-                    value={suggestionText}
-                    onChange={(e) => setSuggestionText(e.target.value)}
-                    className="min-h-[100px]"
-                  />
-                  <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}>
-                    <Send className="mr-2 h-4 w-4" /> Add Suggestion
-                  </Button>
                 </div>
-              </div>
 
-              {submittedSuggestions.length > 0 && (
-                <div className="w-full pt-4 mt-6 border-t">
-                  <h3 className="text-2xl font-headline font-semibold text-primary mb-3">
-                    List of Possible Improvements
-                  </h3>
-                  <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
-                    <ol className="list-decimal list-inside space-y-2 text-foreground/90">
-                      {submittedSuggestions.map((suggestion, index) => (
-                        <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
-                          {suggestion.text}
-                          <span className="block text-xs text-muted-foreground mt-0.5">
-                            &mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                   <Button onClick={handleEmailSuggestions} variant="default" className="mt-4">
-                    <Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer
-                  </Button>
-                </div>
-              )}
+                <Tabs defaultValue="about-field-day" className="w-full">
+                    <TabsList className="grid w-full grid-cols-5 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Field Day</TabsTrigger>
+                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Call Day</TabsTrigger>
+                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Visits</TabsTrigger>
+                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Debbie</TabsTrigger>
+                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Feedback</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p className="mb-4">This is your main workspace for logging new visits. Here's how it works:</p>
+                        <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> button, the app uses your current location to find company information, giving you a head start before you even walk in.
+                            </li>
+                            <li>
+                                As you interact with the potential partner, use the form to <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span>. Capturing details like business cards, competitor info, and visit notes makes the app—and our AI assistant, Debbie—more powerful.
+                            </li>
+                            <li>
+                                Once you're done for the day, click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">End Day!</span> button. This resets your session and summarizes your daily accomplishments.
+                            </li>
+                        </ul>
+                    </TabsContent>
+
+                    <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p>The "Call Day" tab is your command center for follow-ups. It provides a prioritized list of your visits, helping you focus your calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.</p>
+                    </TabsContent>
+
+                    <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
+                    </TabsContent>
+
+                    <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p>"Debbie" is your customized AI agent, powered by Gemini. She can analyze visit notes, answer questions about recent activities, and even review documents like product lists if you upload a PDF. The more information you log in your visits, the more helpful Debbie becomes. Challenge her with your questions!</p>
+                    </TabsContent>
+                    
+                    <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
+                        <div className="w-full">
+                            <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
+                                <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
+                            </h3>
+                            <div className="space-y-3">
+                                <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
+                                <Textarea
+                                id="appSuggestion"
+                                placeholder="Type your feedback or feature request here..."
+                                value={suggestionText}
+                                onChange={(e) => setSuggestionText(e.target.value)}
+                                className="min-h-[100px]"
+                                />
+                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}>
+                                <Send className="mr-2 h-4 w-4" /> Add Suggestion
+                                </Button>
+                            </div>
+                        </div>
+
+                        {submittedSuggestions.length > 0 && (
+                            <div className="w-full pt-4 mt-6 border-t">
+                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">
+                                List of Possible Improvements
+                                </h3>
+                                <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
+                                <ol className="list-decimal list-inside space-y-2 text-foreground/90">
+                                    {submittedSuggestions.map((suggestion, index) => (
+                                    <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
+                                        {suggestion.text}
+                                        <span className="block text-xs text-muted-foreground mt-0.5">
+                                        &mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}
+                                        </span>
+                                    </li>
+                                    ))}
+                                </ol>
+                                </div>
+                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4">
+                                <Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer
+                                </Button>
+                            </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
             </div>
           </TabsContent>
         </Tabs>
