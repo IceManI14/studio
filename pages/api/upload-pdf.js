@@ -18,13 +18,13 @@ export default async (req, res) => {
     return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted for PDF uploads.' });
   }
 
-  if (!process.env.GCP_PROJECT_ID || !process.env.CLOUD_STORAGE_BUCKET_NAME) {
-    console.error('CRITICAL SERVER CONFIG ERROR: GCP_PROJECT_ID or CLOUD_STORAGE_BUCKET_NAME is not set in environment variables. PDF upload cannot proceed.');
-    return res.status(500).json({ message: 'Server configuration error: Missing critical environment variables (Cloud Project ID or Storage Bucket Name). Please check server environment setup.' });
+  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || !process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+    console.error('CRITICAL SERVER CONFIG ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID or NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set in environment variables. PDF upload cannot proceed.');
+    return res.status(500).json({ message: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name in .env file. Please check server environment setup.' });
   }
 
-  const storage = new Storage({ projectId: process.env.GCP_PROJECT_ID });
-  const bucketName = process.env.CLOUD_STORAGE_BUCKET_NAME;
+  const storage = new Storage({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
   const form = formidable({ multiples: false });
   let responseSent = false; // Flag to prevent multiple responses
@@ -134,4 +134,3 @@ export default async (req, res) => {
     }
   });
 };
-
