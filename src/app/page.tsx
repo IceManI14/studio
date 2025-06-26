@@ -427,6 +427,19 @@ export default function HomePage() {
     };
   }, [sortedVisitsForCallDay]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   const proceedToCreateVisit = (visit: Visit) => {
     if (visit.visitNumber) {
         updateColdCallCount(visit.visitNumber);
