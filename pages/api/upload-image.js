@@ -93,7 +93,10 @@ export default async (req, res) => {
       console.error(`Error streaming image to Google Cloud Storage (Bucket: ${bucketName}, File: ${uniqueFileName}):`, uploadError);
       console.error('GCS STREAM ERROR HINT: This often indicates a permissions issue. Ensure the service account running this server has "Storage Object Creator" (or "Storage Object Admin") role on the bucket. Also check bucket existence and network connectivity to GCS.');
       responseSent = true;
-      res.status(500).json({ message: 'Failed to upload image to Cloud Storage. Check server logs for GCS error details.', details: uploadError.message });
+      res.status(500).json({ 
+        message: 'Failed to upload image to Cloud Storage. This is very likely a permissions issue.',
+        details: `The server responded with: "${uploadError.message}". Please ensure the service account for this app has the "Storage Object Creator" role on the "${bucketName}" bucket in your Google Cloud project.`
+      });
     });
 
     blobStream.on('finish', () => {
