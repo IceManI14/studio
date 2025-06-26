@@ -6,7 +6,8 @@
  * - findPlaceFromLatLng - A function to find business details from coordinates.
  */
 
-import { Client, PlaceType2 } from '@googlemaps/google-maps-services-js';
+// This service now uses direct fetch calls to the Google Places API
+// instead of the @googlemaps/google-maps-services-js library to avoid bundling issues.
 
 export interface PlaceDetails {
   suggestedCompanyName: string;
@@ -14,8 +15,6 @@ export interface PlaceDetails {
   city: string;
   phone: string;
 }
-
-const client = new Client({});
 
 // Helper to extract address components
 const getAddressComponent = (components: any[], type: string) => {
@@ -41,29 +40,36 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
     try {
         // Step 1: Use Nearby Search to find the closest established place.
-        // This is more effective for finding business names than reverse geocoding.
-        const nearbySearchResponse = await client.nearbySearch({
-            params: {
-                location: { lat: latitude, lng: longitude },
-                rankby: 'distance', // Prioritizes the very closest results
-                key: apiKey,
-            }
-        });
+        const nearbySearchUrl = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
+        nearbySearchUrl.searchParams.set('location', `${latitude},${longitude}`);
+        nearbySearchUrl.searchParams.set('rankby', 'distance');
+        nearbySearchUrl.searchParams.set('key', apiKey);
+
+        const nearbySearchResponse = await fetch(nearbySearchUrl.toString());
+        const nearbySearchData = await nearbySearchResponse.json();
         
+        if (nearbySearchData.status !== 'OK' && nearbySearchData.status !== 'ZERO_RESULTS') {
+            throw new Error(`Google Places API Error (Nearby Search): ${nearbySearchData.status} - ${nearbySearchData.error_message || 'Unknown error'}`);
+        }
+
         // If we find a nearby place, use its place_id to get definitive details.
-        if (nearbySearchResponse.data.results && nearbySearchResponse.data.results.length > 0) {
-            const closestPlace = nearbySearchResponse.data.results[0];
+        if (nearbySearchData.results && nearbySearchData.results.length > 0) {
+            const closestPlace = nearbySearchData.results[0];
 
             if (closestPlace.place_id) {
-                 const detailsResponse = await client.placeDetails({
-                    params: {
-                        place_id: closestPlace.place_id,
-                        fields: ['name', 'formatted_address', 'address_components', 'formatted_phone_number'],
-                        key: apiKey, // Added API key to placeDetails request
-                    },
-                });
+                 const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+                 detailsUrl.searchParams.set('place_id', closestPlace.place_id);
+                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number');
+                 detailsUrl.searchParams.set('key', apiKey);
 
-                const placeDetails = detailsResponse.data.result;
+                 const detailsResponse = await fetch(detailsUrl.toString());
+                 const detailsData = await detailsResponse.json();
+
+                 if (detailsData.status !== 'OK') {
+                    throw new Error(`Google Places API Error (Place Details): ${detailsData.status} - ${detailsData.error_message || 'Unknown error'}`);
+                 }
+                
+                const placeDetails = detailsData.result;
 
                 if (placeDetails) {
                     const city = getBestEffortCity(placeDetails.address_components);
@@ -78,16 +84,19 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
         }
         
         // Step 2: If Nearby Search finds nothing, fall back to Reverse Geocode.
-        // This is good for getting a street address and city when no specific business is found.
-        const reverseGeocodeResponse = await client.reverseGeocode({
-            params: {
-                latlng: { latitude, longitude },
-                key: apiKey,
-            },
-        });
+        const reverseGeocodeUrl = new URL('https://maps.googleapis.com/maps/api/geocode/json');
+        reverseGeocodeUrl.searchParams.set('latlng', `${latitude},${longitude}`);
+        reverseGeocodeUrl.searchParams.set('key', apiKey);
 
-        if (reverseGeocodeResponse.data.results && reverseGeocodeResponse.data.results.length > 0) {
-            const firstResult = reverseGeocodeResponse.data.results[0];
+        const reverseGeocodeResponse = await fetch(reverseGeocodeUrl.toString());
+        const reverseGeocodeData = await reverseGeocodeResponse.json();
+        
+        if (reverseGeocodeData.status !== 'OK' && reverseGeocodeData.status !== 'ZERO_RESULTS') {
+            throw new Error(`Google Places API Error (Reverse Geocode): ${reverseGeocodeData.status} - ${reverseGeocodeData.error_message || 'Unknown error'}`);
+        }
+
+        if (reverseGeocodeData.results && reverseGeocodeData.results.length > 0) {
+            const firstResult = reverseGeocodeData.results[0];
             const city = getBestEffortCity(firstResult.address_components);
             
             return {
@@ -98,21 +107,13 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             };
         }
 
-        // If both methods fail to return anything.
+        // If all methods fail to return anything.
         console.warn(`No results from Places API for lat: ${latitude}, lng: ${longitude}`);
         return null;
 
     } catch (error: any) {
         console.error('Error fetching data from Google Places API:', error);
-        let userMessage = "An unknown error occurred while connecting to Google Places API.";
-        if (error.response?.data?.error_message) {
-            userMessage = `Google Places API Error: ${error.response.data.error_message}`;
-        } else if (error.response?.data?.status) {
-            userMessage = `Google Places API responded with status: ${error.response.data.status}. This may be an API key issue.`;
-        } else if (error.message) {
-            userMessage = error.message;
-        }
-        // Instead of returning null, throw an error that the action can catch.
-        throw new Error(userMessage);
+        // Re-throw the error so the calling action can handle it and show a toast.
+        throw error;
     }
 }
