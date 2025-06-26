@@ -29,7 +29,8 @@ const getBestEffortCity = (components: any[] | undefined): string => {
     return getAddressComponent(components, 'locality') ||          // e.g., "Boston"
            getAddressComponent(components, 'postal_town') ||         // e.g., "Cambridge" (can cover multiple localities)
            getAddressComponent(components, 'sublocality_level_1') || // e.g., a specific borough or district
-           getAddressComponent(components, 'administrative_area_level_2'); // e.g., "Suffolk County" as a fallback
+           getAddressComponent(components, 'administrative_area_level_2') || // e.g., "Suffolk County" as a fallback
+           getAddressComponent(components, 'political'); // A general political entity, often a city or town
 }
 
 export async function findPlaceFromLatLng(latitude: number, longitude: number): Promise<PlaceDetails | null> {
@@ -58,6 +59,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                     params: {
                         place_id: closestPlace.place_id,
                         fields: ['name', 'formatted_address', 'address_components', 'formatted_phone_number'],
+                        key: apiKey, // Added API key to placeDetails request
                     },
                 });
 
@@ -67,8 +69,8 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                     const city = getBestEffortCity(placeDetails.address_components);
                     return {
                         suggestedCompanyName: placeDetails.name || '',
-                        address: placeDetails.formatted_address || '',
-                        city: city,
+                        address: placeDetails.formatted_address || (city ? '' : 'No address found'),
+                        city: city || "Unknown Location",
                         phone: placeDetails.formatted_phone_number || '',
                     };
                 }
@@ -89,9 +91,9 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             const city = getBestEffortCity(firstResult.address_components);
             
             return {
-                suggestedCompanyName: '', // No specific company, but we have an address
+                suggestedCompanyName: firstResult.formatted_address, // Use address as fallback name
                 address: firstResult.formatted_address,
-                city: city,
+                city: city || "Unknown Location",
                 phone: '',
             };
         }
