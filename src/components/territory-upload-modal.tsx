@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud, FileCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { fileToDataUri } from '@/lib/utils';
 
 interface TerritoryUploadModalProps {
   isOpen: boolean;
@@ -40,37 +41,25 @@ export default function TerritoryUploadModal({ isOpen, onClose }: TerritoryUploa
     }
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('pdfFile', selectedFile);
-
+    
     try {
-      const response = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      const dataUri = await fileToDataUri(selectedFile);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload PDF');
-      }
-
-      const result = await response.json();
-
-      // Store the URL for future use with Debbie AI
-      localStorage.setItem('userTerritoryPdfUrl', result.url);
+      // Store the Data URI for future use with Debbie AI
+      localStorage.setItem('userTerritoryPdfUrl', dataUri);
       // Set flag to not show this modal again
       localStorage.setItem('territoryPdfUploaded', 'true');
       
       toast({
-        title: "Territory File Uploaded!",
+        title: "Territory File Stored!",
         description: "Debbie now has your territory information. Thank you!",
       });
 
       onClose(); // Close the modal
     } catch (error: any) {
       toast({
-        title: "Upload Failed",
-        description: error.message,
+        title: "File Processing Failed",
+        description: error.message || "Could not read the PDF file.",
         variant: 'destructive',
       });
     } finally {

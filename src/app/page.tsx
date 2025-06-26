@@ -48,6 +48,7 @@ import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, quer
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
+import { fileToDataUri } from '@/lib/utils';
 
 
 interface SubmittedSuggestion {
@@ -118,7 +119,6 @@ export default function HomePage() {
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
@@ -679,7 +679,7 @@ export default function HomePage() {
   };
 
   const handleSendChatMessage = async () => {
-    if (chatInput.trim() === '' || isAiResponding || isUploadingPdf) return;
+    if (chatInput.trim() === '' || isAiResponding) return;
 
     let messageText = chatInput.trim();
     let pdfUrlForAi: string | undefined = undefined;
@@ -687,29 +687,15 @@ export default function HomePage() {
     setIsAiResponding(true); 
 
     if (selectedPdf) {
-      setIsUploadingPdf(true);
-      const formData = new FormData();
-      formData.append('pdfFile', selectedPdf);
       try {
-        const response = await fetch('/api/upload-pdf', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to upload PDF');
-        }
-        const uploadResult = await response.json();
-        pdfUrlForAi = uploadResult.url;
-        toast({ title: 'PDF Attached', description: `${selectedPdf.name} uploaded and sent to AI.`, duration: 3000});
+        pdfUrlForAi = await fileToDataUri(selectedPdf);
+        toast({ title: 'PDF Attached', description: `${selectedPdf.name} attached and will be sent to AI.`, duration: 3000});
         messageText += ` (Attached PDF: ${selectedPdf.name})`;
-      } catch (uploadError: any) {
-        toast({ title: 'PDF Upload Failed', description: uploadError.message, variant: 'destructive' });
-        setIsUploadingPdf(false);
+      } catch (processingError: any) {
+        toast({ title: 'PDF Processing Failed', description: processingError.message, variant: 'destructive' });
         setIsAiResponding(false);
         return;
       } finally {
-        setIsUploadingPdf(false);
         setSelectedPdf(null); 
         if (pdfInputRef.current) pdfInputRef.current.value = '';
       }
@@ -726,6 +712,8 @@ export default function HomePage() {
 
     const oneWeekAgo = subDays(new Date(), 7);
     const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
+    
+    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl') || undefined;
 
     try {
       const result = await getAiChatResponseAction({
@@ -739,6 +727,7 @@ export default function HomePage() {
             partnershipConfidence: v.partnershipConfidence
         })),
         pdfUrl: pdfUrlForAi,
+        territoryPdfUrl: territoryPdfUrl,
       });
 
       if (result.error) {
@@ -1100,7 +1089,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                       </div>
                     </div>
                   ))}
-                  {isAiResponding && !isUploadingPdf && ( 
+                  {isAiResponding && ( 
                     <div className="flex justify-start mb-4">
                         <div className="flex items-end gap-2 max-w-[75%]">
                             <Avatar className="h-8 w-8 self-start">
@@ -1129,12 +1118,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     </Button>
                   </div>
                 )}
-                 {isUploadingPdf && (
-                    <div className="w-full flex items-center gap-2 text-xs text-primary p-1">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading PDF: {selectedPdf?.name}...
-                    </div>
-                 )}
                 <div className="flex w-full items-center space-x-2">
                   <Input
                     id="pdf-upload-input"
@@ -1143,13 +1126,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     onChange={handlePdfSelect}
                     className="hidden"
                     ref={pdfInputRef}
-                    disabled={isAiResponding || isUploadingPdf}
+                    disabled={isAiResponding}
                   />
                   <Button 
                     variant="outline" 
                     size="icon" 
                     onClick={() => pdfInputRef.current?.click()}
-                    disabled={isAiResponding || isUploadingPdf}
+                    disabled={isAiResponding}
                     aria-label="Attach PDF"
                   >
                     <Paperclip className="h-4 w-4" />
@@ -1159,12 +1142,12 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     placeholder="Type your message..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding && !isUploadingPdf) handleSendChatMessage(); }}
+                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }}
                     className="flex-1"
-                    disabled={isAiResponding || isUploadingPdf}
+                    disabled={isAiResponding}
                   />
-                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isUploadingPdf}>
-                    {(isAiResponding && !isUploadingPdf) || isUploadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
+                    {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     <span className="sr-only">Send</span>
                   </Button>
                 </div>

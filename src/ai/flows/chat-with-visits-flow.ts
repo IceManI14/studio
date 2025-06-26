@@ -16,7 +16,8 @@ const ChatWithVisitsInputSchema = z.object({
   userMessage: z.string().describe('The latest message from the user.'),
   visitsContext: z.string().describe('A summary of recent company visits relevant to the conversation. Each visit is separated by "---".'),
   modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-1.5-flash-latest").'),
-  pdfUrl: z.string().url().optional().describe("An optional URL to a PDF document for analysis, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
+  pdfUrl: z.string().optional().describe("An optional URL or Data URI to a PDF document for analysis for the current query. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
+  territoryPdfUrl: z.string().optional().describe("A URL or Data URI for the salesperson's territory PDF, providing overarching context."),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
 
@@ -47,15 +48,21 @@ Recent Visit Data for Context (from the last 7 days):
 No recent visits found in the last 7 days.
 {{/if}}
 
+{{#if territoryPdfUrl}}
+The user has provided their sales territory file. Use this as a primary source of context for their geographic area, boundaries, and key locations.
+Territory Document:
+{{{media url=territoryPdfUrl}}}
+{{/if}}
+
 {{#if pdfUrl}}
-The user has also attached the following PDF document for additional context. Please analyze its content and incorporate relevant information into your response:
+The user has also attached the following PDF document for additional context for this specific query. Please analyze its content and incorporate relevant information into your response:
 {{{media url=pdfUrl}}}
 {{/if}}
 
-Based on the conversation, the visit data, and any attached PDF, provide a helpful and concise response to the user.
+Based on the conversation, the visit data, and any attached PDF(s), provide a helpful and concise response to the user.
 If visit data is relevant, incorporate it naturally into your response.
 If a PDF is provided, refer to its content when answering questions or providing analysis related to it.
-If asked for summaries or analysis, use the provided visit data and PDF content.
+Always consider the territory information when providing recommendations about locations or planning.
 Keep your responses focused on sales strategy, visit planning, and analyzing customer interactions.
 Be positive and encouraging.
 AI:`,
@@ -88,10 +95,10 @@ const chatWithVisitsFlow = ai.defineFlow(
     outputSchema: ChatWithVisitsOutputSchema,
   },
   async (input) => {
-    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl } = input;
+    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, territoryPdfUrl } = input;
     
     const { output } = await prompt(
-        { chatHistory, userMessage, visitsContext, pdfUrl }, 
+        { chatHistory, userMessage, visitsContext, pdfUrl, territoryPdfUrl }, 
         { model: modelName } 
     );
 

@@ -214,7 +214,8 @@ const aiChatPayloadSchema = z.object({
       partnershipConfidence: z.number().optional(),
     })
   ),
-  pdfUrl: z.string().url().optional(),
+  pdfUrl: z.string().optional(),
+  territoryPdfUrl: z.string().optional(),
 });
 
 export async function getAiChatResponseAction(
@@ -246,6 +247,7 @@ export async function getAiChatResponseAction(
       visitsContext: visitsContextString,
       modelName: validatedPayload.model,
       pdfUrl: validatedPayload.pdfUrl,
+      territoryPdfUrl: validatedPayload.territoryPdfUrl,
     });
 
     return { aiResponse: result.aiResponse };
