@@ -47,6 +47,7 @@ import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
+import TerritoryUploadModal from '@/components/territory-upload-modal';
 
 
 interface SubmittedSuggestion {
@@ -129,6 +130,7 @@ export default function HomePage() {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
+  const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -286,6 +288,17 @@ export default function HomePage() {
     };
 
   }, [toast]);
+
+  useEffect(() => {
+    // Check if this is the first time the user is using the app
+    // and prompt them to upload their territory file for the AI.
+    if (selectedSalesperson) { // Only run after a salesperson is selected
+        const hasUploaded = localStorage.getItem('territoryPdfUploaded');
+        if (!hasUploaded) {
+            setShowTerritoryUploadModal(true);
+        }
+    }
+  }, [selectedSalesperson]);
 
   useEffect(() => {
     if (coldCallCount >= 30) {
@@ -791,6 +804,10 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           onSelectSalesperson={handleSelectSalesperson}
         />
       )}
+      <TerritoryUploadModal 
+        isOpen={showTerritoryUploadModal}
+        onClose={() => setShowTerritoryUploadModal(false)}
+      />
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full py-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
