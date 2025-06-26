@@ -47,7 +47,6 @@ import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
-import { DirectionsRenderer, DirectionsService } from '@react-google-maps/api';
 
 
 interface SubmittedSuggestion {
@@ -127,7 +126,6 @@ export default function HomePage() {
   const [pendingVisit, setPendingVisit] = useState<Visit | null>(null);
 
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
 
@@ -1014,7 +1012,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
               
               <GoogleMapComponent 
                 visits={visits} 
-                directions={directions}
                 userLatitude={userCurrentLatitude}
                 userLongitude={userCurrentLongitude}
               />

@@ -2,13 +2,12 @@
 'use client';
 
 import type { Visit } from '@/lib/types';
-import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, MapPin, AlertTriangle } from 'lucide-react';
 
 interface GoogleMapComponentProps {
   visits: Visit[];
-  directions: google.maps.DirectionsResult | null;
   userLatitude?: number;
   userLongitude?: number;
 }
@@ -16,7 +15,6 @@ interface GoogleMapComponentProps {
 interface GoogleMapLoaderProps {
   visits: Visit[];
   apiKey: string;
-  directions: google.maps.DirectionsResult | null;
   userLatitude?: number;
   userLongitude?: number;
 }
@@ -33,10 +31,10 @@ const defaultCenter = {
   lng: -98.5795,
 };
 
-const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, directions, userLatitude, userLongitude }) => {
+const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userLatitude, userLongitude }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
-    libraries: ['marker', 'directions'],
+    libraries: ['marker'],
   });
 
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
@@ -49,10 +47,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, direc
   );
 
   useEffect(() => {
-    if (directions) {
-        // If directions are available, let the map auto-center on them.
-        // No manual center/zoom needed.
-    } else if (validVisits.length > 0) {
+    if (validVisits.length > 0) {
       const latestVisit = validVisits.reduce((latest, current) => {
         return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
       });
@@ -68,7 +63,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, direc
       setMapCenter(defaultCenter);
       setZoomLevel(4);
     }
-  }, [validVisits, directions, userLatitude, userLongitude]);
+  }, [validVisits, userLatitude, userLongitude]);
 
   const handleMarkerClick = useCallback((visitId: string) => {
     setActiveMarker(visitId);
@@ -158,7 +153,6 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, direc
         fullscreenControl: false,
       }}
     >
-      {directions && <DirectionsRenderer directions={directions} />}
       {validVisits.map((visit) => (
         <MarkerF
           key={visit.id}
@@ -189,7 +183,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, direc
 };
 
 
-const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, directions, userLatitude, userLongitude }) => {
+const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLatitude, userLongitude }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
@@ -209,7 +203,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, directi
     );
   }
 
-  return <GoogleMapLoader visits={visits} apiKey={apiKey} directions={directions} userLatitude={userLatitude} userLongitude={userLongitude} />;
+  return <GoogleMapLoader visits={visits} apiKey={apiKey} userLatitude={userLatitude} userLongitude={userLongitude} />;
 };
 
 
