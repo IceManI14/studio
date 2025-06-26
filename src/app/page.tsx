@@ -837,7 +837,19 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
-            <TabsTrigger value="visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger
+              value="visits"
+              className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
+              onClick={(e) => {
+                if (visits.length === 0) {
+                  e.preventDefault();
+                  toast({
+                    title: 'No Visits to show at the moment!',
+                    description: 'Come back at the end of the day!',
+                  });
+                }
+              }}
+            >
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
