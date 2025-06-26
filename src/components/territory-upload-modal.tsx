@@ -118,7 +118,7 @@ export default function TerritoryUploadModal({ isOpen, onClose }: TerritoryUploa
         <DialogFooter>
           <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-            Upload and Continue
+            Store this file locally for Debbie to use as data
           </Button>
         </DialogFooter>
       </DialogContent>
