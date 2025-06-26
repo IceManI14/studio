@@ -1169,7 +1169,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     </p>
                     <ul className="list-disc list-inside text-foreground text-base leading-relaxed mt-3 space-y-1 pl-4">
                       <li>
-                        When you <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span>, the app begins to scrape the web for the company data at which you are currently located.
+                        When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> button, the app begins to scrape the web for the company data at which you are currently located.
                         It will hopefully give a a quick run down of what you are up against as a salesperson,
                         and potentially help you get to the decision maker more efficiently.
                       </li>
