@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
@@ -128,6 +128,7 @@ export default function HomePage() {
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
+  const [isFindingParking, setIsFindingParking] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -1305,7 +1306,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <DialogHeader>
                     <DialogTitle>Choose Your Destination</DialogTitle>
                     <DialogDescription>
-                        Select a city or town from your territories to get directions for the day.
+                        Select a city to get an AI-optimized parking location for your day.
                     </DialogDescription>
                 </DialogHeader>
                 <Accordion type="multiple" className="w-full max-h-[400px] overflow-y-auto pr-2">
@@ -1320,13 +1321,45 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                                 key={city}
                                                 variant="ghost"
                                                 className="justify-start"
-                                                onClick={() => {
-                                                    const destination = city;
-                                                    if (typeof window !== 'undefined') {
-                                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, '_blank');
-                                                    }
+                                                disabled={isFindingParking}
+                                                onClick={async () => {
+                                                    const destinationCity = city;
                                                     setIsDestinationModalOpen(false);
-                                                    toast({ title: `Navigating to ${city}`, description: "Opening Google Maps in a new tab."});
+                                                    setIsFindingParking(true);
+                                                    toast({
+                                                        title: 'AI is finding the best parking spot...',
+                                                        description: `Optimizing your route for ${destinationCity}. This may take a moment.`,
+                                                        duration: 10000,
+                                                    });
+
+                                                    try {
+                                                        const result = await findOptimalParkingAction({ city: destinationCity });
+
+                                                        if (result.error) {
+                                                            throw new Error(result.error);
+                                                        }
+
+                                                        if (result.latitude && result.longitude) {
+                                                            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
+                                                            if (typeof window !== 'undefined') {
+                                                                window.open(googleMapsUrl, '_blank');
+                                                            }
+                                                            toast({
+                                                                title: 'Optimal Location Found!',
+                                                                description: `Navigating to: ${result.locationDescription || 'suggested parking area'}.`,
+                                                            });
+                                                        } else {
+                                                            throw new Error('AI did not return a valid location.');
+                                                        }
+                                                    } catch (e: any) {
+                                                        toast({
+                                                            title: 'Could Not Find Location',
+                                                            description: e.message || 'An unexpected error occurred.',
+                                                            variant: 'destructive',
+                                                        });
+                                                    } finally {
+                                                        setIsFindingParking(false);
+                                                    }
                                                 }}
                                             >
                                                {city}
@@ -1339,7 +1372,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     ))}
                 </Accordion>
                  <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)}>Skip</Button>
+                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking}>
+                        {isFindingParking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Skip'}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

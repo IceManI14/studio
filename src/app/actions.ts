@@ -5,6 +5,7 @@ import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
 import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords.ts';
 import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
+import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -282,5 +283,33 @@ export async function summarizeNotesAction(
         return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
     }
     return { error: error.message || 'Failed to summarize notes. An unexpected error occurred.' };
+  }
+}
+
+const findOptimalParkingSchema = z.object({
+  city: z.string().min(1, "City name is required."),
+});
+
+export async function findOptimalParkingAction(
+  payload: z.infer<typeof findOptimalParkingSchema>
+): Promise<{ latitude?: number; longitude?: number; locationDescription?: string; error?: string }> {
+  try {
+    const validatedPayload = findOptimalParkingSchema.parse(payload);
+    const result = await findOptimalParking({ city: validatedPayload.city });
+    return {
+      latitude: result.latitude,
+      longitude: result.longitude,
+      locationDescription: result.locationDescription,
+    };
+  } catch (error: any) {
+    console.error("Error in findOptimalParkingAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
+        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
+    }
+    return { error: error.message || 'Failed to find optimal parking location. An unexpected error occurred.' };
   }
 }

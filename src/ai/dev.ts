@@ -14,3 +14,4 @@ if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY !== "YOUR_GOOGLE_AP
 import '@/ai/flows/scrape-contact-info.ts';
 import '@/ai/flows/summarize-visit-notes.ts';
 import '@/ai/flows/chat-with-visits-flow.ts';
+import '@/ai/flows/find-optimal-parking-flow.ts';
