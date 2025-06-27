@@ -116,7 +116,6 @@ const visitFormSchema = z.object({
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.date().optional(),
   freeTrial: z.boolean().optional(),
-  dealClosed: z.boolean().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false;
@@ -188,7 +187,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: false,
       futureMeetingDateTime: undefined,
       freeTrial: false,
-      dealClosed: false,
     },
   });
 
@@ -277,7 +275,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         futureMeetingSet: initialData.futureMeetingSet || false,
         futureMeetingDateTime: initialData.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
         freeTrial: initialData.freeTrial || false,
-        dealClosed: initialData.dealClosed || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -302,7 +299,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         futureMeetingSet: false,
         futureMeetingDateTime: undefined,
         freeTrial: false,
-        dealClosed: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -606,7 +602,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: data.futureMeetingSet,
       futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
       freeTrial: data.freeTrial,
-      dealClosed: data.dealClosed,
+      dealClosed: initialData?.dealClosed,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -680,6 +676,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleNotesBlur = () => {
     if (isRecordingNotes && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
+    }
+  };
+
+  const handleGeniusScanClick = () => {
+    if (typeof window !== 'undefined') {
+      const isAndroid = /android/i.test(navigator.userAgent);
+      toast({ 
+        title: isAndroid ? 'Opening Google Play Store' : 'Opening Genius Scan',
+        description: 'After scanning, come back here and upload the saved image from your photos.',
+      });
+
+      if (isAndroid) {
+        window.open('https://play.google.com/store/apps/details?id=com.thegrizzlylabs.geniusscan.free', '_blank');
+      } else {
+        // For iOS and others
+        window.open('geniusscan://', '_blank');
+      }
     }
   };
 
@@ -881,12 +894,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     type="button" 
                     variant="secondary"
                     className="w-full"
-                    onClick={() => {
-                        if (typeof window !== 'undefined') {
-                            window.open('geniusscan://', '_blank');
-                            toast({ title: 'Opening Genius Scan', description: 'After scanning, come back and upload the image from your photos.' });
-                        }
-                    }}
+                    onClick={handleGeniusScanClick}
                   >
                       <ScanLine className="mr-2 h-4 w-4" />
                       Activate Genius Scan

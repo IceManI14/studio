@@ -101,7 +101,7 @@ export default function HomePage() {
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
-  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp'>('partnershipConfidence');
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
 
@@ -344,10 +344,17 @@ export default function HomePage() {
       const confidenceB = b.partnershipConfidence ?? 0;
       const timeA = new Date(a.timestamp).getTime();
       const timeB = new Date(b.timestamp).getTime();
+      const dealClosedA = a.dealClosed ? 1 : 0;
+      const dealClosedB = b.dealClosed ? 1 : 0;
 
       let comparison = 0;
 
-      if (sortCriteria === 'partnershipConfidence') {
+      if (sortCriteria === 'dealClosed') {
+        comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
+        if (comparison !== 0) return comparison;
+        // Secondary sort by confidence descending
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'partnershipConfidence') {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
         return timeB - timeA; // Secondary sort by time descending
@@ -476,6 +483,9 @@ export default function HomePage() {
       hasTDSReading: false,
       tdsValue: undefined,
       futureMeetingSet: false,
+      futureMeetingDateTime: undefined,
+      freeTrial: false,
+      dealClosed: false,
     };
 
     if (userCurrentLatitude && userCurrentLongitude && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
@@ -951,7 +961,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     <Label htmlFor="sort-criteria" className="text-sm">Sort By</Label>
                     <Select
                       value={sortCriteria}
-                      onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp')}
+                      onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
                     >
                       <SelectTrigger id="sort-criteria" className="w-full sm:w-[220px]">
                         <SelectValue placeholder="Select criteria" />
@@ -959,6 +969,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                       <SelectContent>
                         <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
                         <SelectItem value="timestamp">Date Visited</SelectItem>
+                        <SelectItem value="dealClosed">Closed Deals</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -968,12 +979,31 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                       value={sortOrder}
                       onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
                     >
-                      <SelectTrigger id="sort-order" className="w-full sm:w-[180px]">
+                      <SelectTrigger id="sort-order" className="w-full sm:w-[220px]">
                         <SelectValue placeholder="Select order" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="desc">Descending by visit card number</SelectItem>
-                        <SelectItem value="asc">Ascending by visit card number</SelectItem>
+                        {sortCriteria === 'partnershipConfidence' ? (
+                          <>
+                            <SelectItem value="desc">High to Low!</SelectItem>
+                            <SelectItem value="asc">Low to High</SelectItem>
+                          </>
+                        ) : sortCriteria === 'timestamp' ? (
+                          <>
+                            <SelectItem value="desc">Newest to Oldest</SelectItem>
+                            <SelectItem value="asc">Oldest to Newest</SelectItem>
+                          </>
+                        ) : sortCriteria === 'dealClosed' ? (
+                          <>
+                            <SelectItem value="desc">Closed Deals First</SelectItem>
+                            <SelectItem value="asc">Open Deals First</SelectItem>
+                          </>
+                        ) : (
+                           <>
+                            <SelectItem value="desc">Descending</SelectItem>
+                            <SelectItem value="asc">Ascending</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
