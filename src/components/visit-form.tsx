@@ -115,6 +115,7 @@ const visitFormSchema = z.object({
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.date().optional(),
+  freeTrial: z.boolean().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false;
@@ -185,6 +186,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       tdsValue: undefined,
       futureMeetingSet: false,
       futureMeetingDateTime: undefined,
+      freeTrial: false,
     },
   });
 
@@ -272,6 +274,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         tdsValue: initialData.tdsValue,
         futureMeetingSet: initialData.futureMeetingSet || false,
         futureMeetingDateTime: initialData.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
+        freeTrial: initialData.freeTrial || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -295,6 +298,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         tdsValue: undefined,
         futureMeetingSet: false,
         futureMeetingDateTime: undefined,
+        freeTrial: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -597,6 +601,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
       futureMeetingSet: data.futureMeetingSet,
       futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
+      freeTrial: data.freeTrial,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -1110,6 +1115,27 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="freeTrial"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="freeTrial"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
+                      <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
 
             <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Info (Optional)</Label>

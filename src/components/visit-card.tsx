@@ -222,6 +222,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
               </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Free Trial: {visit.freeTrial ? 'Yes' : 'No'}
+              </div>
             </div>
           </div>
         </div>

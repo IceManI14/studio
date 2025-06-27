@@ -51,6 +51,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "DM Contact",
         "Competitor",
         "Cooler",
+        "Free Trial",
       ];
 
       const tableRows = visits.map(visit => {
@@ -67,6 +68,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.decisionMakerContact || 'N/A',
           visit.competitorName || (visit.discussedCompetitors ? 'Yes (Unspecified)' : 'No'),
           visit.coolerType || (visit.discussedCompetitors ? 'N/A' : 'N/A'),
+          visit.freeTrial ? 'Yes' : 'No',
         ];
       });
 

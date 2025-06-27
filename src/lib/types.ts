@@ -39,6 +39,7 @@ export interface Visit {
   tdsValue?: number;
   futureMeetingSet?: boolean;
   futureMeetingDateTime?: Date;
+  freeTrial?: boolean;
 }
 
 export interface ChatMessage {

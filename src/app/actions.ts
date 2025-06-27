@@ -31,6 +31,7 @@ export interface SaveVisitPayload {
   tdsValue?: number;
   futureMeetingSet?: boolean; 
   futureMeetingDateTime?: Date;
+  freeTrial?: boolean;
   originalCompanyName?: string;
   originalNotes?: string;
   existingContactInfo?: ContactInfo; 
@@ -59,6 +60,7 @@ const saveVisitPayloadSchema = z.object({
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.date().optional(),
+  freeTrial: z.boolean().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -144,6 +146,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
       futureMeetingSet: validatedPayload.futureMeetingSet,
       futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
+      freeTrial: validatedPayload.freeTrial,
     };
 
     return { visit };
