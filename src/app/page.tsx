@@ -13,7 +13,7 @@ import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, Mess
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { format, subDays } from 'date-fns';
+import { format, subDays, isSameDay } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import { fileToDataUri } from '@/lib/utils';
+import { Calendar } from "@/components/ui/calendar";
 
 
 interface SubmittedSuggestion {
@@ -132,6 +133,7 @@ export default function HomePage() {
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -339,7 +341,12 @@ export default function HomePage() {
     if (visits.length === 0) {
       return [];
     }
-    const sorted = [...visits].sort((a, b) => {
+
+    const filteredVisits = selectedDate
+      ? visits.filter(visit => isSameDay(new Date(visit.timestamp), selectedDate))
+      : visits;
+
+    const sorted = [...filteredVisits].sort((a, b) => {
       const confidenceA = a.partnershipConfidence ?? 0;
       const confidenceB = b.partnershipConfidence ?? 0;
       const timeA = new Date(a.timestamp).getTime();
@@ -365,7 +372,7 @@ export default function HomePage() {
       }
     });
     return sorted;
-  }, [visits, sortCriteria, sortOrder]);
+  }, [visits, sortCriteria, sortOrder, selectedDate]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -954,65 +961,84 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground">Sort Options</h3>
+                  <h3 className="text-lg font-medium text-foreground">Filter & Sort Options</h3>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
-                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                    <Label htmlFor="sort-criteria" className="text-sm">Sort By</Label>
-                    <Select
-                      value={sortCriteria}
-                      onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
-                    >
-                      <SelectTrigger id="sort-criteria" className="w-full sm:w-[220px]">
-                        <SelectValue placeholder="Select criteria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
-                        <SelectItem value="timestamp">Date Visited</SelectItem>
-                        <SelectItem value="dealClosed">Closed Deals</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <div className="flex flex-col items-center">
+                    <Label className="text-sm mb-2 block w-full text-left">Filter by Date</Label>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      className="rounded-md border self-center"
+                    />
+                    {selectedDate && (
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
+                        Clear Date Filter
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                    <Label htmlFor="sort-order" className="text-sm">Order</Label>
-                    <Select
-                      value={sortOrder}
-                      onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-                    >
-                      <SelectTrigger id="sort-order" className="w-full sm:w-[220px]">
-                        <SelectValue placeholder="Select order" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortCriteria === 'partnershipConfidence' ? (
-                          <>
-                            <SelectItem value="desc">High to Low!</SelectItem>
-                            <SelectItem value="asc">Low to High</SelectItem>
-                          </>
-                        ) : sortCriteria === 'timestamp' ? (
-                          <>
-                            <SelectItem value="desc">Newest to Oldest</SelectItem>
-                            <SelectItem value="asc">Oldest to Newest</SelectItem>
-                          </>
-                        ) : sortCriteria === 'dealClosed' ? (
-                          <>
-                            <SelectItem value="desc">Closed Deals First</SelectItem>
-                            <SelectItem value="asc">Open Deals First</SelectItem>
-                          </>
-                        ) : (
-                           <>
-                            <SelectItem value="desc">Descending</SelectItem>
-                            <SelectItem value="asc">Ascending</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <Label htmlFor="sort-criteria" className="text-sm">Sort By</Label>
+                      <Select
+                        value={sortCriteria}
+                        onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
+                      >
+                        <SelectTrigger id="sort-criteria" className="w-full">
+                          <SelectValue placeholder="Select criteria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
+                          <SelectItem value="timestamp">Date Visited</SelectItem>
+                          <SelectItem value="dealClosed">Closed Deals</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <Label htmlFor="sort-order" className="text-sm">Order</Label>
+                      <Select
+                        value={sortOrder}
+                        onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                      >
+                        <SelectTrigger id="sort-order" className="w-full">
+                          <SelectValue placeholder="Select order" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sortCriteria === 'partnershipConfidence' ? (
+                            <>
+                              <SelectItem value="desc">High to Low</SelectItem>
+                              <SelectItem value="asc">Low to High</SelectItem>
+                            </>
+                          ) : sortCriteria === 'timestamp' ? (
+                            <>
+                              <SelectItem value="desc">Newest to Oldest</SelectItem>
+                              <SelectItem value="asc">Oldest to Newest</SelectItem>
+                            </>
+                          ) : sortCriteria === 'dealClosed' ? (
+                            <>
+                              <SelectItem value="desc">Closed Deals First</SelectItem>
+                              <SelectItem value="asc">Open Deals First</SelectItem>
+                            </>
+                          ) : (
+                             <>
+                              <SelectItem value="desc">Descending</SelectItem>
+                              <SelectItem value="asc">Ascending</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
 
+
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                  <p className="text-xl text-muted-foreground mb-4">No visits to display. Log visits in "Field Day" first.</p>
+                  <p className="text-xl text-muted-foreground mb-4">
+                    {selectedDate ? `No visits logged on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
