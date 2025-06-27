@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -116,6 +116,7 @@ const visitFormSchema = z.object({
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.date().optional(),
   freeTrial: z.boolean().optional(),
+  dealClosed: z.boolean().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false;
@@ -187,6 +188,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: false,
       futureMeetingDateTime: undefined,
       freeTrial: false,
+      dealClosed: false,
     },
   });
 
@@ -275,6 +277,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         futureMeetingSet: initialData.futureMeetingSet || false,
         futureMeetingDateTime: initialData.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
         freeTrial: initialData.freeTrial || false,
+        dealClosed: initialData.dealClosed || false,
       });
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
@@ -299,6 +302,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         futureMeetingSet: false,
         futureMeetingDateTime: undefined,
         freeTrial: false,
+        dealClosed: false,
       });
       setCurrentLatitude(undefined);
       setCurrentLongitude(undefined);
@@ -602,6 +606,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: data.futureMeetingSet,
       futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
       freeTrial: data.freeTrial,
+      dealClosed: data.dealClosed,
       originalCompanyName: initialData?.companyName,
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
@@ -1131,6 +1136,27 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <div className="space-y-1 leading-none">
                     <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
                       <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dealClosed"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="dealClosed"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="dealClosed" className="cursor-pointer font-normal flex items-center text-green-600 dark:text-green-400">
+                      <DollarSign className="mr-2 h-4 w-4" /> Deal Closed?
                     </FormLabel>
                   </div>
                 </FormItem>

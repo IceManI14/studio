@@ -16,6 +16,8 @@ import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Separator } from './ui/separator';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 
 interface VisitCardProps {
   visit: Visit;
@@ -33,6 +35,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const [isDateVisible, setIsDateVisible] = useState(false);
   const [isCoordsVisible, setIsCoordsVisible] = useState(false);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+
+  const handleDealClosedChange = (checked: boolean) => {
+    const updatedVisit = { ...visit, dealClosed: !!checked };
+    onUpdateVisit(updatedVisit);
+    toast({
+        title: checked ? "Congratulations!" : "Deal Status Updated",
+        description: `Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}`,
+    });
+  };
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
@@ -136,7 +147,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2 border-primary/40",
+        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
+        visit.dealClosed ? 'border-green-500' : 'border-primary/40',
         !isZoomedView && 'cursor-pointer'
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
@@ -367,29 +379,46 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </CardContent>
       )}
 
-      <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
-          <Edit className="h-4 w-4" />
-        </Button>
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+      <CardFooter className="flex justify-between items-center gap-2 border-t pt-4 mt-auto">
+        <div 
+          className="flex items-center space-x-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox 
+            id={`deal-closed-${visit.id}`} 
+            checked={!!visit.dealClosed}
+            onCheckedChange={handleDealClosedChange}
+            aria-label="Mark deal as closed"
+          />
+          <Label htmlFor={`deal-closed-${visit.id}`} className="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400">
+            Deal Closed!
+          </Label>
+        </div>
+
+        <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
       </CardFooter>
     </Card>
   );

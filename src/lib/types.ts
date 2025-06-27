@@ -40,6 +40,7 @@ export interface Visit {
   futureMeetingSet?: boolean;
   futureMeetingDateTime?: Date;
   freeTrial?: boolean;
+  dealClosed?: boolean;
 }
 
 export interface ChatMessage {

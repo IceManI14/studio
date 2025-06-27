@@ -28,7 +28,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
     const headers = [
       'ID', 'Timestamp', 'Latitude', 'Longitude',
       'Company Name', 'Notes', 'Contact Info',
-      'Contact Confidence', 'Notes Summary'
+      'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
+      'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 'Competitor Name',
+      'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
+      'Decision Maker Contact', 'Visit Number', 'Interested Unit',
+      'Has TDS Reading', 'TDS Value', 'Future Meeting Set',
+      'Future Meeting DateTime', 'Free Trial', 'Deal Closed'
     ];
 
     const rows = visits.map(visit => [
@@ -36,11 +41,28 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       new Date(visit.timestamp).toISOString(),
       visit.latitude ?? '',
       visit.longitude ?? '',
-      `"${visit.companyName.replace(/"/g, '""')}"`, // Escape double quotes
+      `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
       `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
       `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
       visit.contactInfo?.confidence ?? '',
-      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`
+      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`,
+      visit.partnershipConfidence ?? '',
+      visit.hasBusinessCard ? 'Yes' : 'No',
+      `"${(visit.businessCardImageUrl ?? '').replace(/"/g, '""')}"`,
+      visit.discussedCompetitors ? 'Yes' : 'No',
+      `"${(visit.competitorName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.coolerType ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
+      visit.visitNumber ?? '',
+      `"${(visit.interestedUnit ?? '').replace(/"/g, '""')}"`,
+      visit.hasTDSReading ? 'Yes' : 'No',
+      visit.tdsValue ?? '',
+      visit.futureMeetingSet ? 'Yes' : 'No',
+      visit.futureMeetingDateTime ? new Date(visit.futureMeetingDateTime).toISOString() : '',
+      visit.freeTrial ? 'Yes' : 'No',
+      visit.dealClosed ? 'Yes' : 'No',
     ].join(','));
 
     const csvContent = [headers.join(','), ...rows].join('\n');

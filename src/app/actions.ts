@@ -32,6 +32,7 @@ export interface SaveVisitPayload {
   futureMeetingSet?: boolean; 
   futureMeetingDateTime?: Date;
   freeTrial?: boolean;
+  dealClosed?: boolean;
   originalCompanyName?: string;
   originalNotes?: string;
   existingContactInfo?: ContactInfo; 
@@ -61,6 +62,7 @@ const saveVisitPayloadSchema = z.object({
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.date().optional(),
   freeTrial: z.boolean().optional(),
+  dealClosed: z.boolean().optional(),
   originalCompanyName: z.string().optional(),
   originalNotes: z.string().optional(),
   existingContactInfo: z.object({
@@ -147,6 +149,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       futureMeetingSet: validatedPayload.futureMeetingSet,
       futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
       freeTrial: validatedPayload.freeTrial,
+      dealClosed: validatedPayload.dealClosed,
     };
 
     return { visit };
