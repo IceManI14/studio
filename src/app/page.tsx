@@ -58,9 +58,10 @@ interface SubmittedSuggestion {
 }
 
 const AVAILABLE_AI_MODELS = [
-  { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
-  { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
-  { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
+    { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
+    { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
+    { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
+    { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
 
 const salespeople: Salesperson[] = [
@@ -1415,7 +1416,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                                         if (result.latitude && result.longitude) {
                                                             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
                                                             if (typeof window !== 'undefined') {
-                                                                window.open(googleMapsUrl, '_blank');
+                                                                window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
                                                             }
                                                             toast({
                                                                 title: 'Optimal Location Found!',
