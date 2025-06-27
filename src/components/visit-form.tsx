@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
@@ -196,6 +196,62 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const hasTDSReadingValue = form.watch('hasTDSReading');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
 
+  const handleSuggestCompany = useCallback(async () => {
+    setIsSuggestingCompany(true);
+
+    let lat = form.getValues('latitude');
+    let lon = form.getValues('longitude');
+
+    try {
+        // If coords are not in the form, fetch them. This is for manual "Find" clicks.
+        if (!lat || !lon) {
+            if (!navigator.geolocation) {
+                throw new Error("Geolocation is not supported by your browser.");
+            }
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => 
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+            );
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+        }
+
+        // Update state and form with coordinates
+        setCurrentLatitude(lat);
+        setCurrentLongitude(lon);
+        form.setValue('latitude', lat, { shouldValidate: true });
+        form.setValue('longitude', lon, { shouldValidate: true });
+
+        // Now, perform the company lookup
+        const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
+            form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
+            toast({ title: "Company Found", description: `Located: ${result.suggestedCompanyName}` });
+        } else {
+            toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+        }
+        if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
+        if (result.address) {
+            const currentNotes = form.getValues('notes') || '';
+            const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
+            form.setValue('notes', newNotes.replace(/\\n/g, '\n'), { shouldValidate: true });
+        }
+        if (result.city) setCurrentCity(result.city);
+
+    } catch (error: any) {
+        let errorMessage = error.message || "An unexpected error occurred.";
+        if (error.code === error.PERMISSION_DENIED) errorMessage = "Location access denied. Please enable it in your browser settings.";
+        toast({ title: "Could Not Find Company", description: errorMessage, variant: "destructive" });
+    } finally {
+        setIsSuggestingCompany(false);
+    }
+  }, [form, toast, setCurrentCity]);
+
+
   useEffect(() => {
     if (hasTDSReadingValue) {
       // A small delay ensures the element is rendered and can be focused.
@@ -279,6 +335,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setCurrentLatitude(initialData.latitude);
       setCurrentLongitude(initialData.longitude);
       setBusinessCardPreviewUrl(initialData.businessCardImageUrl || null);
+      
+      // Auto-suggest company if it's a new visit and no name is present yet
+      if (isOpen && !initialData.id && !initialData.companyName && initialData.latitude && initialData.longitude) {
+        handleSuggestCompany();
+      }
     } else {
       form.reset({
         companyName: '',
@@ -307,7 +368,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
     setHasCameraPermission(undefined);
-  }, [initialData, form, isOpen, salesperson]);
+  }, [initialData, form, isOpen, salesperson, handleSuggestCompany]);
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -458,75 +519,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } else {
         toast({ title: "Capture Error", description: "Camera not ready or permission denied.", variant: "destructive"});
     }
-  };
-
-
-  const handleSuggestCompany = async () => {
-    setIsSuggestingCompany(true);
-
-    const suggestFromCoords = async (lat: number, lon: number) => {
-      setCurrentLatitude(lat);
-      setCurrentLongitude(lon);
-      form.setValue('latitude', lat, { shouldValidate: true });
-      form.setValue('longitude', lon, { shouldValidate: true });
-
-      const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-      setIsSuggestingCompany(false);
-
-      if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
-      } else {
-        if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
-          form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
-          toast({
-              title: "Company Found",
-              description: `Located: ${result.suggestedCompanyName}`
-          });
-        } else {
-          toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
-        }
-        if (result.phone) {
-          form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
-        }
-        if (result.address) {
-          const currentNotes = form.getValues('notes') || '';
-          const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
-          form.setValue('notes', newNotes.replace(/\\n/g, '\n'), { shouldValidate: true });
-        }
-        if (result.city) {
-            setCurrentCity(result.city);
-        }
-      }
-    };
-
-    if (currentLatitude && currentLongitude) {
-      await suggestFromCoords(currentLatitude, currentLongitude);
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setIsSuggestingCompany(false);
-      toast({
-        title: "Geolocation Not Supported",
-        description: "Your browser does not support this feature.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        suggestFromCoords(position.coords.latitude, position.coords.longitude);
-      },
-      (error) => {
-        setIsSuggestingCompany(false);
-        let errorMessage = "Could not retrieve location.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location access denied. Please enable it in your browser settings.";
-        }
-        toast({ title: "Location Error", description: errorMessage, variant: "destructive" });
-      }
-    );
   };
 
   const handleAddCustomCooler = () => {

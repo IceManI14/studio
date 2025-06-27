@@ -59,7 +59,6 @@ interface SubmittedSuggestion {
 
 const AVAILABLE_AI_MODELS = [
     { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
-    { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
     { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
     { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
@@ -134,6 +133,7 @@ export default function HomePage() {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
+  const [isFetchingNewLocation, setIsFetchingNewLocation] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
@@ -466,57 +466,109 @@ export default function HomePage() {
     setPendingVisit(null);
   };
 
-  const handleOpenAddVisitForm = () => {
-    const newVisitNumber = coldCallCount + 1;
-    const currentTime = new Date();
-    
-    const newVisitData: Visit = {
-      id: '',
-      timestamp: currentTime,
-      companyName: '',
-      notes: '',
-      latitude: userCurrentLatitude, 
-      longitude: userCurrentLongitude, 
-      contactInfo: undefined,
-      notesSummary: undefined,
-      partnershipConfidence: undefined,
-      hasBusinessCard: false,
-      businessCardImageUrl: undefined,
-      discussedCompetitors: false,
-      competitorName: undefined,
-      coolerType: undefined,
-      decisionMakerName: '',
-      decisionMakerTitle: '',
-      decisionMakerContact: '',
-      visitNumber: newVisitNumber,
-      interestedUnit: undefined,
-      hasTDSReading: false,
-      tdsValue: undefined,
-      futureMeetingSet: false,
-      futureMeetingDateTime: undefined,
-      freeTrial: false,
-      dealClosed: false,
-    };
+  const handleOpenAddVisitForm = async () => {
+    setIsFetchingNewLocation(true);
 
-    if (userCurrentLatitude && userCurrentLongitude && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
-      const hasTerritories = selectedSalesperson.territory.length > 0;
-      if (hasTerritories) {
-        const inTerritory = selectedSalesperson.territory.some(t => 
-          userCurrentLatitude >= t.bounds.minLat &&
-          userCurrentLatitude <= t.bounds.maxLat &&
-          userCurrentLongitude >= t.bounds.minLng &&
-          userCurrentLongitude <= t.bounds.maxLng
-        );
-        if (!inTerritory) {
-          setPendingVisit(newVisitData);
-          setIsTerritoryWarningOpen(true);
+    const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not supported by your browser."));
           return;
         }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+            });
+          },
+          (error) => {
+            let message = "Could not retrieve location.";
+            if (error.code === error.PERMISSION_DENIED) {
+              message = "Location access denied. Please enable it in your browser settings.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              message = "Location information is unavailable.";
+            } else if (error.code === error.TIMEOUT) {
+              message = "Location request timed out.";
+            }
+            reject(new Error(message));
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // force fresh read
+        );
+      });
+    };
+
+    try {
+      const { lat, lon } = await getFreshCoordinates();
+      
+      setUserCurrentLatitude(lat);
+      setUserCurrentLongitude(lon);
+      toast({
+        title: "Fresh Location Acquired",
+        description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`
+      });
+
+      const newVisitNumber = coldCallCount + 1;
+      const currentTime = new Date();
+      
+      const newVisitData: Visit = {
+        id: '',
+        timestamp: currentTime,
+        companyName: '',
+        notes: '',
+        latitude: lat, 
+        longitude: lon, 
+        contactInfo: undefined,
+        notesSummary: undefined,
+        partnershipConfidence: undefined,
+        hasBusinessCard: false,
+        businessCardImageUrl: undefined,
+        discussedCompetitors: false,
+        competitorName: undefined,
+        coolerType: undefined,
+        decisionMakerName: '',
+        decisionMakerTitle: '',
+        decisionMakerContact: '',
+        visitNumber: newVisitNumber,
+        interestedUnit: undefined,
+        hasTDSReading: false,
+        tdsValue: undefined,
+        futureMeetingSet: false,
+        futureMeetingDateTime: undefined,
+        freeTrial: false,
+        dealClosed: false,
+      };
+
+      if (lat && lon && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
+        const hasTerritories = selectedSalesperson.territory.length > 0;
+        if (hasTerritories) {
+          const inTerritory = selectedSalesperson.territory.some(t => 
+            lat >= t.bounds.minLat &&
+            lat <= t.bounds.maxLat &&
+            lon >= t.bounds.minLng &&
+            lon <= t.bounds.maxLng
+          );
+          if (!inTerritory) {
+            setPendingVisit(newVisitData);
+            setIsTerritoryWarningOpen(true);
+            return; // The finally block will still run
+          }
+        }
       }
+      
+      proceedToCreateVisit(newVisitData);
+    } catch (error: any) {
+      toast({
+        title: "Location Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingNewLocation(false);
     }
-    
-    proceedToCreateVisit(newVisitData);
   };
+
 
   const handleEditVisit = (visit: Visit) => {
     setCurrentEditingVisit(visit);
@@ -905,8 +957,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1">
-                        <PlusCircle className="mr-2 h-5 w-5" /> Hit New Door!
+                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
+                        {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
+                        {isFetchingNewLocation ? 'Getting Location...' : 'Hit New Door!'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
