@@ -263,30 +263,38 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </AccordionItem>
             )}
 
-            {/* AI Summary */}
-            {visit.notesSummary && (
-              <AccordionItem value="summary">
+            {/* Combined Notes and Summary */}
+            {(visit.notes || visit.notesSummary) && (
+              <AccordionItem value="notes-summary">
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
-                  <FileText className="mr-2 h-5 w-5" /> AI Summary
+                  <FileText className="mr-2 h-5 w-5" /> Notes & AI Summary
                 </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notesSummary}</p>
-                  <Button variant="ghost" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="mt-2 text-primary hover:bg-primary/10">
-                    {isSummarizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    Re-summarize
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-            )}
+                <AccordionContent className="bg-primary/5 p-3 rounded-md space-y-3">
+                  {visit.notesSummary && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-1 flex items-center">
+                        <Sparkles className="h-4 w-4 mr-2 text-primary" />
+                        AI Summary
+                      </h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notesSummary}</p>
+                      <Button variant="ghost" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="mt-2 text-primary hover:bg-primary/10 h-auto py-1 px-2 text-xs">
+                        {isSummarizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="mr-1 h-3 w-3" />}
+                        Re-summarize
+                      </Button>
+                    </div>
+                  )}
 
-            {/* Full Notes */}
-            {visit.notes && (
-              <AccordionItem value="notes">
-                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
-                  <Info className="mr-2 h-5 w-5" /> Visit Notes
-                </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notes}</p>
+                  {visit.notes && visit.notesSummary && <Separator />}
+                  
+                  {visit.notes && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-1 flex items-center">
+                        <Info className="h-4 w-4 mr-2 text-primary" />
+                        Full Visit Notes
+                      </h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{visit.notes}</p>
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             )}
