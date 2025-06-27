@@ -1142,27 +1142,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="dealClosed"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      id="dealClosed"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="dealClosed" className="cursor-pointer font-normal flex items-center text-green-600 dark:text-green-400">
-                      <DollarSign className="mr-2 h-4 w-4" /> Deal Closed?
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
-
             <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Info (Optional)</Label>
               <FormField
@@ -1359,5 +1338,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-
-    
