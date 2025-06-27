@@ -682,15 +682,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleGeniusScanClick = () => {
     if (typeof window !== 'undefined') {
       const isAndroid = /android/i.test(navigator.userAgent);
+      
       toast({ 
-        title: isAndroid ? 'Opening Google Play Store' : 'Opening Genius Scan',
-        description: 'After scanning, come back here and upload the saved image from your photos.',
+        title: 'Opening Genius Scan',
+        description: 'After scanning, return here to upload the saved image from your photos.',
       });
 
       if (isAndroid) {
-        window.open('https://play.google.com/store/apps/details?id=com.thegrizzlylabs.geniusscan.free', '_blank');
+        // This intent URL will try to open the app. If it fails, it will redirect to the Play Store.
+        const geniusScanPackage = 'com.thegrizzlylabs.geniusscan.free';
+        const playStoreUrl = `https://play.google.com/store/apps/details?id=${geniusScanPackage}`;
+        const intentUrl = `intent://#Intent;package=${geniusScanPackage};S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
+        window.location.href = intentUrl;
       } else {
-        // For iOS and others
+        // For iOS and others, the custom URL scheme is the standard way.
         window.open('geniusscan://', '_blank');
       }
     }
