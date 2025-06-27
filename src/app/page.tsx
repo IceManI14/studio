@@ -58,8 +58,8 @@ interface SubmittedSuggestion {
 }
 
 const AVAILABLE_AI_MODELS = [
-  { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
   { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
+  { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
   { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
 

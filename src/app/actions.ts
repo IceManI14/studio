@@ -266,7 +266,7 @@ export async function getAiChatResponseAction(
     if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
         return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
     }
-    return { error: 'Failed to get AI chat response. An unexpected error occurred.' };
+    return { error: `AI chat failed: ${error.message || 'An unexpected error occurred.'}` };
   }
 }
 
