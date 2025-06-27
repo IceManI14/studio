@@ -59,7 +59,7 @@ interface SubmittedSuggestion {
 
 const AVAILABLE_AI_MODELS = [
   { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
-  { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
+  { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
   { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
 
@@ -129,6 +129,7 @@ export default function HomePage() {
   const [pendingVisit, setPendingVisit] = useState<Visit | null>(null);
 
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
+  const [targetDestination, setTargetDestination] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
@@ -140,6 +141,7 @@ export default function HomePage() {
 
   const handleSelectSalesperson = (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
+    setTargetDestination(null);
      if (salesperson.territory.length > 0 && salesperson.name !== 'Corporate') {
       setIsDestinationModalOpen(true);
     } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
@@ -761,7 +763,7 @@ export default function HomePage() {
       });
 
       if (result.error) {
-        toast({ title: "AI Chat Error", description: result.error, variant: "destructive" });
+        toast({ title: "AI Chat Error", description: `Error: ${result.error}`, variant: "destructive" });
         const aiErrorResponse: ChatMessage = {
           id: crypto.randomUUID(),
           sender: 'ai',
@@ -838,7 +840,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <div className="flex items-center gap-2">
                     <User className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-headline font-semibold text-foreground text-center">
-                        {selectedSalesperson.name} | Today's Territory: {selectedSalesperson.territory.map(t => t.name).join(', ')}
+                      {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
                     </h2>
                 </div>
                 {isFetchingCity && (
@@ -1394,6 +1396,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                                 disabled={isFindingParking}
                                                 onClick={async () => {
                                                     const destinationCity = city;
+                                                    setTargetDestination(destinationCity);
                                                     setIsDestinationModalOpen(false);
                                                     setIsFindingParking(true);
                                                     toast({
