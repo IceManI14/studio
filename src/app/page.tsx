@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -8,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -40,13 +41,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
+import FindCompanyModal from '@/components/find-company-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 
@@ -138,6 +140,7 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [isExtractingCities, setIsExtractingCities] = useState(false);
+  const [isFindCompanyModalOpen, setIsFindCompanyModalOpen] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -890,6 +893,39 @@ export default function HomePage() {
     }
   };
 
+  const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
+    const newVisit: Visit = {
+        id: '',
+        timestamp: new Date(),
+        companyName: visitData.companyName || '',
+        notes: visitData.notes,
+        latitude: visitData.latitude,
+        longitude: visitData.longitude,
+        contactInfo: undefined,
+        notesSummary: undefined,
+        partnershipConfidence: undefined,
+        hasBusinessCard: false,
+        businessCardImageUrl: undefined,
+        discussedCompetitors: false,
+        competitorName: undefined,
+        coolerType: undefined,
+        decisionMakerName: '',
+        decisionMakerTitle: '',
+        decisionMakerContact: visitData.decisionMakerContact || '',
+        visitNumber: undefined, // Not a "door hit" from this flow
+        interestedUnit: undefined,
+        hasTDSReading: false,
+        tdsValue: undefined,
+        futureMeetingSet: false,
+        futureMeetingDateTime: undefined,
+        freeTrial: false,
+        dealClosed: false,
+    };
+    
+    setCurrentEditingVisit(newVisit);
+    setIsVisitFormOpen(true);
+};
+
   if (!firebaseConfigured) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 bg-background">
@@ -1129,6 +1165,11 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                       </Select>
                     </div>
                   </div>
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
+                      <Search className="mr-2 h-4 w-4" /> Find Company by Name
+                  </Button>
                 </div>
               </div>
 
@@ -1515,13 +1556,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
                                                 if (typeof window !== 'undefined') {
-                                                    const link = document.createElement('a');
-                                                    link.href = googleMapsUrl;
-                                                    link.target = '_blank';
-                                                    link.rel = 'noopener noreferrer';
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
+                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
                                                 }
                                                 toast({
                                                     title: 'Optimal Location Found!',
@@ -1558,6 +1593,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <FindCompanyModal
+          isOpen={isFindCompanyModalOpen}
+          onClose={() => setIsFindCompanyModalOpen(false)}
+          onAddAsVisit={handleAddFoundCompanyAsVisit}
+          destinationCities={destinationCities}
+        />
 
         <VisitForm
           isOpen={isVisitFormOpen}

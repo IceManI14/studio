@@ -7,6 +7,7 @@ import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coord
 import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
+import { findPlaceFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -344,5 +345,52 @@ export async function extractCitiesFromPdfAction(
         return { error: "The AI service API key is invalid or has expired." };
     }
     return { error: error.message || 'Failed to extract cities from PDF. An unexpected error occurred.' };
+  }
+}
+
+const findCompanySchema = z.object({
+  companyName: z.string().min(1, "Company name is required."),
+  city: z.string().optional(),
+});
+
+export async function findCompanyAction(
+  payload: z.infer<typeof findCompanySchema>
+): Promise<{ 
+  place?: {
+    companyName: string;
+    address: string;
+    city: string;
+    phone: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  error?: string 
+}> {
+  try {
+    const validatedPayload = findCompanySchema.parse(payload);
+    const query = `${validatedPayload.companyName}${validatedPayload.city ? `, ${validatedPayload.city}` : ''}`;
+    
+    const result = await findPlaceFromText(query);
+    if (!result) {
+      return { error: 'Company not found.' };
+    }
+    return { place: {
+        companyName: result.suggestedCompanyName,
+        address: result.address,
+        city: result.city,
+        phone: result.phone,
+        latitude: result.latitude,
+        longitude: result.longitude,
+    } };
+  } catch (error: any) {
+    console.error("Error in findCompanyAction:", error);
+    if (error instanceof z.ZodError) {
+        return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key')) {
+        return { error: "The Google Maps API key is invalid or not configured properly. Please check your .env file." };
+    }
+    return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
 }

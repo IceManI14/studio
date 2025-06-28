@@ -4,6 +4,7 @@
  * @fileOverview A service for interacting with the Google Maps Places API.
  *
  * - findPlaceFromLatLng - A function to find business details from coordinates.
+ * - findPlaceFromText - A function to find business details from a text query.
  */
 
 // This service now uses direct fetch calls to the Google Places API
@@ -14,6 +15,8 @@ export interface PlaceDetails {
   address: string;
   city: string;
   phone: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Helper to extract address components
@@ -59,7 +62,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             if (closestPlace.place_id) {
                  const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
                  detailsUrl.searchParams.set('place_id', closestPlace.place_id);
-                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number');
+                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
                  detailsUrl.searchParams.set('key', apiKey);
 
                  const detailsResponse = await fetch(detailsUrl.toString());
@@ -78,6 +81,8 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                         address: placeDetails.formatted_address || (city ? '' : 'No address found'),
                         city: city || "Unknown Location",
                         phone: placeDetails.formatted_phone_number || '',
+                        latitude: placeDetails.geometry?.location?.lat,
+                        longitude: placeDetails.geometry?.location?.lng,
                     };
                 }
             }
@@ -104,6 +109,8 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                 address: firstResult.formatted_address,
                 city: city || "Unknown Location",
                 phone: '',
+                latitude: firstResult.geometry?.location?.lat,
+                longitude: firstResult.geometry?.location?.lng,
             };
         }
 
@@ -114,6 +121,65 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
     } catch (error: any) {
         console.error('Error fetching data from Google Places API:', error);
         // Re-throw the error so the calling action can handle it and show a toast.
+        throw error;
+    }
+}
+
+export async function findPlaceFromText(query: string): Promise<PlaceDetails | null> {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey || apiKey.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE')) {
+        throw new Error("Google Maps API key is not configured correctly in .env file.");
+    }
+
+    try {
+        // Step 1: Find Place from text to get a place_id
+        const findPlaceUrl = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
+        findPlaceUrl.searchParams.set('input', query);
+        findPlaceUrl.searchParams.set('inputtype', 'textquery');
+        findPlaceUrl.searchParams.set('fields', 'place_id');
+        findPlaceUrl.searchParams.set('key', apiKey);
+
+        const findPlaceResponse = await fetch(findPlaceUrl.toString());
+        const findPlaceData = await findPlaceResponse.json();
+
+        if (findPlaceData.status !== 'OK' || !findPlaceData.candidates || findPlaceData.candidates.length === 0) {
+            if (findPlaceData.status === 'ZERO_RESULTS') return null;
+            throw new Error(`Google Places API Error (Find Place): ${findPlaceData.status} - ${findPlaceData.error_message || 'No candidates found'}`);
+        }
+
+        const placeId = findPlaceData.candidates[0].place_id;
+
+        // Step 2: Get Place Details using the place_id
+        const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+        detailsUrl.searchParams.set('place_id', placeId);
+        detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
+        detailsUrl.searchParams.set('key', apiKey);
+
+        const detailsResponse = await fetch(detailsUrl.toString());
+        const detailsData = await detailsResponse.json();
+
+        if (detailsData.status !== 'OK') {
+            throw new Error(`Google Places API Error (Place Details): ${detailsData.status} - ${detailsData.error_message || 'Unknown error'}`);
+        }
+        
+        const placeDetails = detailsData.result;
+
+        if (placeDetails) {
+            const city = getBestEffortCity(placeDetails.address_components);
+            return {
+                suggestedCompanyName: placeDetails.name || '',
+                address: placeDetails.formatted_address || '',
+                city: city || "Unknown Location",
+                phone: placeDetails.formatted_phone_number || '',
+                latitude: placeDetails.geometry?.location?.lat,
+                longitude: placeDetails.geometry?.location?.lng,
+            };
+        }
+
+        return null;
+
+    } catch (error: any) {
+        console.error('Error fetching data from Google Places API:', error);
         throw error;
     }
 }
