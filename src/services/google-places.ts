@@ -59,22 +59,21 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
         // If we find a nearby place, use its place_id to get definitive details.
         if (nearbySearchData.results && nearbySearchData.results.length > 0) {
-            // Find the first result that is not an undesirable type like a parking lot.
+            // Find the first result that is not an undesirable type like a parking lot or intersection.
             const findBestPlace = (results: any[]) => {
                 for (const place of results) {
                     const types = place.types || [];
                     const isParking = types.includes('parking');
-                    const isGeographic = types.some((type: string) => ['locality', 'political', 'neighborhood', 'route', 'sublocality'].includes(type));
+                    const isGeographic = types.some((type: string) => ['locality', 'political', 'neighborhood', 'route', 'sublocality', 'intersection'].includes(type));
                     
-                    // Skip if it's primarily a parking lot or a geographical area.
+                    // Skip if it's primarily a parking lot or a geographical area/intersection.
                     // We want actual businesses/venues.
                     if (!isParking && !isGeographic) {
                         return place; // This is a good candidate
                     }
                 }
-                // If all nearby results are undesirable (e.g., only parking lots found),
-                // return the very first one as a last resort to at least get some info.
-                return results.length > 0 ? results[0] : null;
+                // If no suitable candidates were found, return null. The logic will then fall back to reverse geocoding.
+                return null;
             };
             
             const bestPlaceCandidate = findBestPlace(nearbySearchData.results);
