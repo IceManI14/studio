@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -416,6 +416,26 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       }
     };
   }, [isCameraViewVisible, toast]);
+
+  const handleTakeLater = () => {
+    const currentNotes = form.getValues('notes') || '';
+    const reminderText = "\n\n[REMINDER: Take photo of front and back of business card.]";
+
+    if (!currentNotes.includes(reminderText.trim())) {
+        form.setValue('notes', (currentNotes + reminderText).trim(), { shouldValidate: true });
+        toast({
+            title: "Reminder Added",
+            description: "A note was added to photograph the card later.",
+        });
+    } else {
+        toast({
+            title: "Reminder Already Exists",
+            description: "The business card reminder is already in your notes.",
+        });
+    }
+    // Uncheck the box to allow the user to "pass" this section
+    form.setValue('hasBusinessCard', false);
+  };
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -836,7 +856,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     </Button>
                 </div>
                 
-                <div className="mt-2">
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button 
                     type="button" 
                     variant="secondary"
@@ -845,6 +865,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   >
                       <ScanLine className="mr-2 h-4 w-4" />
                       Activate Genius Scan
+                  </Button>
+                   <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={handleTakeLater}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    Take Later
                   </Button>
                 </div>
 
