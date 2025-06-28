@@ -857,19 +857,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </div>
                 
                 <div className="mt-2 flex items-center gap-2">
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     variant="secondary"
-                    className="flex-1"
                     onClick={handleGeniusScanClick}
                   >
-                      <ScanLine className="mr-2 h-4 w-4" />
-                      Activate Genius Scan
+                    <ScanLine className="mr-2 h-4 w-4" />
+                    Activate Genius Scan
                   </Button>
-                   <Button
+                  <Button
                     type="button"
                     variant="ghost"
-                    className="flex-1"
                     onClick={handleTakeLater}
                   >
                     <Clock className="mr-2 h-4 w-4" />
