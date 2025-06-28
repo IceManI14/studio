@@ -11,12 +11,12 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const ExtractCitiesFromPdfInputSchema = z.object({
+const ExtractCitiesFromPdfInputSchema = z.object({
   pdfDataUri: z.string().describe("A territory PDF document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:application/pdf;base64,<encoded_data>'."),
 });
 export type ExtractCitiesFromPdfInput = z.infer<typeof ExtractCitiesFromPdfInputSchema>;
 
-export const ExtractCitiesFromPdfOutputSchema = z.object({
+const ExtractCitiesFromPdfOutputSchema = z.object({
   cities: z.array(z.string()).describe('A list of all unique cities and towns found in the document. Each entry should be in "City, ST" format, e.g., "Boston, MA". Do not include duplicates.'),
 });
 export type ExtractCitiesFromPdfOutput = z.infer<typeof ExtractCitiesFromPdfOutputSchema>;
