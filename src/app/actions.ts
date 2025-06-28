@@ -6,6 +6,7 @@ import { summarizeVisitNotes } from '@/ai/flows/summarize-visit-notes';
 import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coords.ts';
 import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
+import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -264,7 +265,7 @@ export async function getAiChatResponseAction(
     }
     const errorMessage = error?.message?.toLowerCase() || '';
     if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
+        return { error: `The AI service API key is invalid or has expired. Please check your .env file. (Model: ${payload.model})` };
     }
     return { error: `AI chat failed: ${error.message || 'An unexpected error occurred.'}` };
   }
@@ -319,5 +320,29 @@ export async function findOptimalParkingAction(
         return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
     }
     return { error: error.message || 'Failed to find optimal parking location. An unexpected error occurred.' };
+  }
+}
+
+const extractCitiesSchema = z.object({
+  pdfDataUri: z.string().min(1, "PDF data URI is required."),
+});
+
+export async function extractCitiesFromPdfAction(
+  payload: z.infer<typeof extractCitiesSchema>
+): Promise<{ cities?: string[]; error?: string }> {
+  try {
+    const validatedPayload = extractCitiesSchema.parse(payload);
+    const result = await extractCitiesFromPdf({ pdfDataUri: validatedPayload.pdfDataUri });
+    return { cities: result.cities };
+  } catch (error: any) {
+    console.error("Error in extractCitiesFromPdfAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid')) {
+        return { error: "The AI service API key is invalid or has expired." };
+    }
+    return { error: error.message || 'Failed to extract cities from PDF. An unexpected error occurred.' };
   }
 }

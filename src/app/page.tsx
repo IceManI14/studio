@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
@@ -136,14 +136,57 @@ export default function HomePage() {
   const [isFetchingNewLocation, setIsFetchingNewLocation] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [destinationCities, setDestinationCities] = useState<string[]>([]);
+  const [isExtractingCities, setIsExtractingCities] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
-  const handleSelectSalesperson = (salesperson: Salesperson) => {
+  const handleSelectSalesperson = async (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     setTargetDestination(null);
-     if (salesperson.territory.length > 0 && salesperson.name !== 'Corporate') {
+    setDestinationCities([]);
+
+    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl');
+    let cities: string[] = [];
+    let shouldOpenModal = false;
+
+    if (territoryPdfUrl && salesperson.name !== 'Corporate') {
+      shouldOpenModal = true;
+      setIsDestinationModalOpen(true);
+      setIsExtractingCities(true);
+      try {
+        const result = await extractCitiesFromPdfAction({ pdfDataUri: territoryPdfUrl });
+        if (result.error) throw new Error(result.error);
+        
+        if (result.cities && result.cities.length > 0) {
+          cities = result.cities;
+        } else {
+          toast({
+            title: "No Cities Found in PDF",
+            description: "Falling back to the default list for your profile.",
+            variant: "default",
+          });
+          cities = salesperson.territory.flatMap(t => t.cities || []);
+        }
+      } catch (e: any) {
+        toast({
+          title: "AI Error",
+          description: `Could not read cities from PDF: ${e.message}. Using default list.`,
+          variant: "destructive",
+        });
+        cities = salesperson.territory.flatMap(t => t.cities || []);
+      } finally {
+        setIsExtractingCities(false);
+      }
+    } else if (salesperson.territory.length > 0 && salesperson.name !== 'Corporate') {
+      shouldOpenModal = true;
+      cities = salesperson.territory.flatMap(t => t.cities || []);
+    }
+    
+    setDestinationCities(cities);
+
+    if (shouldOpenModal) {
       setIsDestinationModalOpen(true);
     } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
       toast({
@@ -153,7 +196,7 @@ export default function HomePage() {
         duration: 8000,
       });
     } else {
-      toast({
+       toast({
         title: `Welcome, ${salesperson.name}!`,
         description: `Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}`,
       });
@@ -1432,75 +1475,79 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <DialogHeader>
                     <DialogTitle>Choose Your Destination</DialogTitle>
                     <DialogDescription>
-                        Select a city to get an AI-optimized parking location for your day.
+                        {isExtractingCities
+                            ? "Debbie is reading your territory file to find cities..."
+                            : "Select a city to get an AI-optimized parking location for your day."
+                        }
                     </DialogDescription>
                 </DialogHeader>
-                <Accordion type="multiple" className="w-full max-h-[400px] overflow-y-auto pr-2">
-                    {selectedSalesperson?.territory.map((t) => (
-                        t.cities && t.cities.length > 0 && (
-                            <AccordionItem value={t.name} key={t.name}>
-                                <AccordionTrigger>{t.name}</AccordionTrigger>
-                                <AccordionContent>
-                                    <div className="flex flex-col space-y-2">
-                                        {t.cities.map(city => (
-                                            <Button
-                                                key={city}
-                                                variant="ghost"
-                                                className="justify-start"
-                                                disabled={isFindingParking}
-                                                onClick={async () => {
-                                                    const destinationCity = city;
-                                                    setTargetDestination(destinationCity);
-                                                    setIsDestinationModalOpen(false);
-                                                    setIsFindingParking(true);
-                                                    toast({
-                                                        title: 'AI is finding the best parking spot...',
-                                                        description: `Optimizing your route for ${destinationCity}. This may take a moment.`,
-                                                        duration: 20000,
-                                                    });
+                <div className="max-h-[400px] overflow-y-auto pr-2">
+                    {isExtractingCities ? (
+                        <div className="flex justify-center items-center h-32">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : destinationCities.length > 0 ? (
+                        <div className="flex flex-col space-y-2">
+                            {destinationCities.map(city => (
+                                <Button
+                                    key={city}
+                                    variant="ghost"
+                                    className="justify-start"
+                                    disabled={isFindingParking}
+                                    onClick={async () => {
+                                        const destinationCity = city;
+                                        setTargetDestination(destinationCity);
+                                        setIsDestinationModalOpen(false);
+                                        setIsFindingParking(true);
+                                        toast({
+                                            title: 'AI is finding the best parking spot...',
+                                            description: `Optimizing your route for ${destinationCity}. This may take a moment.`,
+                                            duration: 20000,
+                                        });
 
-                                                    try {
-                                                        const result = await findOptimalParkingAction({ city: destinationCity });
+                                        try {
+                                            const result = await findOptimalParkingAction({ city: destinationCity });
 
-                                                        if (result.error) {
-                                                            throw new Error(result.error);
-                                                        }
+                                            if (result.error) {
+                                                throw new Error(result.error);
+                                            }
 
-                                                        if (result.latitude && result.longitude) {
-                                                            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-                                                            if (typeof window !== 'undefined') {
-                                                                window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
-                                                            }
-                                                            toast({
-                                                                title: 'Optimal Location Found!',
-                                                                description: `Navigating to: ${result.locationDescription || 'suggested parking area'}.`,
-                                                            });
-                                                        } else {
-                                                            throw new Error('AI did not return a valid location.');
-                                                        }
-                                                    } catch (e: any) {
-                                                        toast({
-                                                            title: 'Could Not Find Location',
-                                                            description: e.message || 'An unexpected error occurred.',
-                                                            variant: 'destructive',
-                                                        });
-                                                    } finally {
-                                                        setIsFindingParking(false);
-                                                    }
-                                                }}
-                                            >
-                                               {city}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        )
-                    ))}
-                </Accordion>
+                                            if (result.latitude && result.longitude) {
+                                                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
+                                                if (typeof window !== 'undefined') {
+                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
+                                                }
+                                                toast({
+                                                    title: 'Optimal Location Found!',
+                                                    description: `Navigating to: ${result.locationDescription || 'suggested parking area'}.`,
+                                                });
+                                            } else {
+                                                throw new Error('AI did not return a valid location.');
+                                            }
+                                        } catch (e: any) {
+                                            toast({
+                                                title: 'Could Not Find Location',
+                                                description: e.message || 'An unexpected error occurred.',
+                                                variant: 'destructive',
+                                            });
+                                        } finally {
+                                            setIsFindingParking(false);
+                                        }
+                                    }}
+                                >
+                                   {city}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : (
+                         <p className="text-muted-foreground text-center py-4">
+                            No destination cities found. You can upload a territory PDF on the "About" tab or ensure your profile has default cities assigned.
+                        </p>
+                    )}
+                </div>
                  <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking}>
-                        {isFindingParking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Skip'}
+                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking || isExtractingCities}>
+                        {isFindingParking || isExtractingCities ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Skip'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
