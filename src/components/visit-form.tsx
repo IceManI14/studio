@@ -144,6 +144,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentLatitude, setCurrentLatitude] = useState<number | undefined>(initialData?.latitude);
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
   const [hoveredStars, setHoveredStars] = useState<number | undefined>(undefined);
+  const confidenceStarsRef = useRef<HTMLDivElement>(null);
 
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
@@ -314,6 +315,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [initialData, isOpen, resetFormAndState, handleSuggestCompany]);
 
+  useEffect(() => {
+    // When the form opens for a new Quicklog, focus the confidence stars
+    // to prevent the keyboard from opening on mobile for the company name input.
+    if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
+      const timer = setTimeout(() => {
+        confidenceStarsRef.current?.focus({ preventScroll: true });
+      }, 100); // A small delay to ensure the element is focusable
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, initialData]);
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -692,7 +703,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <FormItem>
                   <FormLabel>Partnership Confidence</FormLabel>
                   <FormControl>
-                    <div className="flex items-center gap-1 mt-1" onMouseLeave={() => setHoveredStars(undefined)}>
+                    <div ref={confidenceStarsRef} tabIndex={-1} className="flex items-center gap-1 mt-1 outline-none" onMouseLeave={() => setHoveredStars(undefined)}>
                       {[1, 2, 3, 4, 5].map((starValue) => {
                         const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
                         return (
