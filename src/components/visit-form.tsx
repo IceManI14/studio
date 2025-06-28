@@ -1070,17 +1070,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               return;
                             }
                             const newDateTime = new Date(date);
-                            if (field.value) {
-                              // A date was already selected, keep the existing time
-                              newDateTime.setHours(field.value.getHours());
-                              newDateTime.setMinutes(field.value.getMinutes());
-                            } else {
-                              // This is the first time a date is selected, default to 9:00 AM
-                              newDateTime.setHours(9);
-                              newDateTime.setMinutes(0);
-                              newDateTime.setSeconds(0);
-                              newDateTime.setMilliseconds(0);
-                            }
+                            // When a new date is picked, always default time to 9 AM.
+                            // User can then adjust it. This simplifies state management.
+                            newDateTime.setHours(9);
+                            newDateTime.setMinutes(0);
+                            newDateTime.setSeconds(0);
+                            newDateTime.setMilliseconds(0);
+                            
                             field.onChange(newDateTime);
                           }}
                           disabled={(date) =>
@@ -1090,16 +1086,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         />
                         <div className="p-3 border-t border-border">
                           <div className="flex items-center gap-2">
-                             <Label>Time</Label>
+                            <Label htmlFor="hours">Time</Label>
                             <Select
+                              disabled={!field.value}
                               value={field.value ? String(field.value.getHours()) : '9'}
                               onValueChange={(value) => {
-                                const newDate = field.value ? new Date(field.value) : new Date();
+                                if (!field.value) return;
+                                const newDate = new Date(field.value);
                                 newDate.setHours(parseInt(value));
                                 field.onChange(newDate);
                               }}
                             >
-                              <SelectTrigger className="w-[80px]">
+                              <SelectTrigger id="hours" className="w-[80px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1110,11 +1108,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             </Select>
                             :
                             <Select
+                              disabled={!field.value}
                               value={field.value ? String(field.value.getMinutes()).padStart(2, '0') : '00'}
                                onValueChange={(value) => {
-                                const newDate = field.value ? new Date(field.value) : new Date();
+                                if (!field.value) return;
+                                const newDate = new Date(field.value);
                                 newDate.setMinutes(parseInt(value));
-
                                 field.onChange(newDate);
                               }}
                             >
