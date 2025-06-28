@@ -593,34 +593,26 @@ export default function HomePage() {
     await handleSaveVisit(updatedVisit);
   };
 
-  const handleLogFollowUp = async (existingVisit: Visit) => {
-    if (!db) return;
+  const handleLogFollowUp = (existingVisit: Visit) => {
+    toast({ title: 'Logging Follow-up...', description: `Opening new visit form for ${existingVisit.companyName}.` });
   
-    // Find the latest visit number for this company
-    const companyVisits = visits.filter(v => v.companyName === existingVisit.companyName);
-    const maxVisitNumber = companyVisits.reduce((max, v) => Math.max(max, v.visitNumber || 0), 0);
-    
-    toast({ title: 'Logging Follow-up...', description: `Creating a new visit log for ${existingVisit.companyName}.` });
-  
-    const payload: SaveVisitPayload = {
+    const newVisitTemplate: Partial<Visit> = {
       // No id, so it's a new visit
       companyName: existingVisit.companyName,
       latitude: existingVisit.latitude,
       longitude: existingVisit.longitude,
-      visitNumber: maxVisitNumber + 1,
+      visitNumber: coldCallCount + 1, // Provisional number, will be finalized on save
       // Pass existing info to avoid re-scraping
-      existingContactInfo: existingVisit.contactInfo, 
-      // New visits start with blank notes/summary
+      contactInfo: existingVisit.contactInfo, 
       notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
       notesSummary: undefined,
-      // Default other fields to be blank
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       businessCardImageUrl: undefined,
       discussedCompetitors: false,
       competitorName: undefined,
       coolerType: undefined,
-      decisionMakerName: existingVisit.decisionMakerName, // Carry over DM info
+      decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
       interestedUnit: undefined,
@@ -632,31 +624,37 @@ export default function HomePage() {
       dealClosed: false,
     };
     
-    const result = await saveVisitAction(payload);
-    
-    if (result.error) {
-      toast({ title: 'Error Logging Follow-up', description: result.error, variant: 'destructive' });
-    } else if (result.visit) {
-      toast({ title: 'Follow-up Logged', description: `New visit card created for ${result.visit.companyName}.` });
-      // The new visit will appear automatically via the Firestore listener.
-    }
+    setCurrentEditingVisit(newVisitTemplate as Visit);
+    setIsVisitFormOpen(true);
   };
 
 
   const handleSaveVisit = async (visit: Visit) => {
     if (!db) return;
     try {
+      // Determine if this is a brand new visit being saved for the first time.
+      // `currentEditingVisit` is set when the form opens. If it had no ID, it's a new visit.
+      const isNewVisit = !currentEditingVisit?.id;
+
+      const visitToSave = { ...visit };
+
+      // If it's a new visit, we assign/overwrite the visit number right before saving
+      // to use the most up-to-date count and avoid race conditions.
+      if (isNewVisit) {
+        visitToSave.visitNumber = coldCallCount + 1;
+      }
+      
       const visitData = {
-          ...visit,
-          timestamp: visit.timestamp,
-          futureMeetingDateTime: visit.futureMeetingDateTime || null,
+          ...visitToSave,
+          timestamp: visitToSave.timestamp,
+          futureMeetingDateTime: visitToSave.futureMeetingDateTime || null,
       };
 
       const visitDocRef = doc(db, 'visits', visit.id);
       await setDoc(visitDocRef, visitData, { merge: true });
 
-      // After a new visit is saved, update the cold call count
-      if (!visits.some(v => v.id === visit.id)) {
+      // If it was a new visit, we now increment the persistent counter.
+      if (isNewVisit) {
         await updateColdCallCount(coldCallCount + 1);
       }
 
@@ -936,7 +934,7 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: undefined, // Not a "door hit" from this flow
+        visitNumber: coldCallCount + 1, // This is a new visit, assign provisional number. It will be finalized on save.
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
