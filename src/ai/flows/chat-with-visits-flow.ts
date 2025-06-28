@@ -15,7 +15,7 @@ const ChatWithVisitsInputSchema = z.object({
   chatHistory: z.string().describe('The conversation history between the user and AI, with each turn on a new line, prefixed by "User:" or "AI:".'),
   userMessage: z.string().describe('The latest message from the user.'),
   visitsContext: z.string().describe('A summary of recent company visits relevant to the conversation. Each visit is separated by "---".'),
-  modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-2.5-pro-preview").'),
+  modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-1.5-flash-latest").'),
   pdfUrl: z.string().optional().describe("An optional URL or Data URI to a PDF document for analysis for the current query. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
   territoryPdfUrl: z.string().optional().describe("A URL or Data URI for the salesperson's territory PDF, providing overarching context."),
 });
@@ -74,7 +74,7 @@ AI:`,
       },
       {
         category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_ONLY_HIGH',
+        threshold: 'BLOCK_NONE',
       },
       {
         category: 'HARM_CATEGORY_HARASSMENT',
