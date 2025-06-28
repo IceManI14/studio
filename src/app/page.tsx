@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +62,7 @@ interface SubmittedSuggestion {
 
 const AVAILABLE_AI_MODELS = [
     { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
+    { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro (Preview)'},
     { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
     { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
@@ -564,6 +566,56 @@ export default function HomePage() {
     await handleSaveVisit(updatedVisit);
   };
 
+  const handleLogFollowUp = async (existingVisit: Visit) => {
+    if (!db) return;
+  
+    // Find the latest visit number for this company
+    const companyVisits = visits.filter(v => v.companyName === existingVisit.companyName);
+    const maxVisitNumber = companyVisits.reduce((max, v) => Math.max(max, v.visitNumber || 0), 0);
+    
+    toast({ title: 'Logging Follow-up...', description: `Creating a new visit log for ${existingVisit.companyName}.` });
+  
+    const payload: SaveVisitPayload = {
+      // No id, so it's a new visit
+      companyName: existingVisit.companyName,
+      latitude: existingVisit.latitude,
+      longitude: existingVisit.longitude,
+      visitNumber: maxVisitNumber + 1,
+      // Pass existing info to avoid re-scraping
+      existingContactInfo: existingVisit.contactInfo, 
+      // New visits start with blank notes/summary
+      notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
+      notesSummary: undefined,
+      // Default other fields to be blank
+      partnershipConfidence: undefined,
+      hasBusinessCard: false,
+      businessCardImageUrl: undefined,
+      discussedCompetitors: false,
+      competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: existingVisit.decisionMakerName, // Carry over DM info
+      decisionMakerTitle: existingVisit.decisionMakerTitle,
+      decisionMakerContact: existingVisit.decisionMakerContact,
+      interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
+      futureMeetingSet: false,
+      futureMeetingDateTime: undefined,
+      freeTrial: false,
+      dealClosed: false,
+    };
+    
+    const result = await saveVisitAction(payload);
+    
+    if (result.error) {
+      toast({ title: 'Error Logging Follow-up', description: result.error, variant: 'destructive' });
+    } else if (result.visit) {
+      toast({ title: 'Follow-up Logged', description: `New visit card created for ${result.visit.companyName}.` });
+      // The new visit will appear automatically via the Firestore listener.
+    }
+  };
+
+
   const handleSaveVisit = async (visit: Visit) => {
     if (!db) return;
     try {
@@ -1026,6 +1078,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                           onDelete={handleDeleteVisit}
                           onUpdateVisit={handleUpdateVisitInList}
                           onZoom={setZoomedVisit}
+                          onLogFollowUp={handleLogFollowUp}
                           />
                       ))}
                     </div>
@@ -1146,6 +1199,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                         onDelete={handleDeleteVisit}
                         onUpdateVisit={handleUpdateVisitInList}
                         onZoom={setZoomedVisit}
+                        onLogFollowUp={handleLogFollowUp}
                       />
                     </div>
                   ))}

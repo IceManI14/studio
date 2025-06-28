@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -26,9 +26,10 @@ interface VisitCardProps {
   onUpdateVisit: (updatedVisit: Visit) => void;
   onZoom?: (visit: Visit) => void;
   isZoomedView?: boolean;
+  onLogFollowUp?: (visit: Visit) => void;
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView, onLogFollowUp }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const { toast } = useToast();
   const timeZone = 'America/New_York'; 
@@ -205,6 +206,22 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
+            {!isZoomedView && onLogFollowUp && (
+              <div className="pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogFollowUp(visit);
+                  }}
+                >
+                  <PlusSquare className="mr-2 h-4 w-4" /> Log Follow-up Visit
+                </Button>
+              </div>
+            )}
+
             {isCoordsVisible && visit.latitude && visit.longitude && (
                 <p className="text-xs text-muted-foreground flex items-center justify-center w-full">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
