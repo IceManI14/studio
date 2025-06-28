@@ -46,6 +46,8 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
         const nearbySearchUrl = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
         nearbySearchUrl.searchParams.set('location', `${latitude},${longitude}`);
         nearbySearchUrl.searchParams.set('rankby', 'distance');
+        // Prioritize commercial establishments to get better results.
+        nearbySearchUrl.searchParams.set('type', 'establishment');
         nearbySearchUrl.searchParams.set('key', apiKey);
 
         const nearbySearchResponse = await fetch(nearbySearchUrl.toString());
@@ -88,7 +90,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             }
         }
         
-        // Step 2: If Nearby Search finds nothing, fall back to Reverse Geocode.
+        // Step 2: If Nearby Search finds nothing, fall back to Reverse Geocode to get address info.
         const reverseGeocodeUrl = new URL('https://maps.googleapis.com/maps/api/geocode/json');
         reverseGeocodeUrl.searchParams.set('latlng', `${latitude},${longitude}`);
         reverseGeocodeUrl.searchParams.set('key', apiKey);
@@ -105,7 +107,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             const city = getBestEffortCity(firstResult.address_components);
             
             return {
-                suggestedCompanyName: firstResult.formatted_address, // Use address as fallback name
+                suggestedCompanyName: '', // Do not use address as a fallback for company name
                 address: firstResult.formatted_address,
                 city: city || "Unknown Location",
                 phone: '',
