@@ -206,22 +206,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
             </CardTitle>
             
-            {!isZoomedView && onLogFollowUp && (
-              <div className="pt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full h-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLogFollowUp(visit);
-                  }}
-                >
-                  <PlusSquare className="mr-2 h-4 w-4" /> Log Follow-up Visit
-                </Button>
-              </div>
-            )}
-
             {isCoordsVisible && visit.latitude && visit.longitude && (
                 <p className="text-xs text-muted-foreground flex items-center justify-center w-full">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
