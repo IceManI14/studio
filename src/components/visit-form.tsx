@@ -200,17 +200,39 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleSuggestCompany = useCallback(async () => {
     setIsSuggestingCompany(true);
 
-    let lat = form.getValues('latitude');
-    let lon = form.getValues('longitude');
+    const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not supported."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
+          (error) => {
+            let message = "Could not retrieve location.";
+            if (error.code === error.PERMISSION_DENIED) message = "Location access denied.";
+            if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
+            if (error.code === error.TIMEOUT) message = "Location request timed out.";
+            reject(new Error(message));
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      });
+    };
 
     try {
-        if (!lat || !lon) {
-           throw new Error("No coordinates available to find company.");
-        }
+        const { lat, lon } = await getFreshCoordinates();
+        
+        toast({
+          title: "Location Refreshed",
+          description: `Searching for businesses near Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`,
+        });
 
         // Update state and form with coordinates
         setCurrentLatitude(lat);
         setCurrentLongitude(lon);
+        form.setValue('latitude', lat);
+        form.setValue('longitude', lon);
 
         // Now, perform the company lookup
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
@@ -228,15 +250,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
         if (result.address) {
             const currentNotes = form.getValues('notes') || '';
-            const newNotes = `Suggested Address: ${result.address}\n\n${currentNotes}`;
-            form.setValue('notes', newNotes.replace(/\\n/g, '\n'), { shouldValidate: true });
+            const addressNote = `Suggested Address: ${result.address}`;
+            if (!currentNotes.includes(addressNote)) {
+              const newNotes = `${addressNote}\n\n${currentNotes}`;
+              form.setValue('notes', newNotes.trim().replace(/\\n/g, '\n'), { shouldValidate: true });
+            }
         }
         if (result.city) setCurrentCity(result.city);
 
     } catch (error: any) {
-        let errorMessage = error.message || "An unexpected error occurred.";
-        if (error.code === error.PERMISSION_DENIED) errorMessage = "Location access denied. Please enable it in your browser settings.";
-        toast({ title: "Could Not Find Company", description: errorMessage, variant: "destructive" });
+        toast({ title: "Could Not Find Company", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
         setIsSuggestingCompany(false);
     }
@@ -702,7 +725,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         <Input placeholder="e.g., Acme Corp" {...field} />
                         <Button
                             type="button"
-                            onClick={handleSuggestCompany}
+                            onClick={() => handleSuggestCompany()}
                             variant="outline"
                             size="sm"
                             disabled={isSuggestingCompany}
@@ -875,7 +898,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     onClick={handleGeniusScanClick}
                   >
                     <ScanLine className="mr-2 h-4 w-4" />
-                    Activate Genius Scan
+                    Genius Scan
                   </Button>
                   <Button
                     type="button"
