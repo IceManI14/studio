@@ -513,8 +513,14 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = '';
+      // Only show the confirmation dialog if the visit form is open,
+      // as that's when unsaved data is most likely to exist.
+      if (isVisitFormOpen) {
+        event.preventDefault();
+        // Standard requires setting returnValue to an empty string.
+        // Some older browsers might display the string assigned here, but modern ones won't.
+        event.returnValue = '';
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -522,7 +528,7 @@ export default function HomePage() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [isVisitFormOpen]);
 
   const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
