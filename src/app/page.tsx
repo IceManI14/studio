@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -1516,7 +1515,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
                                                 if (typeof window !== 'undefined') {
-                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
+                                                    const link = document.createElement('a');
+                                                    link.href = googleMapsUrl;
+                                                    link.target = '_blank';
+                                                    link.rel = 'noopener noreferrer';
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
                                                 }
                                                 toast({
                                                     title: 'Optimal Location Found!',
