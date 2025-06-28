@@ -534,6 +534,11 @@ export default function HomePage() {
     try {
       const { lat, lon } = await getFreshCoordinates();
 
+      toast({
+        title: "Fetching Location Details...",
+        description: `Using coordinates: Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`,
+      });
+      
       const newVisitTemplate: Partial<Visit> = {
         timestamp: new Date(), // This marks the meeting start time
         latitude: lat,

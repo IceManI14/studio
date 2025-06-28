@@ -64,7 +64,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             if (closestPlace.place_id) {
                  const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
                  detailsUrl.searchParams.set('place_id', closestPlace.place_id);
-                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
+                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry,types');
                  detailsUrl.searchParams.set('key', apiKey);
 
                  const detailsResponse = await fetch(detailsUrl.toString());
@@ -77,9 +77,16 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                 const placeDetails = detailsData.result;
 
                 if (placeDetails) {
+                    const isGeographicArea = placeDetails.types?.some((type: string) =>
+                        [
+                            'locality', 'political', 'administrative_area_level_1', 'administrative_area_level_2',
+                            'country', 'postal_code', 'neighborhood'
+                        ].includes(type)
+                    );
+
                     const city = getBestEffortCity(placeDetails.address_components);
                     return {
-                        suggestedCompanyName: placeDetails.name || '',
+                        suggestedCompanyName: isGeographicArea ? '' : (placeDetails.name || ''),
                         address: placeDetails.formatted_address || (city ? '' : 'No address found'),
                         city: city || "Unknown Location",
                         phone: placeDetails.formatted_phone_number || '',
