@@ -531,81 +531,28 @@ export default function HomePage() {
 
     try {
       const { lat, lon } = await getFreshCoordinates();
-      setUserCurrentLatitude(lat);
-      setUserCurrentLongitude(lon);
-      toast({
-        title: "Quicklog: Location Acquired",
-        description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`,
-        duration: 3000,
-      });
 
-      const companyInfo = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-      if (companyInfo.error) {
-        toast({ title: "Company Lookup Failed", description: companyInfo.error, variant: 'destructive'});
-        // Don't throw, just proceed with "Unknown Location"
-      }
-      
-      const companyName = companyInfo.suggestedCompanyName || 'Unknown Location';
-      let visitNotes = companyInfo.address ? `Address: ${companyInfo.address}` : 'Quicklog entry, no notes yet.';
-
-      // Territory Check and note addition
-      if (lat && lon && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
-        const hasTerritories = selectedSalesperson.territory.length > 0;
-        if (hasTerritories) {
-          const inTerritory = selectedSalesperson.territory.some(t =>
-            lat >= t.bounds.minLat &&
-            lat <= t.bounds.maxLat &&
-            lon >= t.bounds.minLng &&
-            lon <= t.bounds.maxLng
-          );
-          if (!inTerritory) {
-            visitNotes += '\n\nNOTE: This location appears to be outside of the assigned sales territory.';
-            toast({
-                title: 'Outside Territory',
-                description: 'This visit is being logged outside of your assigned territory.',
-                variant: 'default'
-            })
-          }
-        }
-      }
-      
-      const newVisitNumber = coldCallCount + 1;
-
-      const payload: SaveVisitPayload = {
-        companyName: companyName,
-        notes: visitNotes,
+      const newVisitTemplate: Partial<Visit> = {
+        timestamp: new Date(), // This marks the meeting start time
         latitude: lat,
         longitude: lon,
-        decisionMakerContact: companyInfo.phone,
-        visitNumber: newVisitNumber,
-        // all other fields are optional/default
+        visitNumber: coldCallCount + 1,
       };
-
-      const result = await saveVisitAction(payload);
       
-      if (result.error) {
-          throw new Error(result.error);
-      }
+      setCurrentEditingVisit(newVisitTemplate as Visit);
+      setIsVisitFormOpen(true);
+      // The VisitForm will now be responsible for fetching company details and handling the rest
       
-      if (result.visit) {
-        await handleSaveVisit(result.visit);
-        updateColdCallCount(newVisitNumber);
-        toast({
-            title: 'Quicklog Successful!',
-            description: `${result.visit.companyName} has been logged. You can edit it from the list.`,
-        });
-      }
-
     } catch (error: any) {
       toast({
-        title: "Quicklog Failed",
+        title: "Could Not Start Visit",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setIsFetchingNewLocation(false);
     }
-};
+  };
 
 
   const handleEditVisit = (visit: Visit) => {
@@ -628,6 +575,12 @@ export default function HomePage() {
 
       const visitDocRef = doc(db, 'visits', visit.id);
       await setDoc(visitDocRef, visitData, { merge: true });
+
+      // After a new visit is saved, update the cold call count
+      if (!visits.some(v => v.id === visit.id)) {
+        await updateColdCallCount(coldCallCount + 1);
+      }
+
     } catch (error) {
       console.error("Error saving visit to Firestore:", error);
       toast({ title: 'Sync Error', description: 'Failed to save visit data.', variant: 'destructive'});
@@ -1033,7 +986,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
                         {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        {isFetchingNewLocation ? 'Logging...' : 'Quicklog'}
+                        {isFetchingNewLocation ? 'Getting Location...' : 'Quicklog'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>

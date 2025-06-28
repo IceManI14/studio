@@ -203,23 +203,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     let lon = form.getValues('longitude');
 
     try {
-        // If coords are not in the form, fetch them. This is for manual "Find" clicks.
         if (!lat || !lon) {
-            if (!navigator.geolocation) {
-                throw new Error("Geolocation is not supported by your browser.");
-            }
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => 
-                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
-            );
-            lat = position.coords.latitude;
-            lon = position.coords.longitude;
+           throw new Error("No coordinates available to find company.");
         }
 
         // Update state and form with coordinates
         setCurrentLatitude(lat);
         setCurrentLongitude(lon);
-        form.setValue('latitude', lat, { shouldValidate: true });
-        form.setValue('longitude', lon, { shouldValidate: true });
 
         // Now, perform the company lookup
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
@@ -282,93 +272,48 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [watchedCompetitorName]);
 
-  useEffect(() => {
-    const fetchLocationCity = async (lat: number, lon: number) => {
-        setIsFetchingCity(true);
-        setCurrentCity(null);
-        try {
-            const result = await getCompanyNameFromCoordsAction({ 
-                latitude: lat, 
-                longitude: lon,
-             });
-
-            if (result.city) {
-                setCurrentCity(result.city);
-            } else {
-                setCurrentCity("Location Unknown");
-            }
-        } catch (e) {
-            console.error("Failed to fetch city", e);
-            setCurrentCity("Could not determine city");
-        } finally {
-            setIsFetchingCity(false);
-        }
+  const resetFormAndState = useCallback((data?: Visit) => {
+    const defaultValues = {
+      companyName: data?.companyName || '',
+      notes: data?.notes || '',
+      latitude: data?.latitude,
+      longitude: data?.longitude,
+      partnershipConfidence: data?.partnershipConfidence,
+      hasBusinessCard: data?.hasBusinessCard || false,
+      businessCardImageUrl: data?.businessCardImageUrl || null,
+      competitorName: data?.competitorName || undefined,
+      coolerType: data?.coolerType || undefined,
+      decisionMakerName: data?.decisionMakerName || '',
+      decisionMakerTitle: data?.decisionMakerTitle || '',
+      decisionMakerContact: data?.decisionMakerContact || '',
+      interestedUnit: data?.interestedUnit || undefined,
+      hasTDSReading: data?.hasTDSReading || false,
+      tdsValue: data?.tdsValue,
+      futureMeetingSet: data?.futureMeetingSet || false,
+      futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
+      freeTrial: data?.freeTrial || false,
     };
-
-    if (isOpen && initialData?.latitude && initialData?.longitude) {
-        fetchLocationCity(initialData.latitude, initialData.longitude);
-    } else {
-        setCurrentCity(null);
-    }
-
-    if (initialData) {
-      form.reset({
-        companyName: initialData.companyName,
-        notes: initialData.notes || '',
-        latitude: initialData.latitude,
-        longitude: initialData.longitude,
-        partnershipConfidence: initialData.partnershipConfidence,
-        hasBusinessCard: initialData.hasBusinessCard || false,
-        businessCardImageUrl: initialData.businessCardImageUrl || null, // Will be Data URI if exists
-        competitorName: initialData.competitorName || undefined,
-        coolerType: initialData.coolerType || undefined,
-        decisionMakerName: initialData.decisionMakerName || '',
-        decisionMakerTitle: initialData.decisionMakerTitle || '',
-        decisionMakerContact: initialData.decisionMakerContact || '',
-        interestedUnit: initialData.interestedUnit || undefined,
-        hasTDSReading: initialData.hasTDSReading || false,
-        tdsValue: initialData.tdsValue,
-        futureMeetingSet: initialData.futureMeetingSet || false,
-        futureMeetingDateTime: initialData.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
-        freeTrial: initialData.freeTrial || false,
-      });
-      setCurrentLatitude(initialData.latitude);
-      setCurrentLongitude(initialData.longitude);
-      setBusinessCardPreviewUrl(initialData.businessCardImageUrl || null);
-      
-      // Auto-suggest company if it's a new visit and no name is present yet
-      if (isOpen && !initialData.id && !initialData.companyName && initialData.latitude && initialData.longitude) {
-        handleSuggestCompany();
-      }
-    } else {
-      form.reset({
-        companyName: '',
-        notes: '',
-        latitude: undefined,
-        longitude: undefined,
-        partnershipConfidence: undefined,
-        hasBusinessCard: false,
-        businessCardImageUrl: null,
-        competitorName: undefined,
-        coolerType: undefined,
-        decisionMakerName: '',
-        decisionMakerTitle: '',
-        decisionMakerContact: '',
-        interestedUnit: undefined,
-        hasTDSReading: false,
-        tdsValue: undefined,
-        futureMeetingSet: false,
-        futureMeetingDateTime: undefined,
-        freeTrial: false,
-      });
-      setCurrentLatitude(undefined);
-      setCurrentLongitude(undefined);
-      setBusinessCardPreviewUrl(null);
-    }
+    form.reset(defaultValues);
+    setCurrentLatitude(data?.latitude);
+    setCurrentLongitude(data?.longitude);
+    setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
     setHasCameraPermission(undefined);
-  }, [initialData, form, isOpen, salesperson, handleSuggestCompany]);
+    setCurrentCity(null);
+  }, [form]);
+
+  useEffect(() => {
+    if (isOpen) {
+      resetFormAndState(initialData);
+
+      // Auto-suggest company for a new visit initiated via Quicklog
+      if (!initialData?.id && initialData?.latitude && initialData?.longitude) {
+        handleSuggestCompany();
+      }
+    }
+  }, [initialData, isOpen, resetFormAndState, handleSuggestCompany]);
+
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -552,23 +497,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setIsSaving(true);
     let finalNotes = data.notes || '';
 
-    if ((!initialData || !initialData.id) && initialData?.timestamp) {
+    if (initialData?.timestamp && !initialData?.id) {
         const startTime = initialData.timestamp;
         const endTime = new Date();
         const durationMs = endTime.getTime() - startTime.getTime();
-
         const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-
-        const durationString = `Meeting duration was ${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}.`;
-
+        const durationString = `Meeting duration: ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}.`;
+        
         const currentNotes = finalNotes.trim();
-        if (currentNotes) {
-             finalNotes = `${currentNotes}\n${durationString}`;
-        } else {
-            finalNotes = durationString;
-        }
+        finalNotes = currentNotes ? `${durationString}\n\n${currentNotes}` : durationString;
     }
 
     const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
