@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
@@ -51,6 +51,7 @@ import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
+import type { SaveVisitPayload } from '@/app/actions';
 
 
 interface SubmittedSuggestion {
@@ -119,7 +120,7 @@ export default function HomePage() {
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
-  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[1].id);
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,9 +128,6 @@ export default function HomePage() {
   const isAutoScrollingRef = useRef(false);
 
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
-  const [isTerritoryWarningOpen, setIsTerritoryWarningOpen] = useState(false);
-  const [pendingVisit, setPendingVisit] = useState<Visit | null>(null);
-
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
@@ -503,16 +501,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const proceedToCreateVisit = (visit: Visit) => {
-    if (visit.visitNumber) {
-        updateColdCallCount(visit.visitNumber);
-    }
-    setCurrentEditingVisit(visit);
-    setIsVisitFormOpen(true);
-    setPendingVisit(null);
-  };
-
-  const handleOpenAddVisitForm = async () => {
+  const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
 
     const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
@@ -521,99 +510,97 @@ export default function HomePage() {
           reject(new Error("Geolocation is not supported by your browser."));
           return;
         }
-
         navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            });
-          },
+          (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
           (error) => {
             let message = "Could not retrieve location.";
-            if (error.code === error.PERMISSION_DENIED) {
-              message = "Location access denied. Please enable it in your browser settings.";
-            } else if (error.code === error.POSITION_UNAVAILABLE) {
-              message = "Location information is unavailable.";
-            } else if (error.code === error.TIMEOUT) {
-              message = "Location request timed out.";
-            }
+            if (error.code === error.PERMISSION_DENIED) message = "Location access denied. Please enable it in your browser settings.";
+            if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
+            if (error.code === error.TIMEOUT) message = "Location request timed out.";
             reject(new Error(message));
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // force fresh read
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       });
     };
 
     try {
       const { lat, lon } = await getFreshCoordinates();
-      
       setUserCurrentLatitude(lat);
       setUserCurrentLongitude(lon);
       toast({
-        title: "Fresh Location Acquired",
-        description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`
+        title: "Quicklog: Location Acquired",
+        description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`,
+        duration: 3000,
       });
 
-      const newVisitNumber = coldCallCount + 1;
-      const currentTime = new Date();
+      const companyInfo = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+      if (companyInfo.error) {
+        toast({ title: "Company Lookup Failed", description: companyInfo.error, variant: 'destructive'});
+        // Don't throw, just proceed with "Unknown Location"
+      }
       
-      const newVisitData: Visit = {
-        id: '',
-        timestamp: currentTime,
-        companyName: '',
-        notes: '',
-        latitude: lat, 
-        longitude: lon, 
-        contactInfo: undefined,
-        notesSummary: undefined,
-        partnershipConfidence: undefined,
-        hasBusinessCard: false,
-        businessCardImageUrl: undefined,
-        discussedCompetitors: false,
-        competitorName: undefined,
-        coolerType: undefined,
-        decisionMakerName: '',
-        decisionMakerTitle: '',
-        decisionMakerContact: '',
-        visitNumber: newVisitNumber,
-        interestedUnit: undefined,
-        hasTDSReading: false,
-        tdsValue: undefined,
-        futureMeetingSet: false,
-        futureMeetingDateTime: undefined,
-        freeTrial: false,
-        dealClosed: false,
-      };
+      const companyName = companyInfo.suggestedCompanyName || 'Unknown Location';
+      let visitNotes = companyInfo.address ? `Address: ${companyInfo.address}` : 'Quicklog entry, no notes yet.';
 
+      // Territory Check and note addition
       if (lat && lon && selectedSalesperson && selectedSalesperson.name !== 'Corporate') {
         const hasTerritories = selectedSalesperson.territory.length > 0;
         if (hasTerritories) {
-          const inTerritory = selectedSalesperson.territory.some(t => 
+          const inTerritory = selectedSalesperson.territory.some(t =>
             lat >= t.bounds.minLat &&
             lat <= t.bounds.maxLat &&
             lon >= t.bounds.minLng &&
             lon <= t.bounds.maxLng
           );
           if (!inTerritory) {
-            setPendingVisit(newVisitData);
-            setIsTerritoryWarningOpen(true);
-            return; // The finally block will still run
+            visitNotes += '\n\nNOTE: This location appears to be outside of the assigned sales territory.';
+            toast({
+                title: 'Outside Territory',
+                description: 'This visit is being logged outside of your assigned territory.',
+                variant: 'default'
+            })
           }
         }
       }
       
-      proceedToCreateVisit(newVisitData);
+      const newVisitNumber = coldCallCount + 1;
+
+      const payload: SaveVisitPayload = {
+        companyName: companyName,
+        notes: visitNotes,
+        latitude: lat,
+        longitude: lon,
+        decisionMakerContact: companyInfo.phone,
+        visitNumber: newVisitNumber,
+        // all other fields are optional/default
+      };
+
+      const result = await saveVisitAction(payload);
+      
+      if (result.error) {
+          throw new Error(result.error);
+      }
+      
+      if (result.visit) {
+        await handleSaveVisit(result.visit);
+        updateColdCallCount(newVisitNumber);
+        toast({
+            title: 'Quicklog Successful!',
+            description: `${result.visit.companyName} has been logged. You can edit it from the list.`,
+        });
+      }
+
     } catch (error: any) {
       toast({
-        title: "Location Error",
+        title: "Quicklog Failed",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setIsFetchingNewLocation(false);
     }
-  };
+};
 
 
   const handleEditVisit = (visit: Visit) => {
@@ -1036,9 +1023,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleOpenAddVisitForm} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
                         {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        {isFetchingNewLocation ? 'Getting Location...' : 'Hit New Door!'}
+                        {isFetchingNewLocation ? 'Logging...' : 'Quicklog'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -1065,7 +1052,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> this app will help streamline your efforts
+                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> this app will help streamline your efforts
                       </p>
                     </div>
                 ) : (
@@ -1389,7 +1376,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                         <p className="mb-4">This is your main workspace for logging new visits. Here's how it works:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
-                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Hit New Door!</span> button, the app uses your current location to find company information, giving you a head start before you even walk in.
+                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> button, the app uses your current location to find company information, giving you a head start before you even walk in.
                             </li>
                             <li>
                                 As you interact with the potential partner, use the form to <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span>. Capturing details like business cards, competitor info, and visit notes makes the app—and our AI assistant, Debbie—more powerful.
@@ -1460,28 +1447,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           </TabsContent>
         </Tabs>
         
-        <AlertDialog open={isTerritoryWarningOpen} onOpenChange={setIsTerritoryWarningOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Outside Your Territory</AlertDialogTitle>
-              <AlertDialogDescription>
-                Your current location appears to be outside of your assigned sales territory. Are you sure you want to proceed with creating a visit here?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPendingVisit(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => {
-                if (pendingVisit) {
-                  proceedToCreateVisit(pendingVisit);
-                }
-                setIsTerritoryWarningOpen(false);
-              }}>
-                Proceed Anyway
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
             {zoomedVisit && (
