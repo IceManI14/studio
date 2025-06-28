@@ -61,7 +61,6 @@ interface SubmittedSuggestion {
 
 const AVAILABLE_AI_MODELS = [
     { id: 'googleai/gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash' },
-    { id: 'googleai/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
     { id: 'googleai/gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro' },
     { id: 'googleai/gemini-1.0-pro', name: 'Gemini 1.0 Pro' },
 ];
@@ -120,7 +119,7 @@ export default function HomePage() {
   const [chatInput, setChatInput] = useState('');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
-  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[1].id);
+  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,18 +142,16 @@ export default function HomePage() {
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
-  const handleSelectSalesperson = async (salesperson: Salesperson) => {
-    setSelectedSalesperson(salesperson);
-    setTargetDestination(null);
-    setDestinationCities([]);
+  const handleChangeDestination = async (salespersonToUse?: Salesperson) => {
+    const activeSalesperson = salespersonToUse || selectedSalesperson;
+    if (!activeSalesperson) return;
 
     const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl');
     let cities: string[] = [];
-    let shouldOpenModal = false;
-
-    if (territoryPdfUrl && salesperson.name !== 'Corporate') {
-      shouldOpenModal = true;
-      setIsDestinationModalOpen(true);
+    
+    setIsDestinationModalOpen(true);
+    
+    if (territoryPdfUrl && activeSalesperson.name !== 'Corporate') {
       setIsExtractingCities(true);
       try {
         const result = await extractCitiesFromPdfAction({ pdfDataUri: territoryPdfUrl });
@@ -168,7 +165,7 @@ export default function HomePage() {
             description: "Falling back to the default list for your profile.",
             variant: "default",
           });
-          cities = salesperson.territory.flatMap(t => t.cities || []);
+          cities = activeSalesperson.territory.flatMap(t => t.cities || []);
         }
       } catch (e: any) {
         toast({
@@ -176,19 +173,27 @@ export default function HomePage() {
           description: `Could not read cities from PDF: ${e.message}. Using default list.`,
           variant: "destructive",
         });
-        cities = salesperson.territory.flatMap(t => t.cities || []);
+        cities = activeSalesperson.territory.flatMap(t => t.cities || []);
       } finally {
         setIsExtractingCities(false);
       }
-    } else if (salesperson.territory.length > 0 && salesperson.name !== 'Corporate') {
-      shouldOpenModal = true;
-      cities = salesperson.territory.flatMap(t => t.cities || []);
+    } else if (activeSalesperson.territory.length > 0 && activeSalesperson.name !== 'Corporate') {
+      cities = activeSalesperson.territory.flatMap(t => t.cities || []);
     }
     
     setDestinationCities(cities);
+  };
 
-    if (shouldOpenModal) {
-      setIsDestinationModalOpen(true);
+  const handleSelectSalesperson = async (salesperson: Salesperson) => {
+    setSelectedSalesperson(salesperson);
+    setTargetDestination(null);
+    setDestinationCities([]);
+
+    const hasTerritoryPdf = !!localStorage.getItem('userTerritoryPdfUrl');
+    const hasDefaultTerritory = salesperson.territory.length > 0 && salesperson.name !== 'Corporate';
+
+    if (hasTerritoryPdf || hasDefaultTerritory) {
+      handleChangeDestination(salesperson);
     } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
       toast({
         title: `Welcome, ${salesperson.name}!`,
@@ -956,9 +961,12 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           </h1>
           {selectedSalesperson ? (
             <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
-                <div className="flex items-center gap-2">
+                <div 
+                  className="flex items-center gap-2 cursor-pointer group"
+                  onClick={() => handleChangeDestination()}
+                >
                     <User className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-headline font-semibold text-foreground text-center">
+                    <h2 className="text-lg font-headline font-semibold text-foreground text-center transition-colors group-hover:text-primary">
                       {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
                     </h2>
                 </div>
