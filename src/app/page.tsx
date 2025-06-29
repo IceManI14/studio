@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay } from 'date-fns';
@@ -129,6 +129,7 @@ export default function HomePage() {
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<string | null>(null);
+  const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
@@ -145,6 +146,7 @@ export default function HomePage() {
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
   const handleChangeDestination = async (salespersonToUse?: Salesperson) => {
+    setNavigationUrl(null);
     const activeSalesperson = salespersonToUse || selectedSalesperson;
     if (!activeSalesperson) return;
 
@@ -181,6 +183,7 @@ export default function HomePage() {
   const handleSelectSalesperson = async (salesperson: Salesperson) => {
     setSelectedSalesperson(salesperson);
     setTargetDestination(null);
+    setNavigationUrl(null);
     setDestinationCities([]);
 
     const hasTerritoryPdf = !!localStorage.getItem('userTerritoryPdfUrl');
@@ -952,6 +955,17 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                       {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
                     </h2>
                 </div>
+                {navigationUrl && (
+                  <Button
+                    onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
+                    className="mt-2"
+                    variant="default"
+                    size="sm"
+                  >
+                    <Map className="mr-2 h-4 w-4" />
+                    Navigate to Destination
+                  </Button>
+                )}
                 {isFetchingCity && (
                     <div className="flex items-center text-sm text-muted-foreground mt-2">
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1515,9 +1529,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
 
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-                                                if (typeof window !== 'undefined') {
-                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
-                                                }
+                                                setNavigationUrl(googleMapsUrl);
                                             } else {
                                                 throw new Error('AI did not return a valid location.');
                                             }
