@@ -17,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
@@ -137,7 +136,6 @@ interface VisitFormProps {
 }
 
 const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson }) => {
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
 
@@ -239,7 +237,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
             form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
         } else {
-            toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
+            console.warn("No Company Found", "Could not identify a company at this location.");
         }
         if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
         if (result.address) {
@@ -253,11 +251,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.city) setCurrentCity(result.city);
 
     } catch (error: any) {
-        toast({ title: "Could Not Find Company", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+        console.error("Could Not Find Company", error.message || "An unexpected error occurred.");
     } finally {
         setIsSuggestingCompany(false);
     }
-  }, [form, toast, setCurrentCity]);
+  }, [form, setCurrentCity]);
 
 
   useEffect(() => {
@@ -413,11 +411,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
           setIsCameraViewVisible(false);
-          toast({
-            variant: 'destructive',
-            title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings to use this feature.',
-          });
         }
       }
     };
@@ -432,7 +425,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         videoRef.current.srcObject = null;
       }
     };
-  }, [isCameraViewVisible, toast]);
+  }, [isCameraViewVisible]);
 
   const handleTakeLater = () => {
     const currentNotes = form.getValues('notes') || '';
@@ -440,15 +433,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     if (!currentNotes.includes(reminderText.trim())) {
         form.setValue('notes', (currentNotes + reminderText).trim(), { shouldValidate: true });
-        toast({
-            title: "Reminder Added",
-            description: "A note was added to photograph the card later.",
-        });
+        console.log("Reminder Added", "A note was added to photograph the card later.");
     } else {
-        toast({
-            title: "Reminder Already Exists",
-            description: "The business card reminder is already in your notes.",
-        });
+        console.log("Reminder Already Exists", "The business card reminder is already in your notes.");
     }
     // Uncheck the box to allow the user to "pass" this section
     form.setValue('hasBusinessCard', false);
@@ -506,11 +493,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const dataUri = canvas.toDataURL('image/jpeg', 0.9);
         setBusinessCardPreviewUrl(dataUri);
         form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
-        toast({ title: "Image Captured", description: "Business card image captured from camera." });
+        console.log("Image Captured", "Business card image captured from camera.");
       }
       handleToggleCameraView();
     } else {
-        toast({ title: "Capture Error", description: "Camera not ready or permission denied.", variant: "destructive"});
+        console.error("Capture Error", "Camera not ready or permission denied.");
     }
   };
 
@@ -531,13 +518,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setCurrentCoolerOptions(updatedOptions);
         form.setValue('coolerType', newName, { shouldValidate: true });
         setCustomCoolerNameInput('');
-        toast({ title: "Custom Cooler Added", description: `${newName} added to options and selected.`});
+        console.log("Custom Cooler Added", `${newName} added to options and selected.`);
     } else if (newName && currentCoolerOptions.includes(newName)) {
         form.setValue('coolerType', newName, { shouldValidate: true });
         setCustomCoolerNameInput('');
-        toast({ title: "Cooler Selected", description: `${newName} selected.`});
+        console.log("Cooler Selected", `${newName} selected.`);
     } else {
-        toast({ title: "Invalid Name", description: "Please enter a cooler name.", variant: "default" });
+        console.warn("Invalid Name", "Please enter a cooler name.");
     }
   };
 
@@ -592,12 +579,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     try {
       await onSave(payload);
-      setIsSaving(false); // Reset state before closing
       onClose();
     } catch (error) {
       console.error("Error during save operation:", error);
-      setIsSaving(false); // Reset state on error too
-      // The parent component will show a toast, so we don't need one here.
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -605,7 +591,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
     if (hasMicPermission === false) {
-      toast({ title: "Microphone Access Denied", description: "Please enable microphone permissions to record audio notes.", variant: "destructive" });
+      console.error("Microphone Access Denied: Please enable microphone permissions to record audio notes.");
       return;
     }
 
@@ -622,7 +608,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       mediaRecorderRef.current.onstop = () => {
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
-          toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
+          console.log(`Audio Notes Recorded: Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)`);
           audioChunksRef.current = [];
         }
         if (mediaRecorderRef.current?.stream) {
@@ -636,11 +622,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch (error) {
       console.error('Error accessing microphone:', error);
       setHasMicPermission(false);
-      toast({
-        variant: 'destructive',
-        title: 'Microphone Access Denied',
-        description: 'Please enable microphone permissions in your browser settings.',
-      });
     }
   };
 
@@ -654,10 +635,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     if (typeof window !== 'undefined') {
       const isAndroid = /android/i.test(navigator.userAgent);
       
-      toast({ 
-        title: 'Opening Genius Scan',
-        description: 'After scanning, return here to upload the saved image from your photos.',
-      });
+      console.log('Opening Genius Scan. After scanning, return here to upload the saved image from your photos.');
 
       if (isAndroid) {
         // This intent URL will try to open the app. If it fails, it will redirect to the Play Store.

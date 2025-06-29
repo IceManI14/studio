@@ -1,10 +1,5 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import dynamic from 'next/dynamic';
-
-const DynamicToaster = dynamic(() => 
-  import('@/components/ui/toaster').then((mod) => mod.Toaster)
-);
 
 export const metadata: Metadata = {
   title: 'Optimum Trailblazer',
@@ -27,7 +22,6 @@ export default function RootLayout({
         <div className="relative z-10">
           {children}
         </div>
-        <DynamicToaster />
       </body>
     </html>
   );

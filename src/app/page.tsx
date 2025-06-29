@@ -10,7 +10,6 @@ import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay } from 'date-fns';
@@ -54,7 +53,6 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
-import { ToastAction } from '@/components/ui/toast';
 
 
 interface SubmittedSuggestion {
@@ -103,7 +101,6 @@ export default function HomePage() {
   const [coldCallCount, setColdCallCount] = useState<number>(0);
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
-  const { toast } = useToast();
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
@@ -165,19 +162,11 @@ export default function HomePage() {
         if (result.cities && result.cities.length > 0) {
           cities = result.cities;
         } else {
-          toast({
-            title: "No Cities Found in PDF",
-            description: "The AI could not find any cities in the provided document. Falling back to the default list from your profile.",
-            variant: "default",
-          });
+          console.warn("The AI could not find any cities in the provided document. Falling back to the default list from your profile.");
           cities = activeSalesperson.territory.flatMap(t => t.cities || []);
         }
       } catch (e: any) {
-        toast({
-          title: "AI Error",
-          description: `Could not read cities from PDF: ${e.message}. Using default list.`,
-          variant: "destructive",
-        });
+        console.error(`Could not read cities from PDF: ${e.message}. Using default list.`);
         cities = activeSalesperson.territory.flatMap(t => t.cities || []);
       } finally {
         setIsExtractingCities(false);
@@ -200,17 +189,9 @@ export default function HomePage() {
     if (hasTerritoryPdf || hasDefaultTerritory) {
       handleChangeDestination(salesperson);
     } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
-      toast({
-        title: `Welcome, ${salesperson.name}!`,
-        description: 'You have no territories assigned. Please contact your manager to have them set up.',
-        variant: 'destructive',
-        duration: 8000,
-      });
+      console.warn(`Welcome, ${salesperson.name}! You have no territories assigned. Please contact your manager to have them set up.`);
     } else {
-       toast({
-        title: `Welcome, ${salesperson.name}!`,
-        description: `Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}`,
-      });
+       console.log(`Welcome, ${salesperson.name}! Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}`);
     }
   };
 
@@ -222,7 +203,6 @@ export default function HomePage() {
       await setDoc(statsDocRef, { coldCallCount: newCount }, { merge: true });
     } catch (error) {
       console.error("Error updating cold call count:", error);
-      toast({ title: 'Sync Error', description: 'Failed to update cold call count.', variant: 'destructive'});
     }
   };
 
@@ -236,20 +216,12 @@ export default function HomePage() {
           const lon = position.coords.longitude;
           setUserCurrentLatitude(lat);
           setUserCurrentLongitude(lon);
-          toast({
-            title: "Current Location Acquired",
-            description: `Lat: ${lat.toFixed(4)}, Lng: ${lon.toFixed(4)}`
-          });
           
           setIsFetchingCity(true);
           try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
             if (result.error) {
-              toast({
-                title: "Location Lookup Failed",
-                description: result.error,
-                variant: "destructive",
-              });
+              console.error("Location Lookup Failed", result.error);
               setCurrentCity("Location lookup failed");
             } else if (result.city) {
               setCurrentCity(result.city);
@@ -258,11 +230,6 @@ export default function HomePage() {
             }
           } catch (e: any) {
             console.error("Error fetching city:", e);
-            toast({
-                title: "Client Error",
-                description: "An unexpected error occurred while fetching city data.",
-                variant: "destructive",
-            });
             setCurrentCity("Error fetching city.");
           } finally {
             setIsFetchingCity(false);
@@ -277,20 +244,12 @@ export default function HomePage() {
           } else if (error.code === error.TIMEOUT) {
             errorMessage = "Location request timed out.";
           }
-          toast({
-            title: "Location Error",
-            description: errorMessage,
-            variant: "default" 
-          });
+          console.error("Location Error", errorMessage);
           setCurrentCity("Location access denied.");
         }
       );
     } else {
-      toast({
-        title: "Geolocation Not Supported",
-        description: "Your browser does not support geolocation.",
-        variant: "default"
-      });
+      console.warn("Geolocation Not Supported: Your browser does not support geolocation.");
       setCurrentCity("Geolocation not supported.");
     }
     
@@ -321,7 +280,6 @@ export default function HomePage() {
       setVisits(visitsData);
     }, (error) => {
       console.error("Error fetching visits:", error);
-      toast({ title: 'Sync Error', description: 'Could not load visits data.', variant: 'destructive' });
     });
     
     const suggestionsQuery = query(collection(db, 'suggestions'), orderBy('timestamp', 'desc'));
@@ -336,7 +294,6 @@ export default function HomePage() {
       setSubmittedSuggestions(suggestionsData);
     }, (error) => {
       console.error("Error fetching suggestions:", error);
-      toast({ title: 'Sync Error', description: 'Could not load suggestions.', variant: 'destructive' });
     });
 
     const statsDocRef = doc(db, 'app-state', 'daily-stats');
@@ -348,7 +305,6 @@ export default function HomePage() {
         }
     }, (error) => {
         console.error("Error fetching daily stats:", error);
-        toast({ title: 'Sync Error', description: 'Could not load daily stats.', variant: 'destructive' });
     });
 
 
@@ -358,7 +314,7 @@ export default function HomePage() {
       unsubscribeStats && unsubscribeStats();
     };
 
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     // Check if this is the first time the user is using the app
@@ -385,16 +341,7 @@ export default function HomePage() {
               // already achieved today, do nothing
             } else {
               // not achieved today, show toast and update doc
-              toast({
-                title: (
-                  <div className="flex items-center">
-                    <PartyPopper className="mr-2 h-5 w-5 text-accent" />
-                    Milestone Achieved!
-                  </div>
-                ),
-                description: "Congratulations! You've hit 30 doors today! Keep up the great work!",
-                duration: 7000, 
-              });
+              console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
               await updateDoc(statsDocRef, { milestoneAchievedDate: today });
             }
         } catch (error) {
@@ -403,7 +350,7 @@ export default function HomePage() {
       }
       checkAndSetMilestone();
     }
-  }, [coldCallCount, toast]);
+  }, [coldCallCount]);
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visits.length === 0) {
@@ -540,11 +487,7 @@ export default function HomePage() {
         setZoomedVisit(null);
       } else {
         // If no specific modal is open that we want to handle, prevent exiting the app.
-        toast({
-          title: "Action Canceled",
-          description: "To prevent accidental exit, the back button is disabled on this main page.",
-          duration: 3000
-        });
+        console.log("Back button action canceled to prevent accidental exit.");
       }
     };
 
@@ -556,7 +499,7 @@ export default function HomePage() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [toast, zoomedVisit]); // Re-create the handler when zoomedVisit changes to have the latest state.
+  }, [zoomedVisit]); // Re-create the handler when zoomedVisit changes to have the latest state.
 
   const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
@@ -595,11 +538,7 @@ export default function HomePage() {
       // The VisitForm will now be responsible for fetching company details and handling the rest
       
     } catch (error: any) {
-      toast({
-        title: "Could Not Start Visit",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Could Not Start Visit", error.message);
     } finally {
       setIsFetchingNewLocation(false);
     }
@@ -616,7 +555,7 @@ export default function HomePage() {
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
-    toast({ title: 'Logging Follow-up...', description: `Opening new visit form for ${existingVisit.companyName}.` });
+    console.log(`Logging Follow-up for ${existingVisit.companyName}.`);
   
     const newVisitTemplate: Partial<Visit> = {
       // No id, so it's a new visit
@@ -670,7 +609,6 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error("Error saving visit to Firestore:", error);
-      toast({ title: 'Sync Error', description: 'Failed to save visit data.', variant: 'destructive'});
     }
   };
 
@@ -679,16 +617,9 @@ export default function HomePage() {
     const result = await saveVisitAction(finalPayload);
 
     if (result.error) {
-      toast({
-        title: 'Error saving visit',
-        description: result.error,
-        variant: 'destructive',
-      });
+      console.error('Error saving visit', result.error);
     } else if (result.visit) {
-      toast({
-        title: payload.id ? 'Potential Partner Updated' : 'Potential Partner Logged',
-        description: `${result.visit.companyName} details saved successfully.`,
-      });
+      console.log('Potential Partner Logged', `${result.visit.companyName} details saved successfully.`);
       await handleSaveVisit(result.visit);
     }
   };
@@ -698,10 +629,9 @@ export default function HomePage() {
     if (!db) return;
     try {
         await deleteDoc(doc(db, "visits", visitId));
-        toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
+        console.log('Visit Deleted', 'The visit log has been removed.');
     } catch (error) {
         console.error("Error deleting visit:", error);
-        toast({ title: 'Sync Error', description: 'Failed to delete visit.', variant: 'destructive'});
     }
   };
 
@@ -718,20 +648,13 @@ export default function HomePage() {
         }
     }
 
-    toast({
-      title: "Field Day Ended",
-      description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset. Tomorrow is a new day!`,
-    });
+    console.log("Field Day Ended", `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset.`);
     setIsEndDayConfirmOpen(false);
   };
 
   const handleSubmitSuggestion = async () => {
     if (suggestionText.trim() === '' || !db) {
-      toast({
-        title: 'Empty Suggestion',
-        description: 'Please type your suggestion before submitting.',
-        variant: 'default',
-      });
+      console.warn('Empty Suggestion', 'Please type your suggestion before submitting.');
       return;
     }
 
@@ -742,24 +665,16 @@ export default function HomePage() {
     
     try {
         await addDoc(collection(db, "suggestions"), newSuggestionObject);
-        toast({
-          title: 'Suggestion Submitted!',
-          description: 'Thank you for your feedback.',
-        });
+        console.log('Suggestion Submitted!', 'Thank you for your feedback.');
         setSuggestionText('');
     } catch (error) {
         console.error("Error submitting suggestion:", error);
-        toast({ title: 'Sync Error', description: 'Could not submit suggestion.', variant: 'destructive'});
     }
   };
 
   const handleEmailSuggestions = () => {
     if (submittedSuggestions.length === 0) {
-      toast({
-        title: 'No Suggestions to Email',
-        description: 'There are no submitted suggestions to send.',
-        variant: 'default',
-      });
+      console.log('No Suggestions to Email', 'There are no submitted suggestions to send.');
       return;
     }
 
@@ -780,10 +695,7 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
         window.location.href = mailtoLink;
     }
-    toast({
-      title: "Opening email client...",
-      description: "Please send the composed email with your suggestions.",
-    });
+    console.log("Opening email client...", "Please send the composed email with your suggestions.");
   };
 
   const handleEmailManager = () => {
@@ -827,10 +739,7 @@ export default function HomePage() {
         window.open(gmailLink, '_blank');
     }
 
-    toast({
-      title: "Opening Gmail...",
-      description: "Please manually attach the exported PDF to the email before sending.",
-    });
+    console.log("Opening Gmail...", "Please manually attach the exported PDF to the email before sending.");
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -838,13 +747,13 @@ export default function HomePage() {
     if (file) {
       const allowedTypes = ["application/pdf", "text/csv"];
       if (!allowedTypes.includes(file.type)) {
-        toast({ title: "Invalid File Type", description: "Please select a PDF or CSV file.", variant: "destructive" });
+        console.error("Invalid File Type", "Please select a PDF or CSV file.");
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({ title: "File Too Large", description: "Please select a file smaller than 5MB.", variant: "destructive" });
+        console.error("File Too Large", "Please select a file smaller than 5MB.");
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -878,10 +787,10 @@ export default function HomePage() {
         } else if (selectedFile.type === 'text/csv') {
           csvDataForAi = await selectedFile.text();
         }
-        toast({ title: 'File Attached', description: `${selectedFile.name} attached and will be sent to AI.`, duration: 3000});
+        console.log('File Attached', `${selectedFile.name} attached and will be sent to AI.`);
         messageText += ` (Attached File: ${selectedFile.name})`;
       } catch (processingError: any) {
-        toast({ title: 'File Processing Failed', description: processingError.message, variant: 'destructive' });
+        console.error('File Processing Failed', processingError.message);
         setIsAiResponding(false);
         return;
       } finally {
@@ -922,7 +831,7 @@ export default function HomePage() {
       });
 
       if (result.error) {
-        toast({ title: "AI Chat Error", description: `Error: ${result.error}`, variant: "destructive" });
+        console.error("AI Chat Error", `Error: ${result.error}`);
         const aiErrorResponse: ChatMessage = {
           id: crypto.randomUUID(),
           sender: 'ai',
@@ -940,7 +849,7 @@ export default function HomePage() {
         setChatMessages(prev => [...prev, aiResponse]);
       }
     } catch (e: any) {
-      toast({ title: "AI Chat Failed", description: "Could not get response from AI.", variant: "destructive" });
+      console.error("AI Chat Failed", "Could not get response from AI.");
        const aiFailureResponse: ChatMessage = {
           id: crypto.randomUUID(),
           sender: 'ai',
@@ -1081,10 +990,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
               onClick={(e) => {
                 if (visits.length === 0) {
                   e.preventDefault();
-                  toast({
-                    title: 'No Visits to show at the moment!',
-                    description: 'Come back at the end of the day!',
-                  });
+                  console.log('No visits to show at the moment!');
                 }
               }}
             >
@@ -1599,12 +1505,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                                         setTargetDestination(destinationCity);
                                         setIsDestinationModalOpen(false);
                                         setIsFindingParking(true);
-                                        toast({
-                                            title: 'AI is finding the best parking spot...',
-                                            description: `Optimizing your route for ${destinationCity}. This may take a moment.`,
-                                            duration: 20000,
-                                        });
-
+                                        
                                         try {
                                             const result = await findOptimalParkingAction({ city: destinationCity });
 
@@ -1614,25 +1515,14 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
 
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-                                                toast({
-                                                    title: 'Optimal Location Found!',
-                                                    description: `AI suggests parking near: ${result.locationDescription || 'the commercial district'}.`,
-                                                    duration: 10000,
-                                                    action: (
-                                                      <ToastAction altText="Open in Maps" onClick={() => window.open(googleMapsUrl, '_blank', 'noopener,noreferrer')}>
-                                                        Navigate
-                                                      </ToastAction>
-                                                    ),
-                                                });
+                                                if (typeof window !== 'undefined') {
+                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
+                                                }
                                             } else {
                                                 throw new Error('AI did not return a valid location.');
                                             }
                                         } catch (e: any) {
-                                            toast({
-                                                title: 'Could Not Find Location',
-                                                description: e.message || 'An unexpected error occurred.',
-                                                variant: 'destructive',
-                                            });
+                                            console.error('Could Not Find Location', e.message || 'An unexpected error occurred.');
                                         } finally {
                                             setIsFindingParking(false);
                                         }

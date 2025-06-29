@@ -10,7 +10,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { summarizeNotesAction } from '@/app/actions';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
@@ -31,7 +30,6 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView, onLogFollowUp }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const { toast } = useToast();
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
   const [isCoordsVisible, setIsCoordsVisible] = useState(false);
@@ -40,15 +38,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const handleDealClosedChange = (checked: boolean) => {
     const updatedVisit = { ...visit, dealClosed: !!checked };
     onUpdateVisit(updatedVisit);
-    toast({
-        title: checked ? "Congratulations!" : "Deal Status Updated",
-        description: `Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}`,
-    });
+    console.log(`Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}`);
   };
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
-      toast({ title: "No notes to summarize", variant: "default" });
+      console.warn("No notes to summarize");
       return;
     }
     setIsSummarizing(true);
@@ -59,9 +54,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       }
       const updatedVisit = { ...visit, notesSummary: result.summary };
       onUpdateVisit(updatedVisit);
-      toast({ title: "Notes Re-summarized", description: "Summary has been updated."});
+      console.log("Notes Re-summarized: Summary has been updated.");
     } catch (error: any) {
-      toast({ title: "Error Summarizing", description: error.message || "Could not re-summarize notes.", variant: "destructive" });
+      console.error("Error Summarizing", error.message || "Could not re-summarize notes.");
     } finally {
       setIsSummarizing(false);
     }

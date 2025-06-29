@@ -5,7 +5,6 @@ import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud, FileCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { fileToDataUri } from '@/lib/utils';
@@ -18,14 +17,13 @@ interface TerritoryUploadModalProps {
 export default function TerritoryUploadModal({ isOpen, onClose }: TerritoryUploadModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type !== "application/pdf") {
-        toast({ title: "Invalid File Type", description: "Please select a PDF file.", variant: "destructive" });
+        console.error("Invalid File Type", "Please select a PDF file.");
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -36,7 +34,7 @@ export default function TerritoryUploadModal({ isOpen, onClose }: TerritoryUploa
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast({ title: "No file selected", description: "Please select your territory PDF.", variant: "default" });
+      console.warn("No file selected", "Please select your territory PDF.");
       return;
     }
 
@@ -50,18 +48,11 @@ export default function TerritoryUploadModal({ isOpen, onClose }: TerritoryUploa
       // Set flag to not show this modal again
       localStorage.setItem('territoryPdfUploaded', 'true');
       
-      toast({
-        title: "Territory File Stored!",
-        description: "Debbie now has your territory information. Thank you!",
-      });
+      console.log("Territory File Stored!", "Debbie now has your territory information.");
 
       onClose(); // Close the modal
     } catch (error: any) {
-      toast({
-        title: "File Processing Failed",
-        description: error.message || "Could not read the PDF file.",
-        variant: 'destructive',
-      });
+      console.error("File Processing Failed", error.message || "Could not read the PDF file.");
     } finally {
       setIsUploading(false);
     }

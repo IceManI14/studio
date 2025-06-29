@@ -3,7 +3,6 @@
 
 import type { Visit } from '@/lib/types';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface ExportButtonProps {
@@ -13,15 +12,10 @@ interface ExportButtonProps {
 }
 
 const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) => {
-  const { toast } = useToast();
 
   const handleExport = () => {
     if (visits.length === 0) {
-      toast({
-        title: 'No Data to Export',
-        description: 'There are no visits logged to export.',
-        variant: 'default',
-      });
+      console.warn('No Data to Export: There are no visits logged to export.');
       return;
     }
 
@@ -79,13 +73,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast({ title: 'Export Successful', description: 'Visits data downloaded as CSV.' });
+        console.log('Export Successful: Visits data downloaded as CSV.');
       } else {
         throw new Error("Download feature not supported in this browser.");
       }
     } catch (error) {
         console.error("Export failed:", error);
-        toast({ title: 'Export Failed', description: 'Could not download CSV file.', variant: 'destructive'});
     }
   };
 

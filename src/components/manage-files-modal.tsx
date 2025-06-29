@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, File, Trash2 } from 'lucide-react';
 import type { ManagedFile } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
@@ -20,7 +19,6 @@ interface ManageFilesModalProps {
 
 export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFilesChange }: ManageFilesModalProps) {
     const [isUploading, setIsUploading] = useState(false);
-    const { toast } = useToast();
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -29,7 +27,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
 
         const allowedTypes = ["application/pdf", "text/csv"];
         if (!allowedTypes.includes(file.type)) {
-            toast({ title: "Invalid File Type", description: "Please select a PDF or CSV file.", variant: "destructive" });
+            console.error("Invalid File Type: Please select a PDF or CSV file.");
             return;
         }
 
@@ -55,11 +53,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
                     console.error("Could not parse error response as JSON.", jsonError);
                 }
                 
-                toast({
-                    title: "Upload Failed",
-                    description: errorMessage,
-                    variant: 'destructive',
-                });
+                console.error("Upload Failed", errorMessage);
                 return; // Exit the function without throwing
             }
 
@@ -73,18 +67,10 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
 
             onFilesChange([...managedFiles, newFile]);
 
-            toast({
-                title: 'File Uploaded',
-                description: `${newFile.name} is now available for Debbie to use.`,
-            });
+            console.log('File Uploaded', `${newFile.name} is now available for Debbie to use.`);
 
         } catch (error: any) {
             console.error("File upload network error:", error);
-            toast({
-                title: "Upload Failed",
-                description: "A network error occurred. Please check your internet connection and try again.",
-                variant: 'destructive',
-            });
         } finally {
             setIsUploading(false);
             // Reset file input
@@ -97,10 +83,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
     const handleDeleteFile = (urlToDelete: string) => {
         const updatedFiles = managedFiles.filter(f => f.url !== urlToDelete);
         onFilesChange(updatedFiles);
-        toast({
-            title: "File Removed",
-            description: "The file will no longer be used as context by the AI.",
-        });
+        console.log("File Removed", "The file will no longer be used as context by the AI.");
     }
 
     return (

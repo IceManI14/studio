@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { findCompanyAction } from '@/app/actions';
 import { Loader2, Map, MapPin, Phone } from 'lucide-react';
 import type { Visit } from '@/lib/types';
@@ -34,11 +33,10 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
     const [city, setCity] = useState(destinationCities[0] || '');
     const [isSearching, setIsSearching] = useState(false);
     const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
-    const { toast } = useToast();
 
     const handleSearch = async () => {
         if (!companyName.trim()) {
-            toast({ title: "Company name required", variant: "destructive" });
+            console.warn("Company name required");
             return;
         }
         setIsSearching(true);
@@ -46,14 +44,14 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
         try {
             const result = await findCompanyAction({ companyName, city });
             if (result.error) {
-                toast({ title: "Search Failed", description: result.error, variant: "destructive" });
+                console.error("Search Failed", result.error);
             } else if (result.places && result.places.length > 0) {
                 setFoundPlaces(result.places);
             } else {
-                 toast({ title: "No Results Found", description: "No companies found with that name in the specified area.", variant: "default" });
+                 console.log("No Results Found", "No companies found with that name in the specified area.");
             }
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            console.error("Error", error.message);
         } finally {
             setIsSearching(false);
         }

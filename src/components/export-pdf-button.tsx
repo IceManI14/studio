@@ -3,7 +3,6 @@
 
 import type { Visit } from '@/lib/types';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -16,16 +15,11 @@ interface ExportPdfButtonProps {
 }
 
 const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className }) => {
-  const { toast } = useToast();
   const timeZone = 'America/New_York';
 
   const handleExportPdf = () => {
     if (visits.length === 0) {
-      toast({
-        title: 'No Data to Export',
-        description: 'There are no visits logged to export as PDF.',
-        variant: 'default',
-      });
+      console.warn('No Data to Export: There are no visits logged to export as PDF.');
       return;
     }
 
@@ -102,18 +96,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
       const pdfFilename = `optimum_trailblazer_visits_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(pdfFilename);
 
-      toast({
-        title: 'PDF Export Successful',
-        description: `${pdfFilename} has been downloaded.`,
-      });
+      console.log('PDF Export Successful', `${pdfFilename} has been downloaded.`);
 
     } catch (error) {
       console.error("PDF Export failed:", error);
-      toast({
-        title: 'PDF Export Failed',
-        description: 'An error occurred while generating the PDF.',
-        variant: 'destructive',
-      });
     }
   };
 
