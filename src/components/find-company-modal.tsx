@@ -11,6 +11,7 @@ import { findCompanyAction } from '@/app/actions';
 import { Loader2, Map, MapPin, Phone } from 'lucide-react';
 import type { Visit } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { ScrollArea } from './ui/scroll-area';
 
 interface FoundPlace {
     companyName: string;
@@ -32,7 +33,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
     const [companyName, setCompanyName] = useState('');
     const [city, setCity] = useState(destinationCities[0] || '');
     const [isSearching, setIsSearching] = useState(false);
-    const [foundPlace, setFoundPlace] = useState<FoundPlace | null>(null);
+    const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
     const { toast } = useToast();
 
     const handleSearch = async () => {
@@ -41,13 +42,15 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
             return;
         }
         setIsSearching(true);
-        setFoundPlace(null);
+        setFoundPlaces([]);
         try {
             const result = await findCompanyAction({ companyName, city });
             if (result.error) {
                 toast({ title: "Search Failed", description: result.error, variant: "destructive" });
-            } else if (result.place) {
-                setFoundPlace(result.place);
+            } else if (result.places && result.places.length > 0) {
+                setFoundPlaces(result.places);
+            } else {
+                 toast({ title: "No Results Found", description: "No companies found with that name in the specified area.", variant: "default" });
             }
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -56,14 +59,14 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
         }
     };
 
-    const handleAddVisit = () => {
-        if (foundPlace) {
+    const handleAddVisit = (place: FoundPlace) => {
+        if (place) {
             const visitData: Partial<Visit> = {
-                companyName: foundPlace.companyName,
-                latitude: foundPlace.latitude,
-                longitude: foundPlace.longitude,
-                notes: `Address: ${foundPlace.address}`,
-                decisionMakerContact: foundPlace.phone
+                companyName: place.companyName,
+                latitude: place.latitude,
+                longitude: place.longitude,
+                notes: `Address: ${place.address}`,
+                decisionMakerContact: place.phone
             };
             onAddAsVisit(visitData);
             handleClose();
@@ -72,13 +75,13 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
     
     const handleClose = () => {
         setCompanyName('');
-        setFoundPlace(null);
+        setFoundPlaces([]);
         onClose();
     }
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Find a Company</DialogTitle>
                     <DialogDescription>
@@ -96,7 +99,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="city-search">City / Area</Label>
+                        <Label htmlFor="city-search">State / City / Town / County</Label>
                         <Input
                             id="city-search"
                             value={city}
@@ -108,27 +111,35 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                         {isSearching ? <Loader2 className="animate-spin" /> : 'Search'}
                     </Button>
                 </div>
-                {foundPlace && (
-                    <Card className="mt-4">
-                        <CardHeader>
-                            <CardTitle>{foundPlace.companyName}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            <p className="flex items-center"><MapPin className="mr-2 h-4 w-4" /> {foundPlace.address}</p>
-                            {foundPlace.phone && <p className="flex items-center"><Phone className="mr-2 h-4 w-4" /> {foundPlace.phone}</p>}
-                            {foundPlace.latitude && foundPlace.longitude && (
-                                <Button variant="link" asChild className="p-0 h-auto">
-                                    <a href={`https://www.google.com/maps?q=${foundPlace.latitude},${foundPlace.longitude}`} target="_blank" rel="noopener noreferrer">
-                                        <Map className="mr-2 h-4 w-4" /> View on Map
-                                    </a>
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                {foundPlaces.length > 0 && (
+                     <ScrollArea className="mt-4 max-h-60">
+                        <div className="space-y-2 pr-4">
+                            {foundPlaces.map((place, index) => (
+                                <Card key={index} className="w-full">
+                                    <CardHeader className="pb-2 pt-3">
+                                        <CardTitle className="text-base">{place.companyName}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1 text-xs pb-3">
+                                        <p className="flex items-start"><MapPin className="mr-2 h-3 w-3 mt-0.5 shrink-0" /> {place.address}</p>
+                                        {place.phone && <p className="flex items-center"><Phone className="mr-2 h-3 w-3 shrink-0" /> {place.phone}</p>}
+                                        <div className="flex items-center justify-between pt-2">
+                                            {place.latitude && place.longitude ? (
+                                                <Button variant="link" asChild className="p-0 h-auto text-xs">
+                                                    <a href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`} target="_blank" rel="noopener noreferrer">
+                                                        <Map className="mr-1 h-3 w-3" /> View on Map
+                                                    </a>
+                                                </Button>
+                                            ) : <div />}
+                                            <Button size="sm" className="h-7 text-xs" onClick={() => handleAddVisit(place)}>Add as Visit</Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </ScrollArea>
                 )}
                 <DialogFooter>
-                    <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleAddVisit} disabled={!foundPlace}>Add as Visit</Button>
+                    <Button variant="outline" onClick={handleClose}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

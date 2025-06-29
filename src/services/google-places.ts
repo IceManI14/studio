@@ -4,7 +4,7 @@
  * @fileOverview A service for interacting with the Google Maps Places API.
  *
  * - findPlaceFromLatLng - A function to find business details from coordinates.
- * - findPlaceFromText - A function to find business details from a text query.
+ * - findPlacesFromText - A function to find a list of business details from a text query.
  */
 
 // This service now uses direct fetch calls to the Google Places API
@@ -151,58 +151,57 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
     }
 }
 
-export async function findPlaceFromText(query: string): Promise<PlaceDetails | null> {
+export async function findPlacesFromText(query: string): Promise<PlaceDetails[]> {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey || apiKey.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE')) {
         throw new Error("Google Maps API key is not configured correctly in .env file.");
     }
 
     try {
-        // Step 1: Find Place from text to get a place_id
-        const findPlaceUrl = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
-        findPlaceUrl.searchParams.set('input', query);
-        findPlaceUrl.searchParams.set('inputtype', 'textquery');
-        findPlaceUrl.searchParams.set('fields', 'place_id');
-        findPlaceUrl.searchParams.set('key', apiKey);
+        const textSearchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
+        textSearchUrl.searchParams.set('query', query);
+        textSearchUrl.searchParams.set('key', apiKey);
 
-        const findPlaceResponse = await fetch(findPlaceUrl.toString());
-        const findPlaceData = await findPlaceResponse.json();
+        const textSearchResponse = await fetch(textSearchUrl.toString());
+        const textSearchData = await textSearchResponse.json();
 
-        if (findPlaceData.status !== 'OK' || !findPlaceData.candidates || findPlaceData.candidates.length === 0) {
-            if (findPlaceData.status === 'ZERO_RESULTS') return null;
-            throw new Error(`Google Places API Error (Find Place): ${findPlaceData.status} - ${findPlaceData.error_message || 'No candidates found'}`);
+        if (textSearchData.status !== 'OK' && textSearchData.status !== 'ZERO_RESULTS') {
+            throw new Error(`Google Places API Error (Text Search): ${textSearchData.status} - ${textSearchData.error_message || 'Unknown error'}`);
         }
 
-        const placeId = findPlaceData.candidates[0].place_id;
-
-        // Step 2: Get Place Details using the place_id
-        const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-        detailsUrl.searchParams.set('place_id', placeId);
-        detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
-        detailsUrl.searchParams.set('key', apiKey);
-
-        const detailsResponse = await fetch(detailsUrl.toString());
-        const detailsData = await detailsResponse.json();
-
-        if (detailsData.status !== 'OK') {
-            throw new Error(`Google Places API Error (Place Details): ${detailsData.status} - ${detailsData.error_message || 'Unknown error'}`);
-        }
-        
-        const placeDetails = detailsData.result;
-
-        if (placeDetails) {
-            const city = getBestEffortCity(placeDetails.address_components);
-            return {
-                suggestedCompanyName: placeDetails.name || '',
-                address: placeDetails.formatted_address || '',
-                city: city || "Unknown Location",
-                phone: placeDetails.formatted_phone_number || '',
-                latitude: placeDetails.geometry?.location?.lat,
-                longitude: placeDetails.geometry?.location?.lng,
-            };
+        if (!textSearchData.results || textSearchData.results.length === 0) {
+            return [];
         }
 
-        return null;
+        // Using Promise.all to fetch details in parallel
+        const detailPromises = textSearchData.results.map(async (candidate: any) => {
+            if (!candidate.place_id) return null;
+
+            const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+            detailsUrl.searchParams.set('place_id', candidate.place_id);
+            detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
+            detailsUrl.searchParams.set('key', apiKey);
+
+            const detailsResponse = await fetch(detailsUrl.toString());
+            const detailsData = await detailsResponse.json();
+
+            if (detailsData.status === 'OK' && detailsData.result) {
+                const placeDetails = detailsData.result;
+                const city = getBestEffortCity(placeDetails.address_components);
+                return {
+                    suggestedCompanyName: placeDetails.name || '',
+                    address: placeDetails.formatted_address || '',
+                    city: city || "Unknown Location",
+                    phone: placeDetails.formatted_phone_number || '',
+                    latitude: placeDetails.geometry?.location?.lat,
+                    longitude: placeDetails.geometry?.location?.lng,
+                };
+            }
+            return null;
+        });
+
+        const places = (await Promise.all(detailPromises)).filter(p => p !== null) as PlaceDetails[];
+        return places;
 
     } catch (error: any) {
         console.error('Error fetching data from Google Places API:', error);

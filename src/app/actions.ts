@@ -7,7 +7,7 @@ import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coord
 import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
-import { findPlaceFromText } from '@/services/google-places';
+import { findPlacesFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -356,32 +356,34 @@ const findCompanySchema = z.object({
 export async function findCompanyAction(
   payload: z.infer<typeof findCompanySchema>
 ): Promise<{ 
-  place?: {
+  places?: {
     companyName: string;
     address: string;
     city: string;
     phone: string;
     latitude?: number;
     longitude?: number;
-  };
+  }[];
   error?: string 
 }> {
   try {
     const validatedPayload = findCompanySchema.parse(payload);
     const query = `${validatedPayload.companyName}${validatedPayload.city ? `, ${validatedPayload.city}` : ''}`;
     
-    const result = await findPlaceFromText(query);
-    if (!result) {
+    const results = await findPlacesFromText(query);
+    if (!results || results.length === 0) {
       return { error: 'Company not found.' };
     }
-    return { place: {
+    
+    const places = results.map(result => ({
         companyName: result.suggestedCompanyName,
         address: result.address,
         city: result.city,
         phone: result.phone,
         latitude: result.latitude,
         longitude: result.longitude,
-    } };
+    }));
+    return { places };
   } catch (error: any) {
     console.error("Error in findCompanyAction:", error);
     if (error instanceof z.ZodError) {
