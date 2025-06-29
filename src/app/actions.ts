@@ -38,7 +38,7 @@ export interface SaveVisitPayload {
   futureMeetingSet?: boolean;
   futureMeetingDateTime?: Date | null;
   freeTrial?: boolean;
-  dealClosed?: boolean;
+  dealClosed?: boolean | null;
   originalCompanyName?: string | null;
   originalNotes?: string | null;
   existingContactInfo?: ContactInfo | null;
@@ -46,11 +46,16 @@ export interface SaveVisitPayload {
   originalBusinessCardImageUrl?: string | null; // Can be Data URI
 }
 
+function isValidDate(d: any) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 const saveVisitPayloadSchema = z.object({
     id: z.string().optional(),
     timestamp: z.preprocess((arg) => {
         if (!arg) return undefined;
-        try { return new Date(arg as string | number | Date); } catch { return undefined; }
+        const d = new Date(arg as string | number | Date);
+        return isValidDate(d) ? d : undefined;
     }, z.date().optional()),
     
     companyName: z.string().min(1, "Company name is required"),
@@ -82,7 +87,8 @@ const saveVisitPayloadSchema = z.object({
     futureMeetingSet: z.boolean().nullish(),
     futureMeetingDateTime: z.preprocess((arg) => {
         if (!arg) return null;
-        try { return new Date(arg as string | number | Date); } catch { return null; }
+        const d = new Date(arg as string | number | Date);
+        return isValidDate(d) ? d : null;
     }, z.date().nullish()),
     freeTrial: z.boolean().nullish(),
     dealClosed: z.boolean().nullish(),
@@ -152,11 +158,11 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
     const visitDataForDb = {
       id: visitId,
       timestamp: new Date(),
-      latitude,
-      longitude,
-      companyName,
-      notes,
-      contactInfo,
+      latitude: latitude,
+      longitude: longitude,
+      companyName: companyName,
+      notes: notes,
+      contactInfo: contactInfo,
       notesSummary: null,
       partnershipConfidence: null,
       hasBusinessCard: false,
@@ -167,7 +173,7 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
       decisionMakerName: null,
       decisionMakerTitle: null,
       decisionMakerContact: contactInfo?.info ?? null,
-      visitNumber,
+      visitNumber: visitNumber,
       interestedUnit: null,
       hasTDSReading: false,
       tdsValue: null,
@@ -192,7 +198,7 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
         notesSummary: undefined,
         partnershipConfidence: undefined,
         hasBusinessCard: false,
-        businessCardImageUrl: null,
+        businessCardImageUrl: undefined,
         discussedCompetitors: false,
         competitorName: undefined,
         coolerType: undefined,
@@ -261,25 +267,25 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       timestamp: validatedPayload.timestamp || new Date(),
       companyName: validatedPayload.companyName,
       notes: validatedPayload.notes || undefined,
-      latitude: validatedPayload.latitude || undefined,
-      longitude: validatedPayload.longitude || undefined,
+      latitude: validatedPayload.latitude,
+      longitude: validatedPayload.longitude,
       contactInfo: contactInfo || undefined,
       notesSummary: notesSummary || undefined,
-      partnershipConfidence: validatedPayload.partnershipConfidence || undefined,
+      partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard || false,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl || undefined,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl,
       discussedCompetitors: !!validatedPayload.competitorName,
-      competitorName: validatedPayload.competitorName || undefined,
-      coolerType: validatedPayload.competitorName ? (validatedPayload.coolerType || undefined) : undefined,
-      decisionMakerName: validatedPayload.decisionMakerName || undefined,
-      decisionMakerTitle: validatedPayload.decisionMakerTitle || undefined,
-      decisionMakerContact: validatedPayload.decisionMakerContact || undefined,
-      visitNumber: validatedPayload.visitNumber || undefined,
-      interestedUnit: validatedPayload.interestedUnit || undefined,
+      competitorName: validatedPayload.competitorName,
+      coolerType: validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
+      decisionMakerName: validatedPayload.decisionMakerName,
+      decisionMakerTitle: validatedPayload.decisionMakerTitle,
+      decisionMakerContact: validatedPayload.decisionMakerContact,
+      visitNumber: validatedPayload.visitNumber,
+      interestedUnit: validatedPayload.interestedUnit,
       hasTDSReading: validatedPayload.hasTDSReading || false,
-      tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? undefined) : undefined,
+      tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
       futureMeetingSet: validatedPayload.futureMeetingSet || false,
-      futureMeetingDateTime: validatedPayload.futureMeetingDateTime || undefined,
+      futureMeetingDateTime: validatedPayload.futureMeetingDateTime,
       freeTrial: validatedPayload.freeTrial || false,
       dealClosed: validatedPayload.dealClosed || false,
     };
