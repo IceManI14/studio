@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage, Salesperson, Territory } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
+import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
@@ -140,6 +141,8 @@ export default function HomePage() {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [isExtractingCities, setIsExtractingCities] = useState(false);
   const [isFindCompanyModalOpen, setIsFindCompanyModalOpen] = useState(false);
+  const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
+  const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -229,6 +232,7 @@ export default function HomePage() {
 
   const updateColdCallCount = async (newCount: number) => {
     if (!db) return;
+    setColdCallCount(newCount);
     const statsDocRef = doc(db, 'app-state', 'daily-stats');
     try {
       await setDoc(statsDocRef, { coldCallCount: newCount }, { merge: true });
@@ -304,6 +308,16 @@ export default function HomePage() {
         variant: "default"
       });
       setCurrentCity("Geolocation not supported.");
+    }
+    
+    try {
+        const storedFiles = localStorage.getItem('managedFiles');
+        if (storedFiles) {
+            setManagedFiles(JSON.parse(storedFiles));
+        }
+    } catch (e) {
+        console.error("Failed to parse managed files from localStorage", e);
+        localStorage.removeItem('managedFiles');
     }
 
     if (!firebaseConfigured || !db) return;
@@ -565,7 +579,6 @@ export default function HomePage() {
         timestamp: new Date(), // This marks the meeting start time
         latitude: lat,
         longitude: lon,
-        visitNumber: coldCallCount + 1,
       };
       
       setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -601,7 +614,6 @@ export default function HomePage() {
       companyName: existingVisit.companyName,
       latitude: existingVisit.latitude,
       longitude: existingVisit.longitude,
-      visitNumber: coldCallCount + 1, // Provisional number, will be finalized on save
       // Pass existing info to avoid re-scraping
       contactInfo: existingVisit.contactInfo, 
       notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
@@ -633,10 +645,12 @@ export default function HomePage() {
     if (!db) return;
     try {
       // Determine if this is a brand new visit being saved for the first time.
-      // `currentEditingVisit` is set when the form opens. If it had no ID, it's a new visit.
-      const isNewVisit = !currentEditingVisit?.id;
-
-      const visitToSave = { ...visit };
+      const isNewVisit = !visit.id || !visits.some(v => v.id === visit.id);
+      
+      const visitToSave: Omit<Visit, 'id'> & { id?: string } = { ...visit };
+      if (!visitToSave.id) {
+        visitToSave.id = crypto.randomUUID();
+      }
 
       // If it's a new visit, we assign/overwrite the visit number right before saving
       // to use the most up-to-date count and avoid race conditions.
@@ -650,12 +664,15 @@ export default function HomePage() {
           futureMeetingDateTime: visitToSave.futureMeetingDateTime || null,
       };
 
-      const visitDocRef = doc(db, 'visits', visit.id);
+      const visitDocRef = doc(db, 'visits', visitData.id!);
       await setDoc(visitDocRef, visitData, { merge: true });
 
       // If it was a new visit, we now increment the persistent counter.
       if (isNewVisit) {
         await updateColdCallCount(coldCallCount + 1);
+      } else {
+        // This is an update, refresh the local state to show changes.
+        setVisits(prevVisits => prevVisits.map(v => v.id === visit.id ? ({...v, ...visitToSave}) : v));
       }
 
     } catch (error) {
@@ -888,6 +905,7 @@ export default function HomePage() {
         pdfUrl: pdfUrlForAi,
         csvData: csvDataForAi,
         territoryPdfUrl: territoryPdfUrl,
+        managedFiles: managedFiles,
       });
 
       if (result.error) {
@@ -941,7 +959,6 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: coldCallCount + 1, // This is a new visit, assign provisional number. It will be finalized on save.
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
@@ -954,6 +971,12 @@ export default function HomePage() {
     setCurrentEditingVisit(newVisit);
     setIsVisitFormOpen(true);
 };
+
+  const handleManagedFilesChange = (files: ManagedFile[]) => {
+      setManagedFiles(files);
+      localStorage.setItem('managedFiles', JSON.stringify(files));
+  };
+
 
   if (!firebaseConfigured) {
     return (
@@ -1362,6 +1385,16 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                   </div>
                 )}
                 <div className="flex w-full items-center space-x-2">
+                  <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={() => setIsManageFilesModalOpen(true)}
+                      disabled={isAiResponding}
+                      aria-label="Manage long-term files for AI"
+                      title="Manage long-term files for AI"
+                  >
+                      <FolderKanban className="h-4 w-4" />
+                  </Button>
                   <Input
                     id="file-upload-input"
                     type="file"
@@ -1376,7 +1409,8 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     size="icon" 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isAiResponding}
-                    aria-label="Attach File"
+                    aria-label="Attach a file for this message"
+                    title="Attach a file for this message"
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>
@@ -1611,6 +1645,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           onClose={() => setIsFindCompanyModalOpen(false)}
           onAddAsVisit={handleAddFoundCompanyAsVisit}
           destinationCities={destinationCities}
+        />
+        
+        <ManageFilesModal
+            isOpen={isManageFilesModalOpen}
+            onClose={() => setIsManageFilesModalOpen(false)}
+            managedFiles={managedFiles}
+            onFilesChange={handleManagedFilesChange}
         />
 
         <VisitForm

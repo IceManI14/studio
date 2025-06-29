@@ -19,6 +19,10 @@ const ChatWithVisitsInputSchema = z.object({
   pdfUrl: z.string().optional().describe("An optional URL or Data URI to a PDF document for analysis for the current query. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
   csvData: z.string().optional().describe('An optional string containing data from a CSV file for analysis.'),
   territoryPdfUrl: z.string().optional().describe("A URL or Data URI for the salesperson's territory PDF, providing overarching context."),
+  managedFiles: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+  })).optional().describe('A list of persistently uploaded files (PDFs or CSVs) to use as long-term context.'),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
 
@@ -55,6 +59,13 @@ Territory Document:
 {{{media url=territoryPdfUrl}}}
 {{/if}}
 
+{{#if managedFiles}}
+The user has provided the following persistent files for long-term context. Analyze their content and incorporate relevant information into your response:
+{{#each managedFiles}}
+- {{this.name}}: {{{media url=this.url}}}
+{{/each}}
+{{/if}}
+
 {{#if pdfUrl}}
 The user has also attached the following PDF document for additional context for this specific query. Please analyze its content and incorporate relevant information into your response:
 {{{media url=pdfUrl}}}
@@ -89,7 +100,7 @@ When analyzing the attached CSV data, provide insights based on its content.
 If a file is provided, refer to its content when answering questions or providing analysis related to it.
 {{/if}}
 
-Always consider the territory information when providing recommendations about locations or planning.
+Always consider the territory information and any managed files when providing recommendations about locations or planning.
 Keep your responses focused on sales strategy, visit planning, and analyzing customer interactions.
 Be positive and encouraging.
 AI:`,
@@ -122,10 +133,10 @@ const chatWithVisitsFlow = ai.defineFlow(
     outputSchema: ChatWithVisitsOutputSchema,
   },
   async (input) => {
-    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, csvData, territoryPdfUrl } = input;
+    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, csvData, territoryPdfUrl, managedFiles } = input;
     
     const { output } = await prompt(
-        { chatHistory, userMessage, visitsContext, pdfUrl, csvData, territoryPdfUrl }, 
+        { chatHistory, userMessage, visitsContext, pdfUrl, csvData, territoryPdfUrl, managedFiles }, 
         { model: modelName } 
     );
 

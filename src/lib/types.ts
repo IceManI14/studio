@@ -55,3 +55,10 @@ export interface Salesperson {
   name: string;
   territory: Territory[];
 }
+
+export interface ManagedFile {
+  name: string;
+  url: string;
+  type: string;
+  uploadedAt: string;
+}

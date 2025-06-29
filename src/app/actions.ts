@@ -8,7 +8,7 @@ import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { findPlacesFromText } from '@/services/google-places';
-import type { Visit, ContactInfo, ChatMessage } from '@/lib/types';
+import type { Visit, ContactInfo, ChatMessage, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
 
@@ -225,6 +225,12 @@ const aiChatPayloadSchema = z.object({
   pdfUrl: z.string().optional(),
   csvData: z.string().optional(),
   territoryPdfUrl: z.string().optional(),
+  managedFiles: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+    type: z.string(),
+    uploadedAt: z.string(),
+  })).optional(),
 });
 
 export async function getAiChatResponseAction(
@@ -258,6 +264,7 @@ export async function getAiChatResponseAction(
       pdfUrl: validatedPayload.pdfUrl,
       csvData: validatedPayload.csvData,
       territoryPdfUrl: validatedPayload.territoryPdfUrl,
+      managedFiles: validatedPayload.managedFiles?.map(f => ({ name: f.name, url: f.url })),
     });
 
     return { aiResponse: result.aiResponse };
