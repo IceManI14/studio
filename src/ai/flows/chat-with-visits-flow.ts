@@ -61,7 +61,7 @@ The user has also attached the following PDF document for additional context for
 {{/if}}
 
 {{#if csvData}}
-The user has also attached the following CSV data (e.g., a client list) for this specific query. Analyze its content and incorporate relevant information into your response.
+The user has also attached the following CSV data (e.g., a client list) for analysis for this specific query. Analyze its content and incorporate relevant information into your response.
 CSV Data:
 \`\`\`csv
 {{{csvData}}}
@@ -74,6 +74,12 @@ If visit data is relevant, incorporate it naturally into your response.
 {{#if csvData}}
 {{#if territoryPdfUrl}}
 **Crucial Instruction:** When analyzing the attached CSV data, you MUST cross-reference it with the user's sales territory PDF. Any analysis, suggestions, or summaries based on the CSV should be strictly limited to clients or locations that fall WITHIN the boundaries defined in the territory document. Explicitly mention if you are filtering the CSV data based on the territory.
+
+**Target Identification Task:** If the user asks for companies to target, follow these steps:
+1. Analyze the CSV of partners and clients. Look for a column indicating their status (e.g., "Status", "Contract", "Service Level").
+2. Filter this list to only include locations within the user's sales territory, as defined by the attached territory PDF.
+3. From the filtered list, identify companies that are NOT yet active clients. These might be marked as "Prospect", "Lead", have no status, or a similar indicator. Assume any company without a clear "Active" or "Partner" status is a potential target.
+4. Present these companies to the salesperson as a list of potential targets to visit.
 {{else}}
 When analyzing the attached CSV data, provide insights based on its content.
 {{/if}}
