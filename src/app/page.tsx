@@ -141,6 +141,7 @@ export default function HomePage() {
   const [isFindCompanyModalOpen, setIsFindCompanyModalOpen] = useState(false);
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('field-day');
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -397,29 +398,40 @@ export default function HomePage() {
 
 
   const handleQuickLog = async () => {
-    setIsFetchingNewLocation(true);
-    try {
-      if (!userCurrentLatitude || !userCurrentLongitude) {
-        console.error("Could Not Get Location", "Current user location is not available.");
-        return;
-      }
-      
-      const result = await quickCreateVisitAction({
-        latitude: userCurrentLatitude,
-        longitude: userCurrentLongitude,
-        visitNumber: coldCallCount + 1,
-      });
+      setIsFetchingNewLocation(true);
+      try {
+          if (!userCurrentLatitude || !userCurrentLongitude) {
+              console.error("Could Not Get Location", "Current user location is not available.");
+              return;
+          }
+          
+          const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
+          
+          let visitTemplate: Partial<Visit> = {
+              latitude: userCurrentLatitude,
+              longitude: userCurrentLongitude,
+              timestamp: new Date(),
+          };
 
-      if (result.error) {
-        console.error("Could Not Quicklog Visit", result.error);
-      } else {
-        console.log("Visit Quick-Logged", "A new visit has been created at your location.");
+          if (result.error) {
+              console.error("Could Not Find Company", result.error);
+              visitTemplate.companyName = 'New Visit (Location Logged)';
+              visitTemplate.notes = `Could not determine company. Address lookup failed: ${result.error}`;
+          } else {
+              visitTemplate.companyName = result.suggestedCompanyName || 'New Visit (Address Logged)';
+              visitTemplate.notes = result.address ? `Suggested Address: ${result.address}` : 'Address could not be determined.';
+              if (result.phone) {
+                  visitTemplate.decisionMakerContact = result.phone;
+              }
+          }
+          setCurrentEditingVisit(visitTemplate as Visit);
+          setIsVisitFormOpen(true);
+
+      } catch (error: any) {
+          console.error("Could Not Quicklog Visit", error.message || "An unexpected error occurred.");
+      } finally {
+          setIsFetchingNewLocation(false);
       }
-    } catch (error: any) {
-      console.error("Could Not Quicklog Visit", error.message || "An unexpected error occurred.");
-    } finally {
-      setIsFetchingNewLocation(false);
-    }
   };
 
 
@@ -764,7 +776,7 @@ export default function HomePage() {
           )}
         </header>
         
-        <Tabs defaultValue="field-day" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 -mt-6">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
@@ -796,8 +808,10 @@ export default function HomePage() {
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="field-day">
+        </Tabs>
+        
+        <div className="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation || !userCurrentLatitude}>
@@ -857,9 +871,9 @@ export default function HomePage() {
                     </div>
                 )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="call-day">
+          )}
+          
+          {activeTab === 'call-day' && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-semibold text-foreground text-center">
@@ -958,9 +972,9 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="visits">
+          {activeTab === 'visits' && (
             <section aria-labelledby="map-section-title" className="p-6 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
@@ -987,110 +1001,112 @@ export default function HomePage() {
                 userLongitude={userCurrentLongitude}
               />
             </section>
-          </TabsContent>
+          )}
 
-          <TabsContent value="ai-chat">
-            {!isGenkitConfigured ? (
-              <Alert variant="destructive" className="max-w-2xl mx-auto">
-                <WifiOff className="h-4 w-4" />
-                <AlertTitle>AI Features Disabled</AlertTitle>
-                <AlertDescription>
-                  The AI assistant is currently unavailable because the Google API Key has not been configured. Please set the `GOOGLE_API_KEY` in your .env file to enable this feature.
-                </AlertDescription>
-              </Alert>
-            ) : (
-            <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card/60 backdrop-blur-sm border-primary/20">
-              <UiCardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bot className="h-8 w-8 text-primary" />
-                    <h2 className="text-2xl font-headline font-semibold text-foreground">
-                      Debbie
-                    </h2>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <Brain className="h-5 w-5 text-muted-foreground" />
-                    <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
-                      <SelectTrigger className="w-[180px] h-9 text-xs">
-                        <SelectValue placeholder="Select AI Model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
-              </UiCardHeader>
-              <UiCardContent className="p-0">
-                <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
-                  {chatMessages.map((message) => (
-                    <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-                      <div className={`flex items-end gap-2 max-w-[75%]`}>
-                        {message.sender === 'ai' && (
-                          <Avatar className="h-8 w-8 self-start">
-                            <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
-                            <AvatarFallback>AI</AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
-                          <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-                          <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
-                        </div>
-                        {message.sender === 'user' && (
-                          <Avatar className="h-8 w-8 self-start">
-                            <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
-                            <AvatarFallback>U</AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
+          {activeTab === 'ai-chat' && (
+            <>
+              {!isGenkitConfigured ? (
+                <Alert variant="destructive" className="max-w-2xl mx-auto">
+                  <WifiOff className="h-4 w-4" />
+                  <AlertTitle>AI Features Disabled</AlertTitle>
+                  <AlertDescription>
+                    The AI assistant is currently unavailable because the Google API Key has not been configured. Please set the `GOOGLE_API_KEY` in your .env file to enable this feature.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+              <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card/60 backdrop-blur-sm border-primary/20">
+                <UiCardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bot className="h-8 w-8 text-primary" />
+                      <h2 className="text-2xl font-headline font-semibold text-foreground">
+                        Debbie
+                      </h2>
                     </div>
-                  ))}
-                  {isAiResponding && ( 
-                    <div className="flex justify-start mb-4">
-                      <div className="flex items-end gap-2 max-w-[75%]">
-                          <Avatar className="h-8 w-8 self-start">
+                    <div className="flex items-center gap-2">
+                       <Brain className="h-5 w-5 text-muted-foreground" />
+                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                        <SelectTrigger className="w-[180px] h-9 text-xs">
+                          <SelectValue placeholder="Select AI Model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
+                </UiCardHeader>
+                <UiCardContent className="p-0">
+                  <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
+                    {chatMessages.map((message) => (
+                      <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                        <div className={`flex items-end gap-2 max-w-[75%]`}>
+                          {message.sender === 'ai' && (
+                            <Avatar className="h-8 w-8 self-start">
                               <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
                               <AvatarFallback>AI</AvatarFallback>
-                          </Avatar>
-                          <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
-                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            </Avatar>
+                          )}
+                          <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
+                            <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                            <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
                           </div>
+                          {message.sender === 'user' && (
+                            <Avatar className="h-8 w-8 self-start">
+                              <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
+                              <AvatarFallback>U</AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
                       </div>
+                    ))}
+                    {isAiResponding && ( 
+                      <div className="flex justify-start mb-4">
+                        <div className="flex items-end gap-2 max-w-[75%]">
+                            <Avatar className="h-8 w-8 self-start">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                                <AvatarFallback>AI</AvatarFallback>
+                            </Avatar>
+                            <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </ScrollArea>
+                </UiCardContent>
+                <UiCardFooter className="p-4 space-y-2 flex-col items-start">
+                  {selectedFile && (
+                    <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
+                      <div className="flex items-center gap-2 truncate">
+                        <Paperclip className="h-4 w-4 text-primary shrink-0" />
+                        <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
+                        <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        <span className="sr-only">Clear File</span>
+                      </Button>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
-                </ScrollArea>
-              </UiCardContent>
-              <UiCardFooter className="p-4 space-y-2 flex-col items-start">
-                {selectedFile && (
-                  <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
-                    <div className="flex items-center gap-2 truncate">
-                      <Paperclip className="h-4 w-4 text-primary shrink-0" />
-                      <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
-                      <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      <span className="sr-only">Clear File</span>
+                  <div className="flex w-full items-center space-x-2">
+                    <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
+                    <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
+                    <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
+                    <Input type="text" placeholder="Type your message..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} className="flex-1" disabled={isAiResponding} />
+                    <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
+                      {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      <span className="sr-only">Send</span>
                     </Button>
                   </div>
-                )}
-                <div className="flex w-full items-center space-x-2">
-                  <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
-                  <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
-                  <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
-                  <Input type="text" placeholder="Type your message..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} className="flex-1" disabled={isAiResponding} />
-                  <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
-                    {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    <span className="sr-only">Send</span>
-                  </Button>
-                </div>
-              </UiCardFooter>
-            </UiCard>
-            )}
-          </TabsContent>
-
-          <TabsContent value="about">
+                </UiCardFooter>
+              </UiCard>
+              )}
+            </>
+          )}
+          
+          {activeTab === 'about' && (
             <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
                 <div className="w-full text-center">
                     <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
@@ -1168,8 +1184,8 @@ export default function HomePage() {
                     </TabsContent>
                 </Tabs>
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
         
         <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
