@@ -44,84 +44,100 @@ export interface SaveVisitPayload {
   originalBusinessCardImageUrl?: string | null;
 }
 
+// Helper to check for a valid Date object
+function isValidDate(d: any): d is Date {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
 
   try {
-    // Manual validation
-    if (!payload.companyName || typeof payload.companyName !== 'string' || payload.companyName.trim() === '') {
-      return { error: 'Validation Error: Company name is required.' };
-    }
-    if (!!payload.hasTDSReading && (payload.tdsValue === undefined || payload.tdsValue === null)) {
-      return { error: 'Validation Error: TDS value is required when TDS Reading is checked.' };
-    }
-    if (!!payload.futureMeetingSet && !payload.futureMeetingDateTime) {
-       return { error: 'Validation Error: A meeting date and time is required when Future Meeting is checked.' };
-    }
-
     const visitId = payload.id || uuidv4();
     const isNewVisit = !payload.id;
 
-    let notesSummary = payload.existingNotesSummary || null;
-    if (payload.notes && payload.notes !== payload.originalNotes) {
-      try {
-        const result = await summarizeVisitNotes({ notes: payload.notes });
-        notesSummary = result.summary;
-      } catch (e: any) {
-        console.warn("AI Warning: Failed to summarize new/updated notes. Saving will continue.", e.message);
-      }
+    // --- Robust Data Sanitization ---
+    const companyName = payload.companyName?.trim() || '';
+    if (!companyName) {
+      return { error: 'Validation Error: Company name is required.' };
+    }
+
+    const timestamp = isValidDate(payload.timestamp) ? payload.timestamp : new Date();
+    
+    const futureMeetingDateTime = isValidDate(payload.futureMeetingDateTime) ? payload.futureMeetingDateTime : null;
+    if (payload.futureMeetingSet && !futureMeetingDateTime) {
+      return { error: 'Validation Error: A valid meeting date and time is required when Future Meeting is checked.' };
+    }
+
+    const tdsValue = (typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null;
+    if (payload.hasTDSReading && tdsValue === null) {
+      return { error: 'Validation Error: A valid TDS value is required when TDS Reading is checked.' };
     }
     
-    // Build the clean object for Firestore, ensuring no undefined values are sent for optional fields.
+    // AI summarization is now outside the critical save path to prevent hangs
+    let notesSummary = payload.existingNotesSummary ?? null;
+    const notes = payload.notes ?? null;
+    if (notes && notes !== payload.originalNotes) {
+        // Run summarization in the background without blocking the save operation
+        summarizeVisitNotes({ notes: notes }).then(result => {
+            const newSummary = result.summary;
+            const visitDocRef = doc(db, 'visits', visitId);
+            setDoc(visitDocRef, { notesSummary: newSummary }, { merge: true }).catch(e => {
+                console.error("Async summary update failed:", e);
+            });
+        }).catch(e => {
+            console.warn("AI Warning: Failed to summarize notes in background.", e.message);
+        });
+    }
+
     const visitData: Visit = {
       id: visitId,
-      timestamp: payload.timestamp instanceof Date ? payload.timestamp : new Date(),
-      companyName: payload.companyName.trim(),
-      notes: payload.notes ?? null,
+      timestamp: timestamp,
+      companyName: companyName,
+      notes: notes,
       latitude: payload.latitude ?? null,
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
       contactInfo: payload.existingContactInfo ?? null,
-      notesSummary: notesSummary,
+      notesSummary: notesSummary, // Return the old summary immediately
       
       hasBusinessCard: !!payload.hasBusinessCard,
       businessCardImageUrl: !!payload.hasBusinessCard ? (payload.businessCardImageUrl ?? null) : null,
       
       discussedCompetitors: !!payload.competitorName,
-      competitorName: payload.competitorName ?? null,
-      coolerType: !!payload.competitorName ? (payload.coolerType ?? null) : null,
+      competitorName: payload.competitorName || null,
+      coolerType: !!payload.competitorName ? (payload.coolerType || null) : null,
       
-      decisionMakerName: payload.decisionMakerName ?? null,
-      decisionMakerTitle: payload.decisionMakerTitle ?? null,
-      decisionMakerContact: payload.decisionMakerContact ?? null,
+      decisionMakerName: payload.decisionMakerName || null,
+      decisionMakerTitle: payload.decisionMakerTitle || null,
+      decisionMakerContact: payload.decisionMakerContact || null,
       
       visitNumber: payload.visitNumber ?? null,
-      interestedUnit: payload.interestedUnit ?? null,
+      interestedUnit: payload.interestedUnit || null,
       
       hasTDSReading: !!payload.hasTDSReading,
-      tdsValue: !!payload.hasTDSReading ? (payload.tdsValue ?? null) : null,
+      tdsValue: !!payload.hasTDSReading ? tdsValue : null,
       
       futureMeetingSet: !!payload.futureMeetingSet,
-      futureMeetingDateTime: !!payload.futureMeetingSet ? (payload.futureMeetingDateTime ?? null) : null,
+      futureMeetingDateTime: !!payload.futureMeetingSet ? futureMeetingDateTime : null,
       
       freeTrial: !!payload.freeTrial,
       dealClosed: !!payload.dealClosed,
     };
-    
-    // Remove the ID before saving to Firestore, as it's the document key
+
     const { id, ...visitForDb } = visitData;
 
     const visitDocRef = doc(db, 'visits', id);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    // Return the full visit object (with ID) to the client for UI updates
     return { visit: visitData, isNewVisit };
 
   } catch (error: any) {
     console.error("Critical Error in saveVisitAction:", error);
-    return { error: `Failed to save visit. An unexpected error occurred: ${error.message}` };
+    const message = error.message || 'An unexpected server error occurred.';
+    return { error: `Failed to save visit. ${message}` };
   }
 }
 

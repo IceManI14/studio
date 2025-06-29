@@ -200,34 +200,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleSuggestCompany = useCallback(async () => {
     setIsSuggestingCompany(true);
 
-    const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error("Geolocation is not supported."));
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
-          (error) => {
-            let message = "Could not retrieve location.";
-            if (error.code === error.PERMISSION_DENIED) message = "Location access denied.";
-            if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
-            if (error.code === error.TIMEOUT) message = "Location request timed out.";
-            reject(new Error(message));
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
-    };
+    const lat = form.getValues('latitude');
+    const lon = form.getValues('longitude');
+    
+    if (typeof lat !== 'number' || typeof lon !== 'number') {
+        toast({ variant: "destructive", title: "Location Missing", description: "No location data to search with." });
+        setIsSuggestingCompany(false);
+        return;
+    }
 
     try {
-        const { lat, lon } = await getFreshCoordinates();
-
-        setCurrentLatitude(lat);
-        setCurrentLongitude(lon);
-        form.setValue('latitude', lat);
-        form.setValue('longitude', lon);
-
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
         
         if (result.error) {
@@ -290,9 +272,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const defaultValues = {
       companyName: data?.companyName || '',
       notes: data?.notes || '',
-      latitude: data?.latitude,
-      longitude: data?.longitude,
-      partnershipConfidence: data?.partnershipConfidence,
+      latitude: data?.latitude ?? undefined,
+      longitude: data?.longitude ?? undefined,
+      partnershipConfidence: data?.partnershipConfidence ?? undefined,
       hasBusinessCard: data?.hasBusinessCard || false,
       businessCardImageUrl: data?.businessCardImageUrl || null,
       competitorName: data?.competitorName || undefined,
@@ -302,14 +284,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerContact: data?.decisionMakerContact || '',
       interestedUnit: data?.interestedUnit || undefined,
       hasTDSReading: data?.hasTDSReading || false,
-      tdsValue: data?.tdsValue,
+      tdsValue: data?.tdsValue ?? undefined,
       futureMeetingSet: data?.futureMeetingSet || false,
       futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
       freeTrial: data?.freeTrial || false,
     };
     form.reset(defaultValues);
-    setCurrentLatitude(data?.latitude);
-    setCurrentLongitude(data?.longitude);
+    setCurrentLatitude(data?.latitude ?? undefined);
+    setCurrentLongitude(data?.longitude ?? undefined);
     setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
@@ -324,13 +306,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen, resetFormAndState]);
 
   useEffect(() => {
+    // This will run when the form opens for a new visit with location data
     if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
+      handleSuggestCompany(); // Automatically suggest company on open
       const timer = setTimeout(() => {
         confidenceStarsRef.current?.focus({ preventScroll: true });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, handleSuggestCompany]);
+
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -518,33 +503,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
-    let finalNotes = data.notes || '';
-
-    if (initialData?.timestamp && !initialData?.id) {
-        const startTime = initialData.timestamp;
-        const endTime = new Date();
-        const durationMs = endTime.getTime() - startTime.getTime();
-        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        const durationString = `Meeting duration: ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}.`;
-        
-        const currentNotes = finalNotes.trim();
-        finalNotes = currentNotes ? `${durationString}\n\n${currentNotes}` : durationString;
-    }
-
-    const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
-
+    
     const payload: SaveVisitPayload = {
       id: initialData?.id,
       timestamp: initialData?.timestamp,
       companyName: data.companyName,
-      notes: finalNotes,
+      notes: data.notes,
       latitude: currentLatitude,
       longitude: currentLongitude,
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
-      businessCardImageUrl: finalBusinessCardImageUrl,
+      businessCardImageUrl: data.hasBusinessCard ? data.businessCardImageUrl : null,
       competitorName: data.competitorName,
       coolerType: data.competitorName ? data.coolerType : undefined,
       decisionMakerName: data.decisionMakerName,
@@ -675,7 +644,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         <Input placeholder="e.g., Acme Corp" {...field} />
                         <Button
                             type="button"
-                            onClick={() => handleSuggestCompany()}
+                            onClick={handleSuggestCompany}
                             variant="outline"
                             size="sm"
                             disabled={isSuggestingCompany}
