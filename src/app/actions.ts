@@ -85,20 +85,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         }
     }
     
-    // 4. Start AI summary in the background (fire and forget) to prevent hangs
-    if (payload.notes && payload.notes !== payload.originalNotes) {
-        summarizeVisitNotes({ notes: payload.notes }).then(result => {
-            const newSummary = result.summary;
-            const visitDocRef = doc(db, 'visits', visitId);
-            setDoc(visitDocRef, { notesSummary: newSummary }, { merge: true }).catch(e => {
-                console.error("Async summary update failed:", e);
-            });
-        }).catch(e => {
-            console.warn("AI Warning: Failed to summarize notes in background.", e.message);
-        });
-    }
-
-    // 5. Build the final database object, ensuring EVERY optional field defaults to null
+    // 4. Build the final database object, ensuring EVERY optional field defaults to null
     const visitForDb = {
       timestamp: timestamp,
       companyName: payload.companyName.trim(),
@@ -107,7 +94,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
       contactInfo: payload.existingContactInfo ?? null,
-      notesSummary: payload.existingNotesSummary ?? null,
+      // If notes changed, the old summary is invalid. It will be cleared.
+      notesSummary: payload.notes !== payload.originalNotes ? null : (payload.existingNotesSummary ?? null),
       hasBusinessCard: !!payload.hasBusinessCard,
       businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl || null) : null,
       discussedCompetitors: !!payload.competitorName,
@@ -126,11 +114,11 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       dealClosed: !!payload.dealClosed,
     };
 
-    // 6. Save to Firestore
+    // 5. Save to Firestore
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    // 7. Return success response
+    // 6. Return success response
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
@@ -401,3 +389,5 @@ export async function findCompanyAction(
     return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
 }
+
+    
