@@ -103,13 +103,53 @@ ToastTitle.displayName = ToastPrimitives.Title.displayName
 const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description
-    ref={ref}
-    className={cn("text-sm opacity-90", className)}
-    {...props}
-  />
-))
+>(({ className, children, ...props }, ref) => {
+  const [isCopied, setIsCopied] = React.useState(false)
+
+  // Helper to extract text from a ReactNode
+  const getTextContent = (node: React.ReactNode): string => {
+    if (typeof node === "string") return node
+    if (typeof node === "number") return String(node)
+    if (Array.isArray(node)) return node.map(getTextContent).join("")
+    if (React.isValidElement(node) && node.props.children) {
+      return getTextContent(node.props.children)
+    }
+    return ""
+  }
+
+  const handleCopy = (e: React.MouseEvent<HTMLParagraphElement>) => {
+    e.preventDefault()
+    const textToCopy = getTextContent(children)
+
+    if (textToCopy && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(textToCopy)
+        .then(() => {
+          setIsCopied(true)
+          setTimeout(() => setIsCopied(false), 2000)
+        })
+        .catch((err) => {
+          console.error("Failed to copy text: ", err)
+        })
+    }
+  }
+
+  return (
+    <ToastPrimitives.Description
+      ref={ref}
+      className={cn(
+        "text-sm opacity-90 cursor-pointer hover:opacity-100",
+        className
+      )}
+      onClick={handleCopy}
+      title="Click to copy description"
+      {...props}
+    >
+      {children}
+      {isCopied && <span className="ml-2 font-semibold text-primary">(Copied)</span>}
+    </ToastPrimitives.Description>
+  )
+})
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
