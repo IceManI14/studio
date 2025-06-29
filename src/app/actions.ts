@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface SaveVisitPayload {
   id?: string; // For updates
@@ -65,7 +66,7 @@ const saveVisitPayloadSchema = z.object({
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
-  futureMeetingDateTime: z.date().optional(),
+  futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
   dealClosed: z.boolean().optional(),
   originalCompanyName: z.string().optional(),
@@ -128,7 +129,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     }
 
     const visit: Visit = {
-      id: validatedPayload.id || crypto.randomUUID(),
+      id: validatedPayload.id || uuidv4(),
       timestamp: new Date(),
       companyName: validatedPayload.companyName,
       notes: validatedPayload.notes,
@@ -172,7 +173,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     if (errorMessage.includes('api key is invalid')) {
         return { error: "Failed to save visit. The AI API key is invalid or expired. Please check your configuration." };
     }
-    return { error: 'Failed to save visit. An unexpected error occurred.' };
+    return { error: `Failed to save visit: ${error.message || 'An unexpected error occurred.'}` };
   }
 }
 
