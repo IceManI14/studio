@@ -553,8 +553,43 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleUpdateVisitInList = async (updatedVisit: Visit) => {
-    await handleSaveVisit(updatedVisit);
+  const handleUpdateFromCard = async (updatedVisit: Visit) => {
+    const payload: SaveVisitPayload = {
+      id: updatedVisit.id,
+      companyName: updatedVisit.companyName,
+      notes: updatedVisit.notes,
+      latitude: updatedVisit.latitude,
+      longitude: updatedVisit.longitude,
+      partnershipConfidence: updatedVisit.partnershipConfidence,
+      hasBusinessCard: updatedVisit.hasBusinessCard,
+      businessCardImageUrl: updatedVisit.businessCardImageUrl,
+      discussedCompetitors: updatedVisit.discussedCompetitors,
+      competitorName: updatedVisit.competitorName,
+      coolerType: updatedVisit.coolerType,
+      decisionMakerName: updatedVisit.decisionMakerName,
+      decisionMakerTitle: updatedVisit.decisionMakerTitle,
+      decisionMakerContact: updatedVisit.decisionMakerContact,
+      visitNumber: updatedVisit.visitNumber,
+      interestedUnit: updatedVisit.interestedUnit,
+      hasTDSReading: updatedVisit.hasTDSReading,
+      tdsValue: updatedVisit.tdsValue,
+      futureMeetingSet: updatedVisit.futureMeetingSet,
+      futureMeetingDateTime: updatedVisit.futureMeetingDateTime,
+      freeTrial: updatedVisit.freeTrial,
+      dealClosed: updatedVisit.dealClosed,
+      originalCompanyName: updatedVisit.companyName,
+      originalNotes: updatedVisit.notes,
+      existingContactInfo: updatedVisit.contactInfo,
+      existingNotesSummary: updatedVisit.notesSummary,
+      originalBusinessCardImageUrl: updatedVisit.businessCardImageUrl,
+      coldCallCount: coldCallCount,
+    };
+    const result = await saveVisitAction(payload);
+    if (result.error) {
+        console.error("Failed to update visit from card", result.error);
+    } else {
+        console.log("Visit updated successfully from card.");
+    }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
@@ -591,30 +626,6 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveVisit = async (visit: Visit) => {
-    if (!db) return;
-    try {
-      const isNewVisit = !visits.some(v => v.id === visit.id);
-
-      const visitData = {
-          ...visit,
-          timestamp: visit.timestamp,
-          futureMeetingDateTime: visit.futureMeetingDateTime || null,
-      };
-
-      const visitDocRef = doc(db, 'visits', visitData.id!);
-      await setDoc(visitDocRef, visitData, { merge: true });
-
-      if (isNewVisit) {
-        await updateColdCallCount(coldCallCount + 1);
-      } else {
-        setVisits(prevVisits => prevVisits.map(v => v.id === visit.id ? visitData : v));
-      }
-    } catch (error) {
-      console.error("Error saving visit to Firestore:", error);
-    }
-  };
-
   const handleSaveFromForm = async (payload: Omit<SaveVisitPayload, 'coldCallCount'>) => {
     const finalPayload = { ...payload, coldCallCount: coldCallCount };
     const result = await saveVisitAction(finalPayload);
@@ -623,7 +634,9 @@ export default function HomePage() {
       console.error('Error saving visit', result.error);
     } else if (result.visit) {
       console.log('Potential Partner Logged', `${result.visit.companyName} details saved successfully.`);
-      await handleSaveVisit(result.visit);
+      if (result.isNewVisit) {
+        await updateColdCallCount(coldCallCount + 1);
+      }
     }
   };
 
@@ -1064,7 +1077,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                           visit={visit}
                           onEdit={handleEditVisit}
                           onDelete={handleDeleteVisit}
-                          onUpdateVisit={handleUpdateVisitInList}
+                          onUpdateVisit={handleUpdateFromCard}
                           onZoom={setZoomedVisit}
                           onLogFollowUp={handleLogFollowUp}
                           />
@@ -1185,7 +1198,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                         visit={visit}
                         onEdit={handleEditVisit}
                         onDelete={handleDeleteVisit}
-                        onUpdateVisit={handleUpdateVisitInList}
+                        onUpdateVisit={handleUpdateFromCard}
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
                       />
@@ -1480,7 +1493,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     handleDeleteVisit(id);
                   }}
                   onUpdateVisit={(updated) => {
-                    handleUpdateVisitInList(updated);
+                    handleUpdateFromCard(updated);
                     setZoomedVisit(updated);
                   }}
                   isZoomedView={true}

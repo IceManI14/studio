@@ -11,6 +11,8 @@ import { findPlacesFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ChatMessage, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export interface SaveVisitPayload {
   id?: string; // For updates
@@ -86,7 +88,10 @@ const saveVisitPayloadSchema = z.object({
 });
 
 
-export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string }> {
+export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
+  if (!db) {
+    return { error: 'Firebase is not configured. Cannot save visit.' };
+  }
   try {
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
     
@@ -133,10 +138,10 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       notesSummary: summary,
       partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl ?? undefined, // Use Data URI from payload
-      discussedCompetitors: validatedPayload.discussedCompetitors,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl ?? undefined,
+      discussedCompetitors: !!validatedPayload.competitorName,
       competitorName: validatedPayload.competitorName,
-      coolerType: validatedPayload.coolerType,
+      coolerType: !!validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
       decisionMakerName: validatedPayload.decisionMakerName,
       decisionMakerTitle: validatedPayload.decisionMakerTitle,
       decisionMakerContact: validatedPayload.decisionMakerContact,
@@ -149,8 +154,16 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       freeTrial: validatedPayload.freeTrial,
       dealClosed: validatedPayload.dealClosed,
     };
+    
+    const visitDataForFirestore = {
+      ...visit,
+      futureMeetingDateTime: visit.futureMeetingDateTime || null,
+    };
 
-    return { visit };
+    const visitDocRef = doc(db, 'visits', visit.id!);
+    await setDoc(visitDocRef, visitDataForFirestore, { merge: true });
+
+    return { visit, isNewVisit };
   } catch (error: any) {
     console.error("Error in saveVisitAction:", error);
     if (error instanceof z.ZodError) {
