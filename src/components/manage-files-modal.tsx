@@ -24,6 +24,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
+        const fileInput = event.target;
         if (!file) return;
 
         const allowedTypes = ["application/pdf", "text/csv"];
@@ -43,16 +44,23 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
             });
 
             if (!response.ok) {
-                let errorMessage = `Upload failed. Server responded with status ${response.status}.`;
+                let errorMessage = `Upload failed with status ${response.status}.`;
                 try {
                     const errorData = await response.json();
-                    // Use the detailed message from backend if available
+                    // Prioritize the detailed message from the backend.
                     errorMessage = errorData.details || errorData.message || errorMessage;
                 } catch (jsonError) {
-                    // The response was not JSON, which is unexpected.
+                    // The response was not JSON, which is unexpected. Fallback to status text.
+                    errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
                     console.error("Could not parse error response as JSON.", jsonError);
                 }
-                throw new Error(errorMessage);
+                
+                toast({
+                    title: "Upload Failed",
+                    description: errorMessage,
+                    variant: 'destructive',
+                });
+                return; // Exit the function without throwing
             }
 
             const result = await response.json();
@@ -69,18 +77,19 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
                 title: 'File Uploaded',
                 description: `${newFile.name} is now available for Debbie to use.`,
             });
+
         } catch (error: any) {
-            console.error("File upload error caught in modal:", error);
+            console.error("File upload network error:", error);
             toast({
                 title: "Upload Failed",
-                description: error.message,
+                description: "A network error occurred. Please check your internet connection and try again.",
                 variant: 'destructive',
             });
         } finally {
             setIsUploading(false);
             // Reset file input
-            if (event.target) {
-              event.target.value = '';
+            if (fileInput) {
+              fileInput.value = '';
             }
         }
     };
