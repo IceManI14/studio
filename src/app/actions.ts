@@ -47,51 +47,57 @@ export interface SaveVisitPayload {
 }
 
 const saveVisitPayloadSchema = z.object({
-  id: z.string().optional(),
-  timestamp: z.coerce.date().optional(),
-  companyName: z.string().min(1, "Company name is required"),
-  notes: z.string().optional().nullable(),
-  latitude: z.number().optional().nullable(),
-  longitude: z.number().optional().nullable(),
-  partnershipConfidence: z.number().min(1).max(5).optional().nullable(),
-  hasBusinessCard: z.boolean().optional(),
-  businessCardImageUrl: z.string().optional().nullable(),
-  discussedCompetitors: z.boolean().optional(),
-  competitorName: z.string().optional().nullable(),
-  coolerType: z.string().optional().nullable(),
-  decisionMakerName: z.string().optional().nullable().default(''),
-  decisionMakerTitle: z.string().optional().nullable().default(''),
-  decisionMakerContact: z.string().optional().nullable().default(''),
-  visitNumber: z.number().optional().nullable(),
-  interestedUnit: z.string().optional().nullable(),
-  hasTDSReading: z.boolean().optional(),
-  tdsValue: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
-    z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").nullable().optional()
-  ),
-  futureMeetingSet: z.boolean().optional(),
-  futureMeetingDateTime: z.preprocess(
-    (val) => (val ? new Date(val as string | number | Date) : null),
-    z.date().nullable().optional()
-  ),
-  freeTrial: z.boolean().optional(),
-  dealClosed: z.boolean().optional().nullable(),
-  originalCompanyName: z.string().optional().nullable(),
-  originalNotes: z.string().optional().nullable(),
-  existingContactInfo: z.object({
-    info: z.string(),
-    confidence: z.number(),
-  }).optional().nullable(),
-  existingNotesSummary: z.string().optional().nullable(),
-  originalBusinessCardImageUrl: z.string().optional().nullable(),
+    id: z.string().optional(),
+    timestamp: z.preprocess((arg) => {
+        if (!arg) return undefined;
+        try { return new Date(arg as string | number | Date); } catch { return undefined; }
+    }, z.date().optional()),
+    
+    companyName: z.string().min(1, "Company name is required"),
+    notes: z.string().nullish(),
+    latitude: z.number().nullish(),
+    longitude: z.number().nullish(),
+    partnershipConfidence: z.number().min(1).max(5).nullish(),
+    hasBusinessCard: z.boolean().nullish(),
+    businessCardImageUrl: z.string().nullish(),
+    discussedCompetitors: z.boolean().nullish(),
+    competitorName: z.string().nullish(),
+    coolerType: z.string().nullish(),
+    decisionMakerName: z.string().nullish(),
+    decisionMakerTitle: z.string().nullish(),
+    decisionMakerContact: z.string().nullish(),
+    visitNumber: z.number().nullish(),
+    interestedUnit: z.string().nullish(),
+    hasTDSReading: z.boolean().nullish(),
+    tdsValue: z.preprocess(
+      (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+      z.number().min(0).max(1500).nullish()
+    ),
+    futureMeetingSet: z.boolean().nullish(),
+    futureMeetingDateTime: z.preprocess((arg) => {
+        if (!arg) return null;
+        try { return new Date(arg as string | number | Date); } catch { return null; }
+    }, z.date().nullish()),
+    freeTrial: z.boolean().nullish(),
+    dealClosed: z.boolean().nullish(),
+    
+    // Original values for logic
+    originalCompanyName: z.string().nullish(),
+    originalNotes: z.string().nullish(),
+    existingContactInfo: z.object({
+        info: z.string(),
+        confidence: z.number(),
+    }).nullish(),
+    existingNotesSummary: z.string().nullish(),
+    originalBusinessCardImageUrl: z.string().nullish(),
 }).refine(data => {
-  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
-    return false;
-  }
-  return true;
+    if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
+        return false;
+    }
+    return true;
 }, {
-  message: "TDS value is required when TDS Reading is checked.",
-  path: ["tdsValue"],
+    message: "TDS value is required when TDS Reading is checked.",
+    path: ["tdsValue"],
 });
 
 
@@ -132,6 +138,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       }
     }
 
+    // POST-VALIDATION SANITIZATION to create a clean Visit object
     const visit: Visit = {
       id: validatedPayload.id || uuidv4(),
       timestamp: validatedPayload.timestamp || new Date(),
@@ -160,6 +167,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       dealClosed: !!validatedPayload.dealClosed,
     };
 
+    // Convert all undefined values to null for Firestore compatibility
     const visitDataForFirestore = Object.fromEntries(
       Object.entries(visit).map(([key, value]) => [key, value === undefined ? null : value])
     );
