@@ -505,6 +505,8 @@ export default function HomePage() {
   }, [zoomedVisit]); // Re-create the handler when zoomedVisit changes to have the latest state.
 
   const handleQuickLog = async () => {
+    // This function will now prepare a new visit and open the form
+    // instead of trying to save directly, to ensure stability.
     setIsFetchingNewLocation(true);
 
     const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
@@ -517,7 +519,7 @@ export default function HomePage() {
           (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
           (error) => {
             let message = "Could not retrieve location.";
-            if (error.code === error.PERMISSION_DENIED) message = "Location access denied. Please enable it in your browser settings.";
+            if (error.code === error.PERMISSION_DENIED) message = "Location access denied.";
             if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
             if (error.code === error.TIMEOUT) message = "Location request timed out.";
             reject(new Error(message));
@@ -530,27 +532,33 @@ export default function HomePage() {
     try {
       const { lat, lon } = await getFreshCoordinates();
       
-      const newVisitNumber = coldCallCount + 1;
+      // Create a template for the new visit, including a timestamp to calculate meeting duration
+      const newVisitTemplate: Partial<Visit> = {
+        latitude: lat,
+        longitude: lon,
+        timestamp: new Date(), // Set a start time for the visit
+      };
 
-      // Call the new quick create action
-      const result = await quickCreateVisitAction({
-          latitude: lat,
-          longitude: lon,
-          visitNumber: newVisitNumber
-      });
-      
-      if (result.error) {
-          console.error("Quicklog Failed", result.error);
-          return;
+      // Try to get company name but don't let it block the process
+      try {
+        const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+        if (result && !result.error) {
+            newVisitTemplate.companyName = result.suggestedCompanyName || '';
+            newVisitTemplate.decisionMakerContact = result.phone || '';
+            if (result.address) {
+                newVisitTemplate.notes = `Suggested Address: ${result.address}`;
+            }
+        }
+      } catch (e) {
+        console.warn("Could not pre-fill company details, user can enter manually.", e);
       }
-      
-      if (result.visit) {
-        console.log('Quicklog Successful', `Visit logged for ${result.visit.companyName}.`);
-        await updateColdCallCount(newVisitNumber);
-      }
+
+      // Open the form with the pre-filled data
+      setCurrentEditingVisit(newVisitTemplate as Visit);
+      setIsVisitFormOpen(true);
 
     } catch (error: any) {
-      console.error("Could Not Quicklog Visit", error.message);
+      console.error("Could Not Get Location", error.message);
     } finally {
       setIsFetchingNewLocation(false);
     }
@@ -1054,7 +1062,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
                         {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        {isFetchingNewLocation ? 'Getting Location...' : 'Quicklog'}
+                        {isFetchingNewLocation ? 'Getting Location...' : 'Log Visit at Location'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -1081,7 +1089,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> this app will help streamline your efforts
+                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log Visit at Location</span> this app will help streamline your efforts
                       </p>
                     </div>
                 ) : (
@@ -1418,7 +1426,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                         <p className="mb-4">This is your main workspace for logging new visits. Here's how it works:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
-                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> button, the app uses your current location to find company information, giving you a head start before you even walk in.
+                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log Visit at Location</span> button, the app uses your current location to find company information and pre-fills the visit form for you.
                             </li>
                             <li>
                                 As you interact with the potential partner, use the form to <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span>. Capturing details like business cards, competitor info, and visit notes makes the app—and our AI assistant, Debbie—more powerful.
