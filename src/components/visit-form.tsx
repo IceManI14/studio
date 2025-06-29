@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Visit, Salesperson } from '@/lib/types';
@@ -703,20 +702,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
-            
-            <Button 
-                type="button" 
-                onClick={() => {
-                  form.handleSubmit(handleFormSubmit)().finally(() => setIsSaving(false));
-                }}
-                disabled={isSaving || isSuggestingCompany}
-                className="w-full"
-                size="sm"
-            >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Quick Save
-            </Button>
-
 
             <FormField
               control={form.control}
