@@ -1,3 +1,4 @@
+
 // pages/api/upload-image.js
 import { Storage } from '@google-cloud/storage';
 import formidable from 'formidable';
@@ -87,8 +88,8 @@ export default async (req, res) => {
 
     if (errorMessage.includes('could not refresh access token')) {
         return res.status(500).json({
-            message: 'Authentication failed while trying to access Google Cloud Storage.',
-            details: `The server could not refresh its access token (Original error: ${error.message}). This is often a permissions issue. Please ensure the service account for this app has the "Service Account Token Creator" IAM role in your Google Cloud project.`
+            message: 'Authentication Failed',
+            details: `Action Required: Your app is missing a required Google Cloud permission. To fix this, add the "Service Account Token Creator" role to your app's service account in the Google Cloud IAM page.`
         });
     }
 
