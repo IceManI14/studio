@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Visit, Salesperson } from '@/lib/types';
@@ -319,12 +320,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   useEffect(() => {
     if (isOpen) {
       resetFormAndState(initialData);
-
-      if (!initialData?.id && initialData?.latitude && initialData?.longitude) {
-        handleSuggestCompany();
-      }
     }
-  }, [initialData, isOpen, resetFormAndState, handleSuggestCompany]);
+  }, [initialData, isOpen, resetFormAndState]);
 
   useEffect(() => {
     if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
