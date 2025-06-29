@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface SaveVisitPayload {
   id?: string; // For updates
+  timestamp?: Date; // For updates, to preserve original timestamp
   companyName: string;
   notes?: string;
   latitude?: number;
@@ -47,6 +48,7 @@ export interface SaveVisitPayload {
 
 const saveVisitPayloadSchema = z.object({
   id: z.string().optional(),
+  timestamp: z.coerce.date().optional(),
   companyName: z.string().min(1, "Company name is required"),
   notes: z.string().optional(),
   latitude: z.number().optional(),
@@ -63,7 +65,7 @@ const saveVisitPayloadSchema = z.object({
   visitNumber: z.number().optional(),
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
-  tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+  tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
@@ -77,7 +79,7 @@ const saveVisitPayloadSchema = z.object({
   existingNotesSummary: z.string().optional(),
   originalBusinessCardImageUrl: z.string().optional().nullable(),
 }).refine(data => {
-  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null)) {
+  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false; 
   }
   return true;
@@ -128,7 +130,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
 
     const visit: Visit = {
       id: validatedPayload.id || uuidv4(),
-      timestamp: new Date(),
+      timestamp: validatedPayload.timestamp || new Date(),
       companyName: validatedPayload.companyName,
       notes: validatedPayload.notes,
       latitude: validatedPayload.latitude,

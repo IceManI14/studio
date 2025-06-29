@@ -556,6 +556,7 @@ export default function HomePage() {
   const handleUpdateFromCard = async (updatedVisit: Visit) => {
     const payload: SaveVisitPayload = {
       id: updatedVisit.id,
+      timestamp: updatedVisit.timestamp,
       companyName: updatedVisit.companyName,
       notes: updatedVisit.notes,
       latitude: updatedVisit.latitude,

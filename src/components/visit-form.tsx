@@ -549,6 +549,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     const payload: SaveVisitPayload = {
       id: initialData?.id,
+      timestamp: initialData?.timestamp,
       companyName: data.companyName,
       notes: finalNotes,
       latitude: currentLatitude,
@@ -705,7 +706,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             
             <Button 
                 type="button" 
-                onClick={() => form.handleSubmit(handleFormSubmit)()}
+                onClick={() => {
+                  form.handleSubmit(handleFormSubmit)().finally(() => setIsSaving(false));
+                }}
                 disabled={isSaving || isSuggestingCompany}
                 className="w-full"
                 size="sm"
