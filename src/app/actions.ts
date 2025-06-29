@@ -65,11 +65,17 @@ const saveVisitPayloadSchema = z.object({
   visitNumber: z.number().optional().nullable(),
   interestedUnit: z.string().optional().nullable(),
   hasTDSReading: z.boolean().optional(),
-  tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional().nullable(),
+  tdsValue: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").nullable().optional()
+  ),
   futureMeetingSet: z.boolean().optional(),
-  futureMeetingDateTime: z.coerce.date().optional().nullable(),
+  futureMeetingDateTime: z.preprocess(
+    (val) => (val ? new Date(val as string | number | Date) : null),
+    z.date().nullable().optional()
+  ),
   freeTrial: z.boolean().optional(),
-  dealClosed: z.boolean().optional(),
+  dealClosed: z.boolean().optional().nullable(),
   originalCompanyName: z.string().optional().nullable(),
   originalNotes: z.string().optional().nullable(),
   existingContactInfo: z.object({
@@ -413,4 +419,5 @@ export async function findCompanyAction(
   }
 }
 
+    
     
