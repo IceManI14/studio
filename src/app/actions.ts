@@ -138,7 +138,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       notesSummary: summary,
       partnershipConfidence: validatedPayload.partnershipConfidence,
       hasBusinessCard: validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl ?? undefined,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl,
       discussedCompetitors: !!validatedPayload.competitorName,
       competitorName: validatedPayload.competitorName,
       coolerType: !!validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
@@ -155,10 +155,9 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       dealClosed: validatedPayload.dealClosed,
     };
     
-    const visitDataForFirestore = {
-      ...visit,
-      futureMeetingDateTime: visit.futureMeetingDateTime || null,
-    };
+    const visitDataForFirestore = Object.fromEntries(
+      Object.entries(visit).map(([key, value]) => [key, value === undefined ? null : value])
+    );
 
     const visitDocRef = doc(db, 'visits', visit.id!);
     await setDoc(visitDocRef, visitDataForFirestore, { merge: true });
