@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import VisitForm from '@/components/visit-form';
+import VisitForm, { type VisitFormData } from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
@@ -653,12 +653,9 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-
   const handleSaveVisit = async (visit: Visit) => {
     if (!db) return;
     try {
-      // The visit object from the action now has the correct visitNumber.
-      // We still need to know if it's new to increment the counter.
       const isNewVisit = !visits.some(v => v.id === visit.id);
 
       const visitData = {
@@ -668,15 +665,11 @@ export default function HomePage() {
       };
 
       const visitDocRef = doc(db, 'visits', visitData.id!);
-      // Using setDoc with merge:true handles both new visits and updates cleanly.
       await setDoc(visitDocRef, visitData, { merge: true });
 
-      // If it was a new visit, we now increment the persistent counter.
       if (isNewVisit) {
         await updateColdCallCount(coldCallCount + 1);
       } else {
-        // This is an update, refresh the local state to show changes immediately.
-        // The Firestore listener will also update, but this provides instant UI feedback.
         setVisits(prevVisits => prevVisits.map(v => v.id === visit.id ? visitData : v));
       }
     } catch (error) {
@@ -684,6 +677,26 @@ export default function HomePage() {
       toast({ title: 'Sync Error', description: 'Failed to save visit data.', variant: 'destructive'});
     }
   };
+
+  const handleSaveFromForm = async (payload: Omit<SaveVisitPayload, 'coldCallCount'>) => {
+    const finalPayload = { ...payload, coldCallCount: coldCallCount };
+    const result = await saveVisitAction(finalPayload);
+
+    if (result.error) {
+      toast({
+        title: 'Error saving visit',
+        description: result.error,
+        variant: 'destructive',
+      });
+    } else if (result.visit) {
+      toast({
+        title: payload.id ? 'Potential Partner Updated' : 'Potential Partner Logged',
+        description: `${result.visit.companyName} details saved successfully.`,
+      });
+      await handleSaveVisit(result.visit);
+    }
+  };
+
 
   const handleDeleteVisit = async (visitId: string) => {
     if (!db) return;
@@ -1664,10 +1677,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
             setIsVisitFormOpen(false);
             setCurrentEditingVisit(undefined);
           }}
-          onSave={handleSaveVisit}
+          onSave={handleSaveFromForm}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
-          coldCallCount={coldCallCount}
         />
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">

@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { saveVisitAction, getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
+import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -126,18 +126,17 @@ const visitFormSchema = z.object({
   path: ["tdsValue"],
 });
 
-type VisitFormData = z.infer<typeof visitFormSchema>;
+export type VisitFormData = z.infer<typeof visitFormSchema>;
 
 interface VisitFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (visit: Visit) => void;
+  onSave: (payload: Omit<SaveVisitPayload, 'coldCallCount'>) => Promise<void>;
   initialData?: Visit;
   salesperson: Salesperson | null;
-  coldCallCount: number;
 }
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, coldCallCount }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson }) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
@@ -567,7 +566,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
 
-    const payload: SaveVisitPayload = {
+    const payload: Omit<SaveVisitPayload, 'coldCallCount'> = {
       id: initialData?.id,
       companyName: data.companyName,
       notes: finalNotes,
@@ -593,28 +592,19 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       originalNotes: initialData?.notes,
       existingContactInfo: initialData?.contactInfo,
       existingNotesSummary: initialData?.notesSummary,
-      originalBusinessCardImageUrl: initialData?.businessCardImageUrl, // This will be a Data URI if it existed
+      originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
       visitNumber: initialData?.visitNumber,
-      coldCallCount: coldCallCount,
     };
 
-    const result = await saveVisitAction(payload);
-
-    if (result.error) {
-      toast({
-        title: 'Error saving visit',
-        description: result.error,
-        variant: 'destructive',
-      });
-    } else if (result.visit) {
-      toast({
-        title: initialData?.id ? 'Potential Partner Updated' : 'Potential Partner Logged',
-        description: `${result.visit.companyName} details saved successfully.`,
-      });
-      onSave(result.visit);
+    try {
+      await onSave(payload);
       onClose();
+    } catch (error) {
+      console.error("Error during save operation:", error);
+      // The parent component will show a toast, so we don't need one here.
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
 
