@@ -54,6 +54,7 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
+import { ToastAction } from '@/components/ui/toast';
 
 
 interface SubmittedSuggestion {
@@ -166,7 +167,7 @@ export default function HomePage() {
         } else {
           toast({
             title: "No Cities Found in PDF",
-            description: "Falling back to the default list from your profile.",
+            description: "The AI could not find any cities in the provided document. Falling back to the default list from your profile.",
             variant: "default",
           });
           cities = activeSalesperson.territory.flatMap(t => t.cities || []);
@@ -583,11 +584,6 @@ export default function HomePage() {
     try {
       const { lat, lon } = await getFreshCoordinates();
 
-      toast({
-        title: "Fetching Location Details...",
-        description: `Using coordinates: Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`,
-      });
-      
       const newVisitTemplate: Partial<Visit> = {
         timestamp: new Date(), // This marks the meeting start time
         latitude: lat,
@@ -1618,12 +1614,15 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
 
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-                                                if (typeof window !== 'undefined') {
-                                                    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
-                                                }
                                                 toast({
                                                     title: 'Optimal Location Found!',
-                                                    description: `Navigating to: ${result.locationDescription || 'suggested parking area'}.`,
+                                                    description: `AI suggests parking near: ${result.locationDescription || 'the commercial district'}.`,
+                                                    duration: 10000,
+                                                    action: (
+                                                      <ToastAction altText="Open in Maps" onClick={() => window.open(googleMapsUrl, '_blank', 'noopener,noreferrer')}>
+                                                        Navigate
+                                                      </ToastAction>
+                                                    ),
                                                 });
                                             } else {
                                                 throw new Error('AI did not return a valid location.');
