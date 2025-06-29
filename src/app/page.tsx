@@ -459,7 +459,7 @@ export default function HomePage() {
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: visits.filter(v => v.companyName === existingVisit.companyName).length + 1,
+      visitNumber: coldCallCount + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -711,6 +711,7 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
+        visitNumber: coldCallCount + 1,
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
