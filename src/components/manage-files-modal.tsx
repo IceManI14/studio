@@ -9,6 +9,7 @@ import { Loader2, File, Trash2 } from 'lucide-react';
 import type { ManagedFile } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 interface ManageFilesModalProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ interface ManageFilesModalProps {
 
 export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFilesChange }: ManageFilesModalProps) {
     const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -27,7 +29,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
 
         const allowedTypes = ["application/pdf", "text/csv"];
         if (!allowedTypes.includes(file.type)) {
-            console.error("Invalid File Type: Please select a PDF or CSV file.");
+            toast({ variant: 'destructive', title: "Invalid File Type", description: "Please select a PDF or CSV file." });
             return;
         }
 
@@ -45,16 +47,14 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
                 let errorMessage = `Upload failed with status ${response.status}.`;
                 try {
                     const errorData = await response.json();
-                    // Prioritize the detailed message from the backend.
                     errorMessage = errorData.details || errorData.message || errorMessage;
                 } catch (jsonError) {
-                    // The response was not JSON, which is unexpected. Fallback to status text.
                     errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
                     console.error("Could not parse error response as JSON.", jsonError);
                 }
                 
-                console.error("Upload Failed", errorMessage);
-                return; // Exit the function without throwing
+                toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
+                return;
             }
 
             const result = await response.json();
@@ -67,13 +67,12 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
 
             onFilesChange([...managedFiles, newFile]);
 
-            console.log('File Uploaded', `${newFile.name} is now available for Debbie to use.`);
+            toast({ title: 'File Uploaded', description: `${newFile.name} is now available for Debbie to use.` });
 
         } catch (error: any) {
-            console.error("File upload network error:", error);
+            toast({ variant: 'destructive', title: "Upload Error", description: "A network error occurred during file upload." });
         } finally {
             setIsUploading(false);
-            // Reset file input
             if (fileInput) {
               fileInput.value = '';
             }
@@ -83,7 +82,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
     const handleDeleteFile = (urlToDelete: string) => {
         const updatedFiles = managedFiles.filter(f => f.url !== urlToDelete);
         onFilesChange(updatedFiles);
-        console.log("File Removed", "The file will no longer be used as context by the AI.");
+        toast({ title: "File Removed", description: "The file will no longer be used as context by the AI." });
     }
 
     return (

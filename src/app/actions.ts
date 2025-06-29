@@ -51,7 +51,7 @@ function isValidDate(d: any) {
 const saveVisitPayloadSchema = z.object({
     id: z.string().optional(),
     timestamp: z.preprocess((arg) => {
-        if (!arg) return new Date(); // Default to now if not provided
+        if (!arg) return new Date();
         const d = new Date(arg as string | number | Date);
         return isValidDate(d) ? d : new Date();
     }, z.date()),
@@ -63,7 +63,7 @@ const saveVisitPayloadSchema = z.object({
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(1).max(5).nullish()
     ),
-    hasBusinessCard: z.boolean().default(false),
+    hasBusinessCard: z.preprocess((val) => val ?? false, z.boolean()),
     businessCardImageUrl: z.string().nullish(),
     competitorName: z.string().nullish(),
     coolerType: z.string().nullish(),
@@ -72,22 +72,23 @@ const saveVisitPayloadSchema = z.object({
     decisionMakerContact: z.string().nullish(),
     visitNumber: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
-      z.number().nullish()
+      z.number().positive().nullish()
     ),
     interestedUnit: z.string().nullish(),
-    hasTDSReading: z.boolean().default(false),
+    hasTDSReading: z.preprocess((val) => val ?? false, z.boolean()),
     tdsValue: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(0).max(1500).nullish()
     ),
-    futureMeetingSet: z.boolean().default(false),
+    futureMeetingSet: z.preprocess((val) => val ?? false, z.boolean()),
     futureMeetingDateTime: z.preprocess((arg) => {
         if (!arg) return null;
         const d = new Date(arg as string | number | Date);
         return isValidDate(d) ? d : null;
     }, z.date().nullish()),
-    freeTrial: z.boolean().default(false),
-    dealClosed: z.boolean().default(false),
+    freeTrial: z.preprocess((val) => val ?? false, z.boolean()),
+    dealClosed: z.preprocess((val) => val ?? false, z.boolean()),
+    // Fields for comparison, not saved to DB directly in this form
     originalCompanyName: z.string().nullish(),
     originalNotes: z.string().nullish(),
     existingContactInfo: z.any().optional(),
@@ -100,76 +101,6 @@ const saveVisitPayloadSchema = z.object({
     path: ["futureMeetingDateTime"],
 });
 
-
-export interface QuickCreateVisitPayload {
-  latitude: number;
-  longitude: number;
-  visitNumber: number;
-}
-
-const quickCreateVisitPayloadSchema = z.object({
-  latitude: z.number(),
-  longitude: z.number(),
-  visitNumber: z.number(),
-});
-
-export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): Promise<{ visit?: Visit; error?: string }> {
-  if (!db) {
-    return { error: 'Firebase is not configured. Cannot save visit.' };
-  }
-  try {
-    const { latitude, longitude, visitNumber } = quickCreateVisitPayloadSchema.parse(payload);
-    
-    let companyDetails: any = {};
-    try {
-      companyDetails = await getCompanyNameFromCoords({ latitude, longitude });
-    } catch (e: any) {
-      console.warn("AI Warning: Could not get company details for quick-log.", e.message);
-    }
-
-    const visitId = uuidv4();
-    const newVisit: Visit = {
-        id: visitId,
-        timestamp: new Date(),
-        latitude,
-        longitude,
-        companyName: companyDetails.suggestedCompanyName || 'New Quick-Logged Visit',
-        notes: companyDetails.address ? `Suggested Address: ${companyDetails.address}` : `Quick-logged visit at location.`,
-        contactInfo: companyDetails.phone ? { info: companyDetails.phone, confidence: 0.9 } : null,
-        notesSummary: null,
-        partnershipConfidence: null,
-        hasBusinessCard: false,
-        businessCardImageUrl: null,
-        discussedCompetitors: false,
-        competitorName: null,
-        coolerType: null,
-        decisionMakerName: null,
-        decisionMakerTitle: null,
-        decisionMakerContact: companyDetails.phone || null,
-        visitNumber: visitNumber,
-        interestedUnit: null,
-        hasTDSReading: false,
-        tdsValue: null,
-        futureMeetingSet: false,
-        futureMeetingDateTime: null,
-        freeTrial: false,
-        dealClosed: false,
-    };
-    
-    const { id, ...visitForDb } = newVisit;
-    const visitDocRef = doc(db, 'visits', id);
-    await setDoc(visitDocRef, visitForDb);
-
-    return { visit: newVisit };
-
-  } catch (error: any) {
-    console.error("Critical Error in quickCreateVisitAction:", error);
-    if (error instanceof z.ZodError) {
-        return { error: `Validation Error: ${error.errors.map(e => e.message).join(', ')}` };
-    }
-    return { error: `Failed to quick-create visit: ${error.message || 'An unexpected error occurred.'}` };
-  }
-}
 
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
   if (!db) {
@@ -224,7 +155,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       futureMeetingSet: validatedPayload.futureMeetingSet,
       futureMeetingDateTime: validatedPayload.futureMeetingSet ? (validatedPayload.futureMeetingDateTime ?? null) : null,
       freeTrial: validatedPayload.freeTrial,
-      dealClosed: validatedPayload.dealClosed ?? false,
+      dealClosed: validatedPayload.dealClosed,
       contactInfo,
       notesSummary,
       discussedCompetitors: !!validatedPayload.competitorName,

@@ -11,6 +11,7 @@ import { Loader2, Map, MapPin, Phone } from 'lucide-react';
 import type { Visit } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 interface FoundPlace {
     companyName: string;
@@ -33,10 +34,11 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
     const [city, setCity] = useState(destinationCities[0] || '');
     const [isSearching, setIsSearching] = useState(false);
     const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
+    const { toast } = useToast();
 
     const handleSearch = async () => {
         if (!companyName.trim()) {
-            console.warn("Company name required");
+            toast({ variant: 'destructive', title: "Company name required" });
             return;
         }
         setIsSearching(true);
@@ -44,14 +46,14 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
         try {
             const result = await findCompanyAction({ companyName, city });
             if (result.error) {
-                console.error("Search Failed", result.error);
+                toast({ variant: 'destructive', title: "Search Failed", description: result.error });
             } else if (result.places && result.places.length > 0) {
                 setFoundPlaces(result.places);
             } else {
-                 console.log("No Results Found", "No companies found with that name in the specified area.");
+                 toast({ title: "No Results Found", description: "No companies found with that name in the specified area." });
             }
         } catch (error: any) {
-            console.error("Error", error.message);
+            toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsSearching(false);
         }

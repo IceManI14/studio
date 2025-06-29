@@ -17,6 +17,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 interface VisitCardProps {
   visit: Visit;
@@ -34,16 +35,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const [isDateVisible, setIsDateVisible] = useState(false);
   const [isCoordsVisible, setIsCoordsVisible] = useState(false);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const handleDealClosedChange = (checked: boolean) => {
     const updatedVisit = { ...visit, dealClosed: !!checked };
     onUpdateVisit(updatedVisit);
-    console.log(`Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}`);
+    toast({ title: `Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}` });
   };
 
   const handleSummarizeAgain = async () => {
     if (!visit.notes || visit.notes.trim() === '') {
-      console.warn("No notes to summarize");
+      toast({ variant: 'destructive', title: "No notes to summarize" });
       return;
     }
     setIsSummarizing(true);
@@ -54,9 +56,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       }
       const updatedVisit = { ...visit, notesSummary: result.summary };
       onUpdateVisit(updatedVisit);
-      console.log("Notes Re-summarized: Summary has been updated.");
+      toast({ title: "Notes Re-summarized", description: "Summary has been updated." });
     } catch (error: any) {
-      console.error("Error Summarizing", error.message || "Could not re-summarize notes.");
+      toast({ variant: 'destructive', title: "Error Summarizing", description: error.message || "Could not re-summarize notes." });
     } finally {
       setIsSummarizing(false);
     }

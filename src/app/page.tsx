@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction, quickCreateVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -53,6 +53,7 @@ import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useToast } from "@/hooks/use-toast";
 
 
 interface SubmittedSuggestion {
@@ -141,6 +142,7 @@ export default function HomePage() {
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('field-day');
+  const { toast } = useToast();
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -164,11 +166,11 @@ export default function HomePage() {
         if (result.cities && result.cities.length > 0) {
           cities = result.cities;
         } else {
-          console.warn("The AI could not find any cities in the provided document. Falling back to the default list from your profile.");
+          toast({ variant: "destructive", title: "No Cities Found", description: "The AI could not find any cities in the provided document. Falling back to the default list from your profile." });
           cities = activeSalesperson.territory.flatMap(t => t.cities || []);
         }
       } catch (e: any) {
-        console.error(`Could not read cities from PDF: ${e.message}. Using default list.`);
+        toast({ variant: "destructive", title: "Could Not Read PDF", description: `Could not read cities from PDF: ${e.message}. Using default list.` });
         cities = activeSalesperson.territory.flatMap(t => t.cities || []);
       } finally {
         setIsExtractingCities(false);
@@ -192,9 +194,9 @@ export default function HomePage() {
     if (hasTerritoryPdf || hasDefaultTerritory) {
       handleChangeDestination(salesperson);
     } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
-      console.warn(`Welcome, ${salesperson.name}! You have no territories assigned. Please contact your manager to have them set up.`);
+      toast({ variant: "destructive", title: `Welcome, ${salesperson.name}!`, description: "You have no territories assigned. Please contact your manager to have them set up." });
     } else {
-       console.log(`Welcome, ${salesperson.name}! Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}`);
+       toast({ title: `Welcome, ${salesperson.name}!`, description: `Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}` });
     }
   };
 
@@ -276,7 +278,7 @@ export default function HomePage() {
           try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
             if (result.error) {
-              console.error("Location Lookup Failed", result.error);
+              toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
               setCurrentCity("Location lookup failed");
             } else if (result.city) {
               setCurrentCity(result.city);
@@ -295,17 +297,17 @@ export default function HomePage() {
           if (error.code === error.PERMISSION_DENIED) {
             errorMessage = "Location access denied. Please enable it in your browser settings.";
           }
-          console.error("Location Error", errorMessage);
+          toast({ variant: "destructive", title: "Location Error", description: errorMessage });
           setCurrentCity("Location access denied.");
         }
       );
     } else {
-      console.warn("Geolocation Not Supported: Your browser does not support geolocation.");
+      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
       setCurrentCity("Geolocation not supported.");
     }
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   // Save suggestions whenever they change
   useEffect(() => {
@@ -321,11 +323,11 @@ export default function HomePage() {
       const todayStr = new Date().toISOString().split('T')[0];
       const lastMilestone = localStorage.getItem('milestoneAchievedDate');
       if (lastMilestone !== todayStr) {
-        console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
+        toast({ title: "Milestone Achieved!", description: "Congratulations! You've hit 30 doors today!", duration: 10000 });
         localStorage.setItem('milestoneAchievedDate', todayStr);
       }
     }
-  }, [visits]);
+  }, [visits, toast]);
 
   useEffect(() => {
     if (selectedSalesperson) { 
@@ -398,16 +400,20 @@ export default function HomePage() {
 
   const handleQuickLog = () => {
     if (!userCurrentLatitude || !userCurrentLongitude) {
-      console.error("Could Not Get Location", "Current user location is not available. Please enable location services.");
+      toast({
+        variant: "destructive",
+        title: "Could Not Get Location",
+        description: "Current user location is not available. Please enable location services.",
+      });
       return;
     }
 
     const newVisitTemplate: Partial<Visit> = {
       latitude: userCurrentLatitude,
       longitude: userCurrentLongitude,
-      timestamp: new Date(), // Pass the start time of the visit
+      timestamp: new Date(),
       visitNumber: coldCallCount + 1,
-      companyName: '', // Start with empty company name, form will suggest
+      companyName: '',
       notes: '',
     };
 
@@ -426,13 +432,23 @@ export default function HomePage() {
     setVisits(prevVisits => prevVisits.map(v => v.id === updatedVisit.id ? updatedVisit : v));
     const result = await saveVisitAction(updatedVisit);
     if (result.error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to update visit",
+        description: result.error,
+      });
+      // onSnapshot from firebase will handle reverting if there is a DB sync issue.
       console.error("Failed to update visit from card", result.error);
-      // Let onSnapshot handle reverting the UI if needed
+    } else {
+       toast({
+        title: "Visit Updated",
+        description: `Changes to ${result.visit?.companyName} were saved.`,
+      });
     }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
-    console.log(`Logging Follow-up for ${existingVisit.companyName}.`);
+    toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
   
     const newVisitTemplate: Partial<Visit> = {
       companyName: existingVisit.companyName,
@@ -451,14 +467,21 @@ export default function HomePage() {
   };
 
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
-    setIsVisitFormOpen(false); // Close form immediately for responsiveness
+    setIsVisitFormOpen(false);
     
     const result = await saveVisitAction(payload);
     
     if (result.error) {
-      console.error("Could not save visit", result.error);
+      toast({
+        variant: "destructive",
+        title: "Could not save visit",
+        description: result.error,
+      });
     } else {
-      console.log(result.isNewVisit ? "Visit Logged" : "Visit Updated", `Visit for ${result.visit?.companyName} saved to database.`);
+      toast({
+        title: result.isNewVisit ? "Visit Logged" : "Visit Updated",
+        description: `Visit for ${result.visit?.companyName} has been saved.`,
+      });
     }
   };
 
@@ -469,10 +492,17 @@ export default function HomePage() {
 
     const result = await deleteVisitAction(visitId);
     if (result.error) {
-        console.error("Failed to delete visit", result.error);
+        toast({
+          variant: "destructive",
+          title: "Failed to delete visit",
+          description: result.error,
+        });
         setVisits(originalVisits); // Revert UI
     } else {
-        console.log('Visit Deleted', 'The visit log has been removed from the database.');
+        toast({
+          title: 'Visit Deleted',
+          description: 'The visit log has been removed from the database.',
+        });
     }
   };
 
@@ -480,16 +510,19 @@ export default function HomePage() {
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp)));
     const numberOfVisits = todaysVisits.length;
     
-    // This action doesn't delete visits, just resets local counters/flags
     localStorage.removeItem('milestoneAchievedDate');
     
-    console.log("Field Day Ended", `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today.`);
+    toast({
+      title: "Field Day Ended",
+      description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today.`,
+      duration: 10000,
+    });
     setIsEndDayConfirmOpen(false);
   };
 
   const handleSubmitSuggestion = async () => {
     if (suggestionText.trim() === '') {
-      console.warn('Empty Suggestion', 'Please type your suggestion before submitting.');
+      toast({ variant: "destructive", title: 'Empty Suggestion', description: 'Please type your suggestion before submitting.' });
       return;
     }
 
@@ -499,13 +532,13 @@ export default function HomePage() {
     };
     
     setSubmittedSuggestions(prev => [...prev, newSuggestionObject]);
-    console.log('Suggestion Submitted!', 'Thank you for your feedback.');
+    toast({ title: 'Suggestion Submitted!', description: 'Thank you for your feedback.' });
     setSuggestionText('');
   };
 
   const handleEmailSuggestions = () => {
     if (submittedSuggestions.length === 0) {
-      console.log('No Suggestions to Email', 'There are no submitted suggestions to send.');
+      toast({ title: 'No Suggestions to Email', description: 'There are no submitted suggestions to send.' });
       return;
     }
 
@@ -521,7 +554,7 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
         window.location.href = mailtoLink;
     }
-    console.log("Opening email client...", "Please send the composed email with your suggestions.");
+    toast({ title: "Opening email client...", description: "Please send the composed email with your suggestions." });
   };
 
   const handleEmailManager = () => {
@@ -551,7 +584,7 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
         window.open(gmailLink, '_blank');
     }
-    console.log("Opening Gmail...", "Please manually attach the exported PDF to the email before sending.");
+    toast({ title: "Opening Gmail...", description: "Please manually attach the exported PDF to the email before sending." });
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -559,13 +592,13 @@ export default function HomePage() {
     if (file) {
       const allowedTypes = ["application/pdf", "text/csv"];
       if (!allowedTypes.includes(file.type)) {
-        console.error("Invalid File Type", "Please select a PDF or CSV file.");
+        toast({ variant: "destructive", title: "Invalid File Type", description: "Please select a PDF or CSV file." });
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        console.error("File Too Large", "Please select a file smaller than 5MB.");
+        toast({ variant: "destructive", title: "File Too Large", description: "Please select a file smaller than 5MB." });
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -599,10 +632,10 @@ export default function HomePage() {
         } else if (selectedFile.type === 'text/csv') {
           csvDataForAi = await selectedFile.text();
         }
-        console.log('File Attached', `${selectedFile.name} attached and will be sent to AI.`);
+        toast({ title: 'File Attached', description: `${selectedFile.name} attached and will be sent to AI.` });
         messageText += ` (Attached File: ${selectedFile.name})`;
       } catch (processingError: any) {
-        console.error('File Processing Failed', processingError.message);
+        toast({ variant: "destructive", title: 'File Processing Failed', description: processingError.message });
         setIsAiResponding(false);
         return;
       } finally {
@@ -643,7 +676,7 @@ export default function HomePage() {
       });
 
       if (result.error) {
-        console.error("AI Chat Error", `Error: ${result.error}`);
+        toast({ variant: "destructive", title: "AI Chat Error", description: `Error: ${result.error}` });
         const aiErrorResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: `Sorry, I encountered an error: ${result.error}`, timestamp: new Date() };
         setChatMessages(prev => [...prev, aiErrorResponse]);
       } else if (result.aiResponse) {
@@ -651,7 +684,7 @@ export default function HomePage() {
         setChatMessages(prev => [...prev, aiResponse]);
       }
     } catch (e: any) {
-      console.error("AI Chat Failed", "Could not get response from AI.");
+       toast({ variant: "destructive", title: "AI Chat Failed", description: "Could not get response from AI." });
        const aiFailureResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: "I'm having trouble connecting right now. Please try again later.", timestamp: new Date() };
         setChatMessages(prev => [...prev, aiFailureResponse]);
     } finally {
@@ -773,7 +806,7 @@ export default function HomePage() {
               onClick={(e) => {
                 if (visits.length === 0) {
                   e.preventDefault();
-                  console.log('No visits to show at the moment!');
+                  toast({title: 'No visits to show at the moment!'});
                 }
               }}
             >
@@ -1219,7 +1252,7 @@ export default function HomePage() {
                                                 throw new Error('AI did not return a valid location.');
                                             }
                                         } catch (e: any) {
-                                            console.error('Could Not Find Location', e.message || 'An unexpected error occurred.');
+                                            toast({ variant: "destructive", title: 'Could Not Find Location', description: e.message || 'An unexpected error occurred.'});
                                         } finally {
                                             setIsFindingParking(false);
                                         }

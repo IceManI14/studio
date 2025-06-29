@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from '@/hooks/use-toast';
 
 
 const COMPETITORS_LIST = [
@@ -162,6 +163,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
+  const { toast } = useToast();
 
 
   const form = useForm<VisitFormData>({
@@ -220,13 +222,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     try {
         const { lat, lon } = await getFreshCoordinates();
 
-        // Update state and form with coordinates
         setCurrentLatitude(lat);
         setCurrentLongitude(lon);
         form.setValue('latitude', lat);
         form.setValue('longitude', lon);
 
-        // Now, perform the company lookup
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
         
         if (result.error) {
@@ -236,7 +236,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
             form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
         } else {
-            console.warn("No Company Found", "Could not identify a company at this location.");
+            toast({ variant: "destructive", title: "No Company Found", description: "Could not identify a company at this location." });
         }
         if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
         if (result.address) {
@@ -250,16 +250,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.city) setCurrentCity(result.city);
 
     } catch (error: any) {
-        console.error("Could Not Find Company", error.message || "An unexpected error occurred.");
+        toast({ variant: "destructive", title: "Could Not Find Company", description: error.message || "An unexpected error occurred." });
     } finally {
         setIsSuggestingCompany(false);
     }
-  }, [form, setCurrentCity]);
+  }, [form, setCurrentCity, toast]);
 
 
   useEffect(() => {
     if (hasTDSReadingValue) {
-      // A small delay ensures the element is rendered and can be focused.
       const timer = setTimeout(() => {
         tdsInputRef.current?.focus();
       }, 100);
@@ -278,7 +277,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   useEffect(() => {
     if (watchedCompetitorName) {
       setOpenAccordion(['cooler-type']);
-      // A small delay to allow the accordion to animate open before opening the select
       const timer = setTimeout(() => setIsCoolerSelectOpen(true), 250);
       return () => clearTimeout(timer);
     } else {
@@ -322,7 +320,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     if (isOpen) {
       resetFormAndState(initialData);
 
-      // Auto-suggest company for a new visit initiated via Quicklog
       if (!initialData?.id && initialData?.latitude && initialData?.longitude) {
         handleSuggestCompany();
       }
@@ -330,12 +327,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen, resetFormAndState, handleSuggestCompany]);
 
   useEffect(() => {
-    // When the form opens for a new Quicklog, focus the confidence stars
-    // to prevent the keyboard from opening on mobile for the company name input.
     if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
       const timer = setTimeout(() => {
         confidenceStarsRef.current?.focus({ preventScroll: true });
-      }, 100); // A small delay to ensure the element is focusable
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [isOpen, initialData]);
@@ -369,7 +364,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     const stopAudioAndCamera = () => {
-      // Stop audio recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
@@ -379,7 +373,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       audioChunksRef.current = [];
       setIsRecordingNotes(false);
 
-      // Stop camera stream
       stopCameraStream();
     };
 
@@ -432,11 +425,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     if (!currentNotes.includes(reminderText.trim())) {
         form.setValue('notes', (currentNotes + reminderText).trim(), { shouldValidate: true });
-        console.log("Reminder Added", "A note was added to photograph the card later.");
+        toast({ title: "Reminder Added", description: "A note was added to photograph the card later." });
     } else {
-        console.log("Reminder Already Exists", "The business card reminder is already in your notes.");
+        toast({ title: "Reminder Already Exists", description: "The business card reminder is already in your notes." });
     }
-    // Uncheck the box to allow the user to "pass" this section
     form.setValue('hasBusinessCard', false);
   };
 
@@ -492,11 +484,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const dataUri = canvas.toDataURL('image/jpeg', 0.9);
         setBusinessCardPreviewUrl(dataUri);
         form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
-        console.log("Image Captured", "Business card image captured from camera.");
+        toast({ title: "Image Captured", description: "Business card image captured from camera." });
       }
       handleToggleCameraView();
     } else {
-        console.error("Capture Error", "Camera not ready or permission denied.");
+        toast({ variant: "destructive", title: "Capture Error", description: "Camera not ready or permission denied." });
     }
   };
 
@@ -517,13 +509,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setCurrentCoolerOptions(updatedOptions);
         form.setValue('coolerType', newName, { shouldValidate: true });
         setCustomCoolerNameInput('');
-        console.log("Custom Cooler Added", `${newName} added to options and selected.`);
+        toast({ title: "Custom Cooler Added", description: `${newName} added to options and selected.` });
     } else if (newName && currentCoolerOptions.includes(newName)) {
         form.setValue('coolerType', newName, { shouldValidate: true });
         setCustomCoolerNameInput('');
-        console.log("Cooler Selected", `${newName} selected.`);
+        toast({ title: "Cooler Selected", description: `${newName} selected.` });
     } else {
-        console.warn("Invalid Name", "Please enter a cooler name.");
+        toast({ variant: "destructive", title: "Invalid Name", description: "Please enter a cooler name." });
     }
   };
 
@@ -581,7 +573,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       await onSave(payload);
       onClose();
     } catch (error) {
-      console.error("Error during save operation:", error);
+      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save operation." });
     } finally {
         setIsSaving(false);
     }
@@ -591,7 +583,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
     if (hasMicPermission === false) {
-      console.error("Microphone Access Denied: Please enable microphone permissions to record audio notes.");
+      toast({ variant: "destructive", title: "Microphone Access Denied", description: "Please enable microphone permissions to record audio notes." });
       return;
     }
 
@@ -608,7 +600,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       mediaRecorderRef.current.onstop = () => {
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
-          console.log(`Audio Notes Recorded: Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)`);
+          toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
           audioChunksRef.current = [];
         }
         if (mediaRecorderRef.current?.stream) {
@@ -635,16 +627,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     if (typeof window !== 'undefined') {
       const isAndroid = /android/i.test(navigator.userAgent);
       
-      console.log('Opening Genius Scan. After scanning, return here to upload the saved image from your photos.');
+      toast({ title: "Opening Genius Scan", description: "After scanning, return here to upload the saved image from your photos." });
 
       if (isAndroid) {
-        // This intent URL will try to open the app. If it fails, it will redirect to the Play Store.
         const geniusScanPackage = 'com.thegrizzlylabs.geniusscan.free';
         const playStoreUrl = `https://play.google.com/store/apps/details?id=${geniusScanPackage}`;
         const intentUrl = `intent://#Intent;package=${geniusScanPackage};S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
         window.location.href = intentUrl;
       } else {
-        // For iOS and others, the custom URL scheme is the standard way.
         window.open('geniusscan://', '_blank');
       }
     }
