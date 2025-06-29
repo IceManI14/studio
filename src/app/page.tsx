@@ -163,27 +163,12 @@ export default function HomePage() {
         if (result.error) throw new Error(result.error);
         
         if (result.cities && result.cities.length > 0) {
-          const newEnglandStates = ['ME', 'VT', 'NH', 'MA', 'RI', 'CT'];
-          const allExtractedCities = result.cities;
-          const newEnglandCities = allExtractedCities.filter(city => {
-            const parts = city.split(', ');
-            return parts.length === 2 && newEnglandStates.includes(parts[1].toUpperCase());
-          });
-
-          if (newEnglandCities.length > 0) {
-            cities = newEnglandCities;
-          } else {
-             toast({
-              title: "No New England Cities Found in PDF",
-              description: "The PDF provided does not contain cities in the New England area. Falling back to default list.",
-              variant: "default",
-            });
-            cities = activeSalesperson.territory.flatMap(t => t.cities || []);
-          }
+          // Use all extracted cities directly from the PDF, removing the New England filter.
+          cities = result.cities;
         } else {
           toast({
             title: "No Cities Found in PDF",
-            description: "Falling back to the default list for your profile.",
+            description: "Falling back to the default list from your profile.",
             variant: "default",
           });
           cities = activeSalesperson.territory.flatMap(t => t.cities || []);
