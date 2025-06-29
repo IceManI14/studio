@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm, { type VisitFormData } from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -41,10 +41,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, quickCreateVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, summarizeNotesAction, scrapeContactInfo } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { db, firebaseConfigured } from '@/lib/firebase';
-import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
@@ -198,19 +196,35 @@ export default function HomePage() {
     }
   };
 
-  const updateColdCallCount = async (newCount: number) => {
-    if (!db) return;
-    setColdCallCount(newCount);
-    const statsDocRef = doc(db, 'app-state', 'daily-stats');
-    try {
-      await setDoc(statsDocRef, { coldCallCount: newCount }, { merge: true });
-    } catch (error) {
-      console.error("Error updating cold call count:", error);
-    }
-  };
-
 
   useEffect(() => {
+    // Load data from localStorage on initial mount
+    try {
+      const storedVisits = localStorage.getItem('visits');
+      if (storedVisits) {
+        const parsedVisits: Visit[] = JSON.parse(storedVisits).map((v: any) => ({
+          ...v,
+          timestamp: new Date(v.timestamp),
+          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+        }));
+        setVisits(parsedVisits);
+      }
+
+      const storedCount = localStorage.getItem('coldCallCount');
+      setColdCallCount(storedCount ? parseInt(storedCount, 10) : 0);
+
+      const storedSuggestions = localStorage.getItem('submittedSuggestions');
+      if (storedSuggestions) {
+        const parsedSuggestions: SubmittedSuggestion[] = JSON.parse(storedSuggestions).map((s: any) => ({
+          ...s,
+          timestamp: new Date(s.timestamp)
+        }));
+        setSubmittedSuggestions(parsedSuggestions);
+      }
+    } catch (error) {
+      console.error("Failed to load data from localStorage:", error);
+    }
+
     // Get Geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -265,64 +279,29 @@ export default function HomePage() {
         console.error("Failed to parse managed files from localStorage", e);
         localStorage.removeItem('managedFiles');
     }
-
-    if (!firebaseConfigured || !db) return;
-
-    // Firestore listener for visits
-    const visitsQuery = query(collection(db, 'visits'), orderBy('timestamp', 'desc'));
-    const unsubscribeVisits = onSnapshot(visitsQuery, (querySnapshot) => {
-      const visitsData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          ...data,
-          id: doc.id,
-          timestamp: data.timestamp.toDate(),
-          futureMeetingDateTime: data.futureMeetingDateTime?.toDate(),
-        } as Visit;
-      });
-      setVisits(visitsData);
-    }, (error) => {
-      console.error("Error fetching visits:", error);
-    });
-    
-    const suggestionsQuery = query(collection(db, 'suggestions'), orderBy('timestamp', 'desc'));
-    const unsubscribeSuggestions = onSnapshot(suggestionsQuery, (snapshot) => {
-      const suggestionsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          text: data.text,
-          timestamp: data.timestamp.toDate()
-        } as SubmittedSuggestion;
-      });
-      setSubmittedSuggestions(suggestionsData);
-    }, (error) => {
-      console.error("Error fetching suggestions:", error);
-    });
-
-    const statsDocRef = doc(db, 'app-state', 'daily-stats');
-    const unsubscribeStats = onSnapshot(statsDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setColdCallCount(docSnap.data().coldCallCount || 0);
-        } else {
-            setDoc(statsDocRef, { coldCallCount: 0, milestoneAchievedDate: null });
-        }
-    }, (error) => {
-        console.error("Error fetching daily stats:", error);
-    });
-
-
-    return () => {
-      unsubscribeVisits && unsubscribeVisits();
-      unsubscribeSuggestions && unsubscribeSuggestions();
-      unsubscribeStats && unsubscribeStats();
-    };
-
   }, []);
 
+  // Save visits to local storage whenever they change
   useEffect(() => {
-    // Check if this is the first time the user is using the app
-    // and prompt them to upload their territory file for the AI.
-    if (selectedSalesperson) { // Only run after a salesperson is selected
+    // Avoid writing an empty array on first load if nothing was in storage
+    if (visits.length > 0 || localStorage.getItem('visits')) {
+      localStorage.setItem('visits', JSON.stringify(visits));
+    }
+  }, [visits]);
+
+  // Save cold call count whenever it changes
+  useEffect(() => {
+    localStorage.setItem('coldCallCount', coldCallCount.toString());
+  }, [coldCallCount]);
+
+  // Save suggestions whenever they change
+  useEffect(() => {
+    localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
+  }, [submittedSuggestions]);
+
+
+  useEffect(() => {
+    if (selectedSalesperson) { 
         const hasUploaded = localStorage.getItem('territoryPdfUploaded');
         if (!hasUploaded) {
             setShowTerritoryUploadModal(true);
@@ -333,25 +312,11 @@ export default function HomePage() {
   useEffect(() => {
     if (coldCallCount >= 30) {
       const today = new Date().toISOString().split('T')[0];
-      
-      const checkAndSetMilestone = async () => {
-        if (!db) return;
-        const statsDocRef = doc(db, 'app-state', 'daily-stats');
-        try {
-            const docSnap = await getDoc(statsDocRef);
-    
-            if (docSnap.exists() && docSnap.data().milestoneAchievedDate === today) {
-              // already achieved today, do nothing
-            } else {
-              // not achieved today, show toast and update doc
-              console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
-              await updateDoc(statsDocRef, { milestoneAchievedDate: today });
-            }
-        } catch (error) {
-            console.error("Error checking milestone:", error);
-        }
+      const lastMilestone = localStorage.getItem('milestoneAchievedDate');
+      if (lastMilestone !== today) {
+        console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
+        localStorage.setItem('milestoneAchievedDate', today);
       }
-      checkAndSetMilestone();
     }
   }, [coldCallCount]);
 
@@ -377,16 +342,15 @@ export default function HomePage() {
       if (sortCriteria === 'dealClosed') {
         comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
         if (comparison !== 0) return comparison;
-        // Secondary sort by confidence descending
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'partnershipConfidence') {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
-        return timeB - timeA; // Secondary sort by time descending
-      } else { // sortCriteria === 'timestamp'
+        return timeB - timeA; 
+      } else { 
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA; // Secondary sort by confidence descending
+        return confidenceB - confidenceA;
       }
     });
     return sorted;
@@ -461,12 +425,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // Only show the confirmation dialog if the visit form is open,
-      // as that's when unsaved data is most likely to exist.
       if (isVisitFormOpen) {
         event.preventDefault();
-        // Standard requires setting returnValue to an empty string.
-        // Some older browsers might display the string assigned here, but modern ones won't.
         event.returnValue = '';
       }
     };
@@ -479,34 +439,25 @@ export default function HomePage() {
   }, [isVisitFormOpen]);
 
   useEffect(() => {
-    // This effect handles the mobile back button.
     const handlePopState = (event: PopStateEvent) => {
-      // We always push a new state to cancel the browser's default back navigation.
-      // We then handle the "back" action manually.
       window.history.pushState(null, '', window.location.href);
 
-      // If the zoomed-in visit card dialog is open, the back button should close it.
       if (zoomedVisit) {
         setZoomedVisit(null);
       } else {
-        // If no specific modal is open that we want to handle, prevent exiting the app.
         console.log("Back button action canceled to prevent accidental exit.");
       }
     };
 
-    // When the component mounts, add the popstate listener.
-    // A state is pushed into history when the component mounts to enable our custom back button handling.
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [zoomedVisit]); // Re-create the handler when zoomedVisit changes to have the latest state.
+  }, [zoomedVisit]); 
 
   const handleQuickLog = async () => {
-    // This function will now prepare a new visit and open the form
-    // instead of trying to save directly, to ensure stability.
     setIsFetchingNewLocation(true);
 
     const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
@@ -532,14 +483,12 @@ export default function HomePage() {
     try {
       const { lat, lon } = await getFreshCoordinates();
       
-      // Create a template for the new visit, including a timestamp to calculate meeting duration
       const newVisitTemplate: Partial<Visit> = {
         latitude: lat,
         longitude: lon,
-        timestamp: new Date(), // Set a start time for the visit
+        timestamp: new Date(), 
       };
 
-      // Try to get company name but don't let it block the process
       try {
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
         if (result && !result.error) {
@@ -553,7 +502,6 @@ export default function HomePage() {
         console.warn("Could not pre-fill company details, user can enter manually.", e);
       }
 
-      // Open the form with the pre-filled data
       setCurrentEditingVisit(newVisitTemplate as Visit);
       setIsVisitFormOpen(true);
 
@@ -571,72 +519,22 @@ export default function HomePage() {
   };
 
   const handleUpdateFromCard = async (updatedVisit: Visit) => {
-    const payload: SaveVisitPayload = {
-      id: updatedVisit.id,
-      timestamp: updatedVisit.timestamp,
-      companyName: updatedVisit.companyName,
-      notes: updatedVisit.notes,
-      latitude: updatedVisit.latitude,
-      longitude: updatedVisit.longitude,
-      partnershipConfidence: updatedVisit.partnershipConfidence,
-      hasBusinessCard: updatedVisit.hasBusinessCard,
-      businessCardImageUrl: updatedVisit.businessCardImageUrl,
-      discussedCompetitors: updatedVisit.discussedCompetitors,
-      competitorName: updatedVisit.competitorName,
-      coolerType: updatedVisit.coolerType,
-      decisionMakerName: updatedVisit.decisionMakerName,
-      decisionMakerTitle: updatedVisit.decisionMakerTitle,
-      decisionMakerContact: updatedVisit.decisionMakerContact,
-      visitNumber: updatedVisit.visitNumber,
-      interestedUnit: updatedVisit.interestedUnit,
-      hasTDSReading: updatedVisit.hasTDSReading,
-      tdsValue: updatedVisit.tdsValue,
-      futureMeetingSet: updatedVisit.futureMeetingSet,
-      futureMeetingDateTime: updatedVisit.futureMeetingDateTime,
-      freeTrial: updatedVisit.freeTrial,
-      dealClosed: updatedVisit.dealClosed,
-      originalCompanyName: updatedVisit.companyName,
-      originalNotes: updatedVisit.notes,
-      existingContactInfo: updatedVisit.contactInfo,
-      existingNotesSummary: updatedVisit.notesSummary,
-      originalBusinessCardImageUrl: updatedVisit.businessCardImageUrl,
-    };
-    const result = await saveVisitAction(payload);
-    if (result.error) {
-        console.error("Failed to update visit from card", result.error);
-    } else {
-        console.log("Visit updated successfully from card.");
-    }
+    setVisits(prevVisits => prevVisits.map(v => v.id === updatedVisit.id ? updatedVisit : v));
+    console.log("Visit updated successfully from card.");
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
     console.log(`Logging Follow-up for ${existingVisit.companyName}.`);
   
     const newVisitTemplate: Partial<Visit> = {
-      // No id, so it's a new visit
       companyName: existingVisit.companyName,
       latitude: existingVisit.latitude,
       longitude: existingVisit.longitude,
-      // Pass existing info to avoid re-scraping
       contactInfo: existingVisit.contactInfo, 
       notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
-      notesSummary: undefined,
-      partnershipConfidence: undefined,
-      hasBusinessCard: false,
-      businessCardImageUrl: undefined,
-      discussedCompetitors: false,
-      competitorName: undefined,
-      coolerType: undefined,
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
-      interestedUnit: undefined,
-      hasTDSReading: false,
-      tdsValue: undefined,
-      futureMeetingSet: false,
-      futureMeetingDateTime: undefined,
-      freeTrial: false,
-      dealClosed: false,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -644,55 +542,89 @@ export default function HomePage() {
   };
 
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
-    const isNew = !payload.id;
+    const isNewVisit = !payload.id;
+    const visitId = payload.id || crypto.randomUUID();
+
+    // AI Enrichment
+    const companyChanged = isNewVisit || (payload.companyName !== payload.originalCompanyName);
+    const notesChanged = payload.notes !== payload.originalNotes;
     
-    // The client is responsible for calculating the new visit number
-    if (isNew) {
-      payload.visitNumber = coldCallCount + 1;
+    let contactInfo: ContactInfo | undefined = payload.existingContactInfo || undefined;
+    if (isGenkitConfigured && companyChanged && payload.companyName) {
+      try {
+        const { contactInfo: info, confidenceScore } = await scrapeContactInfo({ companyName: payload.companyName });
+        contactInfo = { info, confidence: confidenceScore };
+      } catch (e: any) {
+        console.warn("AI Warning: Failed to scrape contact info.", e.message);
+        contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
+      }
+    }
+    
+    let notesSummary: string | undefined = payload.existingNotesSummary || undefined;
+    if (isGenkitConfigured && notesChanged && payload.notes) {
+      try {
+        const { summary } = await summarizeNotesAction({ notes: payload.notes });
+        notesSummary = summary;
+      } catch (e: any) {
+        console.warn("AI Warning: Failed to summarize notes.", e.message);
+        notesSummary = "Could not summarize notes.";
+      }
     }
 
-    const result = await saveVisitAction(payload);
+    const visitData: Visit = {
+      id: visitId,
+      timestamp: payload.timestamp || new Date(),
+      companyName: payload.companyName,
+      notes: payload.notes || undefined,
+      latitude: payload.latitude,
+      longitude: payload.longitude,
+      partnershipConfidence: payload.partnershipConfidence,
+      hasBusinessCard: payload.hasBusinessCard,
+      businessCardImageUrl: payload.hasBusinessCard ? payload.businessCardImageUrl : undefined,
+      competitorName: payload.competitorName,
+      coolerType: payload.competitorName ? payload.coolerType : undefined,
+      decisionMakerName: payload.decisionMakerName,
+      decisionMakerTitle: payload.decisionMakerTitle,
+      decisionMakerContact: payload.decisionMakerContact,
+      visitNumber: isNewVisit ? coldCallCount + 1 : payload.visitNumber,
+      interestedUnit: payload.interestedUnit,
+      hasTDSReading: payload.hasTDSReading,
+      tdsValue: payload.hasTDSReading ? payload.tdsValue : undefined,
+      futureMeetingSet: payload.futureMeetingSet,
+      futureMeetingDateTime: payload.futureMeetingSet ? payload.futureMeetingDateTime : undefined,
+      freeTrial: payload.freeTrial,
+      dealClosed: payload.dealClosed,
+      contactInfo: contactInfo,
+      notesSummary: notesSummary,
+      discussedCompetitors: !!payload.competitorName,
+    };
 
-    if (result.error) {
-      console.error('Error saving visit', result.error);
-    } else if (result.visit) {
-      console.log('Potential Partner Logged', `${result.visit.companyName} details saved successfully.`);
-      if (result.isNewVisit) {
-        await updateColdCallCount(coldCallCount + 1);
-      }
+    if (isNewVisit) {
+      setVisits(prev => [...prev, visitData]);
+      setColdCallCount(prev => prev + 1);
+      console.log('Potential Partner Logged', `${visitData.companyName} details saved locally.`);
+    } else {
+      setVisits(prev => prev.map(v => v.id === visitId ? visitData : v));
+      console.log('Visit Updated', `${visitData.companyName} details updated locally.`);
     }
   };
 
 
   const handleDeleteVisit = async (visitId: string) => {
-    if (!db) return;
-    try {
-        await deleteDoc(doc(db, "visits", visitId));
-        console.log('Visit Deleted', 'The visit log has been removed.');
-    } catch (error) {
-        console.error("Error deleting visit:", error);
-    }
+    setVisits(prevVisits => prevVisits.filter(v => v.id !== visitId));
+    console.log('Visit Deleted', 'The visit log has been removed.');
   };
 
   const confirmEndDay = async () => {
     const numberOfVisits = visits.length;
-    await updateColdCallCount(0);
-    
-    if (db) {
-        try {
-            const statsDocRef = doc(db, 'app-state', 'daily-stats');
-            await updateDoc(statsDocRef, { milestoneAchievedDate: null });
-        } catch (e) {
-            console.warn("Could not reset milestone date", e);
-        }
-    }
-
+    setColdCallCount(0);
+    localStorage.removeItem('milestoneAchievedDate');
     console.log("Field Day Ended", `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset.`);
     setIsEndDayConfirmOpen(false);
   };
 
   const handleSubmitSuggestion = async () => {
-    if (suggestionText.trim() === '' || !db) {
+    if (suggestionText.trim() === '') {
       console.warn('Empty Suggestion', 'Please type your suggestion before submitting.');
       return;
     }
@@ -702,13 +634,9 @@ export default function HomePage() {
       timestamp: new Date(),
     };
     
-    try {
-        await addDoc(collection(db, "suggestions"), newSuggestionObject);
-        console.log('Suggestion Submitted!', 'Thank you for your feedback.');
-        setSuggestionText('');
-    } catch (error) {
-        console.error("Error submitting suggestion:", error);
-    }
+    setSubmittedSuggestions(prev => [...prev, newSuggestionObject]);
+    console.log('Suggestion Submitted!', 'Thank you for your feedback.');
+    setSuggestionText('');
   };
 
   const handleEmailSuggestions = () => {
@@ -938,30 +866,6 @@ export default function HomePage() {
       localStorage.setItem('managedFiles', JSON.stringify(files));
   };
 
-
-  if (!firebaseConfigured) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 bg-background">
-        <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-destructive">Firebase Configuration Error</h1>
-        <p className="mt-2 text-muted-foreground max-w-md">
-          Your application is missing valid Firebase credentials. Please add your Firebase project configuration to your <strong>.env</strong> file.
-        </p>
-        <p className="mt-4 text-sm text-muted-foreground">The app will not function correctly until this is resolved.</p>
-        <div className="mt-4 p-4 bg-muted rounded-md text-left text-xs text-muted-foreground w-full max-w-lg">
-          <p>You need to set the following variables in your `.env` file:</p>
-          <pre className="mt-2 whitespace-pre-wrap">
-            {`NEXT_PUBLIC_FIREBASE_API_KEY="YOUR_KEY_HERE"
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_DOMAIN_HERE"
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID_HERE"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="YOUR_BUCKET_HERE"
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="YOUR_SENDER_ID_HERE"
-NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
-          </pre>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
@@ -1621,6 +1525,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
+         <p className="text-xs mt-1">All data is currently stored locally in your browser.</p>
       </footer>
     </div>
   );
