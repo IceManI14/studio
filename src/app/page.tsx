@@ -528,6 +528,27 @@ export default function HomePage() {
     };
   }, [isVisitFormOpen]);
 
+  useEffect(() => {
+    // This effect handles the mobile back button to prevent accidentally exiting the app.
+    // It pushes a state to the history, then on 'popstate' (back button press),
+    // it pushes it again, effectively cancelling the navigation.
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = (event: PopStateEvent) => {
+      window.history.pushState(null, '', window.location.href);
+      toast({
+        title: "Action Canceled",
+        description: "To prevent accidental exit, the back button is disabled on this main page.",
+        duration: 3000
+      });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [toast]);
+
   const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
 
