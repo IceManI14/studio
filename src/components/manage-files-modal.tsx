@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -42,8 +43,16 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.details || 'Upload failed');
+                let errorMessage = `Upload failed. Server responded with status ${response.status}.`;
+                try {
+                    const errorData = await response.json();
+                    // Use the detailed message from backend if available
+                    errorMessage = errorData.details || errorData.message || errorMessage;
+                } catch (jsonError) {
+                    // The response was not JSON, which is unexpected.
+                    console.error("Could not parse error response as JSON.", jsonError);
+                }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
@@ -61,6 +70,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
                 description: `${newFile.name} is now available for Debbie to use.`,
             });
         } catch (error: any) {
+            console.error("File upload error caught in modal:", error);
             toast({
                 title: "Upload Failed",
                 description: error.message,
