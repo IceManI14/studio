@@ -52,7 +52,7 @@ function isValidDate(d: any) {
 const saveVisitPayloadSchema = z.object({
     id: z.string().optional(),
     timestamp: z.preprocess((arg) => {
-        if (!arg) return undefined;
+        if (!arg) return undefined; // If no timestamp is passed (e.g. for a new visit), it will be set later.
         const d = new Date(arg as string | number | Date);
         return isValidDate(d) ? d : undefined;
     }, z.date().optional()),
@@ -65,31 +65,40 @@ const saveVisitPayloadSchema = z.object({
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(1).max(5).nullish()
     ),
-    hasBusinessCard: z.boolean().nullish(),
+    
+    // Preprocess all optional booleans to handle null/undefined from DB/form state
+    hasBusinessCard: z.preprocess((val) => val ?? false, z.boolean()),
     businessCardImageUrl: z.string().nullish(),
+    
     competitorName: z.string().nullish(),
     coolerType: z.string().nullish(),
+    
     decisionMakerName: z.string().nullish(),
     decisionMakerTitle: z.string().nullish(),
     decisionMakerContact: z.string().nullish(),
+    
     visitNumber: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().nullish()
     ),
+    
     interestedUnit: z.string().nullish(),
-    hasTDSReading: z.boolean().nullish(),
+    
+    hasTDSReading: z.preprocess((val) => val ?? false, z.boolean()),
     tdsValue: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(0).max(1500).nullish()
     ),
-    futureMeetingSet: z.boolean().nullish(),
+
+    futureMeetingSet: z.preprocess((val) => val ?? false, z.boolean()),
     futureMeetingDateTime: z.preprocess((arg) => {
         if (!arg) return null;
         const d = new Date(arg as string | number | Date);
         return isValidDate(d) ? d : null;
     }, z.date().nullish()),
-    freeTrial: z.boolean().nullish(),
-    dealClosed: z.boolean().nullish(),
+
+    freeTrial: z.preprocess((val) => val ?? false, z.boolean()),
+    dealClosed: z.preprocess((val) => val ?? false, z.boolean()),
     
     // Original values for logic
     originalCompanyName: z.string().nullish(),
@@ -108,7 +117,16 @@ const saveVisitPayloadSchema = z.object({
 }, {
     message: "TDS value is required when TDS Reading is checked.",
     path: ["tdsValue"],
+}).refine(data => {
+    if (data.futureMeetingSet && !data.futureMeetingDateTime) {
+        return false;
+    }
+    return true;
+}, {
+    message: "A meeting date and time is required when Future Meeting is checked.",
+    path: ["futureMeetingDateTime"],
 });
+
 
 export interface QuickCreateVisitPayload {
   latitude: number;
@@ -205,17 +223,19 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
+  
   try {
+    // 1. Validate payload with the robust schema
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
     
     const visitId = validatedPayload.id || uuidv4();
     const isNewVisit = !validatedPayload.id;
 
-    // Determine if AI enrichment should be performed
+    // 2. Handle AI enrichment in a resilient way
     const companyChanged = isNewVisit || (validatedPayload.companyName !== validatedPayload.originalCompanyName);
     const notesChanged = validatedPayload.notes !== validatedPayload.originalNotes;
     
-    let contactInfo = validatedPayload.existingContactInfo;
+    let contactInfo = validatedPayload.existingContactInfo || undefined;
     if (companyChanged && validatedPayload.companyName) {
       try {
         const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
@@ -226,7 +246,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       }
     }
     
-    let notesSummary = validatedPayload.existingNotesSummary;
+    let notesSummary = validatedPayload.existingNotesSummary || undefined;
     if (notesChanged && validatedPayload.notes) {
       try {
         const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
@@ -237,19 +257,17 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       }
     }
 
+    // 3. Construct the final Visit object with clear logic
     const visitData: Visit = {
       id: visitId,
-      timestamp: validatedPayload.timestamp || new Date(),
+      timestamp: validatedPayload.timestamp || new Date(), // Use existing timestamp or create new one
       companyName: validatedPayload.companyName,
-      notes: validatedPayload.notes || undefined,
+      notes: validatedPayload.notes,
       latitude: validatedPayload.latitude,
       longitude: validatedPayload.longitude,
-      contactInfo: contactInfo || undefined,
-      notesSummary: notesSummary || undefined,
       partnershipConfidence: validatedPayload.partnershipConfidence,
-      hasBusinessCard: validatedPayload.hasBusinessCard || false,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl,
-      discussedCompetitors: !!validatedPayload.competitorName,
+      hasBusinessCard: validatedPayload.hasBusinessCard,
+      businessCardImageUrl: validatedPayload.hasBusinessCard ? validatedPayload.businessCardImageUrl : undefined,
       competitorName: validatedPayload.competitorName,
       coolerType: validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
       decisionMakerName: validatedPayload.decisionMakerName,
@@ -257,30 +275,37 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerContact: validatedPayload.decisionMakerContact,
       visitNumber: validatedPayload.visitNumber,
       interestedUnit: validatedPayload.interestedUnit,
-      hasTDSReading: validatedPayload.hasTDSReading || false,
+      hasTDSReading: validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
-      futureMeetingSet: validatedPayload.futureMeetingSet || false,
-      futureMeetingDateTime: validatedPayload.futureMeetingDateTime,
-      freeTrial: validatedPayload.freeTrial || false,
-      dealClosed: validatedPayload.dealClosed || false,
+      futureMeetingSet: validatedPayload.futureMeetingSet,
+      futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
+      freeTrial: validatedPayload.freeTrial,
+      dealClosed: validatedPayload.dealClosed,
+      contactInfo: contactInfo,
+      notesSummary: notesSummary,
+      discussedCompetitors: !!validatedPayload.competitorName,
     };
     
+    // 4. Sanitize the final object for Firestore (undefined -> null)
     const sanitizedVisitData = Object.fromEntries(
         Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
     );
     
+    // 5. Save to Firestore
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, sanitizedVisitData, { merge: true });
 
+    // 6. Return the clean visit object to the client
     return { visit: visitData, isNewVisit };
+    
   } catch (error: any) {
     console.error("Critical Error in saveVisitAction:", error);
     if (error instanceof z.ZodError) {
         return { error: `Validation Error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}` };
     }
     const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key is invalid')) {
-        return { error: "Failed to save visit. The AI API key is invalid or expired. Please check your configuration." };
+    if (errorMessage.includes('api key')) {
+        return { error: "Failed to save visit due to an AI service key error. Please check your configuration." };
     }
     return { error: `Failed to save visit: ${error.message || 'An unexpected error occurred.'}` };
   }
