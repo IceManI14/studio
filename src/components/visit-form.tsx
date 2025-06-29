@@ -222,11 +222,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     try {
         const { lat, lon } = await getFreshCoordinates();
-        
-        toast({
-          title: "Location Refreshed",
-          description: `Searching for businesses near Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`,
-        });
 
         // Update state and form with coordinates
         setCurrentLatitude(lat);
@@ -597,12 +592,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     try {
       await onSave(payload);
+      setIsSaving(false); // Reset state before closing
       onClose();
     } catch (error) {
       console.error("Error during save operation:", error);
+      setIsSaving(false); // Reset state on error too
       // The parent component will show a toast, so we don't need one here.
-    } finally {
-      setIsSaving(false);
     }
   };
 
