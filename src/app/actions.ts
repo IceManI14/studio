@@ -41,8 +41,8 @@ export interface SaveVisitPayload {
   dealClosed?: boolean;
   originalCompanyName?: string;
   originalNotes?: string;
-  existingContactInfo?: ContactInfo; 
-  existingNotesSummary?: string;
+  existingContactInfo?: ContactInfo | null;
+  existingNotesSummary?: string | null;
   originalBusinessCardImageUrl?: string | null; // Can be Data URI
 }
 
@@ -75,8 +75,8 @@ const saveVisitPayloadSchema = z.object({
   existingContactInfo: z.object({
     info: z.string(),
     confidence: z.number(),
-  }).optional(),
-  existingNotesSummary: z.string().optional(),
+  }).optional().nullable(),
+  existingNotesSummary: z.string().optional().nullable(),
   originalBusinessCardImageUrl: z.string().optional().nullable(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
@@ -96,14 +96,16 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   try {
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
     
-    let contactDetails: ContactInfo | undefined = validatedPayload.existingContactInfo;
-    let summary: string | undefined = validatedPayload.existingNotesSummary;
+    let contactDetails: ContactInfo | undefined = validatedPayload.existingContactInfo ?? undefined;
+    let summary: string | undefined = validatedPayload.existingNotesSummary ?? undefined;
 
     const isNewVisit = !validatedPayload.id;
     const companyChanged = !isNewVisit && validatedPayload.companyName !== validatedPayload.originalCompanyName;
     const notesChanged = !isNewVisit && validatedPayload.notes !== validatedPayload.originalNotes;
     
-    if (isNewVisit || companyChanged || !contactDetails) {
+    // AI Enrichment should only happen when creating a new visit or when the relevant source data changes.
+    // It should not be triggered by a simple status update from the visit card.
+    if (isNewVisit || companyChanged) {
       try {
         const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
         contactDetails = {
@@ -112,18 +114,16 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         };
       } catch (e: any) {
         console.warn("Failed to scrape contact info:", e);
-        // Don't throw an error here. Assign a placeholder so the save can continue.
         contactDetails = { info: "Could not retrieve contact info.", confidence: 0 };
       }
     }
 
-    if (validatedPayload.notes && validatedPayload.notes.trim() !== '' && (isNewVisit || notesChanged || !summary)) {
+    if (validatedPayload.notes && validatedPayload.notes.trim() !== '' && (isNewVisit || notesChanged)) {
       try {
         const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
         summary = summaryResult.summary;
       } catch (e: any) {
         console.warn("Failed to summarize notes:", e);
-        // Don't throw an error here. Assign a placeholder so the save can continue.
         summary = "Could not summarize notes.";
       }
     }
