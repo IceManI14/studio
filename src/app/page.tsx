@@ -122,8 +122,8 @@ export default function HomePage() {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
-  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
-  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
@@ -803,31 +803,32 @@ export default function HomePage() {
     });
   };
 
-  const handlePdfSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type !== "application/pdf") {
-        toast({ title: "Invalid File Type", description: "Please select a PDF file.", variant: "destructive" });
-        setSelectedPdf(null);
-        if (pdfInputRef.current) pdfInputRef.current.value = '';
+      const allowedTypes = ["application/pdf", "text/csv"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: "Invalid File Type", description: "Please select a PDF or CSV file.", variant: "destructive" });
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({ title: "File Too Large", description: "Please select a PDF file smaller than 5MB.", variant: "destructive" });
-        setSelectedPdf(null);
-        if (pdfInputRef.current) pdfInputRef.current.value = '';
+        toast({ title: "File Too Large", description: "Please select a file smaller than 5MB.", variant: "destructive" });
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
-      setSelectedPdf(file);
+      setSelectedFile(file);
     } else {
-      setSelectedPdf(null);
+      setSelectedFile(null);
     }
   };
 
-  const handleClearPdf = () => {
-    setSelectedPdf(null);
-    if (pdfInputRef.current) {
-      pdfInputRef.current.value = '';
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -836,21 +837,26 @@ export default function HomePage() {
 
     let messageText = chatInput.trim();
     let pdfUrlForAi: string | undefined = undefined;
+    let csvDataForAi: string | undefined = undefined;
     
     setIsAiResponding(true); 
 
-    if (selectedPdf) {
+    if (selectedFile) {
       try {
-        pdfUrlForAi = await fileToDataUri(selectedPdf);
-        toast({ title: 'PDF Attached', description: `${selectedPdf.name} attached and will be sent to AI.`, duration: 3000});
-        messageText += ` (Attached PDF: ${selectedPdf.name})`;
+        if (selectedFile.type === 'application/pdf') {
+          pdfUrlForAi = await fileToDataUri(selectedFile);
+        } else if (selectedFile.type === 'text/csv') {
+          csvDataForAi = await selectedFile.text();
+        }
+        toast({ title: 'File Attached', description: `${selectedFile.name} attached and will be sent to AI.`, duration: 3000});
+        messageText += ` (Attached File: ${selectedFile.name})`;
       } catch (processingError: any) {
-        toast({ title: 'PDF Processing Failed', description: processingError.message, variant: 'destructive' });
+        toast({ title: 'File Processing Failed', description: processingError.message, variant: 'destructive' });
         setIsAiResponding(false);
         return;
       } finally {
-        setSelectedPdf(null); 
-        if (pdfInputRef.current) pdfInputRef.current.value = '';
+        setSelectedFile(null); 
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     }
 
@@ -880,6 +886,7 @@ export default function HomePage() {
             partnershipConfidence: v.partnershipConfidence
         })),
         pdfUrl: pdfUrlForAi,
+        csvData: csvDataForAi,
         territoryPdfUrl: territoryPdfUrl,
       });
 
@@ -1342,34 +1349,34 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
                 </ScrollArea>
               </UiCardContent>
               <UiCardFooter className="p-4 space-y-2 flex-col items-start">
-                {selectedPdf && (
+                {selectedFile && (
                   <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
                     <div className="flex items-center gap-2 truncate">
                       <Paperclip className="h-4 w-4 text-primary shrink-0" />
-                      <span className="truncate" title={selectedPdf.name}>{selectedPdf.name}</span>
+                      <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handleClearPdf} className="h-6 w-6 shrink-0">
+                    <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
                       <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      <span className="sr-only">Clear PDF</span>
+                      <span className="sr-only">Clear File</span>
                     </Button>
                   </div>
                 )}
                 <div className="flex w-full items-center space-x-2">
                   <Input
-                    id="pdf-upload-input"
+                    id="file-upload-input"
                     type="file"
-                    accept="application/pdf"
-                    onChange={handlePdfSelect}
+                    accept="application/pdf,text/csv"
+                    onChange={handleFileSelect}
                     className="hidden"
-                    ref={pdfInputRef}
+                    ref={fileInputRef}
                     disabled={isAiResponding}
                   />
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    onClick={() => pdfInputRef.current?.click()}
+                    onClick={() => fileInputRef.current?.click()}
                     disabled={isAiResponding}
-                    aria-label="Attach PDF"
+                    aria-label="Attach File"
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>

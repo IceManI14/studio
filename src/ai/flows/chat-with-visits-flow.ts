@@ -17,6 +17,7 @@ const ChatWithVisitsInputSchema = z.object({
   visitsContext: z.string().describe('A summary of recent company visits relevant to the conversation. Each visit is separated by "---".'),
   modelName: z.string().describe('The specific Genkit AI model to use (e.g., "googleai/gemini-1.5-flash-latest").'),
   pdfUrl: z.string().optional().describe("An optional URL or Data URI to a PDF document for analysis for the current query. Expected format: 'data:<mimetype>;base64,<encoded_data>', or a publicly accessible https URL."),
+  csvData: z.string().optional().describe('An optional string containing data from a CSV file for analysis.'),
   territoryPdfUrl: z.string().optional().describe("A URL or Data URI for the salesperson's territory PDF, providing overarching context."),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
@@ -59,9 +60,17 @@ The user has also attached the following PDF document for additional context for
 {{{media url=pdfUrl}}}
 {{/if}}
 
-Based on the conversation, the visit data, and any attached PDF(s), provide a helpful and concise response to the user.
+{{#if csvData}}
+The user has also attached the following CSV data for additional context for this specific query. Analyze its content and incorporate relevant information into your response.
+CSV Data:
+\`\`\`csv
+{{{csvData}}}
+\`\`\`
+{{/if}}
+
+Based on the conversation, the visit data, and any attached file(s), provide a helpful and concise response to the user.
 If visit data is relevant, incorporate it naturally into your response.
-If a PDF is provided, refer to its content when answering questions or providing analysis related to it.
+If a file is provided, refer to its content when answering questions or providing analysis related to it.
 Always consider the territory information when providing recommendations about locations or planning.
 Keep your responses focused on sales strategy, visit planning, and analyzing customer interactions.
 Be positive and encouraging.
@@ -95,10 +104,10 @@ const chatWithVisitsFlow = ai.defineFlow(
     outputSchema: ChatWithVisitsOutputSchema,
   },
   async (input) => {
-    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, territoryPdfUrl } = input;
+    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, csvData, territoryPdfUrl } = input;
     
     const { output } = await prompt(
-        { chatHistory, userMessage, visitsContext, pdfUrl, territoryPdfUrl }, 
+        { chatHistory, userMessage, visitsContext, pdfUrl, csvData, territoryPdfUrl }, 
         { model: modelName } 
     );
 

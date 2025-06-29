@@ -223,6 +223,7 @@ const aiChatPayloadSchema = z.object({
     })
   ),
   pdfUrl: z.string().optional(),
+  csvData: z.string().optional(),
   territoryPdfUrl: z.string().optional(),
 });
 
@@ -255,6 +256,7 @@ export async function getAiChatResponseAction(
       visitsContext: visitsContextString,
       modelName: validatedPayload.model,
       pdfUrl: validatedPayload.pdfUrl,
+      csvData: validatedPayload.csvData,
       territoryPdfUrl: validatedPayload.territoryPdfUrl,
     });
 
