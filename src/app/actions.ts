@@ -44,57 +44,34 @@ export interface SaveVisitPayload {
   originalBusinessCardImageUrl?: string | null;
 }
 
-// This function represents a simpler, more stable version of the save logic.
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string; isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
 
   try {
-    const { id, companyName } = payload;
-    
-    if (!companyName || companyName.trim() === '') {
+    // 1. Validate required fields
+    if (!payload.companyName || payload.companyName.trim() === '') {
       return { error: 'Company name is required.' };
     }
 
-    const visitId = id || uuidv4();
-    const isNewVisit = !id;
+    const visitId = payload.id || uuidv4();
+    const isNewVisit = !payload.id;
 
-    const visitTimestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') 
-      ? new Date(payload.timestamp) 
-      : new Date();
-
-    let finalTdsValue: number | null = null;
-    if (payload.hasTDSReading) {
-        const parsedTds = Number(payload.tdsValue);
-        if (payload.tdsValue === null || payload.tdsValue === undefined || isNaN(parsedTds)) {
-             return { error: 'A valid number is required for TDS value.' };
-        }
-        finalTdsValue = parsedTds;
-    }
-    
-    let finalMeetingDate: Date | null = null;
-    if (payload.futureMeetingSet) {
-        if (!payload.futureMeetingDateTime || new Date(payload.futureMeetingDateTime).toString() === 'Invalid Date') {
-            return { error: 'A valid date is required for the future meeting.' };
-        }
-        finalMeetingDate = new Date(payload.futureMeetingDateTime);
-    }
-
-    // A simpler, more direct construction of the object to be saved in Firestore.
-    // This avoids complex conditional logic that was a likely source of errors.
+    // 2. Sanitize and prepare data for Firestore.
+    // Ensure all optional fields are explicitly null if not provided.
+    // This prevents 'undefined' from being passed to Firestore.
     const visitForDb: Omit<Visit, 'id'> = {
-      timestamp: visitTimestamp,
-      companyName: companyName.trim(),
+      timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
+      companyName: payload.companyName.trim(),
       notes: payload.notes || null,
       latitude: payload.latitude ?? null,
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
       contactInfo: payload.existingContactInfo || null,
-      // If notes changed, clear the old summary. Let the user re-summarize from the card.
       notesSummary: payload.notes === payload.originalNotes ? (payload.existingNotesSummary ?? null) : null,
       hasBusinessCard: !!payload.hasBusinessCard,
-      businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl || null) : null,
+      businessCardImageUrl: (payload.hasBusinessCard && payload.businessCardImageUrl) ? payload.businessCardImageUrl : null,
       discussedCompetitors: !!payload.competitorName,
       competitorName: payload.competitorName || null,
       coolerType: payload.competitorName ? (payload.coolerType || null) : null,
@@ -104,20 +81,26 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       visitNumber: payload.visitNumber ?? null,
       interestedUnit: payload.interestedUnit || null,
       hasTDSReading: !!payload.hasTDSReading,
-      tdsValue: finalTdsValue,
+      tdsValue: (payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null,
       futureMeetingSet: !!payload.futureMeetingSet,
-      futureMeetingDateTime: finalMeetingDate,
+      futureMeetingDateTime: (payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date') ? new Date(payload.futureMeetingDateTime) : null,
       freeTrial: !!payload.freeTrial,
       dealClosed: !!payload.dealClosed,
     };
 
+    // 3. Save to Firestore
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
+    // 4. Prepare the return data for the client.
+    // This is of type `Visit`, which allows `undefined` for optional properties.
+    // The client side code expects this type.
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
-      futureMeetingDateTime: visitForDb.futureMeetingDateTime || undefined,
+      // Ensure date fields are proper Date objects or undefined for the client
+      timestamp: new Date(visitForDb.timestamp),
+      futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
     };
 
     return { visit: finalVisitData, isNewVisit };
@@ -125,10 +108,26 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   } catch (error: any) {
     console.error("CRITICAL ERROR IN saveVisitAction:", error);
     let userMessage = 'An unexpected error occurred during the save operation. Please check the server logs for more details.';
-    if (error.message.includes('Document data maximum size')) {
+    
+    // Provide more specific error messages based on the error type
+    if (error instanceof TypeError) {
+      userMessage = `A data type error occurred: ${error.message}. This might be due to invalid data being sent from the form.`;
+    } else if (error.code) { // Firestore errors often have a code property
+        switch(error.code) {
+            case 'invalid-argument':
+                userMessage = 'Failed to save: Invalid data was sent to the database. Please check the form for errors.';
+                break;
+            case 'permission-denied':
+                userMessage = 'Failed to save: Permission denied. Please check your Firestore security rules.';
+                break;
+            case 'resource-exhausted':
+                 userMessage = 'Failed to save: The database quota has been exceeded. Please check your Firebase plan.';
+                 break;
+            default:
+                 userMessage = `A database error occurred (Code: ${error.code}). Please try again.`;
+        }
+    } else if (error.message.includes('Document data maximum size')) {
       userMessage = 'Failed to save: The visit data is too large. This is often caused by a very large business card image. Please try a smaller image.';
-    } else if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
-      userMessage = 'Failed to save: Permission denied. Please check your Firestore security rules.';
     }
     
     return { error: userMessage };
