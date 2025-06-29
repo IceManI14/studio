@@ -243,7 +243,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         
         if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
             form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
-            toast({ title: "Company Found", description: `Located: ${result.suggestedCompanyName}` });
         } else {
             toast({ title: "No Company Found", description: "Could not identify a company at this location.", variant: "default" });
         }
