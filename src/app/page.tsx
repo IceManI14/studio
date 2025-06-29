@@ -582,7 +582,6 @@ export default function HomePage() {
       existingContactInfo: updatedVisit.contactInfo,
       existingNotesSummary: updatedVisit.notesSummary,
       originalBusinessCardImageUrl: updatedVisit.businessCardImageUrl,
-      coldCallCount: coldCallCount,
     };
     const result = await saveVisitAction(payload);
     if (result.error) {
@@ -626,9 +625,15 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = async (payload: Omit<SaveVisitPayload, 'coldCallCount'>) => {
-    const finalPayload = { ...payload, coldCallCount: coldCallCount };
-    const result = await saveVisitAction(finalPayload);
+  const handleSaveFromForm = async (payload: SaveVisitPayload) => {
+    const isNew = !payload.id;
+    
+    // The client is responsible for calculating the new visit number
+    if (isNew) {
+      payload.visitNumber = coldCallCount + 1;
+    }
+
+    const result = await saveVisitAction(payload);
 
     if (result.error) {
       console.error('Error saving visit', result.error);

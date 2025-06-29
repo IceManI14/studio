@@ -43,7 +43,6 @@ export interface SaveVisitPayload {
   existingContactInfo?: ContactInfo; 
   existingNotesSummary?: string;
   originalBusinessCardImageUrl?: string | null; // Can be Data URI
-  coldCallCount?: number;
 }
 
 const saveVisitPayloadSchema = z.object({
@@ -77,7 +76,6 @@ const saveVisitPayloadSchema = z.object({
   }).optional(),
   existingNotesSummary: z.string().optional(),
   originalBusinessCardImageUrl: z.string().optional().nullable(),
-  coldCallCount: z.number().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null)) {
     return false; 
@@ -146,7 +144,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerName: validatedPayload.decisionMakerName,
       decisionMakerTitle: validatedPayload.decisionMakerTitle,
       decisionMakerContact: validatedPayload.decisionMakerContact,
-      visitNumber: isNewVisit ? (validatedPayload.coldCallCount || 0) + 1 : validatedPayload.visitNumber,
+      visitNumber: validatedPayload.visitNumber,
       interestedUnit: validatedPayload.interestedUnit,
       hasTDSReading: validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,

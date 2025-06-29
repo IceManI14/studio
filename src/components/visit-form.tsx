@@ -130,7 +130,7 @@ export type VisitFormData = z.infer<typeof visitFormSchema>;
 interface VisitFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: Omit<SaveVisitPayload, 'coldCallCount'>) => Promise<void>;
+  onSave: (payload: SaveVisitPayload) => Promise<void>;
   initialData?: Visit;
   salesperson: Salesperson | null;
 }
@@ -547,7 +547,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     const finalBusinessCardImageUrl = data.hasBusinessCard ? data.businessCardImageUrl : undefined;
 
-    const payload: Omit<SaveVisitPayload, 'coldCallCount'> = {
+    const payload: SaveVisitPayload = {
       id: initialData?.id,
       companyName: data.companyName,
       notes: finalNotes,
