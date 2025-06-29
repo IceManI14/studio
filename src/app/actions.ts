@@ -8,7 +8,7 @@ import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { findPlacesFromText } from '@/services/google-places';
-import type { Visit, ContactInfo, ChatMessage, ManagedFile } from '@/lib/types';
+import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
@@ -50,87 +50,98 @@ function isValidDate(d: any): d is Date {
   return d instanceof Date && !isNaN(d.getTime());
 }
 
-export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
+export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string; isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
 
   try {
-    // 1. Validate required fields
-    if (!payload.companyName || payload.companyName.trim() === '') {
+    const { id, timestamp, companyName, ...rest } = payload;
+    
+    if (!companyName || companyName.trim() === '') {
       return { error: 'Company name is required.' };
     }
 
-    const visitId = payload.id || uuidv4();
-    const isNewVisit = !payload.id;
+    const visitId = id || uuidv4();
+    const isNewVisit = !id;
 
-    // 2. Handle dates carefully
-    const timestamp = payload.timestamp && isValidDate(new Date(payload.timestamp)) ? new Date(payload.timestamp) : new Date();
-    let futureMeetingDateTime: Date | null = null;
-    if (payload.futureMeetingSet) {
-        if (payload.futureMeetingDateTime && isValidDate(new Date(payload.futureMeetingDateTime))) {
-            futureMeetingDateTime = new Date(payload.futureMeetingDateTime);
-        } else {
-            return { error: 'A valid meeting date and time is required when "Future Meeting" is checked.'};
-        }
+    const visitTimestamp = timestamp && isValidDate(new Date(timestamp)) ? new Date(timestamp) : new Date();
+
+    let finalTdsValue: number | null = null;
+    if (rest.hasTDSReading) {
+      const parsedTds = Number(rest.tdsValue);
+      if (!isNaN(parsedTds)) {
+        finalTdsValue = parsedTds;
+      } else {
+        return { error: 'A valid number is required for TDS value.' };
+      }
     }
 
-    // 3. Handle numbers carefully
-    let tdsValue: number | null = null;
-    if (payload.hasTDSReading) {
-        if (typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) {
-            tdsValue = payload.tdsValue;
-        } else {
-            return { error: 'A valid TDS value is required when "TDS Reading" is checked.' };
-        }
+    let finalMeetingDate: Date | null = null;
+    if (rest.futureMeetingSet) {
+      if (rest.futureMeetingDateTime && isValidDate(new Date(rest.futureMeetingDateTime))) {
+        finalMeetingDate = new Date(rest.futureMeetingDateTime);
+      } else {
+        return { error: 'A valid date is required for the future meeting.' };
+      }
     }
     
-    // 4. Build the final database object, ensuring EVERY optional field defaults to null
-    const visitForDb = {
-      timestamp: timestamp,
-      companyName: payload.companyName.trim(),
-      notes: payload.notes || null,
-      latitude: payload.latitude ?? null,
-      longitude: payload.longitude ?? null,
-      partnershipConfidence: payload.partnershipConfidence ?? null,
-      contactInfo: payload.existingContactInfo ?? null,
-      // If notes changed, the old summary is invalid. It will be cleared.
-      notesSummary: payload.notes !== payload.originalNotes ? null : (payload.existingNotesSummary ?? null),
-      hasBusinessCard: !!payload.hasBusinessCard,
-      businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl || null) : null,
-      discussedCompetitors: !!payload.competitorName,
-      competitorName: payload.competitorName || null,
-      coolerType: payload.competitorName ? (payload.coolerType || null) : null,
-      decisionMakerName: payload.decisionMakerName || null,
-      decisionMakerTitle: payload.decisionMakerTitle || null,
-      decisionMakerContact: payload.decisionMakerContact || null,
-      visitNumber: payload.visitNumber ?? null,
-      interestedUnit: payload.interestedUnit || null,
-      hasTDSReading: !!payload.hasTDSReading,
-      tdsValue: tdsValue,
-      futureMeetingSet: !!payload.futureMeetingSet,
-      futureMeetingDateTime: futureMeetingDateTime,
-      freeTrial: !!payload.freeTrial,
-      dealClosed: !!payload.dealClosed,
+    // Create the object to save to Firestore
+    const visitForDb: Omit<Visit, 'id'> = {
+      timestamp: visitTimestamp,
+      companyName: companyName.trim(),
+      notes: rest.notes || null,
+      latitude: rest.latitude ?? null,
+      longitude: rest.longitude ?? null,
+      partnershipConfidence: rest.partnershipConfidence ?? null,
+      contactInfo: rest.existingContactInfo ?? null,
+      notesSummary: rest.notes !== rest.originalNotes ? null : (rest.existingNotesSummary ?? null),
+      hasBusinessCard: !!rest.hasBusinessCard,
+      businessCardImageUrl: rest.hasBusinessCard ? (rest.businessCardImageUrl || null) : null,
+      discussedCompetitors: !!rest.competitorName,
+      competitorName: rest.competitorName || null,
+      coolerType: rest.competitorName ? (rest.coolerType || null) : null,
+      decisionMakerName: rest.decisionMakerName || null,
+      decisionMakerTitle: rest.decisionMakerTitle || null,
+      decisionMakerContact: rest.decisionMakerContact || null,
+      visitNumber: rest.visitNumber ?? null,
+      interestedUnit: rest.interestedUnit || null,
+      hasTDSReading: !!rest.hasTDSReading,
+      tdsValue: finalTdsValue,
+      futureMeetingSet: !!rest.futureMeetingSet,
+      futureMeetingDateTime: finalMeetingDate,
+      freeTrial: !!rest.freeTrial,
+      dealClosed: !!rest.dealClosed,
     };
 
-    // 5. Save to Firestore
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    // 6. Return success response
+    // Return the saved data for optimistic UI updates if needed
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
-      timestamp: visitForDb.timestamp,
-      futureMeetingDateTime: visitForDb.futureMeetingDateTime || undefined, // Convert back to what client expects
+      futureMeetingDateTime: visitForDb.futureMeetingDateTime || undefined,
     };
 
-    return { visit: finalVisitData, isNewVisit };
+    return { visit: finalVisitData, isNewVisit: isNewVisit };
 
   } catch (error: any) {
-    console.error("Critical Error in saveVisitAction:", error);
-    return { error: `Failed to save visit. Please check your network connection and try again. Details: ${error.message}` };
+    // More detailed logging
+    console.error("CRITICAL ERROR IN saveVisitAction:", error);
+    console.error("Error Name:", error.name);
+    console.error("Error Message:", error.message);
+    console.error("Error Stack:", error.stack);
+    
+    // Return a more descriptive error
+    let userMessage = 'An unexpected error occurred during the save operation. Please check the server logs for more details.';
+    if (error.message.includes('Document data maximum size')) {
+      userMessage = 'Failed to save: The visit data is too large. This is often caused by a very large business card image. Please try a smaller image.';
+    } else if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
+      userMessage = 'Failed to save: Permission denied. Please check your Firestore security rules.';
+    }
+    
+    return { error: userMessage };
   }
 }
 
