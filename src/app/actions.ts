@@ -106,11 +106,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         };
       } catch (e: any) {
         console.warn("Failed to scrape contact info:", e);
-        const errorMessage = e?.message?.toLowerCase() || '';
-        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-            throw new Error("AI API Key is invalid. Cannot fetch contact info.");
-        }
-        contactDetails = { info: "No contact info found on web!", confidence: 0 };
+        // Don't throw an error here. Assign a placeholder so the save can continue.
+        contactDetails = { info: "Could not retrieve contact info.", confidence: 0 };
       }
     }
 
@@ -120,10 +117,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         summary = summaryResult.summary;
       } catch (e: any) {
         console.warn("Failed to summarize notes:", e);
-        const errorMessage = e?.message?.toLowerCase() || '';
-        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-            throw new Error("AI API Key is invalid. Cannot summarize notes.");
-        }
+        // Don't throw an error here. Assign a placeholder so the save can continue.
         summary = "Could not summarize notes.";
       }
     }
