@@ -1,4 +1,3 @@
-
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -45,18 +44,14 @@ export interface SaveVisitPayload {
   originalBusinessCardImageUrl?: string | null;
 }
 
-// Helper to check for a valid Date object
-function isValidDate(d: any): d is Date {
-  return d instanceof Date && !isNaN(d.getTime());
-}
-
+// This function represents a simpler, more stable version of the save logic.
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string; isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
 
   try {
-    const { id, timestamp, companyName, ...rest } = payload;
+    const { id, companyName } = payload;
     
     if (!companyName || companyName.trim() === '') {
       return { error: 'Company name is required.' };
@@ -65,75 +60,70 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     const visitId = id || uuidv4();
     const isNewVisit = !id;
 
-    const visitTimestamp = timestamp && isValidDate(new Date(timestamp)) ? new Date(timestamp) : new Date();
+    const visitTimestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') 
+      ? new Date(payload.timestamp) 
+      : new Date();
 
     let finalTdsValue: number | null = null;
-    if (rest.hasTDSReading) {
-      const parsedTds = Number(rest.tdsValue);
-      if (!isNaN(parsedTds)) {
+    if (payload.hasTDSReading) {
+        const parsedTds = Number(payload.tdsValue);
+        if (payload.tdsValue === null || payload.tdsValue === undefined || isNaN(parsedTds)) {
+             return { error: 'A valid number is required for TDS value.' };
+        }
         finalTdsValue = parsedTds;
-      } else {
-        return { error: 'A valid number is required for TDS value.' };
-      }
-    }
-
-    let finalMeetingDate: Date | null = null;
-    if (rest.futureMeetingSet) {
-      if (rest.futureMeetingDateTime && isValidDate(new Date(rest.futureMeetingDateTime))) {
-        finalMeetingDate = new Date(rest.futureMeetingDateTime);
-      } else {
-        return { error: 'A valid date is required for the future meeting.' };
-      }
     }
     
-    // Create the object to save to Firestore
+    let finalMeetingDate: Date | null = null;
+    if (payload.futureMeetingSet) {
+        if (!payload.futureMeetingDateTime || new Date(payload.futureMeetingDateTime).toString() === 'Invalid Date') {
+            return { error: 'A valid date is required for the future meeting.' };
+        }
+        finalMeetingDate = new Date(payload.futureMeetingDateTime);
+    }
+
+    // A simpler, more direct construction of the object to be saved in Firestore.
+    // This avoids complex conditional logic that was a likely source of errors.
     const visitForDb: Omit<Visit, 'id'> = {
       timestamp: visitTimestamp,
       companyName: companyName.trim(),
-      notes: rest.notes || null,
-      latitude: rest.latitude ?? null,
-      longitude: rest.longitude ?? null,
-      partnershipConfidence: rest.partnershipConfidence ?? null,
-      contactInfo: rest.existingContactInfo ?? null,
-      notesSummary: rest.notes !== rest.originalNotes ? null : (rest.existingNotesSummary ?? null),
-      hasBusinessCard: !!rest.hasBusinessCard,
-      businessCardImageUrl: rest.hasBusinessCard ? (rest.businessCardImageUrl || null) : null,
-      discussedCompetitors: !!rest.competitorName,
-      competitorName: rest.competitorName || null,
-      coolerType: rest.competitorName ? (rest.coolerType || null) : null,
-      decisionMakerName: rest.decisionMakerName || null,
-      decisionMakerTitle: rest.decisionMakerTitle || null,
-      decisionMakerContact: rest.decisionMakerContact || null,
-      visitNumber: rest.visitNumber ?? null,
-      interestedUnit: rest.interestedUnit || null,
-      hasTDSReading: !!rest.hasTDSReading,
+      notes: payload.notes || null,
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
+      partnershipConfidence: payload.partnershipConfidence ?? null,
+      contactInfo: payload.existingContactInfo || null,
+      // If notes changed, clear the old summary. Let the user re-summarize from the card.
+      notesSummary: payload.notes === payload.originalNotes ? (payload.existingNotesSummary ?? null) : null,
+      hasBusinessCard: !!payload.hasBusinessCard,
+      businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl || null) : null,
+      discussedCompetitors: !!payload.competitorName,
+      competitorName: payload.competitorName || null,
+      coolerType: payload.competitorName ? (payload.coolerType || null) : null,
+      decisionMakerName: payload.decisionMakerName || null,
+      decisionMakerTitle: payload.decisionMakerTitle || null,
+      decisionMakerContact: payload.decisionMakerContact || null,
+      visitNumber: payload.visitNumber ?? null,
+      interestedUnit: payload.interestedUnit || null,
+      hasTDSReading: !!payload.hasTDSReading,
       tdsValue: finalTdsValue,
-      futureMeetingSet: !!rest.futureMeetingSet,
+      futureMeetingSet: !!payload.futureMeetingSet,
       futureMeetingDateTime: finalMeetingDate,
-      freeTrial: !!rest.freeTrial,
-      dealClosed: !!rest.dealClosed,
+      freeTrial: !!payload.freeTrial,
+      dealClosed: !!payload.dealClosed,
     };
 
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    // Return the saved data for optimistic UI updates if needed
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
       futureMeetingDateTime: visitForDb.futureMeetingDateTime || undefined,
     };
 
-    return { visit: finalVisitData, isNewVisit: isNewVisit };
+    return { visit: finalVisitData, isNewVisit };
 
   } catch (error: any) {
-    // More detailed logging
     console.error("CRITICAL ERROR IN saveVisitAction:", error);
-    console.error("Error Name:", error.name);
-    console.error("Error Message:", error.message);
-    console.error("Error Stack:", error.stack);
-    
-    // Return a more descriptive error
     let userMessage = 'An unexpected error occurred during the save operation. Please check the server logs for more details.';
     if (error.message.includes('Document data maximum size')) {
       userMessage = 'Failed to save: The visit data is too large. This is often caused by a very large business card image. Please try a smaller image.';
@@ -400,5 +390,3 @@ export async function findCompanyAction(
     return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
 }
-
-    
