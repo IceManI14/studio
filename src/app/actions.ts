@@ -23,9 +23,8 @@ export interface SaveVisitPayload {
   latitude?: number | null;
   longitude?: number | null;
   partnershipConfidence?: number | null;
-  hasBusinessCard?: boolean;
+  hasBusinessCard?: boolean | null;
   businessCardImageUrl?: string | null; // Can be Data URI
-  discussedCompetitors?: boolean;
   competitorName?: string | null;
   coolerType?: string | null;
   decisionMakerName?: string | null;
@@ -33,11 +32,11 @@ export interface SaveVisitPayload {
   decisionMakerContact?: string | null;
   visitNumber?: number | null;
   interestedUnit?: string | null;
-  hasTDSReading?: boolean;
+  hasTDSReading?: boolean | null;
   tdsValue?: number | null;
-  futureMeetingSet?: boolean;
+  futureMeetingSet?: boolean | null;
   futureMeetingDateTime?: Date | null;
-  freeTrial?: boolean;
+  freeTrial?: boolean | null;
   dealClosed?: boolean | null;
   originalCompanyName?: string | null;
   originalNotes?: string | null;
@@ -68,7 +67,6 @@ const saveVisitPayloadSchema = z.object({
     ),
     hasBusinessCard: z.boolean().nullish(),
     businessCardImageUrl: z.string().nullish(),
-    discussedCompetitors: z.boolean().nullish(),
     competitorName: z.string().nullish(),
     coolerType: z.string().nullish(),
     decisionMakerName: z.string().nullish(),
@@ -525,6 +523,3 @@ export async function findCompanyAction(
     return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
 }
-
-    
-    
