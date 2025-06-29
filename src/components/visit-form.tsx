@@ -548,7 +548,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       partnershipConfidence: data.partnershipConfidence,
       hasBusinessCard: data.hasBusinessCard,
       businessCardImageUrl: finalBusinessCardImageUrl,
-      discussedCompetitors: !!data.competitorName,
       competitorName: data.competitorName,
       coolerType: data.competitorName ? data.coolerType : undefined,
       decisionMakerName: data.decisionMakerName,

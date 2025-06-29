@@ -113,25 +113,23 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     const visitId = validatedPayload.id || uuidv4();
     const isNewVisit = !validatedPayload.id;
 
-    let contactInfo = validatedPayload.existingContactInfo || null;
-    if ((isNewVisit || validatedPayload.companyName !== validatedPayload.originalCompanyName) && validatedPayload.companyName) {
-      try {
-        const result = await scrapeContactInfo({ companyName: validatedPayload.companyName });
-        contactInfo = { info: result.contactInfo, confidence: result.confidenceScore };
-      } catch (e: any) {
-        console.warn("AI Warning: Failed to scrape contact info.", e.message);
-      }
-    }
-    
+    // For stability, AI calls for contact scraping and summarization are removed from the critical save path.
+    // They can be triggered manually by the user from the UI if needed (e.g., re-summarize button).
+    // We will preserve existing summaries and contact info, but not generate new ones automatically on every save.
+    const contactInfo = validatedPayload.existingContactInfo || null;
     let notesSummary = validatedPayload.existingNotesSummary || null;
+
+    // We can still try to summarize if the notes are new or have changed, as this is a key feature.
+    // This is less risky than the contact scraping. We'll wrap it in a try/catch to ensure it doesn't block the save.
     if (validatedPayload.notes && validatedPayload.notes !== validatedPayload.originalNotes) {
       try {
         const result = await summarizeVisitNotes({ notes: validatedPayload.notes });
         notesSummary = result.summary;
       } catch (e: any) {
-        console.warn("AI Warning: Failed to summarize notes.", e.message);
+        console.warn("AI Warning: Failed to summarize new/updated notes. Saving will continue.", e.message);
       }
     }
+
 
     const visitData: Visit = {
       id: visitId,
