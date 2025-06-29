@@ -162,7 +162,6 @@ export default function HomePage() {
         if (result.error) throw new Error(result.error);
         
         if (result.cities && result.cities.length > 0) {
-          // Use all extracted cities directly from the PDF, removing the New England filter.
           cities = result.cities;
         } else {
           toast({
@@ -529,25 +528,35 @@ export default function HomePage() {
   }, [isVisitFormOpen]);
 
   useEffect(() => {
-    // This effect handles the mobile back button to prevent accidentally exiting the app.
-    // It pushes a state to the history, then on 'popstate' (back button press),
-    // it pushes it again, effectively cancelling the navigation.
-    window.history.pushState(null, '', window.location.href);
+    // This effect handles the mobile back button.
+    // If the zoomed visit card is open, it closes it. Otherwise, it prevents accidentally exiting the app.
     const handlePopState = (event: PopStateEvent) => {
+      // We always push a new state to cancel the browser's default back navigation.
+      // We then handle the "back" action manually.
       window.history.pushState(null, '', window.location.href);
-      toast({
-        title: "Action Canceled",
-        description: "To prevent accidental exit, the back button is disabled on this main page.",
-        duration: 3000
-      });
+
+      // If the zoomed-in visit card dialog is open, the back button should close it.
+      if (zoomedVisit) {
+        setZoomedVisit(null);
+      } else {
+        // If no specific modal is open that we want to handle, prevent exiting the app.
+        toast({
+          title: "Action Canceled",
+          description: "To prevent accidental exit, the back button is disabled on this main page.",
+          duration: 3000
+        });
+      }
     };
 
+    // When the component mounts, add the popstate listener.
+    // A state is pushed into history when the component mounts to enable our custom back button handling.
+    window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [toast]);
+  }, [toast, zoomedVisit]); // Re-create the handler when zoomedVisit changes to have the latest state.
 
   const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
