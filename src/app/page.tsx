@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, quickCreateVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
@@ -529,19 +529,28 @@ export default function HomePage() {
 
     try {
       const { lat, lon } = await getFreshCoordinates();
+      
+      const newVisitNumber = coldCallCount + 1;
 
-      const newVisitTemplate: Partial<Visit> = {
-        timestamp: new Date(), // This marks the meeting start time
-        latitude: lat,
-        longitude: lon,
-      };
+      // Call the new quick create action
+      const result = await quickCreateVisitAction({
+          latitude: lat,
+          longitude: lon,
+          visitNumber: newVisitNumber
+      });
       
-      setCurrentEditingVisit(newVisitTemplate as Visit);
-      setIsVisitFormOpen(true);
-      // The VisitForm will now be responsible for fetching company details and handling the rest
+      if (result.error) {
+          console.error("Quicklog Failed", result.error);
+          return;
+      }
       
+      if (result.visit) {
+        console.log('Quicklog Successful', `Visit logged for ${result.visit.companyName}.`);
+        await updateColdCallCount(newVisitNumber);
+      }
+
     } catch (error: any) {
-      console.error("Could Not Start Visit", error.message);
+      console.error("Could Not Quicklog Visit", error.message);
     } finally {
       setIsFetchingNewLocation(false);
     }

@@ -106,6 +106,96 @@ const saveVisitPayloadSchema = z.object({
     path: ["tdsValue"],
 });
 
+export interface QuickCreateVisitPayload {
+  latitude: number;
+  longitude: number;
+  visitNumber: number;
+}
+
+const quickCreateVisitPayloadSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  visitNumber: z.number(),
+});
+
+export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): Promise<{ visit?: Visit; error?: string }> {
+  if (!db) {
+    return { error: 'Firebase is not configured. Cannot save visit.' };
+  }
+
+  try {
+    const { latitude, longitude, visitNumber } = quickCreateVisitPayloadSchema.parse(payload);
+    
+    // 1. Get company details from coordinates
+    let companyName = 'Unknown Location';
+    let contactInfo: ContactInfo | undefined;
+    let notes = `Quick-logged visit at location.`;
+
+    try {
+      const companyDetails = await getCompanyNameFromCoords({ latitude, longitude });
+      if (companyDetails.suggestedCompanyName) {
+        companyName = companyDetails.suggestedCompanyName;
+      }
+      if (companyDetails.address) {
+        notes = `Suggested Address: ${companyDetails.address}`;
+      }
+      if (companyDetails.phone) {
+          contactInfo = { info: companyDetails.phone, confidence: 0.9 };
+      }
+    } catch (e: any) {
+      console.warn("AI Warning: Could not get company details from coordinates.", e.message);
+      notes += "\nCould not fetch company details automatically."
+    }
+
+    // 2. Create the visit object with defaults
+    const visitId = uuidv4();
+    const visitData: Visit = {
+      id: visitId,
+      timestamp: new Date(),
+      latitude,
+      longitude,
+      companyName,
+      notes,
+      contactInfo,
+      notesSummary: undefined,
+      partnershipConfidence: undefined,
+      hasBusinessCard: false,
+      businessCardImageUrl: null,
+      discussedCompetitors: false,
+      competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: undefined,
+      decisionMakerTitle: undefined,
+      decisionMakerContact: contactInfo?.info,
+      visitNumber,
+      interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
+      futureMeetingSet: false,
+      futureMeetingDateTime: undefined,
+      freeTrial: false,
+      dealClosed: false,
+    };
+
+    // 3. Sanitize and save to Firestore
+    const sanitizedVisitData = Object.fromEntries(
+        Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
+    );
+    
+    const visitDocRef = doc(db, 'visits', visitId);
+    await setDoc(visitDocRef, sanitizedVisitData);
+
+    return { visit: visitData };
+
+  } catch (error: any) {
+    console.error("Critical Error in quickCreateVisitAction:", error);
+    if (error instanceof z.ZodError) {
+        return { error: `Validation Error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}` };
+    }
+    return { error: `Failed to quick-create visit: ${error.message || 'An unexpected error occurred.'}` };
+  }
+}
+
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
@@ -116,27 +206,28 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     const visitId = validatedPayload.id || uuidv4();
     const isNewVisit = !validatedPayload.id;
 
-    const companyChanged = !isNewVisit && validatedPayload.companyName !== validatedPayload.originalCompanyName;
-    const notesChanged = !isNewVisit && validatedPayload.notes !== validatedPayload.originalNotes;
+    // Determine if AI enrichment should be performed
+    const companyChanged = isNewVisit || (validatedPayload.companyName !== validatedPayload.originalCompanyName);
+    const notesChanged = validatedPayload.notes !== validatedPayload.originalNotes;
     
     let contactInfo = validatedPayload.existingContactInfo;
-    if ((isNewVisit || companyChanged) && validatedPayload.companyName) {
+    if (companyChanged && validatedPayload.companyName) {
       try {
         const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
         contactInfo = { info: contactResult.contactInfo, confidence: contactResult.confidenceScore };
       } catch (e: any) {
-        console.warn("Failed to scrape contact info:", e);
+        console.warn("AI Warning: Failed to scrape contact info. Saving visit without it.", e.message);
         contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
       }
     }
     
     let notesSummary = validatedPayload.existingNotesSummary;
-    if (validatedPayload.notes && (isNewVisit || notesChanged)) {
+    if (notesChanged && validatedPayload.notes) {
       try {
         const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
         notesSummary = summaryResult.summary;
       } catch (e: any) {
-        console.warn("Failed to summarize notes:", e);
+        console.warn("AI Warning: Failed to summarize notes. Saving visit without it.", e.message);
         notesSummary = "Could not summarize notes.";
       }
     }
@@ -169,19 +260,18 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       dealClosed: validatedPayload.dealClosed || false,
     };
     
-    const sanitizedVisitData = Object.entries(visitData).reduce((acc, [key, value]) => {
-      acc[key] = value === undefined ? null : value;
-      return acc;
-    }, {} as Record<string, any>);
+    const sanitizedVisitData = Object.fromEntries(
+        Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
+    );
     
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, sanitizedVisitData, { merge: true });
 
     return { visit: visitData, isNewVisit };
   } catch (error: any) {
-    console.error("Error in saveVisitAction:", error);
+    console.error("Critical Error in saveVisitAction:", error);
     if (error instanceof z.ZodError) {
-        return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+        return { error: `Validation Error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}` };
     }
     const errorMessage = error?.message?.toLowerCase() || '';
     if (errorMessage.includes('api key is invalid')) {
