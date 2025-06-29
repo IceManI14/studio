@@ -111,9 +111,9 @@ const visitFormSchema = z.object({
   decisionMakerContact: z.string().optional(),
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
-  tdsValue: z.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+  tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
-  futureMeetingDateTime: z.date().optional(),
+  futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
@@ -579,11 +579,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     try {
       await onSave(payload);
-      onClose();
     } catch (error) {
       console.error("Error during save operation:", error);
     } finally {
         setIsSaving(false);
+        onClose();
     }
   };
 
@@ -947,16 +947,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         id="tdsValue"
                         type="number"
                         placeholder="Enter TDS value"
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        disabled={field.disabled}
+                        {...field}
                         ref={(e) => {
                           field.ref(e);
                           tdsInputRef.current = e;
                         }}
                         onChange={(e) =>
                           field.onChange(
-                            e.target.value === "" ? undefined : parseFloat(e.target.value)
+                            e.target.value === "" ? undefined : e.target.value
                           )
                         }
                         value={field.value === undefined ? "" : field.value}
@@ -982,8 +980,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onCheckedChange={(checked) => {
                         const boolValue = !!checked;
                         field.onChange(boolValue);
-                        if (!boolValue) {
-                           form.setValue('futureMeetingDateTime', undefined);
+                        if (boolValue) {
+                          // Default to today at 9:00 AM if no date is set yet
+                          if (!form.getValues('futureMeetingDateTime')) {
+                            const newDateTime = new Date();
+                            newDateTime.setHours(9);
+                            newDateTime.setMinutes(0);
+                            newDateTime.setSeconds(0);
+                            newDateTime.setMilliseconds(0);
+                            form.setValue('futureMeetingDateTime', newDateTime, { shouldValidate: true });
+                          }
+                        } else {
+                           form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
                         }
                       }}
                       id="futureMeetingSet"
@@ -1016,7 +1024,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP 'at' h:mm a")
+                              format(new Date(field.value), "PPP 'at' h:mm a")
                             ) : (
                               <span>Pick a date and time</span>
                             )}
@@ -1027,17 +1035,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value}
+                          selected={field.value ? new Date(field.value) : undefined}
                           onSelect={(date) => {
                             if (!date) {
                               field.onChange(undefined);
                               return;
                             }
                             const newDateTime = new Date(date);
-                            // When a new date is picked, always default time to 9 AM.
-                            // User can then adjust it. This simplifies state management.
-                            newDateTime.setHours(9);
-                            newDateTime.setMinutes(0);
+                            const existingTime = field.value ? new Date(field.value) : new Date();
+                            
+                            // Preserve existing time, or default to 9 AM if no time was set
+                            newDateTime.setHours(field.value ? existingTime.getHours() : 9);
+                            newDateTime.setMinutes(field.value ? existingTime.getMinutes() : 0);
                             newDateTime.setSeconds(0);
                             newDateTime.setMilliseconds(0);
                             
@@ -1053,7 +1062,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             <Label htmlFor="hours">Time</Label>
                             <Select
                               disabled={!field.value}
-                              value={field.value ? String(field.value.getHours()) : '9'}
+                              value={field.value ? String(new Date(field.value).getHours()) : '9'}
                               onValueChange={(value) => {
                                 if (!field.value) return;
                                 const newDate = new Date(field.value);
@@ -1073,7 +1082,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             :
                             <Select
                               disabled={!field.value}
-                              value={field.value ? String(field.value.getMinutes()).padStart(2, '0') : '00'}
+                              value={field.value ? String(new Date(field.value).getMinutes()).padStart(2, '0') : '00'}
                                onValueChange={(value) => {
                                 if (!field.value) return;
                                 const newDate = new Date(field.value);
