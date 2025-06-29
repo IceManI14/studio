@@ -128,7 +128,7 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
     
     // 1. Get company details from coordinates
     let companyName = 'Unknown Location';
-    let contactInfo: ContactInfo | undefined;
+    let contactInfo: ContactInfo | null = null;
     let notes = `Quick-logged visit at location.`;
 
     try {
@@ -149,7 +149,7 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
 
     // 2. Create the visit object with defaults
     const visitId = uuidv4();
-    const visitData: Visit = {
+    const visitDataForDb = {
       id: visitId,
       timestamp: new Date(),
       latitude,
@@ -157,35 +157,59 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
       companyName,
       notes,
       contactInfo,
-      notesSummary: undefined,
-      partnershipConfidence: undefined,
+      notesSummary: null,
+      partnershipConfidence: null,
       hasBusinessCard: false,
       businessCardImageUrl: null,
       discussedCompetitors: false,
-      competitorName: undefined,
-      coolerType: undefined,
-      decisionMakerName: undefined,
-      decisionMakerTitle: undefined,
-      decisionMakerContact: contactInfo?.info,
+      competitorName: null,
+      coolerType: null,
+      decisionMakerName: null,
+      decisionMakerTitle: null,
+      decisionMakerContact: contactInfo?.info ?? null,
       visitNumber,
-      interestedUnit: undefined,
+      interestedUnit: null,
       hasTDSReading: false,
-      tdsValue: undefined,
+      tdsValue: null,
       futureMeetingSet: false,
-      futureMeetingDateTime: undefined,
+      futureMeetingDateTime: null,
       freeTrial: false,
       dealClosed: false,
     };
-
-    // 3. Sanitize and save to Firestore
-    const sanitizedVisitData = Object.fromEntries(
-        Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
-    );
     
     const visitDocRef = doc(db, 'visits', visitId);
-    await setDoc(visitDocRef, sanitizedVisitData);
+    await setDoc(visitDocRef, visitDataForDb);
 
-    return { visit: visitData };
+    // 3. Construct the object to return to the client, which can have undefineds
+    const returnVisit: Visit = {
+        id: visitId,
+        timestamp: visitDataForDb.timestamp,
+        latitude,
+        longitude,
+        companyName,
+        notes,
+        contactInfo: contactInfo ?? undefined,
+        notesSummary: undefined,
+        partnershipConfidence: undefined,
+        hasBusinessCard: false,
+        businessCardImageUrl: null,
+        discussedCompetitors: false,
+        competitorName: undefined,
+        coolerType: undefined,
+        decisionMakerName: undefined,
+        decisionMakerTitle: undefined,
+        decisionMakerContact: contactInfo?.info ?? undefined,
+        visitNumber,
+        interestedUnit: undefined,
+        hasTDSReading: false,
+        tdsValue: undefined,
+        futureMeetingSet: false,
+        futureMeetingDateTime: undefined,
+        freeTrial: false,
+        dealClosed: false,
+    };
+
+    return { visit: returnVisit };
 
   } catch (error: any) {
     console.error("Critical Error in quickCreateVisitAction:", error);
