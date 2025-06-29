@@ -20,9 +20,9 @@ export interface SaveVisitPayload {
   timestamp?: Date; // For updates, to preserve original timestamp
   companyName: string;
   notes?: string;
-  latitude?: number;
-  longitude?: number;
-  partnershipConfidence?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  partnershipConfidence?: number | null;
   hasBusinessCard?: boolean;
   businessCardImageUrl?: string | null; // Can be Data URI
   discussedCompetitors?: boolean;
@@ -31,10 +31,10 @@ export interface SaveVisitPayload {
   decisionMakerName?: string;
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
-  visitNumber?: number; 
+  visitNumber?: number | null; 
   interestedUnit?: string; 
   hasTDSReading?: boolean;
-  tdsValue?: number;
+  tdsValue?: number | null;
   futureMeetingSet?: boolean; 
   futureMeetingDateTime?: Date;
   freeTrial?: boolean;
@@ -51,9 +51,9 @@ const saveVisitPayloadSchema = z.object({
   timestamp: z.coerce.date().optional(),
   companyName: z.string().min(1, "Company name is required"),
   notes: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  partnershipConfidence: z.number().min(1).max(5).optional(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+  partnershipConfidence: z.number().min(1).max(5).optional().nullable(),
   hasBusinessCard: z.boolean().optional(),
   businessCardImageUrl: z.string().optional().nullable(), // Accepts Data URI or other strings
   discussedCompetitors: z.boolean().optional(),
@@ -62,10 +62,10 @@ const saveVisitPayloadSchema = z.object({
   decisionMakerName: z.string().optional().default(''),
   decisionMakerTitle: z.string().optional().default(''),
   decisionMakerContact: z.string().optional().default(''),
-  visitNumber: z.number().optional(),
+  visitNumber: z.number().optional().nullable(),
   interestedUnit: z.string().optional(),
   hasTDSReading: z.boolean().optional(),
-  tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
+  tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional().nullable(),
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
@@ -133,11 +133,11 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       timestamp: validatedPayload.timestamp || new Date(),
       companyName: validatedPayload.companyName,
       notes: validatedPayload.notes,
-      latitude: validatedPayload.latitude,
-      longitude: validatedPayload.longitude,
+      latitude: validatedPayload.latitude ?? undefined,
+      longitude: validatedPayload.longitude ?? undefined,
       contactInfo: contactDetails,
       notesSummary: summary,
-      partnershipConfidence: validatedPayload.partnershipConfidence,
+      partnershipConfidence: validatedPayload.partnershipConfidence ?? undefined,
       hasBusinessCard: !!validatedPayload.hasBusinessCard,
       businessCardImageUrl: validatedPayload.businessCardImageUrl,
       discussedCompetitors: !!validatedPayload.competitorName,
@@ -146,10 +146,10 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerName: validatedPayload.decisionMakerName,
       decisionMakerTitle: validatedPayload.decisionMakerTitle,
       decisionMakerContact: validatedPayload.decisionMakerContact,
-      visitNumber: validatedPayload.visitNumber,
+      visitNumber: validatedPayload.visitNumber ?? undefined,
       interestedUnit: validatedPayload.interestedUnit,
       hasTDSReading: !!validatedPayload.hasTDSReading,
-      tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
+      tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? undefined) : undefined,
       futureMeetingSet: !!validatedPayload.futureMeetingSet,
       futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
       freeTrial: !!validatedPayload.freeTrial,
