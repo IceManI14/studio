@@ -579,11 +579,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     try {
       await onSave(payload);
+      onClose();
     } catch (error) {
       console.error("Error during save operation:", error);
     } finally {
         setIsSaving(false);
-        onClose();
     }
   };
 

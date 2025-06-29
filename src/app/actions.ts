@@ -153,7 +153,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       futureMeetingSet: validatedPayload.futureMeetingSet,
       futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
       freeTrial: validatedPayload.freeTrial,
-      dealClosed: validatedPayload.dealClosed,
+      dealClosed: validatedPayload.dealClosed ?? false,
     };
     
     const visitDataForFirestore = Object.fromEntries(
