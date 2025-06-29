@@ -59,7 +59,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     }
 
     // Step 2: Build the database object defensively.
-    // This approach is more verbose but much safer than complex ternaries.
+    // This approach is more verbose but much safer.
     // It ensures every field is explicitly handled and no `undefined` values are sent to Firestore.
     const visitForDb: Omit<Visit, 'id'> = {
       // Required fields
@@ -72,7 +72,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       longitude: null,
       partnershipConfidence: null,
       contactInfo: null,
-      notesSummary: null,
+      notesSummary: payload.existingNotesSummary || null,
       hasBusinessCard: false,
       businessCardImageUrl: null,
       discussedCompetitors: false,
@@ -81,14 +81,14 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerName: null,
       decisionMakerTitle: null,
       decisionMakerContact: null,
-      visitNumber: null,
+      visitNumber: payload.visitNumber || null,
       interestedUnit: null,
       hasTDSReading: false,
       tdsValue: null,
       futureMeetingSet: false,
       futureMeetingDateTime: null,
       freeTrial: false,
-      dealClosed: false,
+      dealClosed: payload.dealClosed || false,
     };
 
     // Populate optional fields only if they have a valid value
@@ -97,7 +97,6 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     if (typeof payload.longitude === 'number') visitForDb.longitude = payload.longitude;
     if (typeof payload.partnershipConfidence === 'number') visitForDb.partnershipConfidence = payload.partnershipConfidence;
     if (payload.existingContactInfo) visitForDb.contactInfo = payload.existingContactInfo;
-    if (payload.existingNotesSummary) visitForDb.notesSummary = payload.existingNotesSummary;
 
     // Handle boolean flags and their dependent fields
     if (payload.hasBusinessCard === true) {
@@ -118,7 +117,6 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     if (payload.decisionMakerName) visitForDb.decisionMakerName = payload.decisionMakerName;
     if (payload.decisionMakerTitle) visitForDb.decisionMakerTitle = payload.decisionMakerTitle;
     if (payload.decisionMakerContact) visitForDb.decisionMakerContact = payload.decisionMakerContact;
-    if (typeof payload.visitNumber === 'number') visitForDb.visitNumber = payload.visitNumber;
     if (payload.interestedUnit) visitForDb.interestedUnit = payload.interestedUnit;
 
     if (payload.hasTDSReading === true) {
@@ -136,7 +134,20 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     }
     
     if (payload.freeTrial === true) visitForDb.freeTrial = true;
-    if (payload.dealClosed === true) visitForDb.dealClosed = true;
+    
+    // If the notes have changed, run the AI summary in the background (don't await it).
+    // The UI will update reactively if it succeeds.
+    if (payload.notes && payload.notes !== payload.originalNotes) {
+        summarizeVisitNotes({ notes: payload.notes })
+            .then(summaryResult => {
+                if (summaryResult.summary) {
+                    const summaryUpdateRef = doc(db, 'visits', visitId);
+                    setDoc(summaryUpdateRef, { notesSummary: summaryResult.summary }, { merge: true });
+                }
+            })
+            .catch(e => console.error(`Non-critical error: Failed to generate summary for visit ${visitId}:`, e));
+    }
+
 
     // Step 3: Save to Firestore
     const visitDocRef = doc(db, 'visits', visitId);
