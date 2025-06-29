@@ -133,7 +133,6 @@ export default function HomePage() {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
-  const [isFetchingNewLocation, setIsFetchingNewLocation] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
@@ -397,41 +396,23 @@ export default function HomePage() {
   }, [isVisitFormOpen]);
 
 
-  const handleQuickLog = async () => {
-      setIsFetchingNewLocation(true);
-      try {
-          if (!userCurrentLatitude || !userCurrentLongitude) {
-              console.error("Could Not Get Location", "Current user location is not available.");
-              return;
-          }
-          
-          const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
-          
-          let visitTemplate: Partial<Visit> = {
-              latitude: userCurrentLatitude,
-              longitude: userCurrentLongitude,
-              timestamp: new Date(),
-          };
+  const handleQuickLog = () => {
+    if (!userCurrentLatitude || !userCurrentLongitude) {
+      console.error("Could Not Get Location", "Current user location is not available. Please enable location services.");
+      return;
+    }
 
-          if (result.error) {
-              console.error("Could Not Find Company", result.error);
-              visitTemplate.companyName = 'New Visit (Location Logged)';
-              visitTemplate.notes = `Could not determine company. Address lookup failed: ${result.error}`;
-          } else {
-              visitTemplate.companyName = result.suggestedCompanyName || 'New Visit (Address Logged)';
-              visitTemplate.notes = result.address ? `Suggested Address: ${result.address}` : 'Address could not be determined.';
-              if (result.phone) {
-                  visitTemplate.decisionMakerContact = result.phone;
-              }
-          }
-          setCurrentEditingVisit(visitTemplate as Visit);
-          setIsVisitFormOpen(true);
+    const newVisitTemplate: Partial<Visit> = {
+      latitude: userCurrentLatitude,
+      longitude: userCurrentLongitude,
+      timestamp: new Date(), // Pass the start time of the visit
+      visitNumber: coldCallCount + 1,
+      companyName: '', // Start with empty company name, form will suggest
+      notes: '',
+    };
 
-      } catch (error: any) {
-          console.error("Could Not Quicklog Visit", error.message || "An unexpected error occurred.");
-      } finally {
-          setIsFetchingNewLocation(false);
-      }
+    setCurrentEditingVisit(newVisitTemplate as Visit);
+    setIsVisitFormOpen(true);
   };
 
 
@@ -814,9 +795,9 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation || !userCurrentLatitude}>
-                        {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        {isFetchingNewLocation ? 'Logging...' : 'Quicklog Visit'}
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!userCurrentLatitude}>
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Quicklog Visit
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
