@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a logistics and sales operations expert for a water cooler company.
 Your task is to find the best starting point for a salesperson in a given city to maximize their efficiency when visiting businesses on foot.
 
-For the city of {{{city}}}, identify the most commercially dense area. This could be a downtown district, a business park, or an area with a high concentration of office buildings and retail stores.
+For the city of {{{city}}}, identify the most commercially dense area. This location must be within the United States of America. This could be a downtown district, a business park, or an area with a high concentration of office buildings and retail stores.
 
 Then, suggest a specific, centrally-located public parking address or a well-known intersection within that dense area. This location should serve as an optimal starting point for a day of sales visits.
 

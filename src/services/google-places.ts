@@ -48,6 +48,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
         nearbySearchUrl.searchParams.set('rankby', 'distance');
         // Prioritize commercial establishments to get better results.
         nearbySearchUrl.searchParams.set('type', 'establishment');
+        nearbySearchUrl.searchParams.set('region', 'us'); // Bias results to the US
         nearbySearchUrl.searchParams.set('key', apiKey);
 
         const nearbySearchResponse = await fetch(nearbySearchUrl.toString());
@@ -117,6 +118,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
         // Step 2: If Nearby Search finds nothing, fall back to Reverse Geocode to get address info.
         const reverseGeocodeUrl = new URL('https://maps.googleapis.com/maps/api/geocode/json');
         reverseGeocodeUrl.searchParams.set('latlng', `${latitude},${longitude}`);
+        reverseGeocodeUrl.searchParams.set('components', 'country:US'); // Restrict to USA
         reverseGeocodeUrl.searchParams.set('key', apiKey);
 
         const reverseGeocodeResponse = await fetch(reverseGeocodeUrl.toString());
@@ -160,6 +162,7 @@ export async function findPlacesFromText(query: string): Promise<PlaceDetails[]>
     try {
         const textSearchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
         textSearchUrl.searchParams.set('query', query);
+        textSearchUrl.searchParams.set('region', 'us'); // Bias to USA
         textSearchUrl.searchParams.set('key', apiKey);
 
         const textSearchResponse = await fetch(textSearchUrl.toString());

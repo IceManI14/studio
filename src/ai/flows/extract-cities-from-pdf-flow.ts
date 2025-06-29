@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   output: {schema: ExtractCitiesFromPdfOutputSchema},
   prompt: `You are a data extraction specialist. Your task is to analyze the provided PDF document, which outlines a sales territory.
   
-Identify and list all unique cities and towns mentioned in the document.
+Identify and list all unique cities and towns mentioned in the document that are located within the United States.
 Format each entry as "City, State Abbreviation" (e.g., "Boston, MA", "Providence, RI").
 Ensure the list contains no duplicate entries.
 
