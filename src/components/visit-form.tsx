@@ -104,7 +104,7 @@ const visitFormSchema = z.object({
   longitude: z.number().optional(),
   partnershipConfidence: z.number().min(1).max(5).optional(),
   hasBusinessCard: z.boolean().optional(),
-  businessCardImageUrl: z.string().optional().nullable(), // Will store Data URI
+  businessCardImageUrl: z.string().url("Must be a valid URL.").optional().nullable(),
   competitorName: z.string().optional(),
   coolerType: z.string().optional(),
   decisionMakerName: z.string().optional(),
@@ -158,6 +158,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [openAccordion, setOpenAccordion] = useState<string[]>([]);
   const [isCoolerSelectOpen, setIsCoolerSelectOpen] = useState(false);
 
+  const [isUploadingCard, setIsUploadingCard] = useState(false);
   const [isCameraViewVisible, setIsCameraViewVisible] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -196,6 +197,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const hasTDSReadingValue = form.watch('hasTDSReading');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
+  
+  const handleRemoveImage = useCallback(() => {
+    setBusinessCardPreviewUrl(null);
+    form.setValue('businessCardImageUrl', null, { shouldValidate: true });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setIsCameraViewVisible(false);
+    // No need to call stopCameraStream here as it's handled by other flows
+  }, [form]);
+
+  const uploadImage = useCallback(async (file: File) => {
+    setIsUploadingCard(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Upload failed with status ${response.status}.`;
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.details || errorData.message || errorMessage;
+        } catch (e) {
+             errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      form.setValue('businessCardImageUrl', result.url, { shouldValidate: true });
+      setBusinessCardPreviewUrl(result.url);
+      toast({ title: "Image Uploaded", description: "Business card is ready to be saved with the visit." });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: "Upload Failed", description: error.message });
+      handleRemoveImage();
+    } finally {
+      setIsUploadingCard(false);
+    }
+  }, [form, toast, handleRemoveImage]);
+
 
   const handleSuggestCompany = useCallback(async () => {
     setIsSuggestingCompany(true);
@@ -306,9 +352,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen, resetFormAndState]);
 
   useEffect(() => {
-    // This will run when the form opens for a new visit with location data
     if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
-      handleSuggestCompany(); // Automatically suggest company on open
+      handleSuggestCompany();
       const timer = setTimeout(() => {
         confidenceStarsRef.current?.focus({ preventScroll: true });
       }, 100);
@@ -354,7 +399,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       }
       audioChunksRef.current = [];
       setIsRecordingNotes(false);
-
       stopCameraStream();
     };
 
@@ -414,30 +458,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     form.setValue('hasBusinessCard', false);
   };
 
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUri = reader.result as string;
-        setBusinessCardPreviewUrl(dataUri);
-        form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ variant: "destructive", title: "Invalid File Type", description: "Please select a valid image file (JPG, PNG, GIF, WEBP)." });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) { // 10MB client-side limit
+        toast({ variant: "destructive", title: "File Too Large", description: "Please select an image smaller than 10MB." });
+        return;
+      }
+      uploadImage(file);
       setIsCameraViewVisible(false);
       stopCameraStream();
     }
-  };
-
-  const handleRemoveImage = () => {
-    setBusinessCardPreviewUrl(null);
-    form.setValue('businessCardImageUrl', null, {shouldValidate: true});
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    setIsCameraViewVisible(false);
-    stopCameraStream();
   };
 
   const handleToggleCameraView = () => {
@@ -454,7 +490,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleCaptureImage = () => {
+  const handleCaptureImage = useCallback(() => {
     if (videoRef.current && canvasRef.current && hasCameraPermission) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -464,15 +500,24 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg', 0.9);
-        setBusinessCardPreviewUrl(dataUri);
-        form.setValue('businessCardImageUrl', dataUri, { shouldValidate: true });
-        toast({ title: "Image Captured", description: "Business card image captured from camera." });
+        
+        fetch(dataUri)
+          .then(res => res.blob())
+          .then(blob => {
+            const imageFile = new File([blob], "business-card-capture.jpg", { type: "image/jpeg" });
+            uploadImage(imageFile);
+            toast({ title: "Image Captured", description: "Business card image captured from camera." });
+          })
+          .catch(err => {
+              toast({ variant: "destructive", title: "Capture Failed", description: "Could not process captured image for upload." });
+          });
       }
       handleToggleCameraView();
     } else {
         toast({ variant: "destructive", title: "Capture Error", description: "Camera not ready or permission denied." });
     }
-  };
+  }, [hasCameraPermission, uploadImage, toast, handleToggleCameraView]);
+
 
   const handleAddCustomCooler = () => {
     const newName = customCoolerNameInput.trim();
@@ -753,10 +798,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             {hasBusinessCardValue && (
               <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
                 <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
-                {(businessCardPreviewUrl || (initialData?.businessCardImageUrl && !form.getValues('businessCardImageUrl'))) && !isCameraViewVisible && (
+                
+                {isUploadingCard && (
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground p-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                        <span>Uploading image...</span>
+                    </div>
+                )}
+
+                {(businessCardPreviewUrl && !isUploadingCard) && (
                   <div className="mt-2 relative w-full aspect-[1.6/1] max-w-xs mx-auto group">
                     <Image
-                      src={businessCardPreviewUrl || initialData!.businessCardImageUrl!}
+                      src={businessCardPreviewUrl}
                       alt="Business card preview"
                       data-ai-hint="business card professional"
                       fill
@@ -780,11 +833,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <Input
                       id="businessCardImage"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       onChange={handleFileChange}
                       className="flex-grow"
                       ref={fileInputRef}
-                      disabled={isCameraViewVisible}
+                      disabled={isCameraViewVisible || isUploadingCard}
                     />
                     <Button
                         type="button"
@@ -793,6 +846,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         size="icon"
                         aria-label={isCameraViewVisible ? "Close Camera" : "Take Photo"}
                         className="bg-accent hover:bg-accent/90"
+                        disabled={isUploadingCard}
                     >
                         <CameraIcon className="h-4 w-4 text-black" />
                     </Button>
@@ -803,6 +857,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     type="button"
                     variant="secondary"
                     onClick={handleGeniusScanClick}
+                    disabled={isUploadingCard}
                   >
                     <ScanLine className="mr-2 h-4 w-4" />
                     Genius Scan
@@ -811,6 +866,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     type="button"
                     variant="ghost"
                     onClick={handleTakeLater}
+                    disabled={isUploadingCard}
                   >
                     <Clock className="mr-2 h-4 w-4" />
                     Take Later
@@ -843,7 +899,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <canvas ref={canvasRef} className="hidden"></canvas>
 
                 <FormDescription>
-                  Upload an image or take a photo of the business card. Max 5MB (approx for Data URI).
+                  Upload an image of the business card. The file will be stored securely.
                 </FormDescription>
                 <FormMessage>{form.formState.errors.businessCardImageUrl?.message}</FormMessage>
               </FormItem>
@@ -1253,11 +1309,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible || isUploadingCard}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible} className="aurora-glow">
-                {(isSaving || isSuggestingCompany) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible || isUploadingCard} className="aurora-glow">
+                {(isSaving || isSuggestingCompany || isUploadingCard) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>
