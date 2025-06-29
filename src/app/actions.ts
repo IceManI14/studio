@@ -57,7 +57,10 @@ const saveVisitPayloadSchema = z.object({
     notes: z.string().nullish(),
     latitude: z.number().nullish(),
     longitude: z.number().nullish(),
-    partnershipConfidence: z.number().min(1).max(5).nullish(),
+    partnershipConfidence: z.preprocess(
+      (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+      z.number().min(1).max(5).nullish()
+    ),
     hasBusinessCard: z.boolean().nullish(),
     businessCardImageUrl: z.string().nullish(),
     discussedCompetitors: z.boolean().nullish(),
@@ -66,7 +69,10 @@ const saveVisitPayloadSchema = z.object({
     decisionMakerName: z.string().nullish(),
     decisionMakerTitle: z.string().nullish(),
     decisionMakerContact: z.string().nullish(),
-    visitNumber: z.number().nullish(),
+    visitNumber: z.preprocess(
+      (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+      z.number().nullish()
+    ),
     interestedUnit: z.string().nullish(),
     hasTDSReading: z.boolean().nullish(),
     tdsValue: z.preprocess(
@@ -100,75 +106,78 @@ const saveVisitPayloadSchema = z.object({
     path: ["tdsValue"],
 });
 
-
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string, isNewVisit?: boolean }> {
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
   try {
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
-
+    
+    const visitId = validatedPayload.id || uuidv4();
     const isNewVisit = !validatedPayload.id;
+
     const companyChanged = !isNewVisit && validatedPayload.companyName !== validatedPayload.originalCompanyName;
     const notesChanged = !isNewVisit && validatedPayload.notes !== validatedPayload.originalNotes;
     
-    // Start with a base object for Firestore. All optional fields default to null.
-    const visitDataForFirestore: Record<string, any> = {
-      id: validatedPayload.id || uuidv4(),
-      timestamp: validatedPayload.timestamp || new Date(),
-      companyName: validatedPayload.companyName,
-      notes: validatedPayload.notes || null,
-      latitude: validatedPayload.latitude || null,
-      longitude: validatedPayload.longitude || null,
-      contactInfo: validatedPayload.existingContactInfo || null,
-      notesSummary: validatedPayload.existingNotesSummary || null,
-      partnershipConfidence: validatedPayload.partnershipConfidence || null,
-      hasBusinessCard: !!validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl || null,
-      discussedCompetitors: !!validatedPayload.competitorName,
-      competitorName: validatedPayload.competitorName || null,
-      coolerType: validatedPayload.competitorName ? (validatedPayload.coolerType || null) : null,
-      decisionMakerName: validatedPayload.decisionMakerName || null,
-      decisionMakerTitle: validatedPayload.decisionMakerTitle || null,
-      decisionMakerContact: validatedPayload.decisionMakerContact || null,
-      visitNumber: validatedPayload.visitNumber || null,
-      interestedUnit: validatedPayload.interestedUnit || null,
-      hasTDSReading: !!validatedPayload.hasTDSReading,
-      tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? null) : null,
-      futureMeetingSet: !!validatedPayload.futureMeetingSet,
-      futureMeetingDateTime: validatedPayload.futureMeetingDateTime || null,
-      freeTrial: !!validatedPayload.freeTrial,
-      dealClosed: !!validatedPayload.dealClosed,
-    };
-    
-    // AI enrichments will overwrite the nulls if successful
+    let contactInfo = validatedPayload.existingContactInfo;
     if ((isNewVisit || companyChanged) && validatedPayload.companyName) {
       try {
         const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
-        visitDataForFirestore.contactInfo = {
-            info: contactResult.contactInfo,
-            confidence: contactResult.confidenceScore,
-        };
+        contactInfo = { info: contactResult.contactInfo, confidence: contactResult.confidenceScore };
       } catch (e: any) {
         console.warn("Failed to scrape contact info:", e);
-        visitDataForFirestore.contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
+        contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
       }
     }
-
+    
+    let notesSummary = validatedPayload.existingNotesSummary;
     if (validatedPayload.notes && (isNewVisit || notesChanged)) {
       try {
         const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
-        visitDataForFirestore.notesSummary = summaryResult.summary;
+        notesSummary = summaryResult.summary;
       } catch (e: any) {
         console.warn("Failed to summarize notes:", e);
-        visitDataForFirestore.notesSummary = "Could not summarize notes.";
+        notesSummary = "Could not summarize notes.";
       }
     }
 
-    const visitDocRef = doc(db, 'visits', visitDataForFirestore.id!);
-    await setDoc(visitDocRef, visitDataForFirestore, { merge: true });
+    const visitData: Visit = {
+      id: visitId,
+      timestamp: validatedPayload.timestamp || new Date(),
+      companyName: validatedPayload.companyName,
+      notes: validatedPayload.notes || undefined,
+      latitude: validatedPayload.latitude || undefined,
+      longitude: validatedPayload.longitude || undefined,
+      contactInfo: contactInfo || undefined,
+      notesSummary: notesSummary || undefined,
+      partnershipConfidence: validatedPayload.partnershipConfidence || undefined,
+      hasBusinessCard: validatedPayload.hasBusinessCard || false,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl || undefined,
+      discussedCompetitors: !!validatedPayload.competitorName,
+      competitorName: validatedPayload.competitorName || undefined,
+      coolerType: validatedPayload.competitorName ? (validatedPayload.coolerType || undefined) : undefined,
+      decisionMakerName: validatedPayload.decisionMakerName || undefined,
+      decisionMakerTitle: validatedPayload.decisionMakerTitle || undefined,
+      decisionMakerContact: validatedPayload.decisionMakerContact || undefined,
+      visitNumber: validatedPayload.visitNumber || undefined,
+      interestedUnit: validatedPayload.interestedUnit || undefined,
+      hasTDSReading: validatedPayload.hasTDSReading || false,
+      tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? undefined) : undefined,
+      futureMeetingSet: validatedPayload.futureMeetingSet || false,
+      futureMeetingDateTime: validatedPayload.futureMeetingDateTime || undefined,
+      freeTrial: validatedPayload.freeTrial || false,
+      dealClosed: validatedPayload.dealClosed || false,
+    };
+    
+    const sanitizedVisitData = Object.entries(visitData).reduce((acc, [key, value]) => {
+      acc[key] = value === undefined ? null : value;
+      return acc;
+    }, {} as Record<string, any>);
+    
+    const visitDocRef = doc(db, 'visits', visitId);
+    await setDoc(visitDocRef, sanitizedVisitData, { merge: true });
 
-    return { visit: visitDataForFirestore as Visit, isNewVisit };
+    return { visit: visitData, isNewVisit };
   } catch (error: any) {
     console.error("Error in saveVisitAction:", error);
     if (error instanceof z.ZodError) {
