@@ -19,28 +19,28 @@ export interface SaveVisitPayload {
   id?: string; // For updates
   timestamp?: Date; // For updates, to preserve original timestamp
   companyName: string;
-  notes?: string;
+  notes?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   partnershipConfidence?: number | null;
   hasBusinessCard?: boolean;
   businessCardImageUrl?: string | null; // Can be Data URI
   discussedCompetitors?: boolean;
-  competitorName?: string;
-  coolerType?: string;
-  decisionMakerName?: string;
-  decisionMakerTitle?: string;
-  decisionMakerContact?: string;
-  visitNumber?: number | null; 
-  interestedUnit?: string; 
+  competitorName?: string | null;
+  coolerType?: string | null;
+  decisionMakerName?: string | null;
+  decisionMakerTitle?: string | null;
+  decisionMakerContact?: string | null;
+  visitNumber?: number | null;
+  interestedUnit?: string | null;
   hasTDSReading?: boolean;
   tdsValue?: number | null;
-  futureMeetingSet?: boolean; 
-  futureMeetingDateTime?: Date;
+  futureMeetingSet?: boolean;
+  futureMeetingDateTime?: Date | null;
   freeTrial?: boolean;
   dealClosed?: boolean;
-  originalCompanyName?: string;
-  originalNotes?: string;
+  originalCompanyName?: string | null;
+  originalNotes?: string | null;
   existingContactInfo?: ContactInfo | null;
   existingNotesSummary?: string | null;
   originalBusinessCardImageUrl?: string | null; // Can be Data URI
@@ -50,28 +50,28 @@ const saveVisitPayloadSchema = z.object({
   id: z.string().optional(),
   timestamp: z.coerce.date().optional(),
   companyName: z.string().min(1, "Company name is required"),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   partnershipConfidence: z.number().min(1).max(5).optional().nullable(),
   hasBusinessCard: z.boolean().optional(),
-  businessCardImageUrl: z.string().optional().nullable(), // Accepts Data URI or other strings
+  businessCardImageUrl: z.string().optional().nullable(),
   discussedCompetitors: z.boolean().optional(),
-  competitorName: z.string().optional(),
-  coolerType: z.string().optional(),
-  decisionMakerName: z.string().optional().default(''),
-  decisionMakerTitle: z.string().optional().default(''),
-  decisionMakerContact: z.string().optional().default(''),
+  competitorName: z.string().optional().nullable(),
+  coolerType: z.string().optional().nullable(),
+  decisionMakerName: z.string().optional().nullable().default(''),
+  decisionMakerTitle: z.string().optional().nullable().default(''),
+  decisionMakerContact: z.string().optional().nullable().default(''),
   visitNumber: z.number().optional().nullable(),
-  interestedUnit: z.string().optional(),
+  interestedUnit: z.string().optional().nullable(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional().nullable(),
   futureMeetingSet: z.boolean().optional(),
-  futureMeetingDateTime: z.coerce.date().optional(),
+  futureMeetingDateTime: z.coerce.date().optional().nullable(),
   freeTrial: z.boolean().optional(),
   dealClosed: z.boolean().optional(),
-  originalCompanyName: z.string().optional(),
-  originalNotes: z.string().optional(),
+  originalCompanyName: z.string().optional().nullable(),
+  originalNotes: z.string().optional().nullable(),
   existingContactInfo: z.object({
     info: z.string(),
     confidence: z.number(),
@@ -80,12 +80,12 @@ const saveVisitPayloadSchema = z.object({
   originalBusinessCardImageUrl: z.string().optional().nullable(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
-    return false; 
+    return false;
   }
   return true;
 }, {
   message: "TDS value is required when TDS Reading is checked.",
-  path: ["tdsValue"], 
+  path: ["tdsValue"],
 });
 
 
@@ -95,17 +95,15 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   }
   try {
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
-    
+
     let contactDetails: ContactInfo | undefined = validatedPayload.existingContactInfo ?? undefined;
     let summary: string | undefined = validatedPayload.existingNotesSummary ?? undefined;
 
     const isNewVisit = !validatedPayload.id;
     const companyChanged = !isNewVisit && validatedPayload.companyName !== validatedPayload.originalCompanyName;
     const notesChanged = !isNewVisit && validatedPayload.notes !== validatedPayload.originalNotes;
-    
-    // AI Enrichment should only happen when creating a new visit or when the relevant source data changes.
-    // It should not be triggered by a simple status update from the visit card.
-    if (isNewVisit || companyChanged) {
+
+    if ((isNewVisit || companyChanged) && validatedPayload.companyName) {
       try {
         const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
         contactDetails = {
@@ -132,30 +130,30 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       id: validatedPayload.id || uuidv4(),
       timestamp: validatedPayload.timestamp || new Date(),
       companyName: validatedPayload.companyName,
-      notes: validatedPayload.notes,
+      notes: validatedPayload.notes ?? undefined,
       latitude: validatedPayload.latitude ?? undefined,
       longitude: validatedPayload.longitude ?? undefined,
       contactInfo: contactDetails,
       notesSummary: summary,
       partnershipConfidence: validatedPayload.partnershipConfidence ?? undefined,
       hasBusinessCard: !!validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.businessCardImageUrl,
+      businessCardImageUrl: validatedPayload.businessCardImageUrl ?? undefined,
       discussedCompetitors: !!validatedPayload.competitorName,
-      competitorName: validatedPayload.competitorName,
-      coolerType: validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
-      decisionMakerName: validatedPayload.decisionMakerName,
-      decisionMakerTitle: validatedPayload.decisionMakerTitle,
-      decisionMakerContact: validatedPayload.decisionMakerContact,
+      competitorName: validatedPayload.competitorName ?? undefined,
+      coolerType: validatedPayload.competitorName ? (validatedPayload.coolerType ?? undefined) : undefined,
+      decisionMakerName: validatedPayload.decisionMakerName ?? undefined,
+      decisionMakerTitle: validatedPayload.decisionMakerTitle ?? undefined,
+      decisionMakerContact: validatedPayload.decisionMakerContact ?? undefined,
       visitNumber: validatedPayload.visitNumber ?? undefined,
-      interestedUnit: validatedPayload.interestedUnit,
+      interestedUnit: validatedPayload.interestedUnit ?? undefined,
       hasTDSReading: !!validatedPayload.hasTDSReading,
       tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? undefined) : undefined,
       futureMeetingSet: !!validatedPayload.futureMeetingSet,
-      futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
+      futureMeetingDateTime: validatedPayload.futureMeetingDateTime ?? undefined,
       freeTrial: !!validatedPayload.freeTrial,
       dealClosed: !!validatedPayload.dealClosed,
     };
-    
+
     const visitDataForFirestore = Object.fromEntries(
       Object.entries(visit).map(([key, value]) => [key, value === undefined ? null : value])
     );
@@ -191,8 +189,8 @@ export async function getCompanyNameFromCoordsAction(
             latitude: validatedPayload.latitude,
             longitude: validatedPayload.longitude,
         });
-        return { 
-            suggestedCompanyName: result.suggestedCompanyName, 
+        return {
+            suggestedCompanyName: result.suggestedCompanyName,
             confidenceScore: result.confidenceScore,
             address: result.address,
             city: result.city,
@@ -251,14 +249,14 @@ export async function getAiChatResponseAction(
     const chatHistoryString = validatedPayload.currentMessages
       .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.text}`)
       .join('\n');
-    
+
     const newUserMessage = validatedPayload.currentMessages[validatedPayload.currentMessages.length - 1].text;
 
     const visitsContextString = validatedPayload.visits
       .map(
         (visit) => {
-          const confidenceText = visit.partnershipConfidence 
-            ? `${visit.partnershipConfidence}/5 stars` 
+          const confidenceText = visit.partnershipConfidence
+            ? `${visit.partnershipConfidence}/5 stars`
             : 'Not Rated';
           return `Company: ${visit.companyName}, Visited: ${format(visit.timestamp, 'yyyy-MM-dd')}, Confidence: ${confidenceText}, Summary: ${visit.notesSummary || 'No summary available.'}`;
         }
@@ -373,7 +371,7 @@ const findCompanySchema = z.object({
 
 export async function findCompanyAction(
   payload: z.infer<typeof findCompanySchema>
-): Promise<{ 
+): Promise<{
   places?: {
     companyName: string;
     address: string;
@@ -382,17 +380,17 @@ export async function findCompanyAction(
     latitude?: number;
     longitude?: number;
   }[];
-  error?: string 
+  error?: string
 }> {
   try {
     const validatedPayload = findCompanySchema.parse(payload);
     const query = `${validatedPayload.companyName}${validatedPayload.city ? `, ${validatedPayload.city}` : ''}`;
-    
+
     const results = await findPlacesFromText(query);
     if (!results || results.length === 0) {
       return { error: 'Company not found.' };
     }
-    
+
     const places = results.map(result => ({
         companyName: result.suggestedCompanyName,
         address: result.address,
@@ -414,3 +412,5 @@ export async function findCompanyAction(
     return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
 }
+
+    
