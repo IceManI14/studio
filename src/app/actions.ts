@@ -1,4 +1,3 @@
-
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -12,19 +11,19 @@ import type { Visit, ContactInfo, ChatMessage, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SaveVisitPayload {
-  id?: string; // For updates
-  timestamp?: Date; // For updates, to preserve original timestamp
+  id?: string;
+  timestamp?: Date;
   companyName: string;
   notes?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   partnershipConfidence?: number | null;
   hasBusinessCard?: boolean | null;
-  businessCardImageUrl?: string | null; // Can be Data URI
+  businessCardImageUrl?: string | null;
   competitorName?: string | null;
   coolerType?: string | null;
   decisionMakerName?: string | null;
@@ -42,7 +41,7 @@ export interface SaveVisitPayload {
   originalNotes?: string | null;
   existingContactInfo?: ContactInfo | null;
   existingNotesSummary?: string | null;
-  originalBusinessCardImageUrl?: string | null; // Can be Data URI
+  originalBusinessCardImageUrl?: string | null;
 }
 
 function isValidDate(d: any) {
@@ -52,11 +51,10 @@ function isValidDate(d: any) {
 const saveVisitPayloadSchema = z.object({
     id: z.string().optional(),
     timestamp: z.preprocess((arg) => {
-        if (!arg) return undefined; // If no timestamp is passed (e.g. for a new visit), it will be set later.
+        if (!arg) return new Date(); // Default to now if not provided
         const d = new Date(arg as string | number | Date);
-        return isValidDate(d) ? d : undefined;
-    }, z.date().optional()),
-    
+        return isValidDate(d) ? d : new Date();
+    }, z.date()),
     companyName: z.string().min(1, "Company name is required"),
     notes: z.string().nullish(),
     latitude: z.number().nullish(),
@@ -65,64 +63,39 @@ const saveVisitPayloadSchema = z.object({
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(1).max(5).nullish()
     ),
-    
-    // Preprocess all optional booleans to handle null/undefined from DB/form state
-    hasBusinessCard: z.preprocess((val) => val ?? false, z.boolean()),
+    hasBusinessCard: z.boolean().default(false),
     businessCardImageUrl: z.string().nullish(),
-    
     competitorName: z.string().nullish(),
     coolerType: z.string().nullish(),
-    
     decisionMakerName: z.string().nullish(),
     decisionMakerTitle: z.string().nullish(),
     decisionMakerContact: z.string().nullish(),
-    
     visitNumber: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().nullish()
     ),
-    
     interestedUnit: z.string().nullish(),
-    
-    hasTDSReading: z.preprocess((val) => val ?? false, z.boolean()),
+    hasTDSReading: z.boolean().default(false),
     tdsValue: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
       z.number().min(0).max(1500).nullish()
     ),
-
-    futureMeetingSet: z.preprocess((val) => val ?? false, z.boolean()),
+    futureMeetingSet: z.boolean().default(false),
     futureMeetingDateTime: z.preprocess((arg) => {
         if (!arg) return null;
         const d = new Date(arg as string | number | Date);
         return isValidDate(d) ? d : null;
     }, z.date().nullish()),
-
-    freeTrial: z.preprocess((val) => val ?? false, z.boolean()),
-    dealClosed: z.preprocess((val) => val ?? false, z.boolean()),
-    
-    // Original values for logic
+    freeTrial: z.boolean().default(false),
+    dealClosed: z.boolean().default(false),
     originalCompanyName: z.string().nullish(),
     originalNotes: z.string().nullish(),
-    existingContactInfo: z.object({
-        info: z.string(),
-        confidence: z.number(),
-    }).nullish(),
+    existingContactInfo: z.any().optional(),
     existingNotesSummary: z.string().nullish(),
-    originalBusinessCardImageUrl: z.string().nullish(),
-}).refine(data => {
-    if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
-        return false;
-    }
-    return true;
-}, {
+}).refine(data => !data.hasTDSReading || (data.tdsValue !== null && data.tdsValue !== undefined), {
     message: "TDS value is required when TDS Reading is checked.",
     path: ["tdsValue"],
-}).refine(data => {
-    if (data.futureMeetingSet && !data.futureMeetingDateTime) {
-        return false;
-    }
-    return true;
-}, {
+}).refine(data => !data.futureMeetingSet || data.futureMeetingDateTime, {
     message: "A meeting date and time is required when Future Meeting is checked.",
     path: ["futureMeetingDateTime"],
 });
@@ -144,76 +117,55 @@ export async function quickCreateVisitAction(payload: QuickCreateVisitPayload): 
   if (!db) {
     return { error: 'Firebase is not configured. Cannot save visit.' };
   }
-
   try {
     const { latitude, longitude, visitNumber } = quickCreateVisitPayloadSchema.parse(payload);
     
-    // 1. Get company details from coordinates
-    let companyName = 'Unknown Location';
-    let contactInfo: ContactInfo | null = null;
-    let notes = `Quick-logged visit at location.`;
-
+    let companyDetails: any = {};
     try {
-      const companyDetails = await getCompanyNameFromCoords({ latitude, longitude });
-      if (companyDetails.suggestedCompanyName) {
-        companyName = companyDetails.suggestedCompanyName;
-      }
-      if (companyDetails.address) {
-        notes = `Suggested Address: ${companyDetails.address}`;
-      }
-      if (companyDetails.phone) {
-          contactInfo = { info: companyDetails.phone, confidence: 0.9 };
-      }
+      companyDetails = await getCompanyNameFromCoords({ latitude, longitude });
     } catch (e: any) {
-      console.warn("AI Warning: Could not get company details from coordinates.", e.message);
-      notes += "\nCould not fetch company details automatically."
+      console.warn("AI Warning: Could not get company details for quick-log.", e.message);
     }
 
-    // 2. Create the visit object with defaults
     const visitId = uuidv4();
-    const visitData: Visit = {
+    const newVisit: Visit = {
         id: visitId,
         timestamp: new Date(),
         latitude,
         longitude,
-        companyName,
-        notes,
-        contactInfo: contactInfo || undefined,
-        notesSummary: undefined,
-        partnershipConfidence: undefined,
+        companyName: companyDetails.suggestedCompanyName || 'New Quick-Logged Visit',
+        notes: companyDetails.address ? `Suggested Address: ${companyDetails.address}` : `Quick-logged visit at location.`,
+        contactInfo: companyDetails.phone ? { info: companyDetails.phone, confidence: 0.9 } : null,
+        notesSummary: null,
+        partnershipConfidence: null,
         hasBusinessCard: false,
-        businessCardImageUrl: undefined,
+        businessCardImageUrl: null,
         discussedCompetitors: false,
-        competitorName: undefined,
-        coolerType: undefined,
-        decisionMakerName: undefined,
-        decisionMakerTitle: undefined,
-        decisionMakerContact: contactInfo?.info || undefined,
-        visitNumber,
-        interestedUnit: undefined,
+        competitorName: null,
+        coolerType: null,
+        decisionMakerName: null,
+        decisionMakerTitle: null,
+        decisionMakerContact: companyDetails.phone || null,
+        visitNumber: visitNumber,
+        interestedUnit: null,
         hasTDSReading: false,
-        tdsValue: undefined,
+        tdsValue: null,
         futureMeetingSet: false,
-        futureMeetingDateTime: undefined,
+        futureMeetingDateTime: null,
         freeTrial: false,
         dealClosed: false,
     };
     
-    // 3. Sanitize for Firestore (convert undefined to null)
-    const sanitizedVisitData = Object.fromEntries(
-        Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
-    );
-    
-    const visitDocRef = doc(db, 'visits', visitId);
-    await setDoc(visitDocRef, sanitizedVisitData);
+    const { id, ...visitForDb } = newVisit;
+    const visitDocRef = doc(db, 'visits', id);
+    await setDoc(visitDocRef, visitForDb);
 
-    // 4. Return the clean visit object to the client
-    return { visit: visitData };
+    return { visit: newVisit };
 
   } catch (error: any) {
     console.error("Critical Error in quickCreateVisitAction:", error);
     if (error instanceof z.ZodError) {
-        return { error: `Validation Error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}` };
+        return { error: `Validation Error: ${error.errors.map(e => e.message).join(', ')}` };
     }
     return { error: `Failed to quick-create visit: ${error.message || 'An unexpected error occurred.'}` };
   }
@@ -225,77 +177,64 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   }
   
   try {
-    // 1. Validate payload with the robust schema
     const validatedPayload = saveVisitPayloadSchema.parse(payload);
     
     const visitId = validatedPayload.id || uuidv4();
     const isNewVisit = !validatedPayload.id;
 
-    // 2. Handle AI enrichment in a resilient way
-    const companyChanged = isNewVisit || (validatedPayload.companyName !== validatedPayload.originalCompanyName);
-    const notesChanged = validatedPayload.notes !== validatedPayload.originalNotes;
-    
-    let contactInfo = validatedPayload.existingContactInfo || undefined;
-    if (companyChanged && validatedPayload.companyName) {
+    let contactInfo = validatedPayload.existingContactInfo || null;
+    if ((isNewVisit || validatedPayload.companyName !== validatedPayload.originalCompanyName) && validatedPayload.companyName) {
       try {
-        const contactResult = await scrapeContactInfo({ companyName: validatedPayload.companyName });
-        contactInfo = { info: contactResult.contactInfo, confidence: contactResult.confidenceScore };
+        const result = await scrapeContactInfo({ companyName: validatedPayload.companyName });
+        contactInfo = { info: result.contactInfo, confidence: result.confidenceScore };
       } catch (e: any) {
-        console.warn("AI Warning: Failed to scrape contact info. Saving visit without it.", e.message);
-        contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
+        console.warn("AI Warning: Failed to scrape contact info.", e.message);
       }
     }
     
-    let notesSummary = validatedPayload.existingNotesSummary || undefined;
-    if (notesChanged && validatedPayload.notes) {
+    let notesSummary = validatedPayload.existingNotesSummary || null;
+    if (validatedPayload.notes && validatedPayload.notes !== validatedPayload.originalNotes) {
       try {
-        const summaryResult = await summarizeVisitNotes({ notes: validatedPayload.notes });
-        notesSummary = summaryResult.summary;
+        const result = await summarizeVisitNotes({ notes: validatedPayload.notes });
+        notesSummary = result.summary;
       } catch (e: any) {
-        console.warn("AI Warning: Failed to summarize notes. Saving visit without it.", e.message);
-        notesSummary = "Could not summarize notes.";
+        console.warn("AI Warning: Failed to summarize notes.", e.message);
       }
     }
 
-    // 3. Construct the final Visit object with clear logic
     const visitData: Visit = {
       id: visitId,
-      timestamp: validatedPayload.timestamp || new Date(), // Use existing timestamp or create new one
+      timestamp: validatedPayload.timestamp,
       companyName: validatedPayload.companyName,
-      notes: validatedPayload.notes,
-      latitude: validatedPayload.latitude,
-      longitude: validatedPayload.longitude,
-      partnershipConfidence: validatedPayload.partnershipConfidence,
+      notes: validatedPayload.notes ?? null,
+      latitude: validatedPayload.latitude ?? null,
+      longitude: validatedPayload.longitude ?? null,
+      partnershipConfidence: validatedPayload.partnershipConfidence ?? null,
       hasBusinessCard: validatedPayload.hasBusinessCard,
-      businessCardImageUrl: validatedPayload.hasBusinessCard ? validatedPayload.businessCardImageUrl : undefined,
-      competitorName: validatedPayload.competitorName,
-      coolerType: validatedPayload.competitorName ? validatedPayload.coolerType : undefined,
-      decisionMakerName: validatedPayload.decisionMakerName,
-      decisionMakerTitle: validatedPayload.decisionMakerTitle,
-      decisionMakerContact: validatedPayload.decisionMakerContact,
-      visitNumber: validatedPayload.visitNumber,
-      interestedUnit: validatedPayload.interestedUnit,
+      businessCardImageUrl: validatedPayload.hasBusinessCard ? (validatedPayload.businessCardImageUrl ?? null) : null,
+      competitorName: validatedPayload.competitorName ?? null,
+      coolerType: validatedPayload.competitorName ? (validatedPayload.coolerType ?? null) : null,
+      decisionMakerName: validatedPayload.decisionMakerName ?? null,
+      decisionMakerTitle: validatedPayload.decisionMakerTitle ?? null,
+      decisionMakerContact: validatedPayload.decisionMakerContact ?? null,
+      visitNumber: validatedPayload.visitNumber ?? null,
+      interestedUnit: validatedPayload.interestedUnit ?? null,
       hasTDSReading: validatedPayload.hasTDSReading,
-      tdsValue: validatedPayload.hasTDSReading ? validatedPayload.tdsValue : undefined,
+      tdsValue: validatedPayload.hasTDSReading ? (validatedPayload.tdsValue ?? null) : null,
       futureMeetingSet: validatedPayload.futureMeetingSet,
-      futureMeetingDateTime: validatedPayload.futureMeetingSet ? validatedPayload.futureMeetingDateTime : undefined,
+      futureMeetingDateTime: validatedPayload.futureMeetingSet ? (validatedPayload.futureMeetingDateTime ?? null) : null,
       freeTrial: validatedPayload.freeTrial,
-      dealClosed: validatedPayload.dealClosed,
-      contactInfo: contactInfo,
-      notesSummary: notesSummary,
+      dealClosed: validatedPayload.dealClosed ?? false,
+      contactInfo,
+      notesSummary,
       discussedCompetitors: !!validatedPayload.competitorName,
     };
     
-    // 4. Sanitize the final object for Firestore (undefined -> null)
-    const sanitizedVisitData = Object.fromEntries(
-        Object.entries(visitData).map(([key, value]) => [key, value === undefined ? null : value])
-    );
-    
-    // 5. Save to Firestore
-    const visitDocRef = doc(db, 'visits', visitId);
-    await setDoc(visitDocRef, sanitizedVisitData, { merge: true });
+    const { id, ...visitForDb } = visitData;
 
-    // 6. Return the clean visit object to the client
+    const visitDocRef = doc(db, 'visits', id);
+    await setDoc(visitDocRef, visitForDb, { merge: true });
+
     return { visit: visitData, isNewVisit };
     
   } catch (error: any) {
@@ -303,12 +242,26 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     if (error instanceof z.ZodError) {
         return { error: `Validation Error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}` };
     }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key')) {
-        return { error: "Failed to save visit due to an AI service key error. Please check your configuration." };
-    }
     return { error: `Failed to save visit: ${error.message || 'An unexpected error occurred.'}` };
   }
+}
+
+export async function deleteVisitAction(visitId: string): Promise<{ success?: boolean; error?: string }> {
+    if (!db) {
+        return { error: 'Firebase is not configured. Cannot delete visit.' };
+    }
+    if (!visitId) {
+        return { error: 'Visit ID is required.' };
+    }
+
+    try {
+        const visitDocRef = doc(db, 'visits', visitId);
+        await deleteDoc(visitDocRef);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error in deleteVisitAction:", error);
+        return { error: `Failed to delete visit: ${error.message}` };
+    }
 }
 
 const getCompanyNameFromCoordsPayloadSchema = z.object({

@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import VisitForm, { type VisitFormData } from '@/components/visit-form';
+import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
@@ -12,7 +12,7 @@ import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { format, subDays, isSameDay } from 'date-fns';
+import { format, subDays, isSameDay, isToday } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, summarizeNotesAction, scrapeContactInfo } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction, quickCreateVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -51,6 +51,8 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
+import { db, firebaseConfigured } from '@/lib/firebase';
+import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 
 
 interface SubmittedSuggestion {
@@ -198,21 +200,8 @@ export default function HomePage() {
 
 
   useEffect(() => {
-    // Load data from localStorage on initial mount
+    // Load non-visit data from localStorage
     try {
-      const storedVisits = localStorage.getItem('visits');
-      if (storedVisits) {
-        const parsedVisits: Visit[] = JSON.parse(storedVisits).map((v: any) => ({
-          ...v,
-          timestamp: new Date(v.timestamp),
-          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-        }));
-        setVisits(parsedVisits);
-      }
-
-      const storedCount = localStorage.getItem('coldCallCount');
-      setColdCallCount(storedCount ? parseInt(storedCount, 10) : 0);
-
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
         const parsedSuggestions: SubmittedSuggestion[] = JSON.parse(storedSuggestions).map((s: any) => ({
@@ -221,9 +210,58 @@ export default function HomePage() {
         }));
         setSubmittedSuggestions(parsedSuggestions);
       }
+      const storedFiles = localStorage.getItem('managedFiles');
+      if (storedFiles) {
+          setManagedFiles(JSON.parse(storedFiles));
+      }
     } catch (error) {
-      console.error("Failed to load data from localStorage:", error);
+      console.error("Failed to load auxiliary data from localStorage:", error);
     }
+
+    // Connect to Firestore for visit data
+    if (!db || !firebaseConfigured) {
+        console.warn("Firebase not configured. Data will not be loaded from the database. App will run in offline mode.");
+        const localVisits = localStorage.getItem('visits');
+        if (localVisits) {
+            const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
+                ...v,
+                timestamp: new Date(v.timestamp),
+                futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+            }));
+            setVisits(parsedVisits);
+        }
+        return;
+    }
+
+    const visitsCol = collection(db, 'visits');
+    const q = query(visitsCol, orderBy('timestamp', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const visitsData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+                futureMeetingDateTime: data.futureMeetingDateTime ? (data.futureMeetingDateTime as Timestamp).toDate() : undefined,
+            } as Visit;
+        });
+        setVisits(visitsData);
+        // Persist to localStorage as a backup for offline access
+        localStorage.setItem('visits', JSON.stringify(visitsData));
+    }, (error) => {
+        console.error("Error fetching visits from Firestore:", error);
+        // Fallback to localStorage if firestore fails
+        const localVisits = localStorage.getItem('visits');
+        if (localVisits) {
+             const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
+                ...v,
+                timestamp: new Date(v.timestamp),
+                futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+            }));
+            setVisits(parsedVisits);
+        }
+    });
 
     // Get Geolocation
     if (navigator.geolocation) {
@@ -256,10 +294,6 @@ export default function HomePage() {
           let errorMessage = "Could not retrieve location.";
           if (error.code === error.PERMISSION_DENIED) {
             errorMessage = "Location access denied. Please enable it in your browser settings.";
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMessage = "Location information is unavailable.";
-          } else if (error.code === error.TIMEOUT) {
-            errorMessage = "Location request timed out.";
           }
           console.error("Location Error", errorMessage);
           setCurrentCity("Location access denied.");
@@ -269,36 +303,29 @@ export default function HomePage() {
       console.warn("Geolocation Not Supported: Your browser does not support geolocation.");
       setCurrentCity("Geolocation not supported.");
     }
-    
-    try {
-        const storedFiles = localStorage.getItem('managedFiles');
-        if (storedFiles) {
-            setManagedFiles(JSON.parse(storedFiles));
-        }
-    } catch (e) {
-        console.error("Failed to parse managed files from localStorage", e);
-        localStorage.removeItem('managedFiles');
-    }
+
+    return () => unsubscribe();
   }, []);
-
-  // Save visits to local storage whenever they change
-  useEffect(() => {
-    // Avoid writing an empty array on first load if nothing was in storage
-    if (visits.length > 0 || localStorage.getItem('visits')) {
-      localStorage.setItem('visits', JSON.stringify(visits));
-    }
-  }, [visits]);
-
-  // Save cold call count whenever it changes
-  useEffect(() => {
-    localStorage.setItem('coldCallCount', coldCallCount.toString());
-  }, [coldCallCount]);
 
   // Save suggestions whenever they change
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
   }, [submittedSuggestions]);
 
+  // Derive cold call count from visits
+  useEffect(() => {
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    setColdCallCount(todaysVisits);
+
+    if (todaysVisits >= 30) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastMilestone = localStorage.getItem('milestoneAchievedDate');
+      if (lastMilestone !== todayStr) {
+        console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
+        localStorage.setItem('milestoneAchievedDate', todayStr);
+      }
+    }
+  }, [visits]);
 
   useEffect(() => {
     if (selectedSalesperson) { 
@@ -308,17 +335,6 @@ export default function HomePage() {
         }
     }
   }, [selectedSalesperson]);
-
-  useEffect(() => {
-    if (coldCallCount >= 30) {
-      const today = new Date().toISOString().split('T')[0];
-      const lastMilestone = localStorage.getItem('milestoneAchievedDate');
-      if (lastMilestone !== today) {
-        console.log("Milestone Achieved! Congratulations! You've hit 30 doors today!");
-        localStorage.setItem('milestoneAchievedDate', today);
-      }
-    }
-  }, [coldCallCount]);
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visits.length === 0) {
@@ -367,146 +383,40 @@ export default function HomePage() {
   }, [sortedVisitsForCallDay.length]);
 
   useEffect(() => {
-    if (sortedVisitsForCallDay.length === 0 || typeof window === 'undefined' || !window.IntersectionObserver) {
-      return;
-    }
-  
-    const observerOptions = {
-      root: null, 
-      rootMargin: '0px',
-      threshold: 0.1, 
-    };
-  
-    const observerCallback: IntersectionObserverCallback = (entries) => {
-      if (isAutoScrollingRef.current) return;
-  
-      entries.forEach((entry) => {
-        const targetElement = entry.target as HTMLDivElement;
-        const cardIndex = parseInt(targetElement.dataset.cardIndex || '-1', 10);
-  
-        if (cardIndex === -1 || cardIndex >= sortedVisitsForCallDay.length - 1) {
-          return; 
-        }
-  
-        if (!entry.isIntersecting && entry.boundingClientRect.y < 0) {
-          const nextCardRef = callDayCardRefs.current[cardIndex + 1];
-          if (nextCardRef) {
-            const nextCardRect = nextCardRef.getBoundingClientRect();
-            if (nextCardRect.top > window.innerHeight * 0.2 && nextCardRect.top > entry.boundingClientRect.bottom) {
-              isAutoScrollingRef.current = true;
-              nextCardRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              setTimeout(() => {
-                isAutoScrollingRef.current = false;
-              }, 700); 
-            }
-          }
-        }
-      });
-    };
-  
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-  
-    const currentRefs = callDayCardRefs.current;
-    currentRefs.forEach((cardEl) => {
-      if (cardEl) {
-        observer.observe(cardEl);
-      }
-    });
-  
-    return () => {
-      currentRefs.forEach((cardEl) => {
-        if (cardEl) {
-          observer.unobserve(cardEl);
-        }
-      });
-      observer.disconnect();
-    };
-  }, [sortedVisitsForCallDay]);
-
-  useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isVisitFormOpen) {
         event.preventDefault();
         event.returnValue = '';
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isVisitFormOpen]);
 
-  useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      window.history.pushState(null, '', window.location.href);
-
-      if (zoomedVisit) {
-        setZoomedVisit(null);
-      } else {
-        console.log("Back button action canceled to prevent accidental exit.");
-      }
-    };
-
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [zoomedVisit]); 
 
   const handleQuickLog = async () => {
     setIsFetchingNewLocation(true);
-
-    const getFreshCoordinates = (): Promise<{ lat: number; lon: number }> => {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error("Geolocation is not supported by your browser."));
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
-          (error) => {
-            let message = "Could not retrieve location.";
-            if (error.code === error.PERMISSION_DENIED) message = "Location access denied.";
-            if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
-            if (error.code === error.TIMEOUT) message = "Location request timed out.";
-            reject(new Error(message));
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
-    };
-
     try {
-      const { lat, lon } = await getFreshCoordinates();
-      
-      const newVisitTemplate: Partial<Visit> = {
-        latitude: lat,
-        longitude: lon,
-        timestamp: new Date(), 
-      };
-
-      try {
-        const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-        if (result && !result.error) {
-            newVisitTemplate.companyName = result.suggestedCompanyName || '';
-            newVisitTemplate.decisionMakerContact = result.phone || '';
-            if (result.address) {
-                newVisitTemplate.notes = `Suggested Address: ${result.address}`;
-            }
-        }
-      } catch (e) {
-        console.warn("Could not pre-fill company details, user can enter manually.", e);
+      if (!userCurrentLatitude || !userCurrentLongitude) {
+        console.error("Could Not Get Location", "Current user location is not available.");
+        return;
       }
+      
+      const result = await quickCreateVisitAction({
+        latitude: userCurrentLatitude,
+        longitude: userCurrentLongitude,
+        visitNumber: coldCallCount + 1,
+      });
 
-      setCurrentEditingVisit(newVisitTemplate as Visit);
-      setIsVisitFormOpen(true);
-
+      if (result.error) {
+        console.error("Could Not Quicklog Visit", result.error);
+      } else {
+        console.log("Visit Quick-Logged", "A new visit has been created at your location.");
+      }
     } catch (error: any) {
-      console.error("Could Not Get Location", error.message);
+      console.error("Could Not Quicklog Visit", error.message || "An unexpected error occurred.");
     } finally {
       setIsFetchingNewLocation(false);
     }
@@ -519,8 +429,13 @@ export default function HomePage() {
   };
 
   const handleUpdateFromCard = async (updatedVisit: Visit) => {
+    // Optimistic UI update
     setVisits(prevVisits => prevVisits.map(v => v.id === updatedVisit.id ? updatedVisit : v));
-    console.log("Visit updated successfully from card.");
+    const result = await saveVisitAction(updatedVisit);
+    if (result.error) {
+      console.error("Failed to update visit from card", result.error);
+      // Let onSnapshot handle reverting the UI if needed
+    }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
@@ -535,6 +450,7 @@ export default function HomePage() {
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
+      visitNumber: visits.filter(v => v.companyName === existingVisit.companyName).length + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -542,84 +458,39 @@ export default function HomePage() {
   };
 
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
-    const isNewVisit = !payload.id;
-    const visitId = payload.id || crypto.randomUUID();
-
-    // AI Enrichment
-    const companyChanged = isNewVisit || (payload.companyName !== payload.originalCompanyName);
-    const notesChanged = payload.notes !== payload.originalNotes;
+    setIsVisitFormOpen(false); // Close form immediately for responsiveness
     
-    let contactInfo: ContactInfo | undefined = payload.existingContactInfo || undefined;
-    if (isGenkitConfigured && companyChanged && payload.companyName) {
-      try {
-        const { contactInfo: info, confidenceScore } = await scrapeContactInfo({ companyName: payload.companyName });
-        contactInfo = { info, confidence: confidenceScore };
-      } catch (e: any) {
-        console.warn("AI Warning: Failed to scrape contact info.", e.message);
-        contactInfo = { info: "Could not retrieve contact info.", confidence: 0 };
-      }
-    }
+    const result = await saveVisitAction(payload);
     
-    let notesSummary: string | undefined = payload.existingNotesSummary || undefined;
-    if (isGenkitConfigured && notesChanged && payload.notes) {
-      try {
-        const { summary } = await summarizeNotesAction({ notes: payload.notes });
-        notesSummary = summary;
-      } catch (e: any) {
-        console.warn("AI Warning: Failed to summarize notes.", e.message);
-        notesSummary = "Could not summarize notes.";
-      }
-    }
-
-    const visitData: Visit = {
-      id: visitId,
-      timestamp: payload.timestamp || new Date(),
-      companyName: payload.companyName,
-      notes: payload.notes || undefined,
-      latitude: payload.latitude,
-      longitude: payload.longitude,
-      partnershipConfidence: payload.partnershipConfidence,
-      hasBusinessCard: payload.hasBusinessCard,
-      businessCardImageUrl: payload.hasBusinessCard ? payload.businessCardImageUrl : undefined,
-      competitorName: payload.competitorName,
-      coolerType: payload.competitorName ? payload.coolerType : undefined,
-      decisionMakerName: payload.decisionMakerName,
-      decisionMakerTitle: payload.decisionMakerTitle,
-      decisionMakerContact: payload.decisionMakerContact,
-      visitNumber: isNewVisit ? coldCallCount + 1 : payload.visitNumber,
-      interestedUnit: payload.interestedUnit,
-      hasTDSReading: payload.hasTDSReading,
-      tdsValue: payload.hasTDSReading ? payload.tdsValue : undefined,
-      futureMeetingSet: payload.futureMeetingSet,
-      futureMeetingDateTime: payload.futureMeetingSet ? payload.futureMeetingDateTime : undefined,
-      freeTrial: payload.freeTrial,
-      dealClosed: payload.dealClosed,
-      contactInfo: contactInfo,
-      notesSummary: notesSummary,
-      discussedCompetitors: !!payload.competitorName,
-    };
-
-    if (isNewVisit) {
-      setVisits(prev => [...prev, visitData]);
-      setColdCallCount(prev => prev + 1);
-      console.log('Potential Partner Logged', `${visitData.companyName} details saved locally.`);
+    if (result.error) {
+      console.error("Could not save visit", result.error);
     } else {
-      setVisits(prev => prev.map(v => v.id === visitId ? visitData : v));
-      console.log('Visit Updated', `${visitData.companyName} details updated locally.`);
+      console.log(result.isNewVisit ? "Visit Logged" : "Visit Updated", `Visit for ${result.visit?.companyName} saved to database.`);
     }
   };
 
 
   const handleDeleteVisit = async (visitId: string) => {
+    const originalVisits = [...visits];
     setVisits(prevVisits => prevVisits.filter(v => v.id !== visitId));
-    console.log('Visit Deleted', 'The visit log has been removed.');
+
+    const result = await deleteVisitAction(visitId);
+    if (result.error) {
+        console.error("Failed to delete visit", result.error);
+        setVisits(originalVisits); // Revert UI
+    } else {
+        console.log('Visit Deleted', 'The visit log has been removed from the database.');
+    }
   };
 
   const confirmEndDay = async () => {
-    const numberOfVisits = visits.length;
-    setColdCallCount(0);
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp)));
+    const numberOfVisits = todaysVisits.length;
+    
+    // This action doesn't delete visits, just resets local counters/flags
     localStorage.removeItem('milestoneAchievedDate');
-    console.log("Field Day Ended", `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your session has been reset.`);
+    
+    console.log("Field Day Ended", `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today.`);
     setIsEndDayConfirmOpen(false);
   };
 
@@ -651,14 +522,9 @@ export default function HomePage() {
       body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
       body += `   Date: ${format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}\n\n`;
     });
-
     body += `\n\n---\nEmail generated by Optimum Trailblazer App`;
 
-    const params = new URLSearchParams();
-    params.append('subject', subject);
-    params.append('body', body);
-    const mailtoLink = `mailto:paull@drinkoptimum.com?${params.toString()}`;
-    
+    const mailtoLink = `mailto:paull@drinkoptimum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     if (typeof window !== 'undefined') {
         window.location.href = mailtoLink;
     }
@@ -677,35 +543,21 @@ export default function HomePage() {
       body += `Summary of Visits (${visits.length} total):\n`;
       visits.forEach((visit, index) => {
         body += `\n${index + 1}. ${visit.companyName}`;
-        if (visit.notesSummary) {
-          body += `\n   Summary: ${visit.notesSummary}`;
-        }
-        if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") {
-          body += `\n   Contact: ${visit.contactInfo.info}`;
-        }
-        if (visit.partnershipConfidence) {
-          body += `\n   Confidence: ${visit.partnershipConfidence}/5`;
-        }
-        body += `\n   Visited: ${format(new Date(visit.timestamp), 'MMM d, h:mm a')}`;
-        body += "\n";
+        if (visit.notesSummary) body += `\n   Summary: ${visit.notesSummary}`;
+        if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") body += `\n   Contact: ${visit.contactInfo.info}`;
+        if (visit.partnershipConfidence) body += `\n   Confidence: ${visit.partnershipConfidence}/5`;
+        body += `\n   Visited: ${format(new Date(visit.timestamp), 'MMM d, h:mm a')}\n`;
       });
     } else {
       body += "No visits were logged today.\n";
     }
-    
     body += `\n\nBest regards,\nOptimum Trailblazer App`;
 
-    const params = new URLSearchParams();
-    params.append('to', chrisEmail);
-    params.append('su', subject);
-    params.append('body', body);
-    
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&${params.toString()}`;
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${chrisEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     if (typeof window !== 'undefined') {
         window.open(gmailLink, '_blank');
     }
-
     console.log("Opening Gmail...", "Please manually attach the exported PDF to the email before sending.");
   };
 
@@ -788,8 +640,8 @@ export default function HomePage() {
             id: v.id,
             timestamp: v.timestamp,
             companyName: v.companyName,
-            notesSummary: v.notesSummary,
-            partnershipConfidence: v.partnershipConfidence
+            notesSummary: v.notesSummary || undefined,
+            partnershipConfidence: v.partnershipConfidence || undefined,
         })),
         pdfUrl: pdfUrlForAi,
         csvData: csvDataForAi,
@@ -799,30 +651,15 @@ export default function HomePage() {
 
       if (result.error) {
         console.error("AI Chat Error", `Error: ${result.error}`);
-        const aiErrorResponse: ChatMessage = {
-          id: crypto.randomUUID(),
-          sender: 'ai',
-          text: `Sorry, I encountered an error: ${result.error}`,
-          timestamp: new Date(),
-        };
+        const aiErrorResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: `Sorry, I encountered an error: ${result.error}`, timestamp: new Date() };
         setChatMessages(prev => [...prev, aiErrorResponse]);
       } else if (result.aiResponse) {
-        const aiResponse: ChatMessage = {
-          id: crypto.randomUUID(),
-          sender: 'ai',
-          text: result.aiResponse,
-          timestamp: new Date(),
-        };
+        const aiResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: result.aiResponse, timestamp: new Date() };
         setChatMessages(prev => [...prev, aiResponse]);
       }
     } catch (e: any) {
       console.error("AI Chat Failed", "Could not get response from AI.");
-       const aiFailureResponse: ChatMessage = {
-          id: crypto.randomUUID(),
-          sender: 'ai',
-          text: "I'm having trouble connecting right now. Please try again later.",
-          timestamp: new Date(),
-        };
+       const aiFailureResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: "I'm having trouble connecting right now. Please try again later.", timestamp: new Date() };
         setChatMessages(prev => [...prev, aiFailureResponse]);
     } finally {
       setIsAiResponding(false);
@@ -831,7 +668,7 @@ export default function HomePage() {
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
     const newVisit: Visit = {
-        id: '',
+        id: '', // Will be generated by server
         timestamp: new Date(),
         companyName: visitData.companyName || '',
         notes: visitData.notes,
@@ -856,10 +693,9 @@ export default function HomePage() {
         freeTrial: false,
         dealClosed: false,
     };
-    
     setCurrentEditingVisit(newVisit);
     setIsVisitFormOpen(true);
-};
+  };
 
   const handleManagedFilesChange = (files: ManagedFile[]) => {
       setManagedFiles(files);
@@ -964,9 +800,9 @@ export default function HomePage() {
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation}>
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={isFetchingNewLocation || !userCurrentLatitude}>
                         {isFetchingNewLocation ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        {isFetchingNewLocation ? 'Getting Location...' : 'Log Visit at Location'}
+                        {isFetchingNewLocation ? 'Logging...' : 'Quicklog Visit'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -978,7 +814,7 @@ export default function HomePage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>End Your Field Day?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you are done for the day?
+                            Are you sure you are done for the day? This will reset your local milestone tracker.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -993,8 +829,17 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          When you click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log Visit at Location</span> this app will help streamline your efforts
+                          Click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location.
                       </p>
+                       {!firebaseConfigured && (
+                        <Alert variant="destructive" className="mt-4 text-left max-w-md mx-auto">
+                            <WifiOff className="h-4 w-4" />
+                            <AlertTitle>Offline Mode</AlertTitle>
+                            <AlertDescription>
+                            Firebase is not configured. Your visits are saved to this browser only and will not be synced to the cloud.
+                            </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -1069,26 +914,9 @@ export default function HomePage() {
                           <SelectValue placeholder="Select order" />
                         </SelectTrigger>
                         <SelectContent>
-                          {sortCriteria === 'partnershipConfidence' ? (
-                            <>
-                              <SelectItem value="desc">High to Low</SelectItem>
-                              <SelectItem value="asc">Low to High</SelectItem>
-                            </>
-                          ) : sortCriteria === 'timestamp' ? (
-                            <>
-                              <SelectItem value="desc">Newest to Oldest</SelectItem>
-                              <SelectItem value="asc">Oldest to Newest</SelectItem>
-                            </>
-                          ) : sortCriteria === 'dealClosed' ? (
-                            <>
-                              <SelectItem value="desc">Closed Deals First</SelectItem>
-                              <SelectItem value="asc">Open Deals First</SelectItem>
-                            </>
-                          ) : (
-                             <>
-                              <SelectItem value="desc">Descending</SelectItem>
-                              <SelectItem value="asc">Ascending</SelectItem>
-                            </>
+                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
+                          ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
+                          ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>
                           )}
                         </SelectContent>
                       </Select>
@@ -1114,11 +942,7 @@ export default function HomePage() {
                   {sortedVisitsForCallDay.map((visit, index) => (
                     <div 
                       key={visit.id}
-                      ref={(el) => {
-                        if (index < callDayCardRefs.current.length) {
-                           callDayCardRefs.current[index] = el;
-                        }
-                      }}
+                      ref={(el) => { callDayCardRefs.current[index] = el; }}
                       data-card-index={index.toString()}
                     >
                       <VisitCard
@@ -1191,11 +1015,7 @@ export default function HomePage() {
                         <SelectValue placeholder="Select AI Model" />
                       </SelectTrigger>
                       <SelectContent>
-                        {AVAILABLE_AI_MODELS.map(model => (
-                          <SelectItem key={model.id} value={model.id} className="text-xs">
-                            {model.name}
-                          </SelectItem>
-                        ))}
+                        {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1215,9 +1035,7 @@ export default function HomePage() {
                         )}
                         <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
                           <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-                          <p className="text-xs mt-1.5 opacity-80 text-right">
-                            {format(message.timestamp, 'p')}
-                          </p>
+                          <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
                         </div>
                         {message.sender === 'user' && (
                           <Avatar className="h-8 w-8 self-start">
@@ -1230,15 +1048,15 @@ export default function HomePage() {
                   ))}
                   {isAiResponding && ( 
                     <div className="flex justify-start mb-4">
-                        <div className="flex items-end gap-2 max-w-[75%]">
-                            <Avatar className="h-8 w-8 self-start">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
-                                <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
-                            <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            </div>
-                        </div>
+                      <div className="flex items-end gap-2 max-w-[75%]">
+                          <Avatar className="h-8 w-8 self-start">
+                              <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                              <AvatarFallback>AI</AvatarFallback>
+                          </Avatar>
+                          <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
+                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          </div>
+                      </div>
                     </div>
                   )}
                   <div ref={messagesEndRef} />
@@ -1258,44 +1076,10 @@ export default function HomePage() {
                   </div>
                 )}
                 <div className="flex w-full items-center space-x-2">
-                  <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={() => setIsManageFilesModalOpen(true)}
-                      disabled={isAiResponding}
-                      aria-label="Manage long-term files for AI"
-                      title="Manage long-term files for AI"
-                  >
-                      <FolderKanban className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    id="file-upload-input"
-                    type="file"
-                    accept="application/pdf,text/csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    ref={fileInputRef}
-                    disabled={isAiResponding}
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isAiResponding}
-                    aria-label="Attach a file for this message"
-                    title="Attach a file for this message"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }}
-                    className="flex-1"
-                    disabled={isAiResponding}
-                  />
+                  <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
+                  <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
+                  <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
+                  <Input type="text" placeholder="Type your message..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} className="flex-1" disabled={isAiResponding} />
                   <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
                     {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     <span className="sr-only">Send</span>
@@ -1330,13 +1114,13 @@ export default function HomePage() {
                         <p className="mb-4">This is your main workspace for logging new visits. Here's how it works:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
-                                When you click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log Visit at Location</span> button, the app uses your current location to find company information and pre-fills the visit form for you.
+                                Click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> button to instantly create a new visit record at your current location, pre-filled with company details when possible.
                             </li>
                             <li>
-                                As you interact with the potential partner, use the form to <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Log the meeting!</span>. Capturing details like business cards, competitor info, and visit notes makes the app—and our AI assistant, Debbie—more powerful.
+                                As you interact with the potential partner, edit the visit card to add details. Capturing business cards, competitor info, and notes makes the app—and our AI assistant, Debbie—more powerful.
                             </li>
                             <li>
-                                Once you're done for the day, click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">End Day!</span> button. This resets your session and summarizes your daily accomplishments.
+                                Once you're done for the day, click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">End Day!</span> button. This summarizes your daily accomplishments.
                             </li>
                         </ul>
                     </TabsContent>
@@ -1360,39 +1144,25 @@ export default function HomePage() {
                             </h3>
                             <div className="space-y-3">
                                 <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
-                                <Textarea
-                                id="appSuggestion"
-                                placeholder="Type your feedback or feature request here..."
-                                value={suggestionText}
-                                onChange={(e) => setSuggestionText(e.target.value)}
-                                className="min-h-[100px]"
-                                />
-                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}>
-                                <Send className="mr-2 h-4 w-4" /> Add Suggestion
-                                </Button>
+                                <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
+                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
                             </div>
                         </div>
 
                         {submittedSuggestions.length > 0 && (
                             <div className="w-full pt-4 mt-6 border-t">
-                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">
-                                List of Possible Improvements
-                                </h3>
+                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
                                 <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
                                 <ol className="list-decimal list-inside space-y-2 text-foreground/90">
                                     {submittedSuggestions.map((suggestion, index) => (
                                     <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
                                         {suggestion.text}
-                                        <span className="block text-xs text-muted-foreground mt-0.5">
-                                        &mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}
-                                        </span>
+                                        <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
                                     </li>
                                     ))}
                                 </ol>
                                 </div>
-                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4">
-                                <Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer
-                                </Button>
+                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
                             </div>
                         )}
                     </TabsContent>
@@ -1406,23 +1176,12 @@ export default function HomePage() {
             {zoomedVisit && (
               <>
                 <DialogTitle className="sr-only">Visit Details: {zoomedVisit.companyName}</DialogTitle>
-                <DialogDescription className="sr-only">
-                  Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.
-                </DialogDescription>
+                <DialogDescription className="sr-only">Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.</DialogDescription>
                 <VisitCard
                   visit={zoomedVisit}
-                  onEdit={(v) => {
-                    setZoomedVisit(null);
-                    handleEditVisit(v);
-                  }}
-                  onDelete={(id) => {
-                    setZoomedVisit(null);
-                    handleDeleteVisit(id);
-                  }}
-                  onUpdateVisit={(updated) => {
-                    handleUpdateFromCard(updated);
-                    setZoomedVisit(updated);
-                  }}
+                  onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
+                  onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
+                  onUpdateVisit={(updated) => { handleUpdateFromCard(updated); setZoomedVisit(updated); }}
                   isZoomedView={true}
                 />
               </>
@@ -1435,17 +1194,12 @@ export default function HomePage() {
                 <DialogHeader>
                     <DialogTitle>Choose Your Destination</DialogTitle>
                     <DialogDescription>
-                        {isExtractingCities
-                            ? "Debbie is reading your territory file to find cities..."
-                            : "Select a city to get an AI-optimized parking location for your day."
-                        }
+                        {isExtractingCities ? "Debbie is reading your territory file to find cities..." : "Select a city to get an AI-optimized parking location for your day."}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[400px] overflow-y-auto pr-2">
                     {isExtractingCities ? (
-                        <div className="flex justify-center items-center h-32">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
+                        <div className="flex justify-center items-center h-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : destinationCities.length > 0 ? (
                         <div className="flex flex-col space-y-2">
                             {destinationCities.map(city => (
@@ -1455,18 +1209,12 @@ export default function HomePage() {
                                     className="justify-start"
                                     disabled={isFindingParking}
                                     onClick={async () => {
-                                        const destinationCity = city;
-                                        setTargetDestination(destinationCity);
+                                        setTargetDestination(city);
                                         setIsDestinationModalOpen(false);
                                         setIsFindingParking(true);
-                                        
                                         try {
-                                            const result = await findOptimalParkingAction({ city: destinationCity });
-
-                                            if (result.error) {
-                                                throw new Error(result.error);
-                                            }
-
+                                            const result = await findOptimalParkingAction({ city });
+                                            if (result.error) throw new Error(result.error);
                                             if (result.latitude && result.longitude) {
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
                                                 setNavigationUrl(googleMapsUrl);
@@ -1485,9 +1233,7 @@ export default function HomePage() {
                             ))}
                         </div>
                     ) : (
-                         <p className="text-muted-foreground text-center py-4">
-                            No destination cities found. You can upload a territory PDF on the "About" tab or ensure your profile has default cities assigned.
-                        </p>
+                         <p className="text-muted-foreground text-center py-4">No destination cities found. You can upload a territory PDF or ensure your profile has cities assigned.</p>
                     )}
                 </div>
                  <DialogFooter>
@@ -1514,10 +1260,7 @@ export default function HomePage() {
 
         <VisitForm
           isOpen={isVisitFormOpen}
-          onClose={() => {
-            setIsVisitFormOpen(false);
-            setCurrentEditingVisit(undefined);
-          }}
+          onClose={() => { setIsVisitFormOpen(false); setCurrentEditingVisit(undefined); }}
           onSave={handleSaveFromForm}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
@@ -1525,7 +1268,9 @@ export default function HomePage() {
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
-         <p className="text-xs mt-1">All data is currently stored locally in your browser.</p>
+         <p className="text-xs mt-1">
+            {firebaseConfigured ? "All data is synced to the cloud in real-time." : "Data is saved locally to your browser."}
+         </p>
       </footer>
     </div>
   );
