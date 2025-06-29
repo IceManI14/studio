@@ -1,3 +1,4 @@
+
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -55,33 +56,38 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   }
 
   try {
+    // 1. Validate required fields
+    if (!payload.companyName || payload.companyName.trim() === '') {
+      return { error: 'Company name is required.' };
+    }
+
     const visitId = payload.id || uuidv4();
     const isNewVisit = !payload.id;
 
-    // --- Robust Data Sanitization ---
-    const companyName = payload.companyName?.trim() || '';
-    if (!companyName) {
-      return { error: 'Validation Error: Company name is required.' };
+    // 2. Handle dates carefully
+    const timestamp = payload.timestamp && isValidDate(new Date(payload.timestamp)) ? new Date(payload.timestamp) : new Date();
+    let futureMeetingDateTime: Date | null = null;
+    if (payload.futureMeetingSet) {
+        if (payload.futureMeetingDateTime && isValidDate(new Date(payload.futureMeetingDateTime))) {
+            futureMeetingDateTime = new Date(payload.futureMeetingDateTime);
+        } else {
+            return { error: 'A valid meeting date and time is required when "Future Meeting" is checked.'};
+        }
     }
 
-    const timestamp = isValidDate(payload.timestamp) ? payload.timestamp : new Date();
-    
-    const futureMeetingDateTime = isValidDate(payload.futureMeetingDateTime) ? payload.futureMeetingDateTime : null;
-    if (payload.futureMeetingSet && !futureMeetingDateTime) {
-      return { error: 'Validation Error: A valid meeting date and time is required when Future Meeting is checked.' };
-    }
-
-    const tdsValue = (typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null;
-    if (payload.hasTDSReading && tdsValue === null) {
-      return { error: 'Validation Error: A valid TDS value is required when TDS Reading is checked.' };
+    // 3. Handle numbers carefully
+    let tdsValue: number | null = null;
+    if (payload.hasTDSReading) {
+        if (typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) {
+            tdsValue = payload.tdsValue;
+        } else {
+            return { error: 'A valid TDS value is required when "TDS Reading" is checked.' };
+        }
     }
     
-    // AI summarization is now outside the critical save path to prevent hangs
-    let notesSummary = payload.existingNotesSummary ?? null;
-    const notes = payload.notes ?? null;
-    if (notes && notes !== payload.originalNotes) {
-        // Run summarization in the background without blocking the save operation
-        summarizeVisitNotes({ notes: notes }).then(result => {
+    // 4. Start AI summary in the background (fire and forget) to prevent hangs
+    if (payload.notes && payload.notes !== payload.originalNotes) {
+        summarizeVisitNotes({ notes: payload.notes }).then(result => {
             const newSummary = result.summary;
             const visitDocRef = doc(db, 'visits', visitId);
             setDoc(visitDocRef, { notesSummary: newSummary }, { merge: true }).catch(e => {
@@ -92,52 +98,51 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
         });
     }
 
-    const visitData: Visit = {
-      id: visitId,
+    // 5. Build the final database object, ensuring EVERY optional field defaults to null
+    const visitForDb = {
       timestamp: timestamp,
-      companyName: companyName,
-      notes: notes,
+      companyName: payload.companyName.trim(),
+      notes: payload.notes || null,
       latitude: payload.latitude ?? null,
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
       contactInfo: payload.existingContactInfo ?? null,
-      notesSummary: notesSummary, // Return the old summary immediately
-      
+      notesSummary: payload.existingNotesSummary ?? null,
       hasBusinessCard: !!payload.hasBusinessCard,
-      businessCardImageUrl: !!payload.hasBusinessCard ? (payload.businessCardImageUrl ?? null) : null,
-      
+      businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl || null) : null,
       discussedCompetitors: !!payload.competitorName,
       competitorName: payload.competitorName || null,
-      coolerType: !!payload.competitorName ? (payload.coolerType || null) : null,
-      
+      coolerType: payload.competitorName ? (payload.coolerType || null) : null,
       decisionMakerName: payload.decisionMakerName || null,
       decisionMakerTitle: payload.decisionMakerTitle || null,
       decisionMakerContact: payload.decisionMakerContact || null,
-      
       visitNumber: payload.visitNumber ?? null,
       interestedUnit: payload.interestedUnit || null,
-      
       hasTDSReading: !!payload.hasTDSReading,
-      tdsValue: !!payload.hasTDSReading ? tdsValue : null,
-      
+      tdsValue: tdsValue,
       futureMeetingSet: !!payload.futureMeetingSet,
-      futureMeetingDateTime: !!payload.futureMeetingSet ? futureMeetingDateTime : null,
-      
+      futureMeetingDateTime: futureMeetingDateTime,
       freeTrial: !!payload.freeTrial,
       dealClosed: !!payload.dealClosed,
     };
 
-    const { id, ...visitForDb } = visitData;
-
-    const visitDocRef = doc(db, 'visits', id);
+    // 6. Save to Firestore
+    const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    return { visit: visitData, isNewVisit };
+    // 7. Return success response
+    const finalVisitData: Visit = {
+      ...visitForDb,
+      id: visitId,
+      timestamp: visitForDb.timestamp,
+      futureMeetingDateTime: visitForDb.futureMeetingDateTime || undefined, // Convert back to what client expects
+    };
+
+    return { visit: finalVisitData, isNewVisit };
 
   } catch (error: any) {
     console.error("Critical Error in saveVisitAction:", error);
-    const message = error.message || 'An unexpected server error occurred.';
-    return { error: `Failed to save visit. ${message}` };
+    return { error: `Failed to save visit. Please check your network connection and try again. Details: ${error.message}` };
   }
 }
 
