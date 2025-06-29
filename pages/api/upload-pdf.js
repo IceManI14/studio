@@ -72,12 +72,20 @@ export default async (req, res) => {
 
   } catch (error) {
     console.error('An error occurred during PDF upload:', error);
+    const errorMessage = (error.message || '').toLowerCase();
 
-    if (error.code === 403 || (error.message && error.message.toLowerCase().includes('forbidden'))) {
+    if (error.code === 403 || errorMessage.includes('forbidden')) {
          console.error('GCS PERMISSION ERROR: The service account likely lacks the "Storage Object Creator" role.');
          return res.status(500).json({ 
             message: 'Failed to upload PDF due to a permission issue.',
             details: `The server responded with a permissions error (Code: ${error.code || 'N/A'}). Please ensure the service account for this app has the "Storage Object Creator" role on the "${bucketName}" bucket in your Google Cloud project.`
+        });
+    }
+
+    if (errorMessage.includes('could not refresh access token')) {
+        return res.status(500).json({
+            message: 'Authentication failed while trying to access Google Cloud Storage.',
+            details: `The server could not refresh its access token (Original error: ${error.message}). This is often a permissions issue. Please ensure the service account for this app has the "Service Account Token Creator" IAM role in your Google Cloud project.`
         });
     }
 
