@@ -134,9 +134,10 @@ interface VisitFormProps {
   onSave: (visit: Visit) => void;
   initialData?: Visit;
   salesperson: Salesperson | null;
+  coldCallCount: number;
 }
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, coldCallCount }) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
@@ -594,6 +595,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       existingNotesSummary: initialData?.notesSummary,
       originalBusinessCardImageUrl: initialData?.businessCardImageUrl, // This will be a Data URI if it existed
       visitNumber: initialData?.visitNumber,
+      coldCallCount: coldCallCount,
     };
 
     const result = await saveVisitAction(payload);

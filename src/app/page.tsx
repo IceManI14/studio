@@ -529,7 +529,6 @@ export default function HomePage() {
 
   useEffect(() => {
     // This effect handles the mobile back button.
-    // If the zoomed visit card is open, it closes it. Otherwise, it prevents accidentally exiting the app.
     const handlePopState = (event: PopStateEvent) => {
       // We always push a new state to cancel the browser's default back navigation.
       // We then handle the "back" action manually.
@@ -658,37 +657,28 @@ export default function HomePage() {
   const handleSaveVisit = async (visit: Visit) => {
     if (!db) return;
     try {
-      // Determine if this is a brand new visit being saved for the first time.
-      const isNewVisit = !visit.id || !visits.some(v => v.id === visit.id);
-      
-      const visitToSave: Omit<Visit, 'id'> & { id?: string } = { ...visit };
-      if (!visitToSave.id) {
-        visitToSave.id = crypto.randomUUID();
-      }
+      // The visit object from the action now has the correct visitNumber.
+      // We still need to know if it's new to increment the counter.
+      const isNewVisit = !visits.some(v => v.id === visit.id);
 
-      // If it's a new visit, we assign/overwrite the visit number right before saving
-      // to use the most up-to-date count and avoid race conditions.
-      if (isNewVisit) {
-        visitToSave.visitNumber = coldCallCount + 1;
-      }
-      
       const visitData = {
-          ...visitToSave,
-          timestamp: visitToSave.timestamp,
-          futureMeetingDateTime: visitToSave.futureMeetingDateTime || null,
+          ...visit,
+          timestamp: visit.timestamp,
+          futureMeetingDateTime: visit.futureMeetingDateTime || null,
       };
 
       const visitDocRef = doc(db, 'visits', visitData.id!);
+      // Using setDoc with merge:true handles both new visits and updates cleanly.
       await setDoc(visitDocRef, visitData, { merge: true });
 
       // If it was a new visit, we now increment the persistent counter.
       if (isNewVisit) {
         await updateColdCallCount(coldCallCount + 1);
       } else {
-        // This is an update, refresh the local state to show changes.
-        setVisits(prevVisits => prevVisits.map(v => v.id === visit.id ? ({...v, ...visitToSave}) : v));
+        // This is an update, refresh the local state to show changes immediately.
+        // The Firestore listener will also update, but this provides instant UI feedback.
+        setVisits(prevVisits => prevVisits.map(v => v.id === visit.id ? visitData : v));
       }
-
     } catch (error) {
       console.error("Error saving visit to Firestore:", error);
       toast({ title: 'Sync Error', description: 'Failed to save visit data.', variant: 'destructive'});
@@ -1677,6 +1667,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID_HERE"`}
           onSave={handleSaveVisit}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
+          coldCallCount={coldCallCount}
         />
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
