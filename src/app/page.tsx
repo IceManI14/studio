@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -722,7 +723,6 @@ export default function HomePage() {
       setManagedFiles(files);
       localStorage.setItem('managedFiles', JSON.stringify(files));
   };
-
 
   return (
     <div className="min-h-screen">
