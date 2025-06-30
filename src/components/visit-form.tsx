@@ -413,7 +413,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleToggleVoiceNotes = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature.' });
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature. This can sometimes be caused by browser extensions or specific browser settings (e.g., in Firefox).' });
       return;
     }
 
