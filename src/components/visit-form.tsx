@@ -134,9 +134,10 @@ interface VisitFormProps {
   onSave: (payload: SaveVisitPayload) => Promise<void>;
   initialData?: Visit;
   salesperson: Salesperson | null;
+  startDictation?: boolean;
 }
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
 
@@ -409,6 +410,76 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [partnershipConfidenceValue, form]);
 
 
+  const handleToggleVoiceNotes = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature.' });
+      return;
+    }
+
+    if (isRecordingNotes && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingNotes(true);
+      toast({ title: 'Listening...', description: 'Speak to add notes. Recording will stop when you pause.' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingNotes(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onerror = (event) => {
+      let errorMessage = event.error;
+      if (event.error === 'no-speech') {
+        errorMessage = "No speech was detected. Please try again.";
+      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        errorMessage = "Microphone access denied. Please enable it in your browser settings.";
+      }
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage });
+      setIsRecordingNotes(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        const currentNotes = form.getValues('notes') || '';
+        const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
+        form.setValue('notes', newNotes, { shouldValidate: true });
+        toast({ title: 'Notes Added Via Voice' });
+      }
+    };
+    
+    try {
+        recognition.start();
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Could not start recording', description: 'Please ensure microphone access is granted.' });
+    }
+  }, [form, isRecordingNotes, toast]);
+
+
+  useEffect(() => {
+    if (isOpen && startDictation) {
+      // Small delay to ensure the component is ready and the user notices the modal opening first.
+      const timer = setTimeout(() => {
+        handleToggleVoiceNotes();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, startDictation]);
+
   useEffect(() => {
     const stopAudioAndCamera = () => {
       if (recognitionRef.current) {
@@ -634,65 +705,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleToggleVoiceNotes = () => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature.' });
-      return;
-    }
-
-    if (isRecordingNotes && recognitionRef.current) {
-      recognitionRef.current.stop();
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsRecordingNotes(true);
-      toast({ title: 'Listening...', description: 'Speak to add notes. Recording will stop when you pause.' });
-    };
-
-    recognition.onend = () => {
-      setIsRecordingNotes(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onerror = (event) => {
-      let errorMessage = event.error;
-      if (event.error === 'no-speech') {
-        errorMessage = "No speech was detected. Please try again.";
-      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        errorMessage = "Microphone access denied. Please enable it in your browser settings.";
-      }
-      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage });
-      setIsRecordingNotes(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        const currentNotes = form.getValues('notes') || '';
-        const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
-        form.setValue('notes', newNotes, { shouldValidate: true });
-        toast({ title: 'Notes Added Via Voice' });
-      }
-    };
-    
-    try {
-        recognition.start();
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Could not start recording', description: 'Please ensure microphone access is granted.' });
-    }
-  };
-
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[480px] bg-card/80 backdrop-blur-md border-primary/30">
@@ -910,7 +922,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={handleGeniusScanClick}
+                    onClick={handleTakeLater}
                     disabled={isUploadingCard}
                   >
                     <ScanLine className="mr-2 h-4 w-4" />

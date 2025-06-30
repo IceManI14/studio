@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -27,9 +27,10 @@ interface VisitCardProps {
   onZoom?: (visit: Visit) => void;
   isZoomedView?: boolean;
   onLogFollowUp?: (visit: Visit) => void;
+  onDictateNotes?: (visit: Visit) => void;
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
@@ -401,6 +402,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-end gap-2">
+            {onDictateNotes && (
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
               <Edit className="h-4 w-4" />
             </Button>

@@ -142,6 +142,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('field-day');
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
+  const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -806,6 +807,12 @@ export default function HomePage() {
       localStorage.setItem('managedFiles', JSON.stringify(files));
   };
 
+  const handleDictateNotes = (visit: Visit) => {
+    setCurrentEditingVisit(visit);
+    setStartDictationOnOpen(true);
+    setIsVisitFormOpen(true);
+  };
+
   return (
     <div className="min-h-screen">
        {!selectedSalesperson && (
@@ -959,6 +966,7 @@ export default function HomePage() {
                           onUpdateDealClosed={handleUpdateDealClosed}
                           onZoom={setZoomedVisit}
                           onLogFollowUp={handleLogFollowUp}
+                          onDictateNotes={handleDictateNotes}
                           />
                       ))}
                     </div>
@@ -1056,6 +1064,7 @@ export default function HomePage() {
                         onUpdateDealClosed={handleUpdateDealClosed}
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
+                        onDictateNotes={handleDictateNotes}
                       />
                     </div>
                   ))}
@@ -1289,6 +1298,7 @@ export default function HomePage() {
                   onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
                   onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
                   isZoomedView={true}
+                  onDictateNotes={handleDictateNotes}
                 />
               </>
             )}
@@ -1367,10 +1377,15 @@ export default function HomePage() {
 
         <VisitForm
           isOpen={isVisitFormOpen}
-          onClose={() => { setIsVisitFormOpen(false); setCurrentEditingVisit(undefined); }}
+          onClose={() => { 
+            setIsVisitFormOpen(false); 
+            setCurrentEditingVisit(undefined); 
+            setStartDictationOnOpen(false);
+          }}
           onSave={handleSaveFromForm}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
+          startDictation={startDictationOnOpen}
         />
       </div>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
