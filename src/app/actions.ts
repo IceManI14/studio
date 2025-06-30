@@ -37,7 +37,7 @@ export interface SaveVisitPayload {
   futureMeetingSet?: boolean | null;
   futureMeetingDateTime?: Date | null;
   freeTrial?: boolean | null;
-  dealClosed?: boolean | null;
+  // Note: dealClosed is handled separately via the VisitCard to prevent accidental overwrites from the form.
   originalCompanyName?: string | null;
   originalNotes?: string | null;
   existingContactInfo?: ContactInfo | null;
@@ -58,50 +58,70 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       return { error: 'Company name is required.' };
     }
 
-    // Explicitly build the object to be saved, ensuring no undefined or invalid values are sent to Firestore.
-    const visitForDb: Omit<Visit, 'id'> = {
-      // --- REQUIRED ---
-      companyName: payload.companyName.trim(),
-      timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
-      
-      // --- OPTIONAL BASICS ---
-      notes: payload.notes ?? null,
-      latitude: payload.latitude ?? null,
-      longitude: payload.longitude ?? null,
-      partnershipConfidence: payload.partnershipConfidence ?? null,
-      notesSummary: (payload.notes && payload.notes !== payload.originalNotes) ? null : (payload.existingNotesSummary ?? null),
-      contactInfo: payload.existingContactInfo ?? null,
-      visitNumber: payload.visitNumber ?? null,
-      interestedUnit: payload.interestedUnit ?? null,
-      freeTrial: payload.freeTrial || false,
-      dealClosed: payload.dealClosed || false,
-      
-      // --- CONDITIONAL LOGIC ---
-      hasBusinessCard: payload.hasBusinessCard || false,
-      businessCardImageUrl: (payload.hasBusinessCard && payload.businessCardImageUrl) ? payload.businessCardImageUrl : null,
-      
-      discussedCompetitors: !!payload.competitorName,
-      competitorName: payload.competitorName ?? null,
-      coolerType: (!!payload.competitorName && payload.coolerType) ? payload.coolerType : null,
-      
-      decisionMakerName: payload.decisionMakerName ?? null,
-      decisionMakerTitle: payload.decisionMakerTitle ?? null,
-      decisionMakerContact: payload.decisionMakerContact ?? null,
-      
-      hasTDSReading: payload.hasTDSReading || false,
-      tdsValue: (payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null,
-      
-      futureMeetingSet: payload.futureMeetingSet || false,
-      futureMeetingDateTime: (payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date') ? new Date(payload.futureMeetingDateTime) : null,
+    // --- Sanitize and prepare all data BEFORE creating the DB object ---
+    const companyName = payload.companyName.trim();
+    const timestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date();
+    const notes = payload.notes ?? null;
+    const latitude = payload.latitude ?? null;
+    const longitude = payload.longitude ?? null;
+    const partnershipConfidence = payload.partnershipConfidence ?? null;
+    const hasBusinessCard = payload.hasBusinessCard || false;
+    const businessCardImageUrl = hasBusinessCard ? payload.businessCardImageUrl ?? null : null;
+    const discussedCompetitors = !!payload.competitorName;
+    const competitorName = payload.competitorName ?? null;
+    const coolerType = discussedCompetitors ? (payload.coolerType ?? null) : null;
+    const decisionMakerName = payload.decisionMakerName ?? null;
+    const decisionMakerTitle = payload.decisionMakerTitle ?? null;
+    const decisionMakerContact = payload.decisionMakerContact ?? null;
+    const visitNumber = payload.visitNumber ?? null;
+    const interestedUnit = payload.interestedUnit ?? null;
+    const hasTDSReading = payload.hasTDSReading || false;
+    const tdsValue = (hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null;
+    const futureMeetingSet = payload.futureMeetingSet || false;
+    const futureMeetingDateTime = (futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date') ? new Date(payload.futureMeetingDateTime) : null;
+    const freeTrial = payload.freeTrial || false;
+    
+    // Carry over existing summary and contact info, clear summary if notes changed.
+    const notesSummary = (payload.notes && payload.notes !== payload.originalNotes) ? null : (payload.existingNotesSummary ?? null);
+    const contactInfo = payload.existingContactInfo ?? null;
+
+    // --- Create the final object for Firestore ---
+    // This object has NO inline logic. It's just assignments.
+    const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = { // dealClosed is handled via merge to avoid being overwritten
+      companyName,
+      timestamp,
+      notes,
+      latitude,
+      longitude,
+      partnershipConfidence,
+      hasBusinessCard,
+      businessCardImageUrl,
+      discussedCompetitors,
+      competitorName,
+      coolerType,
+      decisionMakerName,
+      decisionMakerTitle,
+      decisionMakerContact,
+      visitNumber,
+      interestedUnit,
+      hasTDSReading,
+      tdsValue,
+      futureMeetingSet,
+      futureMeetingDateTime,
+      freeTrial,
+      notesSummary,
+      contactInfo,
     };
 
-    // Save the clean, validated data to Firestore.
+    // --- Save to Firestore ---
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
+    // --- Prepare the return object ---
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
+      dealClosed: payload.dealClosed || false, // Add it back for the client-side object
       timestamp: new Date(visitForDb.timestamp),
       futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
     };
@@ -381,4 +401,23 @@ export async function findCompanyAction(
     }
     return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
   }
+}
+
+// Action to update the dealClosed status from the card
+export async function updateDealClosedAction(visitId: string, dealClosed: boolean): Promise<{ success?: boolean, error?: string }> {
+    if (!db) {
+        return { error: 'Firebase is not configured. Cannot update visit.' };
+    }
+    if (!visitId) {
+        return { error: 'Visit ID is required.' };
+    }
+
+    try {
+        const visitDocRef = doc(db, 'visits', visitId);
+        await setDoc(visitDocRef, { dealClosed }, { merge: true });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error in updateDealClosedAction:", error);
+        return { error: `Failed to update deal status: ${error.message}` };
+    }
 }

@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction, updateDealClosedAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -99,7 +99,6 @@ export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
-  const [coldCallCount, setColdCallCount] = useState<number>(0);
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
   const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
@@ -314,21 +313,6 @@ export default function HomePage() {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
   }, [submittedSuggestions]);
 
-  // Derive cold call count from visits
-  useEffect(() => {
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
-    setColdCallCount(todaysVisits);
-
-    if (todaysVisits >= 30) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const lastMilestone = localStorage.getItem('milestoneAchievedDate');
-      if (lastMilestone !== todayStr) {
-        toast({ title: "Milestone Achieved!", description: "Congratulations! You've hit 30 doors today!", duration: 10000 });
-        localStorage.setItem('milestoneAchievedDate', todayStr);
-      }
-    }
-  }, [visits, toast]);
-
   useEffect(() => {
     if (selectedSalesperson) { 
         const hasUploaded = localStorage.getItem('territoryPdfUploaded');
@@ -408,11 +392,13 @@ export default function HomePage() {
       return;
     }
 
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+
     const newVisitTemplate: Partial<Visit> = {
       latitude: userCurrentLatitude,
       longitude: userCurrentLongitude,
       timestamp: new Date(),
-      visitNumber: coldCallCount + 1,
+      visitNumber: todaysVisits + 1,
       companyName: '',
       notes: '',
     };
@@ -427,28 +413,23 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleUpdateFromCard = async (updatedVisit: Visit) => {
+  const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
     // Optimistic UI update
-    setVisits(prevVisits => prevVisits.map(v => v.id === updatedVisit.id ? updatedVisit : v));
-    const result = await saveVisitAction(updatedVisit);
+    setVisits(prev => prev.map(v => v.id === visitId ? { ...v, dealClosed } : v));
+
+    const result = await updateDealClosedAction(visitId, dealClosed);
     if (result.error) {
-      toast({
-        variant: "destructive",
-        title: "Failed to update visit",
-        description: result.error,
-      });
-      // onSnapshot from firebase will handle reverting if there is a DB sync issue.
-      console.error("Failed to update visit from card", result.error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
+        // Revert on failure (Firestore listener will also help, but this is faster)
+        setVisits(prev => prev.map(v => v.id === visitId ? { ...v, dealClosed: !dealClosed } : v));
     } else {
-       toast({
-        title: "Visit Updated",
-        description: `Changes to ${result.visit?.companyName} were saved.`,
-      });
+        toast({ title: 'Deal Status Updated' });
     }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
     toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
   
     const newVisitTemplate: Partial<Visit> = {
       companyName: existingVisit.companyName,
@@ -459,7 +440,7 @@ export default function HomePage() {
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: coldCallCount + 1,
+      visitNumber: todaysVisits + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -468,6 +449,9 @@ export default function HomePage() {
 
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
     setIsVisitFormOpen(false);
+    
+    const originalVisits = [...visits];
+    const originalVisit = payload.id ? visits.find(v => v.id === payload.id) : undefined;
     
     // Optimistically update the UI so the user sees the change immediately.
     const tempId = `temp_${crypto.randomUUID()}`;
@@ -487,25 +471,21 @@ export default function HomePage() {
         decisionMakerName: payload.decisionMakerName ?? '',
         decisionMakerTitle: payload.decisionMakerTitle ?? '',
         decisionMakerContact: payload.decisionMakerContact ?? '',
-        visitNumber: payload.visitNumber ?? coldCallCount + 1,
+        visitNumber: payload.visitNumber ?? originalVisits.filter(v => isToday(new Date(v.timestamp))).length + 1,
         interestedUnit: payload.interestedUnit ?? undefined,
         hasTDSReading: payload.hasTDSReading ?? false,
         tdsValue: payload.tdsValue ?? undefined,
         futureMeetingSet: payload.futureMeetingSet ?? false,
         futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
         freeTrial: payload.freeTrial ?? false,
-        dealClosed: payload.dealClosed ?? false,
+        dealClosed: originalVisit?.dealClosed ?? false,
         contactInfo: payload.existingContactInfo ?? undefined,
         notesSummary: payload.existingNotesSummary ?? undefined,
     };
     
-    const originalVisits = [...visits];
-
     if (!payload.id) {
-        // Optimistically add the new visit to the start of the list
         setVisits(prevVisits => [optimisticVisit, ...prevVisits]);
     } else {
-        // Optimistically update the existing visit
         setVisits(prevVisits => prevVisits.map(v => v.id === payload.id ? optimisticVisit : v));
     }
     
@@ -517,15 +497,12 @@ export default function HomePage() {
         title: "Could not save visit",
         description: result.error,
       });
-      // If the save fails, revert the UI to its original state.
       setVisits(originalVisits);
     } else {
       toast({
         title: result.isNewVisit ? "Visit Logged" : "Visit Updated",
         description: `Visit for ${result.visit?.companyName} has been saved.`,
       });
-      // The onSnapshot listener will automatically replace the optimistic visit
-      // with the real one from the database, so we don't need to do anything else on success.
     }
   };
 
@@ -737,6 +714,7 @@ export default function HomePage() {
   };
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
     const newVisit: Visit = {
         id: '', // Will be generated by server
         timestamp: new Date(),
@@ -755,7 +733,7 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: coldCallCount + 1,
+        visitNumber: todaysVisits + 1,
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
@@ -898,7 +876,7 @@ export default function HomePage() {
                     </AlertDialog>
                 </div>
 
-                {visits.length === 0 && coldCallCount === 0 ? (
+                {visits.length === 0 ? (
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
@@ -922,7 +900,7 @@ export default function HomePage() {
                           visit={visit}
                           onEdit={handleEditVisit}
                           onDelete={handleDeleteVisit}
-                          onUpdateVisit={handleUpdateFromCard}
+                          onUpdateDealClosed={handleUpdateDealClosed}
                           onZoom={setZoomedVisit}
                           onLogFollowUp={handleLogFollowUp}
                           />
@@ -1022,7 +1000,7 @@ export default function HomePage() {
                         visit={visit}
                         onEdit={handleEditVisit}
                         onDelete={handleDeleteVisit}
-                        onUpdateVisit={handleUpdateFromCard}
+                        onUpdateDealClosed={handleUpdateDealClosed}
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
                       />
@@ -1256,7 +1234,7 @@ export default function HomePage() {
                   visit={zoomedVisit}
                   onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
                   onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
-                  onUpdateVisit={(updated) => { handleUpdateFromCard(updated); setZoomedVisit(updated); }}
+                  onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
                   isZoomedView={true}
                 />
               </>

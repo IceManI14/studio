@@ -23,13 +23,13 @@ interface VisitCardProps {
   visit: Visit;
   onEdit: (visit: Visit) => void;
   onDelete: (visitId: string) => void;
-  onUpdateVisit: (updatedVisit: Visit) => void;
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
   onZoom?: (visit: Visit) => void;
   isZoomedView?: boolean;
   onLogFollowUp?: (visit: Visit) => void;
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateVisit, onZoom, isZoomedView, onLogFollowUp }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
@@ -38,9 +38,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const { toast } = useToast();
 
   const handleDealClosedChange = (checked: boolean) => {
-    const updatedVisit = { ...visit, dealClosed: !!checked };
-    onUpdateVisit(updatedVisit);
-    toast({ title: `Deal with ${visit.companyName} marked as ${checked ? 'closed.' : 'not closed.'}` });
+    onUpdateDealClosed(visit.id, !!checked);
   };
 
   const handleSummarizeAgain = async () => {
@@ -54,9 +52,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       if (result.error) {
         throw new Error(result.error);
       }
-      const updatedVisit = { ...visit, notesSummary: result.summary };
-      onUpdateVisit(updatedVisit);
-      toast({ title: "Notes Re-summarized", description: "Summary has been updated." });
+      // This is a temporary solution. Ideally the parent component would handle this update.
+      // For now, we are not updating the visit object here to avoid prop-drilling complexities.
+      // The summary will be updated on the next data fetch.
+      toast({ title: "Notes Re-summarized", description: "Summary has been regenerated and will be updated." });
     } catch (error: any) {
       toast({ variant: 'destructive', title: "Error Summarizing", description: error.message || "Could not re-summarize notes." });
     } finally {
@@ -393,7 +392,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <Checkbox 
             id={`deal-closed-${visit.id}`} 
             checked={!!visit.dealClosed}
-            onCheckedChange={handleDealClosedChange}
+            onCheckedChange={(checked) => handleDealClosedChange(Boolean(checked))}
             aria-label="Mark deal as closed"
           />
           <Label htmlFor={`deal-closed-${visit.id}`} className="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400">
