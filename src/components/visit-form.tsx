@@ -160,7 +160,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const [isUploadingCard, setIsUploadingCard] = useState(false);
   const [isCameraViewVisible, setIsCameraViewVisible] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
@@ -341,7 +341,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
-    setHasCameraPermission(undefined);
+    setHasCameraPermission(null);
     setCurrentCity(null);
   }, [form]);
 
