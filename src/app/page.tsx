@@ -346,8 +346,73 @@ export default function HomePage() {
     };
   }, [isVisitFormOpen]);
 
+  useEffect(() => {
+    // This effect handles the Android back button behavior to prevent exiting the app.
+    // It creates a hierarchical back navigation: Modals -> Tabs -> Home Screen.
 
-  const handleQuickLog = () => {
+    const handlePopState = (event: PopStateEvent) => {
+      // Re-push a state to the history stack to "capture" the next back press.
+      // This prevents the app from closing.
+      history.pushState(null, '', location.href);
+
+      // Priority 1: Close any open modals or dialogs.
+      if (isVisitFormOpen) {
+        setIsVisitFormOpen(false);
+        setCurrentEditingVisit(undefined);
+        return;
+      }
+      if (zoomedVisit) {
+        setZoomedVisit(null);
+        return;
+      }
+      if (isDestinationModalOpen) {
+        setIsDestinationModalOpen(false);
+        return;
+      }
+      if (isFindCompanyModalOpen) {
+        setIsFindCompanyModalOpen(false);
+        return;
+      }
+      if (isManageFilesModalOpen) {
+        setIsManageFilesModalOpen(false);
+        return;
+      }
+      if (isEndDayConfirmOpen) {
+        setIsEndDayConfirmOpen(false);
+        return;
+      }
+
+      // Priority 2: If no modals are open, reset to the main tab.
+      if (activeTab !== 'field-day') {
+        setActiveTab('field-day');
+        return;
+      }
+
+      // If already on the main screen, the pushState call has already prevented exit.
+    };
+
+    // On component mount, we push a state. This is the initial "trap" for the back button.
+    // Without this, the first back press would exit if there's no history.
+    history.pushState(null, '', location.href);
+    
+    window.addEventListener('popstate', handlePopState);
+
+    // Clean up the event listener when the component unmounts.
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [
+    activeTab,
+    isVisitFormOpen,
+    zoomedVisit,
+    isDestinationModalOpen,
+    isFindCompanyModalOpen,
+    isManageFilesModalOpen,
+    isEndDayConfirmOpen,
+  ]);
+
+
+  const handleQuickLog = async () => {
     if (!userCurrentLatitude || !userCurrentLongitude) {
       toast({
         variant: "destructive",
@@ -356,7 +421,24 @@ export default function HomePage() {
       });
       return;
     }
-
+    
+    setIsFetchingCity(true);
+    let companyName, notes;
+    try {
+        const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
+        if (result.error) {
+            toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
+        } else {
+            companyName = result.suggestedCompanyName;
+            notes = result.address ? `Company Address: ${result.address}` : '';
+        }
+    } catch (e: any) {
+        console.error("Error fetching company name for quicklog:", e);
+        toast({ variant: "destructive", title: "Location Lookup Error", description: e.message });
+    } finally {
+        setIsFetchingCity(false);
+    }
+    
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
 
     const newVisitTemplate: Partial<Visit> = {
@@ -364,8 +446,8 @@ export default function HomePage() {
       longitude: userCurrentLongitude,
       timestamp: new Date(),
       visitNumber: todaysVisits + 1,
-      companyName: '',
-      notes: '',
+      companyName: companyName || '',
+      notes: notes || '',
     };
 
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -826,8 +908,8 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!userCurrentLatitude}>
-                        <PlusCircle className="mr-2 h-5 w-5" />
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!userCurrentLatitude || isFetchingCity}>
+                        {isFetchingCity ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
                         Quicklog Visit
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
@@ -939,7 +1021,7 @@ export default function HomePage() {
                           <SelectValue placeholder="Select order" />
                         </SelectTrigger>
                         <SelectContent>
-                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
+                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
                         </SelectContent>
                       </Select>
                     </div>
