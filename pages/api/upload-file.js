@@ -23,29 +23,56 @@ const uploadFileToGCS = (filepath, blobStream) => {
 };
 
 export default async (req, res) => {
+  console.log(`[api/upload-file] - INFO: Received ${req.method} request.`);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
-  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || !process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
-    return res.status(500).json({ message: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name.' });
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+  if (!projectId || !bucketName) {
+    console.error('[api/upload-file] - FATAL: Server configuration error. Missing Firebase Project ID or Storage Bucket Name in .env file.');
+    return res.status(500).json({ message: 'Server configuration error: Your app is missing essential Firebase configuration for file storage.' });
   }
 
-  const storage = new Storage({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  console.log(`[api/upload-file] - INFO: Using Project ID: '${projectId}', Storage Bucket: '${bucketName}'.`);
+
+  const storage = new Storage({ projectId });
   const bucket = storage.bucket(bucketName);
+
+  try {
+    const [exists] = await bucket.exists();
+    if (!exists) {
+        console.error(`[api/upload-file] - FATAL: The bucket "${bucketName}" does not exist in the project "${projectId}".`);
+        return res.status(500).json({ 
+            message: 'Storage bucket not found.',
+            details: `The specified storage bucket "${bucketName}" does not exist. Please check your .env file and Firebase/Google Cloud project to ensure the bucket name is correct.`
+        });
+    }
+    console.log(`[api/upload-file] - INFO: Bucket "${bucketName}" exists and is accessible.`);
+  } catch (error) {
+     console.error('[api/upload-file] - FATAL: Error when checking for bucket existence.', error);
+     return res.status(500).json({
+         message: 'Could not verify storage bucket.',
+         details: 'An error occurred while trying to access the storage bucket. This could be a network or permissions issue. The service account may need the "Storage Legacy Bucket Reader" role to check for existence, in addition to the "Storage Object Creator" role to upload.'
+     });
+  }
   
   const form = formidable({ multiples: false });
 
   try {
     const [fields, files] = await form.parse(req);
 
-    const fileArray = files.file; // Use a generic 'file' field
+    const fileArray = files.file;
     const file = fileArray && fileArray.length > 0 ? fileArray[0] : null;
 
     if (!file) {
       return res.status(400).json({ message: 'No file provided. Ensure the FormData field name is "file".' });
     }
+    
+    console.log(`[api/upload-file] - INFO: Received file for upload: originalFilename='${file.originalFilename}', mimetype='${file.mimetype}', size=${file.size} bytes`);
     
     const allowedTypes = ['application/pdf', 'text/csv', 'image/jpeg', 'image/png', 'image/webp'];
     if (!file.mimetype || !allowedTypes.includes(file.mimetype)) {
@@ -59,34 +86,45 @@ export default async (req, res) => {
       metadata: { contentType: file.mimetype },
       resumable: false,
     });
-
+    
+    console.log(`[api/upload-file] - INFO: Uploading ${uniqueFileName} to bucket ${bucketName}...`);
     await uploadFileToGCS(file.filepath, blobStream);
 
     const publicUrl = `https://storage.googleapis.com/${bucketName}/${blob.name}`;
+    console.log(`[api/upload-file] - INFO: Successfully uploaded ${uniqueFileName}. Public URL: ${publicUrl}`);
     
     return res.status(200).json({ message: 'File uploaded successfully', url: publicUrl, name: file.originalFilename, type: file.mimetype });
 
   } catch (error) {
-    console.error('An error occurred during file upload:', error);
+    console.error('[api/upload-file] - ERROR: An error occurred during the upload process.', error);
     const errorMessage = (error.message || '').toLowerCase();
 
     if (error.code === 403 || errorMessage.includes('forbidden')) {
+         console.error('[api/upload-file] - PERMISSION_ERROR: The service account likely lacks the "Storage Object Creator" role.');
          return res.status(500).json({ 
-            message: 'Failed to upload file due to a permission issue.',
-            details: `The server responded with a permissions error (Code: ${error.code || 'N/A'}). Please ensure the service account for this app has the "Storage Object Creator" role on the "${bucketName}" bucket in your Google Cloud project.`
+            message: 'Permission Denied: Cannot write to Storage Bucket.',
+            details: `Your app's service account does not have permission to upload files. Please go to the IAM page in your Google Cloud project and grant the "Storage Object Creator" role to the service account associated with this app.`
         });
     }
 
     if (errorMessage.includes('could not refresh access token')) {
+        console.error('[api/upload-file] - AUTH_ERROR: The service account likely lacks the "Service Account Token Creator" role.');
         return res.status(500).json({
             message: 'Authentication Failed',
-            details: `Action Required: Your app is missing a required Google Cloud permission. To fix this, add the "Service Account Token Creator" role to your app's service account in the Google Cloud IAM page.`
+            details: `Your app's service account is missing a required Google Cloud permission. To fix this, grant the "Service Account Token Creator" role to the service account in your Google Cloud IAM page.`
+        });
+    }
+    
+    if (errorMessage.includes('formidable')) {
+        return res.status(400).json({
+            message: 'File Parsing Error',
+            details: `There was an issue processing the uploaded file data. Details: ${error.message}`
         });
     }
 
     return res.status(500).json({ 
         message: 'Failed to upload file.',
-        details: error.message || 'An unexpected server error occurred.'
+        details: error.message || 'An unexpected server error occurred. Check the server logs for more details.'
     });
   }
 };
