@@ -549,6 +549,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
     
+    // This logic ensures that if the notes have changed, the old summary is cleared.
+    let notesSummaryToSave = initialData?.notesSummary;
+    if (initialData?.notes !== data.notes) {
+      notesSummaryToSave = undefined;
+    }
+
     const payload: SaveVisitPayload = {
       id: initialData?.id,
       timestamp: initialData?.timestamp,
@@ -571,12 +577,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
       freeTrial: data.freeTrial,
       dealClosed: initialData?.dealClosed,
-      originalCompanyName: initialData?.companyName,
-      originalNotes: initialData?.notes,
-      existingContactInfo: initialData?.contactInfo,
-      existingNotesSummary: initialData?.notesSummary,
-      originalBusinessCardImageUrl: initialData?.businessCardImageUrl,
       visitNumber: initialData?.visitNumber,
+      contactInfo: initialData?.contactInfo,
+      notesSummary: notesSummaryToSave,
     };
 
     try {

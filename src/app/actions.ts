@@ -15,35 +15,11 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
-export interface SaveVisitPayload {
+// The payload now directly uses fields from the Visit type, simplifying the data flow.
+export interface SaveVisitPayload extends Omit<Visit, 'id'> {
   id?: string;
-  timestamp?: Date;
-  companyName: string;
-  notes?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  partnershipConfidence?: number | null;
-  hasBusinessCard?: boolean | null;
-  businessCardImageUrl?: string | null;
-  competitorName?: string | null;
-  coolerType?: string | null;
-  decisionMakerName?: string | null;
-  decisionMakerTitle?: string | null;
-  decisionMakerContact?: string | null;
-  visitNumber?: number | null;
-  interestedUnit?: string | null;
-  hasTDSReading?: boolean | null;
-  tdsValue?: number | null;
-  futureMeetingSet?: boolean | null;
-  futureMeetingDateTime?: Date | null;
-  freeTrial?: boolean | null;
-  // Note: dealClosed is handled separately via the VisitCard to prevent accidental overwrites from the form.
-  originalCompanyName?: string | null;
-  originalNotes?: string | null;
-  existingContactInfo?: ContactInfo | null;
-  existingNotesSummary?: string | null;
-  originalBusinessCardImageUrl?: string | null;
 }
+
 
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string; isNewVisit?: boolean }> {
   if (!db) {
@@ -51,66 +27,40 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
   }
 
   try {
-    const visitId = payload.id || uuidv4();
-    const isNewVisit = !payload.id;
+    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
+    const visitId = isNewVisit ? uuidv4() : payload.id!;
 
     if (!payload.companyName || payload.companyName.trim() === '') {
       return { error: 'Company name is required.' };
     }
 
-    // --- Sanitize and prepare all data BEFORE creating the DB object ---
-    const companyName = payload.companyName.trim();
-    const timestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date();
-    const notes = payload.notes ?? null;
-    const latitude = payload.latitude ?? null;
-    const longitude = payload.longitude ?? null;
-    const partnershipConfidence = payload.partnershipConfidence ?? null;
-    const hasBusinessCard = payload.hasBusinessCard || false;
-    const businessCardImageUrl = hasBusinessCard ? payload.businessCardImageUrl ?? null : null;
-    const discussedCompetitors = !!payload.competitorName;
-    const competitorName = payload.competitorName ?? null;
-    const coolerType = discussedCompetitors ? (payload.coolerType ?? null) : null;
-    const decisionMakerName = payload.decisionMakerName ?? null;
-    const decisionMakerTitle = payload.decisionMakerTitle ?? null;
-    const decisionMakerContact = payload.decisionMakerContact ?? null;
-    const visitNumber = payload.visitNumber ?? null;
-    const interestedUnit = payload.interestedUnit ?? null;
-    const hasTDSReading = payload.hasTDSReading || false;
-    const tdsValue = (hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null;
-    const futureMeetingSet = payload.futureMeetingSet || false;
-    const futureMeetingDateTime = (futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date') ? new Date(payload.futureMeetingDateTime) : null;
-    const freeTrial = payload.freeTrial || false;
-    
-    // Carry over existing summary and contact info, clear summary if notes changed.
-    const notesSummary = (payload.notes && payload.notes !== payload.originalNotes) ? null : (payload.existingNotesSummary ?? null);
-    const contactInfo = payload.existingContactInfo ?? null;
-
-    // --- Create the final object for Firestore ---
-    // This object has NO inline logic. It's just assignments.
-    const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = { // dealClosed is handled via merge to avoid being overwritten
-      companyName,
-      timestamp,
-      notes,
-      latitude,
-      longitude,
-      partnershipConfidence,
-      hasBusinessCard,
-      businessCardImageUrl,
-      discussedCompetitors,
-      competitorName,
-      coolerType,
-      decisionMakerName,
-      decisionMakerTitle,
-      decisionMakerContact,
-      visitNumber,
-      interestedUnit,
-      hasTDSReading,
-      tdsValue,
-      futureMeetingSet,
-      futureMeetingDateTime,
-      freeTrial,
-      notesSummary,
-      contactInfo,
+    // --- Defensive Data Sanitization ---
+    // Each field is meticulously checked and sanitized to prevent invalid data from reaching Firestore.
+    // This robust approach prevents the server crashes that were causing the "unexpected error".
+    const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
+      companyName: payload.companyName.trim(),
+      timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
+      notes: payload.notes ?? null,
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
+      partnershipConfidence: payload.partnershipConfidence ?? null,
+      hasBusinessCard: payload.hasBusinessCard || false,
+      businessCardImageUrl: (payload.hasBusinessCard || false) ? payload.businessCardImageUrl ?? null : null,
+      discussedCompetitors: !!payload.competitorName,
+      competitorName: payload.competitorName ?? null,
+      coolerType: (!!payload.competitorName) ? (payload.coolerType ?? null) : null,
+      decisionMakerName: payload.decisionMakerName ?? null,
+      decisionMakerTitle: payload.decisionMakerTitle ?? null,
+      decisionMakerContact: payload.decisionMakerContact ?? null,
+      visitNumber: payload.visitNumber ?? null,
+      interestedUnit: payload.interestedUnit ?? null,
+      hasTDSReading: payload.hasTDSReading || false,
+      tdsValue: (payload.hasTDSReading || false) && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
+      futureMeetingSet: payload.futureMeetingSet || false,
+      futureMeetingDateTime: (payload.futureMeetingSet || false) && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
+      freeTrial: payload.freeTrial || false,
+      notesSummary: payload.notesSummary ?? null,
+      contactInfo: payload.contactInfo ?? null,
     };
 
     // --- Save to Firestore ---
@@ -121,7 +71,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
-      dealClosed: payload.dealClosed || false, // Add it back for the client-side object
+      dealClosed: payload.dealClosed || false,
       timestamp: new Date(visitForDb.timestamp),
       futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
     };

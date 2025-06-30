@@ -434,8 +434,8 @@ export default function HomePage() {
         futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
         freeTrial: payload.freeTrial ?? false,
         dealClosed: payload.dealClosed ?? false,
-        contactInfo: payload.existingContactInfo ?? undefined,
-        notesSummary: payload.existingNotesSummary ?? undefined,
+        contactInfo: payload.contactInfo ?? undefined,
+        notesSummary: payload.notesSummary ?? undefined,
     };
     
     const updatedVisits = isNewVisit
@@ -468,41 +468,43 @@ export default function HomePage() {
     const numberOfVisits = todaysVisits.length;
 
     if (firebaseConfigured && numberOfVisits > 0) {
-        setIsSyncing(true);
-        toast({ title: "Syncing...", description: `Saving ${numberOfVisits} visit(s) to the cloud.` });
+      setIsSyncing(true);
+      toast({ title: "Syncing...", description: `Saving ${numberOfVisits} visit(s) to the cloud. This may take a moment.` });
 
-        try {
-            const savePromises = todaysVisits.map(visit => {
-                const payload: SaveVisitPayload = {
-                    ...visit,
-                    id: visit.id.startsWith('temp_') ? undefined : visit.id,
-                };
-                return saveVisitAction(payload);
-            });
-
-            const results = await Promise.all(savePromises);
-            
-            const failedSaves = results.filter(r => r.error);
-            if (failedSaves.length > 0) {
-                throw new Error(`Failed to save ${failedSaves.length} visit(s). They will remain on your device. Please check your connection and try ending the day again.`);
-            }
-            
-            toast({
-              title: "Field Day Ended & Synced",
-              description: `Great work! You have completed ${numberOfVisits} visit(s) today and they have been saved to the cloud.`,
-              duration: 10000,
-            });
-
-        } catch (e: any) {
-            toast({
-                variant: "destructive",
-                title: "Sync Failed",
-                description: e.message || "An error occurred while saving to the cloud. Your data is still safe on this device.",
-                duration: 10000,
-            });
-        } finally {
-            setIsSyncing(false);
+      try {
+        const results = [];
+        // This loop saves visits one by one, which is more reliable than sending them all at once.
+        for (const visit of todaysVisits) {
+          const payload: SaveVisitPayload = {
+            ...visit,
+            id: visit.id.startsWith('temp_') ? undefined : visit.id,
+          };
+          const result = await saveVisitAction(payload);
+          results.push(result);
         }
+
+        const failedSaves = results.filter(r => r.error);
+        if (failedSaves.length > 0) {
+          const errorMessages = failedSaves.map(f => f.error).join(', ');
+          throw new Error(`Failed to save ${failedSaves.length} visit(s). They will remain on your device. Errors: ${errorMessages}`);
+        }
+        
+        toast({
+          title: "Field Day Ended & Synced",
+          description: `Great work! You have completed ${numberOfVisits} visit(s) today and they have been saved to the cloud.`,
+          duration: 10000,
+        });
+
+      } catch (e: any) {
+        toast({
+            variant: "destructive",
+            title: "Sync Failed",
+            description: e.message || "An error occurred while saving to the cloud. Your data is still safe on this device.",
+            duration: 10000,
+        });
+      } finally {
+        setIsSyncing(false);
+      }
     } else {
          toast({
           title: "Field Day Ended",
