@@ -661,12 +661,12 @@ export default function HomePage() {
     }
     body += `\n\nBest regards,\nOptimum Trailblazer App`;
 
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${chrisEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoLink = `mailto:${chrisEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     if (typeof window !== 'undefined') {
-        window.open(gmailLink, '_blank');
+        window.location.href = mailtoLink;
     }
-    toast({ title: "Opening Gmail...", description: "Please manually attach the exported PDF to the email before sending." });
+    toast({ title: "Opening email client...", description: "Please manually attach the exported PDF to the email before sending." });
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
