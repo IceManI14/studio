@@ -424,7 +424,7 @@ export default function HomePage() {
     }
     
     setIsFetchingCity(true);
-    let companyName, notes;
+    let companyName, notes, phone;
     try {
         const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
         if (result.error) {
@@ -432,6 +432,7 @@ export default function HomePage() {
         } else {
             companyName = result.suggestedCompanyName;
             notes = result.address ? `Company Address: ${result.address}` : '';
+            phone = result.phone;
         }
     } catch (e: any) {
         console.error("Error fetching company name for quicklog:", e);
@@ -449,6 +450,7 @@ export default function HomePage() {
       visitNumber: todaysVisits + 1,
       companyName: companyName || '',
       notes: notes || '',
+      decisionMakerContact: phone || '',
     };
 
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -488,10 +490,13 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = async (payload: SaveVisitPayload) => {
-    setIsVisitFormOpen(false);
+  const handleSaveFromForm = async (payload: SaveVisitPayload, options: { andClose?: boolean } = {}) => {
+    const { andClose = true } = options;
+    if (andClose) {
+      setIsVisitFormOpen(false);
+    }
     
-    const isNewVisit = !payload.id;
+    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
     const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
     
     let notesSummaryToSave = payload.notesSummary;
@@ -535,7 +540,7 @@ export default function HomePage() {
     localStorage.setItem('visits', JSON.stringify(updatedVisits));
 
     toast({
-      title: isNewVisit ? "Visit Logged Locally" : "Visit Updated Locally",
+      title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
       description: `Visit for ${payload.companyName} has been saved to your device.`,
     });
   };

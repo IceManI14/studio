@@ -131,11 +131,45 @@ export type VisitFormData = z.infer<typeof visitFormSchema>;
 interface VisitFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: SaveVisitPayload) => Promise<void>;
+  onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean }) => Promise<void>;
   initialData?: Visit;
   salesperson: Salesperson | null;
   startDictation?: boolean;
 }
+
+const buildVisitPayload = (data: VisitFormData, initialData: Visit | undefined, currentLatitude?: number, currentLongitude?: number): SaveVisitPayload => {
+  let notesSummaryToSave = initialData?.notesSummary;
+  if (initialData?.notes !== data.notes) {
+    notesSummaryToSave = undefined;
+  }
+
+  return {
+    id: initialData?.id,
+    timestamp: initialData?.timestamp,
+    companyName: data.companyName,
+    notes: data.notes,
+    latitude: currentLatitude,
+    longitude: currentLongitude,
+    partnershipConfidence: data.partnershipConfidence,
+    hasBusinessCard: data.hasBusinessCard,
+    businessCardImageUrl: data.hasBusinessCard ? data.businessCardImageUrl : null,
+    competitorName: data.competitorName,
+    coolerType: data.competitorName ? data.coolerType : undefined,
+    decisionMakerName: data.decisionMakerName,
+    decisionMakerTitle: data.decisionMakerTitle,
+    decisionMakerContact: data.decisionMakerContact,
+    interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
+    hasTDSReading: data.hasTDSReading,
+    tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
+    futureMeetingSet: data.futureMeetingSet,
+    futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
+    freeTrial: data.freeTrial,
+    dealClosed: initialData?.dealClosed,
+    visitNumber: initialData?.visitNumber,
+    contactInfo: initialData?.contactInfo,
+    notesSummary: notesSummaryToSave,
+  };
+};
 
 const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation }) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -147,6 +181,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const confidenceStarsRef = useRef<HTMLDivElement>(null);
 
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
+  const [didDictate, setDidDictate] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
@@ -373,17 +408,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen, resetFormAndState]);
 
   useEffect(() => {
-    if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
-      handleSuggestCompany(initialData.latitude, initialData.longitude);
-      const timer = setTimeout(() => {
-        confidenceStarsRef.current?.focus({ preventScroll: true });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, initialData, handleSuggestCompany]);
-
-
-  useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
       ? [...COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]]
       : [...DEFAULT_COOLER_TYPES_LIST];
@@ -409,6 +433,19 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [partnershipConfidenceValue, form]);
 
+  const handleAutoSave = useCallback(async () => {
+    const isValid = await form.trigger();
+    if (!isValid) return;
+
+    const data = form.getValues();
+    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
+
+    try {
+      await onSave(payload, { andClose: false });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Auto-save Failed', description: 'Could not automatically save your notes.' });
+    }
+  }, [form, initialData, currentLatitude, currentLongitude, onSave, toast]);
 
   const handleToggleVoiceNotes = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -421,7 +458,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       recognitionRef.current.stop();
       return;
     }
-
+    
+    setDidDictate(false);
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
@@ -437,6 +475,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     recognition.onend = () => {
       setIsRecordingNotes(false);
       recognitionRef.current = null;
+      if (didDictate) {
+        handleAutoSave();
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -483,6 +524,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             const currentNotes = form.getValues('notes') || '';
             const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
             form.setValue('notes', newNotes, { shouldValidate: true });
+            setDidDictate(true);
             toast({ title: 'Notes Added Via Voice' });
           }
       } else {
@@ -495,7 +537,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast]);
+  }, [form, isRecordingNotes, toast, handleAutoSave, didDictate]);
 
 
   useEffect(() => {
@@ -663,43 +705,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
-    
-    // This logic ensures that if the notes have changed, the old summary is cleared.
-    let notesSummaryToSave = initialData?.notesSummary;
-    if (initialData?.notes !== data.notes) {
-      notesSummaryToSave = undefined;
-    }
-
-    const payload: SaveVisitPayload = {
-      id: initialData?.id,
-      timestamp: initialData?.timestamp,
-      companyName: data.companyName,
-      notes: data.notes,
-      latitude: currentLatitude,
-      longitude: currentLongitude,
-      partnershipConfidence: data.partnershipConfidence,
-      hasBusinessCard: data.hasBusinessCard,
-      businessCardImageUrl: data.hasBusinessCard ? data.businessCardImageUrl : null,
-      competitorName: data.competitorName,
-      coolerType: data.competitorName ? data.coolerType : undefined,
-      decisionMakerName: data.decisionMakerName,
-      decisionMakerTitle: data.decisionMakerTitle,
-      decisionMakerContact: data.decisionMakerContact,
-      interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
-      hasTDSReading: data.hasTDSReading,
-      tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
-      futureMeetingSet: data.futureMeetingSet,
-      futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
-      freeTrial: data.freeTrial,
-      dealClosed: initialData?.dealClosed,
-      visitNumber: initialData?.visitNumber,
-      contactInfo: initialData?.contactInfo,
-      notesSummary: notesSummaryToSave,
-    };
-
+    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
     try {
-      await onSave(payload);
-      onClose();
+      await onSave(payload, { andClose: true });
     } catch (error) {
       toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save operation." });
     } finally {
