@@ -953,7 +953,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => form.setValue('companyName', '', { shouldValidate: true })}
+                            onClick={() => {
+                              form.setValue('companyName', '', { shouldValidate: true });
+                              form.setFocus('companyName');
+                            }}
                             className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                             aria-label="Clear company name"
                           >
