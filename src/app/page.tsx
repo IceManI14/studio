@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -9,7 +8,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -41,7 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -127,7 +126,7 @@ export default function HomePage() {
 
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
-  const [targetDestination, setTargetDestination] = useState<string | null>(null);
+  const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
@@ -410,6 +409,12 @@ export default function HomePage() {
     
     const isNewVisit = !payload.id;
     const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
+    
+    let notesSummaryToSave = payload.notesSummary;
+    if (initialData?.notes !== payload.notes) {
+      notesSummaryToSave = undefined; // Clear old summary if notes changed
+    }
+
     const optimisticVisit: Visit = {
         id: tempId!,
         timestamp: payload.timestamp || new Date(),
@@ -435,7 +440,7 @@ export default function HomePage() {
         freeTrial: payload.freeTrial ?? false,
         dealClosed: payload.dealClosed ?? false,
         contactInfo: payload.contactInfo ?? undefined,
-        notesSummary: payload.notesSummary ?? undefined,
+        notesSummary: notesSummaryToSave,
     };
     
     const updatedVisits = isNewVisit
@@ -467,54 +472,45 @@ export default function HomePage() {
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp)));
     const numberOfVisits = todaysVisits.length;
 
-    if (firebaseConfigured && numberOfVisits > 0) {
-      setIsSyncing(true);
-      toast({ title: "Syncing...", description: `Saving ${numberOfVisits} visit(s) to the cloud. This may take a moment.` });
-
-      try {
-        const results = [];
-        // This loop saves visits one by one, which is more reliable than sending them all at once.
-        for (const visit of todaysVisits) {
-          const payload: SaveVisitPayload = {
-            ...visit,
-            id: visit.id.startsWith('temp_') ? undefined : visit.id,
-          };
-          const result = await saveVisitAction(payload);
-          results.push(result);
-        }
-
-        const failedSaves = results.filter(r => r.error);
-        if (failedSaves.length > 0) {
-          const errorMessages = failedSaves.map(f => f.error).join(', ');
-          throw new Error(`Failed to save ${failedSaves.length} visit(s). They will remain on your device. Errors: ${errorMessages}`);
-        }
-        
-        toast({
-          title: "Field Day Ended & Synced",
-          description: `Great work! You have completed ${numberOfVisits} visit(s) today and they have been saved to the cloud.`,
-          duration: 10000,
-        });
-
-      } catch (e: any) {
-        toast({
-            variant: "destructive",
-            title: "Sync Failed",
-            description: e.message || "An error occurred while saving to the cloud. Your data is still safe on this device.",
-            duration: 10000,
-        });
-      } finally {
-        setIsSyncing(false);
-      }
-    } else {
-         toast({
-          title: "Field Day Ended",
-          description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your data is saved locally.`,
-          duration: 10000,
-        });
+    if (numberOfVisits === 0) {
+        toast({ title: "No visits to create a report for today." });
+        setIsEndDayConfirmOpen(false);
+        return;
     }
-    
-    localStorage.removeItem('milestoneAchievedDate');
-    setIsEndDayConfirmOpen(false);
+
+    if (!firebaseConfigured) {
+        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report. Please check your app's configuration." });
+        setIsEndDayConfirmOpen(false);
+        return;
+    }
+
+    setIsSyncing(true);
+    toast({ title: "Generating Daily Report...", description: `Processing ${numberOfVisits} visit(s) and uploading to cloud storage.` });
+
+    try {
+      const result = await saveDailyReportAction(todaysVisits);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: "Daily Report Saved!",
+        description: `Your daily visit report has been successfully saved to the cloud storage bucket.`,
+        duration: 10000,
+      });
+      localStorage.removeItem('milestoneAchievedDate');
+    } catch (e: any) {
+      toast({
+          variant: "destructive",
+          title: "Report Save Failed",
+          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
+          duration: 10000,
+      });
+    } finally {
+      setIsSyncing(false);
+      setIsEndDayConfirmOpen(false);
+    }
   };
 
   const handleSubmitSuggestion = async () => {
@@ -749,13 +745,16 @@ export default function HomePage() {
             <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
                 <div 
                   className="flex items-center gap-2 cursor-pointer group"
-                  onClick={() => handleChangeDestination()}
+                  onClick={()={() => handleChangeDestination()}
                 >
                     <User className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-headline font-semibold text-foreground text-center transition-colors group-hover:text-primary">
-                      {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
+                      {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination.city}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
                     </h2>
                 </div>
+                 {targetDestination?.description && (
+                  <p className="text-sm text-muted-foreground mt-1 text-center">AI Suggestion: {targetDestination.description}</p>
+                )}
                 {navigationUrl && (
                   <Button
                     onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
@@ -764,7 +763,7 @@ export default function HomePage() {
                     size="sm"
                   >
                     <Map className="mr-2 h-4 w-4" />
-                    Navigate to Destination
+                    Navigate to AI-Suggested Spot
                   </Button>
                 )}
                 {isFetchingCity && (
@@ -834,20 +833,20 @@ export default function HomePage() {
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
                         <Button variant="default" size="sm" className="flex-1" disabled={isSyncing}>
-                          {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sunset className="mr-2 h-5 w-5" />} 
-                          End Day & Sync
+                          {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
+                          Save Daily Report
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>End Your Field Day & Sync to Cloud?</AlertDialogTitle>
+                          <AlertDialogTitle>Save Daily Report to Cloud Storage?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will save all of today's locally stored visits to the company database. This action cannot be undone.
+                            This will generate a CSV report of today's visits and save it to the Trailblazer storage bucket. Your local data for the day will remain on this device.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmEndDay}>End Day & Sync</AlertDialogAction>
+                          <AlertDialogAction onClick={confirmEndDay}>Save Report</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -863,7 +862,7 @@ export default function HomePage() {
                             <WifiOff className="h-4 w-4" />
                             <AlertTitle>Local-First Mode Enabled</AlertTitle>
                             <AlertDescription>
-                            Your visits are being saved to this device. Click "End Day & Sync" to upload them to the cloud.
+                            Your visits are being saved to this device. Click "Save Daily Report" to upload a report to the cloud.
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -896,7 +895,7 @@ export default function HomePage() {
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground">Filter & Sort Options</h3>
+                  <h3 className="text-lg font-medium text-foreground">Filter &amp; Sort Options</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div className="flex flex-col items-center">
@@ -940,10 +939,7 @@ export default function HomePage() {
                           <SelectValue placeholder="Select order" />
                         </SelectTrigger>
                         <SelectContent>
-                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
-                          ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
-                          ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>
-                          )}
+                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1237,13 +1233,14 @@ export default function HomePage() {
                                     className="justify-start"
                                     disabled={isFindingParking}
                                     onClick={async () => {
-                                        setTargetDestination(city);
                                         setIsDestinationModalOpen(false);
                                         setIsFindingParking(true);
                                         try {
                                             const result = await findOptimalParkingAction({ city });
                                             if (result.error) throw new Error(result.error);
+                                            
                                             if (result.latitude && result.longitude) {
+                                                setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
                                                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
                                                 setNavigationUrl(googleMapsUrl);
                                             } else {
@@ -1297,7 +1294,7 @@ export default function HomePage() {
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
          <p className="text-xs mt-1">
-            {firebaseConfigured ? "Data is saved locally and synced at the end of the day." : "Data is saved locally to your browser."}
+            {firebaseConfigured ? "Data is saved locally. Use 'Save Daily Report' to upload to the cloud." : "Data is saved locally to your browser."}
          </p>
       </footer>
     </div>

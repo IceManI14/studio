@@ -1,4 +1,3 @@
-
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -11,9 +10,10 @@ import { findPlacesFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { db } from '@/lib/firebase';
+import { db, firebaseConfigured } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
+import { Storage } from '@google-cloud/storage';
 
 // The payload now directly uses fields from the Visit type, simplifying the data flow.
 export interface SaveVisitPayload extends Omit<Visit, 'id'> {
@@ -370,4 +370,82 @@ export async function updateDealClosedAction(visitId: string, dealClosed: boolea
         console.error("Error in updateDealClosedAction:", error);
         return { error: `Failed to update deal status: ${error.message}` };
     }
+}
+
+export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?: boolean; url?: string; error?: string }> {
+  if (!firebaseConfigured) {
+    return { error: 'Firebase/GCS is not configured. Cannot save report.' };
+  }
+  if (!visits || visits.length === 0) {
+    return { error: 'No visits to generate a report for.' };
+  }
+
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+  if (!projectId || !bucketName) {
+    return { error: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name.' };
+  }
+
+  try {
+    const storage = new Storage({ projectId });
+    
+    // CSV Generation Logic
+    const headers = [
+      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'Notes', 
+      'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
+      'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 
+      'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
+      'Decision Maker Contact', 'Visit Number', 'Interested Unit', 'Has TDS Reading', 
+      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Deal Closed'
+    ];
+    const rows = visits.map(visit => [
+      visit.id,
+      new Date(visit.timestamp).toISOString(),
+      visit.latitude ?? '',
+      visit.longitude ?? '',
+      `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
+      visit.contactInfo?.confidence ?? '',
+      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`,
+      visit.partnershipConfidence ?? '',
+      visit.hasBusinessCard ? 'Yes' : 'No',
+      `"${(visit.businessCardImageUrl ?? '').replace(/"/g, '""')}"`,
+      visit.discussedCompetitors ? 'Yes' : 'No',
+      `"${(visit.competitorName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.coolerType ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
+      visit.visitNumber ?? '',
+      `"${(visit.interestedUnit ?? '').replace(/"/g, '""')}"`,
+      visit.hasTDSReading ? 'Yes' : 'No',
+      visit.tdsValue ?? '',
+      visit.futureMeetingSet ? 'Yes' : 'No',
+      visit.futureMeetingDateTime ? new Date(visit.futureMeetingDateTime).toISOString() : '',
+      visit.freeTrial ? 'Yes' : 'No',
+      visit.dealClosed ? 'Yes' : 'No',
+    ].join(','));
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    const reportDate = format(new Date(), 'yyyy-MM-dd');
+    const fileName = `reports/visits-${reportDate}.csv`;
+    const file = storage.bucket(bucketName).file(fileName);
+
+    await file.save(csvContent, {
+      metadata: { contentType: 'text/csv' },
+    });
+
+    const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+    return { success: true, url: publicUrl };
+
+  } catch (error: any) {
+    console.error("Error in saveDailyReportAction:", error);
+    const errorMessage = String(error?.message || '').toLowerCase();
+    if (errorMessage.includes('forbidden') || error.code === 403) {
+      return { error: 'Permission Denied. The service account may need the "Storage Object Creator" role.' };
+    }
+    return { error: `Failed to save daily report to storage: ${error.message}` };
+  }
 }
