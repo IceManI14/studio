@@ -270,7 +270,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
         if (result.address) {
             const currentNotes = form.getValues('notes') || '';
-            const addressNote = `Suggested Address: ${result.address}`;
+            const addressNote = `Company Address: ${result.address}`;
             if (!currentNotes.includes(addressNote)) {
               const newNotes = `${addressNote}\n\n${currentNotes}`;
               form.setValue('notes', newNotes.trim().replace(/\\n/g, '\n'), { shouldValidate: true });
