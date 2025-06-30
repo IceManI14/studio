@@ -763,7 +763,7 @@ export default function HomePage() {
                     size="sm"
                   >
                     <Map className="mr-2 h-4 w-4" />
-                    Navigate to Suggested Parking
+                    Navigate to AI Destination
                   </Button>
                 )}
                 {isFetchingCity && (
