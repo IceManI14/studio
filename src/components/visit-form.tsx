@@ -425,13 +425,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
-    recognition.continuous = false;
+    recognition.continuous = false; // Stops after the first pause in speech
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
       setIsRecordingNotes(true);
-      toast({ title: 'Listening...', description: 'Speak to add notes. Recording will stop when you pause.' });
+      toast({ title: 'Listening...', description: 'Start speaking. Recording will stop automatically after you pause.' });
     };
 
     recognition.onend = () => {
@@ -439,32 +439,61 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       recognitionRef.current = null;
     };
 
-    recognition.onerror = (event) => {
-      let errorMessage = event.error;
-      if (event.error === 'no-speech') {
-        errorMessage = "No speech was detected. Please try again.";
-      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        errorMessage = "Microphone access denied. Please enable it in your browser settings.";
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+      switch (event.error) {
+        case 'no-speech':
+          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+          break;
+        case 'network':
+          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+          break;
+        case 'aborted':
+          // This can happen if the user stops it manually or navigates away.
+          // It's not usually an error to show to the user.
+          console.log("Speech recognition aborted.");
+          setIsRecordingNotes(false);
+          recognitionRef.current = null;
+          return; // Don't show a toast for this common case.
+        case 'language-not-supported':
+          errorMessage = "The language for dictation is not supported by your browser.";
+          break;
+        case 'bad-grammar':
+           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+           break;
       }
-      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage });
+      
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
       setIsRecordingNotes(false);
       recognitionRef.current = null;
     };
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        const currentNotes = form.getValues('notes') || '';
-        const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
-        form.setValue('notes', newNotes, { shouldValidate: true });
-        toast({ title: 'Notes Added Via Voice' });
+      // Add more robust check for results
+      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            const currentNotes = form.getValues('notes') || '';
+            const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
+            form.setValue('notes', newNotes, { shouldValidate: true });
+            toast({ title: 'Notes Added Via Voice' });
+          }
+      } else {
+        console.warn("Speech recognition returned a result with no transcript.");
       }
     };
     
     try {
         recognition.start();
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Could not start recording', description: 'Please ensure microphone access is granted.' });
+    } catch(e: any) {
+        toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
   }, [form, isRecordingNotes, toast]);
 
