@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -866,30 +866,48 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormLabel>Company Name</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                        <Input placeholder="e.g., Acme Corp" {...field} />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleToggleVoiceCompanyName}
-                          className="h-9 w-9"
-                          aria-label="Dictate company name"
-                        >
-                          {isRecordingCompanyName ? (
-                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                          ) : (
-                            <Mic className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                        <Button
+                      <div className="relative flex-grow">
+                        <Input
+                          placeholder="e.g., Acme Corp"
+                          {...field}
+                          className={cn(field.value && 'pr-9')}
+                        />
+                        {field.value && (
+                          <Button
                             type="button"
-                            onClick={handleFindButtonClick}
-                            variant="outline"
-                            size="sm"
-                            disabled={isSuggestingCompany || isSaving}
-                        >
-                          {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
-                        </Button>
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => form.setValue('companyName', '', { shouldValidate: true })}
+                            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                            aria-label="Clear company name"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleToggleVoiceCompanyName}
+                        className="h-9 w-9"
+                        aria-label="Dictate company name"
+                      >
+                        {isRecordingCompanyName ? (
+                          <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                        ) : (
+                          <Mic className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                      <Button
+                          type="button"
+                          onClick={handleFindButtonClick}
+                          variant="outline"
+                          size="sm"
+                          disabled={isSuggestingCompany || isSaving}
+                      >
+                        {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
+                      </Button>
                     </div>
                   </FormControl>
                   {!initialData?.id && (
