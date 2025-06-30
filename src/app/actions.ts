@@ -58,41 +58,41 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       return { error: 'Company name is required.' };
     }
 
+    // Explicitly build the object to be saved, ensuring no undefined or invalid values are sent to Firestore.
     const visitForDb: Omit<Visit, 'id'> = {
-      // Required fields
+      // --- REQUIRED ---
       companyName: payload.companyName.trim(),
       timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
       
-      // All other fields are optional and need safe defaults
+      // --- OPTIONAL BASICS ---
       notes: payload.notes ?? null,
       latitude: payload.latitude ?? null,
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
-      contactInfo: payload.existingContactInfo ?? null,
-      
-      // If notes have changed, nullify the summary. If not, keep the existing one.
       notesSummary: (payload.notes && payload.notes !== payload.originalNotes) ? null : (payload.existingNotesSummary ?? null),
-
+      contactInfo: payload.existingContactInfo ?? null,
+      visitNumber: payload.visitNumber ?? null,
+      interestedUnit: payload.interestedUnit ?? null,
+      freeTrial: payload.freeTrial || false,
+      dealClosed: payload.dealClosed || false,
+      
+      // --- CONDITIONAL LOGIC ---
       hasBusinessCard: payload.hasBusinessCard || false,
-      businessCardImageUrl: payload.hasBusinessCard ? (payload.businessCardImageUrl ?? null) : null,
+      businessCardImageUrl: (payload.hasBusinessCard && payload.businessCardImageUrl) ? payload.businessCardImageUrl : null,
       
       discussedCompetitors: !!payload.competitorName,
       competitorName: payload.competitorName ?? null,
-      coolerType: payload.competitorName ? (payload.coolerType ?? null) : null,
+      coolerType: (!!payload.competitorName && payload.coolerType) ? payload.coolerType : null,
       
       decisionMakerName: payload.decisionMakerName ?? null,
       decisionMakerTitle: payload.decisionMakerTitle ?? null,
       decisionMakerContact: payload.decisionMakerContact ?? null,
-      visitNumber: payload.visitNumber ?? null,
-      interestedUnit: payload.interestedUnit ?? null,
+      
       hasTDSReading: payload.hasTDSReading || false,
-      tdsValue: payload.hasTDSReading ? (payload.tdsValue ?? null) : null,
+      tdsValue: (payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue)) ? payload.tdsValue : null,
       
       futureMeetingSet: payload.futureMeetingSet || false,
       futureMeetingDateTime: (payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date') ? new Date(payload.futureMeetingDateTime) : null,
-
-      freeTrial: payload.freeTrial || false,
-      dealClosed: payload.dealClosed || false,
     };
 
     // Save the clean, validated data to Firestore.
@@ -110,21 +110,20 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
 
   } catch (error: any) {
     console.error("CRITICAL ERROR IN saveVisitAction:", error);
-    let userMessage = 'An unexpected error occurred during the save operation. Please check the server logs for more details.';
-    
-    if (error.message) {
-        if (error.message.includes('permission-denied') || (error.code && error.code.includes('permission-denied'))) {
-            userMessage = 'Failed to save: Permission denied. Please check your Firestore security rules.';
-        } else if (error.message.includes('Document data maximum size')) {
-            userMessage = 'Failed to save: The visit data is too large. This can be caused by a very large business card image. Please try a smaller image.';
-        } else if (error.message.includes('invalid-argument') || (error.code && error.code.includes('invalid-argument'))) {
-             userMessage = `Failed to save: Invalid data was sent to the database. This might be due to an unexpected value in the form. Details: ${error.message}`;
-        } else {
-             userMessage = `An error occurred: ${error.message}`;
-        }
+    const errorMessage = String(error?.message || '').toLowerCase();
+    const errorCode = String(error?.code || '').toLowerCase();
+
+    if (errorCode.includes('permission-denied') || errorMessage.includes('permission denied')) {
+        return { error: 'Failed to save: Permission denied. Please check your Firestore security rules.' };
     }
-    
-    return { error: userMessage };
+    if (errorMessage.includes('document data maximum size')) {
+        return { error: 'Failed to save: The visit data is too large. This can be caused by a very large business card image. Please try a smaller image.' };
+    }
+    if (errorCode.includes('invalid-argument') || errorMessage.includes('invalid argument')) {
+         return { error: `Failed to save: Invalid data was sent to the database. Details: ${error.message}` };
+    }
+
+    return { error: `An unexpected error occurred during the save operation. Details: ${error.message || 'No specific error message was provided.'}` };
   }
 }
 
