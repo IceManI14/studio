@@ -314,7 +314,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   
   const handleFindButtonClick = useCallback(() => {
     if (!navigator.geolocation) {
-      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
+      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
       return;
     }
     
@@ -1536,9 +1536,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible || isUploadingCard}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isCameraViewVisible || isUploadingCard} className="aurora-glow">
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard} className="aurora-glow">
                 {(isSaving || isSuggestingCompany || isUploadingCard) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isRecordingNotes && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
+                {(isRecordingNotes || isRecordingCompanyName) && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>
             </DialogFooter>
