@@ -195,12 +195,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
         
         <div className="flex flex-row justify-between items-start w-full">
-          <div className="flex-grow space-y-1.5">
+          <div className="flex-grow space-y-1.5 min-w-0">
             <CardTitle 
-              className="font-headline text-2xl text-accent flex items-center justify-center w-full cursor-pointer"
+              className="font-headline text-2xl text-accent flex items-center justify-center w-full cursor-pointer text-center"
               onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
             >
-                <Building2 className="mr-2 h-5 w-5" /> {visit.companyName}
+                <Building2 className="mr-2 h-5 w-5 shrink-0" />
+                <span className="break-all">{visit.companyName}</span>
             </CardTitle>
             
             {isCoordsVisible && visit.latitude && visit.longitude && (
@@ -212,7 +213,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <div className="flex flex-col items-start space-y-1 w-full">
                 {visit.interestedUnit && (
                   <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
-                    <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center text-sm">
+                    <h4 className="font-medium text-green-700 dark:text-green-400 text-sm break-words">
                       Unit of Interest: {visit.interestedUnit}
                     </h4>
                   </div>
