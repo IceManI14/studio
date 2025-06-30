@@ -411,7 +411,7 @@ export default function HomePage() {
     const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
     
     let notesSummaryToSave = payload.notesSummary;
-    if (initialData?.notes !== payload.notes) {
+    if (currentEditingVisit?.notes !== payload.notes) {
       notesSummaryToSave = undefined; // Clear old summary if notes changed
     }
 
@@ -745,7 +745,7 @@ export default function HomePage() {
             <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
                 <div 
                   className="flex items-center gap-2 cursor-pointer group"
-                  onClick={()={() => handleChangeDestination()}
+                  onClick={() => handleChangeDestination()}
                 >
                     <User className="h-5 w-5 text-primary" />
                     <h2 className="text-lg font-headline font-semibold text-foreground text-center transition-colors group-hover:text-primary">
@@ -1300,5 +1300,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
