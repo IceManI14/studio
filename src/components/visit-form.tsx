@@ -243,18 +243,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [form, toast, handleRemoveImage]);
 
 
-  const handleSuggestCompany = useCallback(async () => {
+  const handleSuggestCompany = useCallback(async (lat: number, lon: number) => {
     setIsSuggestingCompany(true);
-
-    const lat = form.getValues('latitude');
-    const lon = form.getValues('longitude');
-    
-    if (typeof lat !== 'number' || typeof lon !== 'number') {
-        toast({ variant: "destructive", title: "Location Missing", description: "No location data to search with." });
-        setIsSuggestingCompany(false);
-        return;
-    }
-
     try {
         const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
         
@@ -284,6 +274,38 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setIsSuggestingCompany(false);
     }
   }, [form, setCurrentCity, toast]);
+  
+  const handleFindButtonClick = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
+      return;
+    }
+    
+    setIsSuggestingCompany(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        setCurrentLatitude(lat);
+        setCurrentLongitude(lon);
+        form.setValue('latitude', lat, { shouldValidate: true });
+        form.setValue('longitude', lon, { shouldValidate: true });
+        
+        handleSuggestCompany(lat, lon);
+      },
+      (error) => {
+        setIsSuggestingCompany(false);
+        let errorMessage = "Could not retrieve location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Location access denied. Please enable it in your browser settings.";
+        }
+        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [handleSuggestCompany, toast, form]);
 
 
   useEffect(() => {
@@ -353,7 +375,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     if (isOpen && !initialData?.id && initialData?.latitude && initialData?.longitude) {
-      handleSuggestCompany();
+      handleSuggestCompany(initialData.latitude, initialData.longitude);
       const timer = setTimeout(() => {
         confidenceStarsRef.current?.focus({ preventScroll: true });
       }, 100);
@@ -719,7 +741,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         <Input placeholder="e.g., Acme Corp" {...field} />
                         <Button
                             type="button"
-                            onClick={handleSuggestCompany}
+                            onClick={handleFindButtonClick}
                             variant="outline"
                             size="sm"
                             disabled={isSuggestingCompany || isSaving}
