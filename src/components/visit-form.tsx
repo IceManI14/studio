@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -183,6 +183,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
   const [didDictate, setDidDictate] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const [isRecordingCompanyName, setIsRecordingCompanyName] = useState(false);
+  const companyNameRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -433,9 +436,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [partnershipConfidenceValue, form]);
 
-  const handleAutoSave = useCallback(async () => {
+  const handleSaveAndContinue = useCallback(async () => {
     const isValid = await form.trigger();
-    if (!isValid) return;
+    if (!isValid) {
+      toast({ variant: 'destructive', title: 'Invalid Data', description: 'Please fill in all required fields before saving.' });
+      return;
+    }
 
     const data = form.getValues();
     const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
@@ -443,9 +449,92 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     try {
       await onSave(payload, { andClose: false });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Auto-save Failed', description: 'Could not automatically save your notes.' });
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your changes.' });
     }
   }, [form, initialData, currentLatitude, currentLongitude, onSave, toast]);
+
+  const handleToggleVoiceCompanyName = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature. This can sometimes be caused by browser extensions or specific browser settings (e.g., in Firefox).' });
+      return;
+    }
+
+    if (isRecordingCompanyName && companyNameRecognitionRef.current) {
+      companyNameRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    companyNameRecognitionRef.current = recognition;
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingCompanyName(true);
+      toast({ title: 'Listening for Company Name...' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingCompanyName(false);
+      companyNameRecognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+      switch (event.error) {
+        case 'no-speech':
+          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+          break;
+        case 'network':
+          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+          break;
+        case 'aborted':
+          console.log("Speech recognition aborted.");
+          setIsRecordingCompanyName(false);
+          companyNameRecognitionRef.current = null;
+          return;
+        case 'language-not-supported':
+          errorMessage = "The language for dictation is not supported by your browser.";
+          break;
+        case 'bad-grammar':
+           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+           break;
+      }
+      
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
+      setIsRecordingCompanyName(false);
+      companyNameRecognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            form.setValue('companyName', transcript, { shouldValidate: true });
+            toast({ title: 'Company Name Updated' });
+            handleSaveAndContinue();
+          }
+      } else {
+        console.warn("Speech recognition returned a result with no transcript.");
+      }
+    };
+    
+    try {
+        recognition.start();
+    } catch(e: any) {
+        toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
+    }
+  }, [form, isRecordingCompanyName, toast, handleSaveAndContinue]);
 
   const handleToggleVoiceNotes = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -475,9 +564,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     recognition.onend = () => {
       setIsRecordingNotes(false);
       recognitionRef.current = null;
-      if (didDictate) {
-        handleAutoSave();
-      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -537,7 +623,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, handleAutoSave, didDictate]);
+  }, [form, isRecordingNotes, toast, didDictate]);
 
 
   useEffect(() => {
@@ -555,6 +641,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const stopAudioAndCamera = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      }
+      if (companyNameRecognitionRef.current) {
+        companyNameRecognitionRef.current.stop();
       }
       stopCameraStream();
     };
@@ -778,6 +867,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <div className="flex items-center gap-2">
                         <Input placeholder="e.g., Acme Corp" {...field} />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleToggleVoiceCompanyName}
+                          className="h-9 w-9"
+                          aria-label="Dictate company name"
+                        >
+                          {isRecordingCompanyName ? (
+                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                          ) : (
+                            <Mic className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                         <Button
                             type="button"
                             onClick={handleFindButtonClick}
@@ -1390,20 +1493,32 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <FormItem>
                   <FormLabel className="flex items-center justify-between">
                     <span>Visit Notes</span>
-                     <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleToggleVoiceNotes}
-                        className="h-7 w-7"
-                        aria-label={isRecordingNotes ? 'Stop dictating notes' : 'Dictate notes by voice'}
-                    >
-                        {isRecordingNotes ? (
-                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                        ) : (
-                            <Mic className="h-4 w-4 text-muted-foreground" />
-                        )}
-                    </Button>
+                     <div className="flex items-center gap-1">
+                       <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleSaveAndContinue}
+                            className="h-7 w-7"
+                            aria-label="Save and continue editing"
+                        >
+                            <Save className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleVoiceNotes}
+                            className="h-7 w-7"
+                            aria-label={isRecordingNotes ? 'Stop dictating notes' : 'Dictate notes by voice'}
+                        >
+                            {isRecordingNotes ? (
+                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                            ) : (
+                                <Mic className="h-4 w-4 text-muted-foreground" />
+                            )}
+                        </Button>
+                     </div>
                   </FormLabel>
                   <FormControl>
                     <Textarea
