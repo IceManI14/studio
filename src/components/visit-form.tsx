@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, MicOff, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -146,9 +146,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const confidenceStarsRef = useRef<HTMLDivElement>(null);
 
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
-  const [hasMicPermission, setHasMicPermission] = useState<boolean | undefined>(undefined);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -413,14 +411,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     const stopAudioAndCamera = () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
       }
-      if (mediaRecorderRef.current?.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      }
-      audioChunksRef.current = [];
-      setIsRecordingNotes(false);
       stopCameraStream();
     };
 
@@ -641,64 +634,61 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-
-  const handleNotesFocus = async () => {
-    if (isRecordingNotes) return;
-    if (hasMicPermission === false) {
-      toast({ variant: "destructive", title: "Microphone Access Denied", description: "Please enable microphone permissions to record audio notes." });
+  const handleToggleVoiceNotes = () => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature.' });
       return;
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setHasMicPermission(true);
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+    if (isRecordingNotes && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
 
-      mediaRecorderRef.current.onstop = () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
-          toast({ title: "Audio Notes Recorded", description: `Captured ${Math.round(audioBlob.size / 1024)} KB of audio. (Not saved with visit yet)` });
-          audioChunksRef.current = [];
-        }
-        if (mediaRecorderRef.current?.stream) {
-             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        }
-        setIsRecordingNotes(false);
-      };
-
-      mediaRecorderRef.current.start();
+    recognition.onstart = () => {
       setIsRecordingNotes(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      setHasMicPermission(false);
-    }
-  };
+      toast({ title: 'Listening...', description: 'Speak to add notes. Recording will stop when you pause.' });
+    };
 
-  const handleNotesBlur = () => {
-    if (isRecordingNotes && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop();
-    }
-  };
+    recognition.onend = () => {
+      setIsRecordingNotes(false);
+      recognitionRef.current = null;
+    };
 
-  const handleGeniusScanClick = () => {
-    if (typeof window !== 'undefined') {
-      const isAndroid = /android/i.test(navigator.userAgent);
-      
-      toast({ title: "Opening Genius Scan", description: "After scanning, return here to upload the saved image from your photos." });
-
-      if (isAndroid) {
-        const geniusScanPackage = 'com.thegrizzlylabs.geniusscan.free';
-        const playStoreUrl = `https://play.google.com/store/apps/details?id=${geniusScanPackage}`;
-        const intentUrl = `intent://#Intent;package=${geniusScanPackage};S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
-        window.location.href = intentUrl;
-      } else {
-        window.open('geniusscan://', '_blank');
+    recognition.onerror = (event) => {
+      let errorMessage = event.error;
+      if (event.error === 'no-speech') {
+        errorMessage = "No speech was detected. Please try again.";
+      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        errorMessage = "Microphone access denied. Please enable it in your browser settings.";
       }
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage });
+      setIsRecordingNotes(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        const currentNotes = form.getValues('notes') || '';
+        const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
+        form.setValue('notes', newNotes, { shouldValidate: true });
+        toast({ title: 'Notes Added Via Voice' });
+      }
+    };
+    
+    try {
+        recognition.start();
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Could not start recording', description: 'Please ensure microphone access is granted.' });
     }
   };
 
@@ -1349,22 +1339,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center">
-                    Visit Notes
-                    {isRecordingNotes && <Mic className="ml-2 h-4 w-4 text-red-500 animate-pulse" />}
-                    {!isRecordingNotes && hasMicPermission === true && <Mic className="ml-2 h-4 w-4 text-green-500" />}
-                    {!isRecordingNotes && hasMicPermission === false && <MicOff className="ml-2 h-4 w-4 text-muted-foreground" />}
-                    {!isRecordingNotes && hasMicPermission === undefined && <Mic className="ml-2 h-4 w-4 text-muted-foreground" />}
+                  <FormLabel className="flex items-center justify-between">
+                    <span>Visit Notes</span>
+                     <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleToggleVoiceNotes}
+                        className="h-7 w-7"
+                        aria-label={isRecordingNotes ? 'Stop dictating notes' : 'Dictate notes by voice'}
+                    >
+                        {isRecordingNotes ? (
+                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                        ) : (
+                            <Mic className="h-4 w-4 text-muted-foreground" />
+                        )}
+                    </Button>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Details about the visit, key discussion points, etc."
+                      placeholder="Details about the visit, key discussion points, etc. You can also use the microphone to dictate notes."
                       className="mt-1 min-h-[100px]"
                       {...field}
-                      onBlur={() => {
-                        field.onBlur();
-                        handleNotesBlur();
-                      }}
                     />
                   </FormControl>
                   <FormMessage />
