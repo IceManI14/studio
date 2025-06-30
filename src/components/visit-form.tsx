@@ -589,6 +589,33 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
+  const handleQuickSave = async () => {
+    const isValid = await form.trigger("companyName");
+    if (!isValid) {
+      return;
+    }
+    const companyName = form.getValues('companyName');
+
+    setIsSaving(true);
+
+    const payload: SaveVisitPayload = {
+      companyName: companyName.trim(),
+      latitude: currentLatitude,
+      longitude: currentLongitude,
+      timestamp: initialData?.timestamp || new Date(),
+      visitNumber: initialData?.visitNumber,
+    };
+
+    try {
+      await onSave(payload);
+      onClose();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the quick save." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   const handleNotesFocus = async () => {
     if (isRecordingNotes) return;
@@ -692,12 +719,24 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             onClick={handleSuggestCompany}
                             variant="outline"
                             size="sm"
-                            disabled={isSuggestingCompany}
+                            disabled={isSuggestingCompany || isSaving}
                         >
                           {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
                         </Button>
                     </div>
                   </FormControl>
+                  {!initialData?.id && (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full mt-2"
+                        onClick={handleQuickSave}
+                        disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
+                    >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Quick Save Company & Continue Later
+                    </Button>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
