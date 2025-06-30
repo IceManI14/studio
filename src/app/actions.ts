@@ -443,6 +443,9 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
   } catch (error: any) {
     console.error("Error in saveDailyReportAction:", error);
     const errorMessage = String(error?.message || '').toLowerCase();
+    if (errorMessage.includes('could not refresh access token')) {
+      return { error: 'Authentication Failed. To fix this, grant the "Service Account Token Creator" role to your app\'s service account in your Google Cloud IAM page.' };
+    }
     if (errorMessage.includes('forbidden') || error.code === 403) {
       return { error: 'Permission Denied. The service account may need the "Storage Object Creator" role.' };
     }
