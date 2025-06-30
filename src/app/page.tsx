@@ -469,6 +469,46 @@ export default function HomePage() {
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
     setIsVisitFormOpen(false);
     
+    // Optimistically update the UI so the user sees the change immediately.
+    const tempId = `temp_${crypto.randomUUID()}`;
+    const optimisticVisit: Visit = {
+        id: payload.id || tempId,
+        timestamp: payload.timestamp || new Date(),
+        companyName: payload.companyName,
+        notes: payload.notes ?? undefined,
+        latitude: payload.latitude ?? undefined,
+        longitude: payload.longitude ?? undefined,
+        partnershipConfidence: payload.partnershipConfidence ?? undefined,
+        hasBusinessCard: payload.hasBusinessCard ?? false,
+        businessCardImageUrl: payload.businessCardImageUrl ?? undefined,
+        discussedCompetitors: !!payload.competitorName,
+        competitorName: payload.competitorName ?? undefined,
+        coolerType: payload.coolerType ?? undefined,
+        decisionMakerName: payload.decisionMakerName ?? '',
+        decisionMakerTitle: payload.decisionMakerTitle ?? '',
+        decisionMakerContact: payload.decisionMakerContact ?? '',
+        visitNumber: payload.visitNumber ?? coldCallCount + 1,
+        interestedUnit: payload.interestedUnit ?? undefined,
+        hasTDSReading: payload.hasTDSReading ?? false,
+        tdsValue: payload.tdsValue ?? undefined,
+        futureMeetingSet: payload.futureMeetingSet ?? false,
+        futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
+        freeTrial: payload.freeTrial ?? false,
+        dealClosed: payload.dealClosed ?? false,
+        contactInfo: payload.existingContactInfo ?? undefined,
+        notesSummary: payload.existingNotesSummary ?? undefined,
+    };
+    
+    const originalVisits = [...visits];
+
+    if (!payload.id) {
+        // Optimistically add the new visit to the start of the list
+        setVisits(prevVisits => [optimisticVisit, ...prevVisits]);
+    } else {
+        // Optimistically update the existing visit
+        setVisits(prevVisits => prevVisits.map(v => v.id === payload.id ? optimisticVisit : v));
+    }
+    
     const result = await saveVisitAction(payload);
     
     if (result.error) {
@@ -477,11 +517,15 @@ export default function HomePage() {
         title: "Could not save visit",
         description: result.error,
       });
+      // If the save fails, revert the UI to its original state.
+      setVisits(originalVisits);
     } else {
       toast({
         title: result.isNewVisit ? "Visit Logged" : "Visit Updated",
         description: `Visit for ${result.visit?.companyName} has been saved.`,
       });
+      // The onSnapshot listener will automatically replace the optimistic visit
+      // with the real one from the database, so we don't need to do anything else on success.
     }
   };
 
