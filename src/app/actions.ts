@@ -7,6 +7,7 @@ import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { extractVisitDetails } from '@/ai/flows/extract-visit-details-flow';
+import { getCompanyIntel } from '@/ai/flows/get-company-intel-flow.ts';
 import { findPlacesFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
@@ -320,6 +321,7 @@ export async function findCompanyAction(
     phone: string;
     latitude?: number;
     longitude?: number;
+    openingHours?: string[];
   }[];
   error?: string
 }> {
@@ -339,6 +341,7 @@ export async function findCompanyAction(
         phone: result.phone,
         latitude: result.latitude,
         longitude: result.longitude,
+        openingHours: result.openingHours,
     }));
     return { places };
   } catch (error: any) {
@@ -475,5 +478,31 @@ export async function extractVisitDetailsAction(
         return { error: "The AI service API key is invalid or has expired." };
     }
     return { error: error.message || 'Failed to extract details from notes. An unexpected error occurred.' };
+  }
+}
+
+const getCompanyIntelSchema = z.object({
+  companyName: z.string().min(1, "Company name cannot be empty."),
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+export async function getCompanyIntelAction(
+  payload: z.infer<typeof getCompanyIntelSchema>
+): Promise<{ details?: z.infer<typeof import('@/ai/flows/get-company-intel-flow').GetCompanyIntelOutput>; error?: string }> {
+  try {
+    const validatedPayload = getCompanyIntelSchema.parse(payload);
+    const result = await getCompanyIntel(validatedPayload);
+    return { details: result };
+  } catch (error: any) {
+    console.error("Error in getCompanyIntelAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid')) {
+        return { error: "The AI service API key is invalid or has expired." };
+    }
+    return { error: error.message || 'Failed to get company intelligence. An unexpected error occurred.' };
   }
 }

@@ -4,7 +4,11 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch } from 'lucide-react';
+import { Button } from './ui/button';
+import { getCompanyIntelAction } from '@/app/actions';
+import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
+
 
 interface GoogleMapComponentProps {
   visits: Visit[];
@@ -40,6 +44,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoomLevel, setZoomLevel] = useState(4);
+  const [intel, setIntel] = useState<Record<string, GetCompanyIntelOutput | 'loading' | 'error'>>({});
 
   const validVisits = useMemo(() =>
     visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
@@ -71,6 +76,24 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 
   const handleInfoWindowClose = useCallback(() => {
     setActiveMarker(null);
+  }, []);
+
+  const handleGetIntel = useCallback(async (visit: Visit) => {
+    if (!visit.latitude || !visit.longitude) return;
+    setIntel(prev => ({ ...prev, [visit.id]: 'loading' }));
+    
+    const result = await getCompanyIntelAction({
+      companyName: visit.companyName,
+      latitude: visit.latitude,
+      longitude: visit.longitude,
+    });
+
+    if (result.error || !result.details) {
+      console.error("Failed to get company intel:", result.error);
+      setIntel(prev => ({ ...prev, [visit.id]: 'error' }));
+    } else {
+      setIntel(prev => ({ ...prev, [visit.id]: result.details! }));
+    }
   }, []);
 
   if (loadError) {
@@ -168,11 +191,64 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                 pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
               }}
             >
-              <div className="p-1">
+              <div className="p-1 max-w-xs">
                 <h4 className="font-semibold text-sm text-primary">{visit.companyName}</h4>
                 <p className="text-xs text-muted-foreground">
                   Confidence: {visit.partnershipConfidence ? `${visit.partnershipConfidence}/5` : 'N/A'}
                 </p>
+
+                {intel[visit.id] === 'loading' && (
+                    <div className="mt-2 flex items-center justify-center">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
+                    </div>
+                )}
+                
+                {intel[visit.id] && intel[visit.id] !== 'loading' && intel[visit.id] !== 'error' && (() => {
+                    const companyIntel = intel[visit.id] as GetCompanyIntelOutput;
+                    return (
+                        <div className="mt-2 text-xs space-y-1 border-t pt-2">
+                            {companyIntel.phone && (
+                                <div className="flex items-center">
+                                    <Phone className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
+                                    <span>{companyIntel.phone}</span>
+                                </div>
+                            )}
+                            {companyIntel.hours && companyIntel.hours.length > 0 && (
+                                <div className="flex items-start">
+                                    <Clock className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                    <div>
+                                        {companyIntel.hours.map(h => <div key={h}>{h}</div>)}
+                                    </div>
+                                </div>
+                            )}
+                            {companyIntel.decisionMaker && (
+                                 <div className="flex items-start">
+                                    <UserSearch className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                    <span>{companyIntel.decisionMaker}</span>
+                                </div>
+                            )}
+                             {(!companyIntel.phone && !companyIntel.hours && !companyIntel.decisionMaker) && (
+                                <p className="text-muted-foreground">No additional details found.</p>
+                             )}
+                        </div>
+                    );
+                })()}
+
+                {intel[visit.id] === 'error' && (
+                    <p className="text-xs text-destructive mt-2">Could not retrieve details.</p>
+                )}
+
+                {!intel[visit.id] && (
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="p-0 h-auto text-xs mt-2"
+                        onClick={() => handleGetIntel(visit)}
+                    >
+                        Get More Info
+                    </Button>
+                )}
               </div>
             </InfoWindowF>
           )}

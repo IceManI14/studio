@@ -17,6 +17,7 @@ export interface PlaceDetails {
   phone: string;
   latitude?: number;
   longitude?: number;
+  openingHours?: string[];
 }
 
 // Helper to extract address components
@@ -86,7 +87,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             if (bestPlaceCandidate && bestPlaceCandidate.place_id) {
                  const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
                  detailsUrl.searchParams.set('place_id', bestPlaceCandidate.place_id);
-                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry,types');
+                 detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry,types,opening_hours');
                  detailsUrl.searchParams.set('key', apiKey);
 
                  const detailsResponse = await fetch(detailsUrl.toString());
@@ -116,6 +117,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                         phone: placeDetails.formatted_phone_number || '',
                         latitude: placeDetails.geometry?.location?.lat,
                         longitude: placeDetails.geometry?.location?.lng,
+                        openingHours: placeDetails.opening_hours?.weekday_text,
                     };
                 }
             }
@@ -188,7 +190,7 @@ export async function findPlacesFromText(query: string): Promise<PlaceDetails[]>
 
             const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
             detailsUrl.searchParams.set('place_id', candidate.place_id);
-            detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry');
+            detailsUrl.searchParams.set('fields', 'name,formatted_address,address_components,formatted_phone_number,geometry,opening_hours');
             detailsUrl.searchParams.set('key', apiKey);
 
             const detailsResponse = await fetch(detailsUrl.toString());
@@ -204,6 +206,7 @@ export async function findPlacesFromText(query: string): Promise<PlaceDetails[]>
                     phone: placeDetails.formatted_phone_number || '',
                     latitude: placeDetails.geometry?.location?.lat,
                     longitude: placeDetails.geometry?.location?.lng,
+                    openingHours: placeDetails.opening_hours?.weekday_text,
                 };
             }
             return null;

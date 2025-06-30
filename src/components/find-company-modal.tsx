@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, Map, MapPin, Phone } from 'lucide-react';
+import { Loader2, Map, MapPin, Phone, Clock } from 'lucide-react';
 import type { Visit } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
@@ -20,6 +20,7 @@ interface FoundPlace {
     phone: string;
     latitude?: number;
     longitude?: number;
+    openingHours?: string[];
 }
 
 interface FindCompanyModalProps {
@@ -122,6 +123,14 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                                     <CardContent className="space-y-1 text-xs pb-3">
                                         <p className="flex items-start"><MapPin className="mr-2 h-3 w-3 mt-0.5 shrink-0" /> {place.address}</p>
                                         {place.phone && <p className="flex items-center"><Phone className="mr-2 h-3 w-3 shrink-0" /> {place.phone}</p>}
+                                        {place.openingHours && (
+                                            <div className="flex items-start mt-1">
+                                                <Clock className="mr-2 h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
+                                                <div className="text-xs text-muted-foreground">
+                                                    {place.openingHours.map((h, i) => <div key={i}>{h}</div>)}
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between pt-2">
                                             {place.latitude && place.longitude ? (
                                                 <Button variant="link" asChild className="p-0 h-auto text-xs">
