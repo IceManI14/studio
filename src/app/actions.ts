@@ -6,6 +6,7 @@ import { getCompanyNameFromCoords } from '@/ai/flows/get-company-name-from-coord
 import { chatWithVisits } from '@/ai/flows/chat-with-visits-flow.ts';
 import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
+import { extractVisitDetails } from '@/ai/flows/extract-visit-details-flow';
 import { findPlacesFromText } from '@/services/google-places';
 import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
@@ -450,5 +451,29 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       return { error: 'Permission Denied. The service account may need the "Storage Object Creator" role.' };
     }
     return { error: `Failed to save daily report to storage: ${error.message}` };
+  }
+}
+
+const extractDetailsSchema = z.object({
+  notes: z.string().min(1, "Notes cannot be empty."),
+});
+
+export async function extractVisitDetailsAction(
+  payload: z.infer<typeof extractDetailsSchema>
+): Promise<{ details?: z.infer<typeof import('@/ai/flows/extract-visit-details-flow').ExtractVisitDetailsOutput>; error?: string }> {
+  try {
+    const validatedPayload = extractDetailsSchema.parse(payload);
+    const result = await extractVisitDetails({ notes: validatedPayload.notes });
+    return { details: result };
+  } catch (error: any) {
+    console.error("Error in extractVisitDetailsAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid')) {
+        return { error: "The AI service API key is invalid or has expired." };
+    }
+    return { error: error.message || 'Failed to extract details from notes. An unexpected error occurred.' };
   }
 }

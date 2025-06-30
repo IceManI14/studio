@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCompanyNameFromCoordsAction, type SaveVisitPayload } from '@/app/actions';
+import { getCompanyNameFromCoordsAction, type SaveVisitPayload, extractVisitDetailsAction } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -181,8 +181,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const confidenceStarsRef = useRef<HTMLDivElement>(null);
 
   const [isRecordingNotes, setIsRecordingNotes] = useState(false);
-  const [didDictate, setDidDictate] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [isAnalyzingNotes, setIsAnalyzingNotes] = useState(false);
 
   const [isRecordingCompanyName, setIsRecordingCompanyName] = useState(false);
   const companyNameRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -453,6 +453,87 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [form, initialData, currentLatitude, currentLongitude, onSave, toast]);
 
+  const analyzeNotesAndPopulateForm = useCallback(async (notes: string) => {
+    if (!notes.trim()) return;
+
+    setIsAnalyzingNotes(true);
+    const analysisToast = toast({
+      title: "AI is analyzing your notes...",
+      description: "Please wait while I extract the details.",
+    });
+
+    try {
+      const result = await extractVisitDetailsAction({ notes });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      if (result.details) {
+        const { details } = result;
+        let fieldsUpdated = 0;
+        
+        const updateField = <T extends keyof VisitFormData>(
+            field: T, 
+            value: VisitFormData[T]
+        ) => {
+            if (value !== undefined && value !== null) {
+                const currentValue = form.getValues(field);
+                if (typeof value === 'boolean') {
+                    if (value === true && currentValue !== true) {
+                        form.setValue(field, value, { shouldValidate: true });
+                        fieldsUpdated++;
+                    }
+                } else if (value !== currentValue) {
+                    form.setValue(field, value as any, { shouldValidate: true });
+                    fieldsUpdated++;
+                }
+            }
+        };
+
+        updateField('hasBusinessCard', details.hasBusinessCard);
+        updateField('competitorName', details.competitorName);
+        updateField('decisionMakerName', details.decisionMakerName);
+        updateField('decisionMakerTitle', details.decisionMakerTitle);
+        updateField('interestedUnit', details.interestedUnit);
+        updateField('futureMeetingSet', details.futureMeetingSet);
+        updateField('freeTrial', details.freeTrial);
+        
+        if (details.tdsValue !== undefined && details.tdsValue !== null) {
+            if (form.getValues('hasTDSReading') !== true) {
+                form.setValue('hasTDSReading', true, { shouldValidate: true });
+                fieldsUpdated++;
+            }
+            if (form.getValues('tdsValue') !== details.tdsValue) {
+                form.setValue('tdsValue', details.tdsValue, { shouldValidate: true });
+                fieldsUpdated++;
+            }
+        }
+
+        if (fieldsUpdated > 0) {
+            toast({
+              title: "AI Analysis Complete",
+              description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes.`,
+            });
+        } else {
+             toast({
+              title: "AI Analysis Complete",
+              description: "I didn't find any new details to add to the form from your notes.",
+            });
+        }
+      }
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "AI Analysis Failed",
+        description: e.message || "Could not extract details from notes.",
+      });
+    } finally {
+      setIsAnalyzingNotes(false);
+      analysisToast.dismiss();
+    }
+  }, [form, toast]);
+
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -548,7 +629,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       return;
     }
     
-    setDidDictate(false);
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
@@ -583,12 +663,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
           break;
         case 'aborted':
-          // This can happen if the user stops it manually or navigates away.
-          // It's not usually an error to show to the user.
           console.log("Speech recognition aborted.");
           setIsRecordingNotes(false);
           recognitionRef.current = null;
-          return; // Don't show a toast for this common case.
+          return;
         case 'language-not-supported':
           errorMessage = "The language for dictation is not supported by your browser.";
           break;
@@ -603,15 +681,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     };
 
     recognition.onresult = (event) => {
-      // Add more robust check for results
       if (event.results && event.results.length > 0 && event.results[0].length > 0) {
           const transcript = event.results[0][0].transcript;
           if (transcript) {
             const currentNotes = form.getValues('notes') || '';
             const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
             form.setValue('notes', newNotes, { shouldValidate: true });
-            setDidDictate(true);
             toast({ title: 'Notes Added Via Voice' });
+            analyzeNotesAndPopulateForm(newNotes);
           }
       } else {
         console.warn("Speech recognition returned a result with no transcript.");
@@ -623,12 +700,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, didDictate]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm]);
 
 
   useEffect(() => {
     if (isOpen && startDictation) {
-      // Small delay to ensure the component is ready and the user notices the modal opening first.
       const timer = setTimeout(() => {
         handleToggleVoiceNotes();
       }, 500);
@@ -1512,6 +1588,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormLabel className="flex items-center justify-between">
                     <span>Visit Notes</span>
                      <div className="flex items-center gap-1">
+                        {isAnalyzingNotes && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                        <Button
                             type="button"
                             variant="ghost"
@@ -1551,11 +1628,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible || isUploadingCard}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible || isUploadingCard || isAnalyzingNotes}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard} className="aurora-glow">
-                {(isSaving || isSuggestingCompany || isUploadingCard) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow">
+                {(isSaving || isSuggestingCompany || isUploadingCard || isAnalyzingNotes) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {(isRecordingNotes || isRecordingCompanyName) && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                 {initialData?.id ? 'Save Changes' : 'Log Meeting'}
               </Button>

@@ -16,3 +16,5 @@ import '@/ai/flows/summarize-visit-notes.ts';
 import '@/ai/flows/chat-with-visits-flow.ts';
 import '@/ai/flows/find-optimal-parking-flow.ts';
 import '@/ai/flows/extract-cities-from-pdf-flow.ts';
+import '@/ai/flows/extract-visit-details-flow.ts';
+
