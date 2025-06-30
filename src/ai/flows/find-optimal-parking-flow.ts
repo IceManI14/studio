@@ -33,11 +33,13 @@ const prompt = ai.definePrompt({
   prompt: `You are a logistics and sales operations expert for a water cooler company.
 Your task is to find the best starting point for a salesperson in a given city to maximize their efficiency when visiting businesses on foot.
 
-For the city of {{{city}}}, identify the most commercially dense area. This location must be within the United States of America. This could be a downtown district, a business park, or an area with a high concentration of office buildings and retail stores.
+For the city of {{{city}}}, identify the downtown area, which is typically the most commercially dense district.
 
-Then, suggest a specific, centrally-located public parking address or a well-known intersection within that dense area. This location should serve as an optimal starting point for a day of sales visits.
+Your primary goal is to find the nearest **free public parking** spot or area (like on-street parking) to the center of this downtown/commercial district. If no free parking is reasonably available, suggest the most cost-effective and centrally-located public parking garage or lot.
 
-Provide the exact latitude and longitude for this parking location and a short description of why it's a good spot (e.g., "Parking garage near City Hall, central to downtown businesses").`,
+This location must be within the United States of America. This location should serve as an optimal starting point for a day of sales visits on foot.
+
+Provide the exact latitude and longitude for this parking location and a short description of why it's a good spot (e.g., "On-street parking near City Hall, free for 2 hours" or "Municipal Garage, central to downtown businesses").`,
 });
 
 const findOptimalParkingFlow = ai.defineFlow(
