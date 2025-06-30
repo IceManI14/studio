@@ -60,16 +60,20 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
         // If we find a nearby place, use its place_id to get definitive details.
         if (nearbySearchData.results && nearbySearchData.results.length > 0) {
-            // Find the first result that is not an undesirable type like a parking lot or intersection.
+            // Find the first result that is not an undesirable type like a park or intersection.
             const findBestPlace = (results: any[]) => {
                 for (const place of results) {
                     const types = place.types || [];
-                    const isParking = types.includes('parking');
-                    const isGeographic = types.some((type: string) => ['locality', 'political', 'neighborhood', 'route', 'sublocality', 'intersection'].includes(type));
+                    // More comprehensive list of types to ignore.
+                    const isUndesirable = types.some((type: string) => [
+                        'park', 'parking', 'intersection', 'route', 
+                        'locality', 'political', 'neighborhood', 'sublocality', 
+                        'administrative_area_level_1', 'administrative_area_level_2',
+                        'country', 'postal_code'
+                    ].includes(type));
                     
-                    // Skip if it's primarily a parking lot or a geographical area/intersection.
-                    // We want actual businesses/venues.
-                    if (!isParking && !isGeographic) {
+                    // Skip if it's primarily a non-business entity.
+                    if (!isUndesirable) {
                         return place; // This is a good candidate
                     }
                 }
@@ -95,10 +99,12 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                 const placeDetails = detailsData.result;
 
                 if (placeDetails) {
+                    // A second, redundant check on the detailed types to ensure it's a business.
                     const isGeographicArea = placeDetails.types?.some((type: string) =>
                         [
+                            'park', 'parking', // Explicitly add park/parking here too
                             'locality', 'political', 'administrative_area_level_1', 'administrative_area_level_2',
-                            'country', 'postal_code', 'neighborhood'
+                            'country', 'postal_code', 'neighborhood', 'route', 'intersection'
                         ].includes(type)
                     );
 
