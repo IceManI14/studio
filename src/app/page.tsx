@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction, deleteVisitAction, updateDealClosedAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -51,8 +51,7 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
-import { db, firebaseConfigured } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { firebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -141,6 +140,7 @@ export default function HomePage() {
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('field-day');
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
 
 
@@ -201,8 +201,18 @@ export default function HomePage() {
 
 
   useEffect(() => {
-    // Load non-visit data from localStorage
+    // Load all data from localStorage on initial render
     try {
+      const localVisits = localStorage.getItem('visits');
+      if (localVisits) {
+          const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
+              ...v,
+              timestamp: new Date(v.timestamp),
+              futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+          }));
+          setVisits(parsedVisits);
+      }
+      
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
         const parsedSuggestions: SubmittedSuggestion[] = JSON.parse(storedSuggestions).map((s: any) => ({
@@ -211,58 +221,15 @@ export default function HomePage() {
         }));
         setSubmittedSuggestions(parsedSuggestions);
       }
+
       const storedFiles = localStorage.getItem('managedFiles');
       if (storedFiles) {
           setManagedFiles(JSON.parse(storedFiles));
       }
     } catch (error) {
-      console.error("Failed to load auxiliary data from localStorage:", error);
+      console.error("Failed to load data from localStorage:", error);
+      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
     }
-
-    // Connect to Firestore for visit data
-    if (!db || !firebaseConfigured) {
-        console.warn("Firebase not configured. Data will not be loaded from the database. App will run in offline mode.");
-        const localVisits = localStorage.getItem('visits');
-        if (localVisits) {
-            const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
-                ...v,
-                timestamp: new Date(v.timestamp),
-                futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-            }));
-            setVisits(parsedVisits);
-        }
-        return;
-    }
-
-    const visitsCol = collection(db, 'visits');
-    const q = query(visitsCol, orderBy('timestamp', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const visitsData = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
-                futureMeetingDateTime: data.futureMeetingDateTime ? (data.futureMeetingDateTime as Timestamp).toDate() : undefined,
-            } as Visit;
-        });
-        setVisits(visitsData);
-        // Persist to localStorage as a backup for offline access
-        localStorage.setItem('visits', JSON.stringify(visitsData));
-    }, (error) => {
-        console.error("Error fetching visits from Firestore:", error);
-        // Fallback to localStorage if firestore fails
-        const localVisits = localStorage.getItem('visits');
-        if (localVisits) {
-             const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
-                ...v,
-                timestamp: new Date(v.timestamp),
-                futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-            }));
-            setVisits(parsedVisits);
-        }
-    });
 
     // Get Geolocation
     if (navigator.geolocation) {
@@ -304,8 +271,6 @@ export default function HomePage() {
       toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
       setCurrentCity("Geolocation not supported.");
     }
-
-    return () => unsubscribe();
   }, [toast]);
 
   // Save suggestions whenever they change
@@ -414,17 +379,10 @@ export default function HomePage() {
   };
 
   const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    // Optimistic UI update
-    setVisits(prev => prev.map(v => v.id === visitId ? { ...v, dealClosed } : v));
-
-    const result = await updateDealClosedAction(visitId, dealClosed);
-    if (result.error) {
-        toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
-        // Revert on failure (Firestore listener will also help, but this is faster)
-        setVisits(prev => prev.map(v => v.id === visitId ? { ...v, dealClosed: !dealClosed } : v));
-    } else {
-        toast({ title: 'Deal Status Updated' });
-    }
+    const updatedVisits = visits.map(v => v.id === visitId ? { ...v, dealClosed } : v);
+    setVisits(updatedVisits);
+    localStorage.setItem('visits', JSON.stringify(updatedVisits));
+    toast({ title: 'Deal Status Updated Locally' });
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
@@ -450,13 +408,10 @@ export default function HomePage() {
   const handleSaveFromForm = async (payload: SaveVisitPayload) => {
     setIsVisitFormOpen(false);
     
-    const originalVisits = [...visits];
-    const originalVisit = payload.id ? visits.find(v => v.id === payload.id) : undefined;
-    
-    // Optimistically update the UI so the user sees the change immediately.
-    const tempId = `temp_${crypto.randomUUID()}`;
+    const isNewVisit = !payload.id;
+    const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
     const optimisticVisit: Visit = {
-        id: payload.id || tempId,
+        id: tempId!,
         timestamp: payload.timestamp || new Date(),
         companyName: payload.companyName,
         notes: payload.notes ?? undefined,
@@ -471,73 +426,92 @@ export default function HomePage() {
         decisionMakerName: payload.decisionMakerName ?? '',
         decisionMakerTitle: payload.decisionMakerTitle ?? '',
         decisionMakerContact: payload.decisionMakerContact ?? '',
-        visitNumber: payload.visitNumber ?? originalVisits.filter(v => isToday(new Date(v.timestamp))).length + 1,
+        visitNumber: payload.visitNumber ?? visits.filter(v => isToday(new Date(v.timestamp))).length + 1,
         interestedUnit: payload.interestedUnit ?? undefined,
         hasTDSReading: payload.hasTDSReading ?? false,
         tdsValue: payload.tdsValue ?? undefined,
         futureMeetingSet: payload.futureMeetingSet ?? false,
         futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
         freeTrial: payload.freeTrial ?? false,
-        dealClosed: originalVisit?.dealClosed ?? false,
+        dealClosed: payload.dealClosed ?? false,
         contactInfo: payload.existingContactInfo ?? undefined,
         notesSummary: payload.existingNotesSummary ?? undefined,
     };
     
-    if (!payload.id) {
-        setVisits(prevVisits => [optimisticVisit, ...prevVisits]);
-    } else {
-        setVisits(prevVisits => prevVisits.map(v => v.id === payload.id ? optimisticVisit : v));
-    }
+    const updatedVisits = isNewVisit
+      ? [optimisticVisit, ...visits]
+      : visits.map(v => v.id === payload.id ? optimisticVisit : v);
     
-    const result = await saveVisitAction(payload);
-    
-    if (result.error) {
-      toast({
-        variant: "destructive",
-        title: "Could not save visit",
-        description: result.error,
-      });
-      setVisits(originalVisits);
-    } else {
-      toast({
-        title: result.isNewVisit ? "Visit Logged" : "Visit Updated",
-        description: `Visit for ${result.visit?.companyName} has been saved.`,
-      });
-    }
+    setVisits(updatedVisits);
+    localStorage.setItem('visits', JSON.stringify(updatedVisits));
+
+    toast({
+      title: isNewVisit ? "Visit Logged Locally" : "Visit Updated Locally",
+      description: `Visit for ${payload.companyName} has been saved to your device.`,
+    });
   };
 
 
   const handleDeleteVisit = async (visitId: string) => {
-    const originalVisits = [...visits];
-    setVisits(prevVisits => prevVisits.filter(v => v.id !== visitId));
+    const updatedVisits = visits.filter(v => v.id !== visitId);
+    setVisits(updatedVisits);
+    localStorage.setItem('visits', JSON.stringify(updatedVisits));
 
-    const result = await deleteVisitAction(visitId);
-    if (result.error) {
-        toast({
-          variant: "destructive",
-          title: "Failed to delete visit",
-          description: result.error,
-        });
-        setVisits(originalVisits); // Revert UI
-    } else {
-        toast({
-          title: 'Visit Deleted',
-          description: 'The visit log has been removed from the database.',
-        });
-    }
+    toast({
+      title: 'Visit Deleted Locally',
+      description: 'The visit log has been removed from this device.',
+    });
   };
 
   const confirmEndDay = async () => {
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp)));
     const numberOfVisits = todaysVisits.length;
+
+    if (firebaseConfigured && numberOfVisits > 0) {
+        setIsSyncing(true);
+        toast({ title: "Syncing...", description: `Saving ${numberOfVisits} visit(s) to the cloud.` });
+
+        try {
+            const savePromises = todaysVisits.map(visit => {
+                const payload: SaveVisitPayload = {
+                    ...visit,
+                    id: visit.id.startsWith('temp_') ? undefined : visit.id,
+                };
+                return saveVisitAction(payload);
+            });
+
+            const results = await Promise.all(savePromises);
+            
+            const failedSaves = results.filter(r => r.error);
+            if (failedSaves.length > 0) {
+                throw new Error(`Failed to save ${failedSaves.length} visit(s). They will remain on your device. Please check your connection and try ending the day again.`);
+            }
+            
+            toast({
+              title: "Field Day Ended & Synced",
+              description: `Great work! You have completed ${numberOfVisits} visit(s) today and they have been saved to the cloud.`,
+              duration: 10000,
+            });
+
+        } catch (e: any) {
+            toast({
+                variant: "destructive",
+                title: "Sync Failed",
+                description: e.message || "An error occurred while saving to the cloud. Your data is still safe on this device.",
+                duration: 10000,
+            });
+        } finally {
+            setIsSyncing(false);
+        }
+    } else {
+         toast({
+          title: "Field Day Ended",
+          description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today. Your data is saved locally.`,
+          duration: 10000,
+        });
+    }
     
     localStorage.removeItem('milestoneAchievedDate');
-    
-    toast({
-      title: "Field Day Ended",
-      description: `Great work! You have completed ${numberOfVisits} visit${numberOfVisits === 1 ? '' : 's'} today.`,
-      duration: 10000,
-    });
     setIsEndDayConfirmOpen(false);
   };
 
@@ -857,20 +831,21 @@ export default function HomePage() {
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="flex-1">
-                          <Sunset className="mr-2 h-5 w-5" /> End Day!
+                        <Button variant="default" size="sm" className="flex-1" disabled={isSyncing}>
+                          {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sunset className="mr-2 h-5 w-5" />} 
+                          End Day & Sync
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>End Your Field Day?</AlertDialogTitle>
+                          <AlertDialogTitle>End Your Field Day & Sync to Cloud?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you are done for the day? This will reset your local milestone tracker.
+                            This will save all of today's locally stored visits to the company database. This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmEndDay}>End Day</AlertDialogAction>
+                          <AlertDialogAction onClick={confirmEndDay}>End Day & Sync</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -882,15 +857,13 @@ export default function HomePage() {
                       <p className="text-muted-foreground mb-4">
                           Click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location.
                       </p>
-                       {!firebaseConfigured && (
-                        <Alert variant="destructive" className="mt-4 text-left max-w-md mx-auto">
+                       <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
-                            <AlertTitle>Offline Mode</AlertTitle>
+                            <AlertTitle>Local-First Mode Enabled</AlertTitle>
                             <AlertDescription>
-                            Firebase is not configured. Your visits are saved to this browser only and will not be synced to the cloud.
+                            Your visits are being saved to this device. Click "End Day & Sync" to upload them to the cloud.
                             </AlertDescription>
                         </Alert>
-                      )}
                     </div>
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -1322,9 +1295,11 @@ export default function HomePage() {
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
          <p className="text-xs mt-1">
-            {firebaseConfigured ? "All data is synced to the cloud in real-time." : "Data is saved locally to your browser."}
+            {firebaseConfigured ? "Data is saved locally and synced at the end of the day." : "Data is saved locally to your browser."}
          </p>
       </footer>
     </div>
   );
 }
+
+    
