@@ -1541,7 +1541,7 @@ export default function HomePage() {
                     <Search className="mr-2 h-4 w-4" /> Find Company by Name
                 </Button>
 
-                <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20">
+                <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20 flex flex-col min-h-[75vh]">
                     <UiCardHeader>
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
@@ -1572,16 +1572,18 @@ export default function HomePage() {
                         </div>
                         <UiCardDescription>Leads generated from your company searches. Saved locally to your device.</UiCardDescription>
                     </UiCardHeader>
-                    <UiCardContent>
+                    <UiCardContent className="flex-grow flex flex-col">
                         {hotLeads.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
+                            <div className="flex-grow flex items-center justify-center">
+                                <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
+                            </div>
                         ) : (
-                            <ScrollArea className="h-[400px]">
+                            <ScrollArea className="h-full">
                                 <div className="space-y-3 pr-4">
-                                    {hotLeads.map(lead => (
+                                    {hotLeads.map((lead, index) => (
                                         <div key={lead.id} className="p-3 rounded-md border bg-background/50 space-y-2">
                                             <div>
-                                                <h4 className="font-semibold text-foreground flex items-center"><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
+                                                <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
                                                 <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
                                                 {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
                                             </div>
@@ -1647,7 +1649,7 @@ export default function HomePage() {
                         )}
                     </UiCardContent>
                     {hotLeads.length > 0 && (
-                        <UiCardFooter className="flex-wrap gap-2">
+                        <UiCardFooter className="flex-wrap gap-2 shrink-0">
                             <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" />
                             <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" />
                             <Button onClick={handleEmailHotLeads} variant="default" size="sm">
