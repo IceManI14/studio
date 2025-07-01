@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -981,6 +981,10 @@ export default function HomePage() {
   
   const handleAddHotLeadAsVisit = (lead: HotLead) => {
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    futureDate.setHours(10, 0, 0, 0);
   
     const newVisitTemplate: Partial<Visit> = {
       companyName: lead.companyName,
@@ -989,6 +993,8 @@ export default function HomePage() {
       notes: `Address: ${lead.address}\n\nHot Lead Notes: ${lead.notes || ''}`.trim(),
       decisionMakerContact: lead.phone,
       visitNumber: todaysVisits + 1,
+      futureMeetingSet: true,
+      futureMeetingDateTime: futureDate,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -1108,9 +1114,15 @@ export default function HomePage() {
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <Compass className="h-5 w-5 text-primary" />
-                      <h2 className="text-lg font-headline font-semibold text-foreground text-left">
-                        {selectedSalesperson.name}'s Plan
-                      </h2>
+                      <div className="flex flex-col items-start">
+                        <h2 className="text-lg font-headline font-semibold text-foreground text-left">
+                          {selectedSalesperson.name}'s Plan
+                        </h2>
+                        <span className="text-xs text-muted-foreground flex items-center">
+                          <CalendarIcon className="mr-1.5 h-3 w-3" />
+                          {format(new Date(), 'MMMM d, yyyy')}
+                        </span>
+                      </div>
                     </div>
                     {targetDestination && (
                       <Badge variant="secondary">{targetDestination.city}</Badge>
@@ -1595,7 +1607,7 @@ export default function HomePage() {
                                                       id={`hot-lead-notes-${lead.id}`}
                                                       value={lead.notes || ''}
                                                       onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                      placeholder="e.g., Competitor: Blue Drop..."
+                                                      placeholder="e.g., Competitor: Blue Drop. Contract with Quench is up in a few months."
                                                       className="text-sm h-20 bg-background pr-10"
                                                       rows={3}
                                                       disabled={isRecordingHotLeadNotes === lead.id}
@@ -1620,7 +1632,7 @@ export default function HomePage() {
                                             <div className="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-border/50">
                                                 <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAddHotLeadAsVisit(lead)}>
                                                     <PlusSquare className="mr-1 h-3 w-3" />
-                                                    Add Visit
+                                                    Add Future Visit
                                                 </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
