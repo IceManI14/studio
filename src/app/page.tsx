@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -962,6 +962,30 @@ export default function HomePage() {
     toast({ title: "Hot Leads Cleared", description: "The hot leads list has been cleared from this device." });
   }, [hotLeads.length, toast]);
 
+  const handleDeleteHotLead = useCallback((leadId: string) => {
+    setHotLeads(prevHotLeads => {
+        const updatedLeads = prevHotLeads.filter(lead => lead.id !== leadId);
+        return updatedLeads;
+    });
+    toast({ title: "Hot Lead Removed" });
+  }, [toast]);
+  
+  const handleAddHotLeadAsVisit = (lead: HotLead) => {
+    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+  
+    const newVisitTemplate: Partial<Visit> = {
+      companyName: lead.companyName,
+      latitude: lead.latitude,
+      longitude: lead.longitude,
+      notes: `Address: ${lead.address}`,
+      decisionMakerContact: lead.phone,
+      visitNumber: todaysVisits + 1,
+    };
+    
+    setCurrentEditingVisit(newVisitTemplate as Visit);
+    setIsVisitFormOpen(true);
+  };
+
   const handleEmailHotLeads = useCallback(() => {
     if (hotLeads.length === 0) {
       toast({ title: 'No Hot Leads to Email', description: 'There are no submitted hot leads to send.' });
@@ -1444,6 +1468,31 @@ export default function HomePage() {
                                             <h4 className="font-semibold text-foreground flex items-center"><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
                                             <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
                                             {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
+                                            <div className="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-border/50">
+                                                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAddHotLeadAsVisit(lead)}>
+                                                    <PlusSquare className="mr-1 h-3 w-3" />
+                                                    Add Visit
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="destructive" size="icon" className="h-7 w-7">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will permanently delete the hot lead for "{lead.companyName}". This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
