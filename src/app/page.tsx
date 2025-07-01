@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, FoundPlace } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -96,6 +96,7 @@ const salespeople: Salesperson[] = [
 
 export default function HomePage() {
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
   const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
@@ -229,6 +230,15 @@ export default function HomePage() {
       if (storedFiles) {
           setManagedFiles(JSON.parse(storedFiles));
       }
+
+      const storedHotLeads = localStorage.getItem('hotLeads');
+      if (storedHotLeads) {
+        const parsedHotLeads: HotLead[] = JSON.parse(storedHotLeads).map((hl: any) => ({
+          ...hl,
+          addedAt: new Date(hl.addedAt)
+        }));
+        setHotLeads(parsedHotLeads);
+      }
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
@@ -280,6 +290,11 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
   }, [submittedSuggestions]);
+
+  // Save hot leads whenever they change
+  useEffect(() => {
+    localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
+  }, [hotLeads]);
 
   useEffect(() => {
     if (selectedSalesperson) { 
@@ -896,6 +911,33 @@ export default function HomePage() {
       localStorage.setItem('managedFiles', JSON.stringify(files));
   };
 
+  const handleAddHotLeads = useCallback((places: FoundPlace[]) => {
+    setHotLeads(prevHotLeads => {
+        const newLeads: HotLead[] = places.map(place => ({
+            id: crypto.randomUUID(),
+            companyName: place.companyName,
+            address: place.address,
+            city: place.city,
+            phone: place.phone,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            addedAt: new Date(),
+        }));
+
+        const existingAddresses = new Set(prevHotLeads.map(lead => lead.address));
+        const uniqueNewLeads = newLeads.filter(lead => !existingAddresses.has(lead.address));
+
+        if (uniqueNewLeads.length > 0) {
+            toast({
+                title: `${uniqueNewLeads.length} Hot Lead(s) Added`,
+                description: `New potential leads have been saved locally for future reference.`
+            });
+        }
+        
+        return [...prevHotLeads, ...uniqueNewLeads];
+    });
+  }, [toast]);
+
   const handleDictateNotes = (visit: Visit) => {
     setCurrentEditingVisit(visit);
     setStartDictationOnOpen(true);
@@ -1492,6 +1534,7 @@ export default function HomePage() {
           isOpen={isFindCompanyModalOpen}
           onClose={() => setIsFindCompanyModalOpen(false)}
           onAddAsVisit={handleAddFoundCompanyAsVisit}
+          onAddHotLeads={handleAddHotLeads}
           destinationCities={destinationCities}
           territory={selectedSalesperson?.territory}
         />

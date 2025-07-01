@@ -1,4 +1,5 @@
 
+
 export interface ContactInfo {
   info: string;
   confidence: number;
@@ -61,4 +62,25 @@ export interface ManagedFile {
   url: string;
   type: string;
   uploadedAt: string;
+}
+
+export interface FoundPlace {
+    companyName: string;
+    address: string;
+    city: string;
+    phone: string;
+    latitude?: number;
+    longitude?: number;
+    openingHours?: string[];
+}
+
+export interface HotLead {
+  id: string;
+  companyName: string;
+  address: string;
+  city: string;
+  phone: string;
+  latitude?: number;
+  longitude?: number;
+  addedAt: Date;
 }

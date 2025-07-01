@@ -8,30 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
 import { Loader2, Map, MapPin, Phone, Clock } from 'lucide-react';
-import type { Visit, Territory } from '@/lib/types';
+import type { Visit, Territory, FoundPlace } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-
-interface FoundPlace {
-    companyName: string;
-    address: string;
-    city: string;
-    phone: string;
-    latitude?: number;
-    longitude?: number;
-    openingHours?: string[];
-}
 
 interface FindCompanyModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAddAsVisit: (visitData: Partial<Visit>) => void;
+    onAddHotLeads: (places: FoundPlace[]) => void;
     destinationCities: string[];
     territory?: Territory[];
 }
 
-export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destinationCities, territory }: FindCompanyModalProps) {
+export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddHotLeads, destinationCities, territory }: FindCompanyModalProps) {
     const [companyName, setCompanyName] = useState('');
     const [city, setCity] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -56,6 +47,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                 toast({ variant: 'destructive', title: "Search Failed", description: result.error });
             } else if (result.places && result.places.length > 0) {
                 setFoundPlaces(result.places);
+                onAddHotLeads(result.places);
             } else {
                  toast({ title: "No Results Found", description: "No companies found with that name in the specified area." });
             }
