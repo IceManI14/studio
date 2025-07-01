@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -356,11 +356,21 @@ export default function HomePage() {
     return sorted;
   }, [visits, sortCriteria, sortOrder, selectedDate]);
 
-  const futureVisits = useMemo(() => {
+  const scheduledVisits = useMemo(() => {
     return visits
       .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date())
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visits]);
+
+  const unscheduledFutureVisits = useMemo(() => {
+    return visits
+      .filter(visit => visit.futureMeetingSet && !visit.futureMeetingDateTime)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [visits]);
+
+  const todaysScheduledVisits = useMemo(() => {
+    return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
+  }, [scheduledVisits]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -1014,10 +1024,6 @@ export default function HomePage() {
     if (convertedHotLeads.has(lead.id)) return;
     
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
-
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 1);
-    futureDate.setHours(10, 0, 0, 0);
   
     const newVisit: Visit = {
       id: `temp_${crypto.randomUUID()}`,
@@ -1025,11 +1031,11 @@ export default function HomePage() {
       companyName: lead.companyName,
       latitude: lead.latitude,
       longitude: lead.longitude,
-      notes: `Scheduled for: ${format(futureDate, 'PPP p')}\n\nAddress: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
+      notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
       decisionMakerContact: lead.phone,
       visitNumber: todaysVisits + 1,
       futureMeetingSet: true,
-      futureMeetingDateTime: futureDate,
+      futureMeetingDateTime: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
       businessCardImageUrl: undefined,
@@ -1057,7 +1063,7 @@ export default function HomePage() {
 
     toast({
         title: "Added to Planner",
-        description: `${lead.companyName} has been scheduled for a future visit.`,
+        description: `${lead.companyName} has been added to future visits to be scheduled.`,
     });
   };
 
@@ -1423,39 +1429,83 @@ export default function HomePage() {
           )}
 
           {activeTab === 'planner' && (
-            <div className="space-y-6">
-                <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
-                    <h2 id="planner-section-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                        <FolderKanban className="mr-3 h-7 w-7 text-primary" /> Future Visit Cards
-                    </h2>
-                </div>
-
-                {futureVisits.length === 0 ? (
-                    <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                        <p className="text-xl text-muted-foreground mb-4">
-                            No future visits scheduled.
-                        </p>
-                        <p className="text-muted-foreground">
-                            Set a future meeting date on a visit card, and it will appear here.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {futureVisits.map((visit) => (
-                            <VisitCard
-                                key={visit.id}
-                                visit={visit}
-                                onEdit={handleEditVisit}
-                                onDelete={handleDeleteVisit}
-                                onUpdateDealClosed={handleUpdateDealClosed}
-                                onZoom={setZoomedVisit}
-                                onLogFollowUp={handleLogFollowUp}
-                                onDictateNotes={handleDictateNotes}
-                                variant="planner"
-                            />
-                        ))}
-                    </div>
-                )}
+            <div className="space-y-8">
+              {todaysScheduledVisits.length > 0 && (
+                <Alert variant="default" className="border-primary/50 bg-primary/10">
+                  <CalendarCheck className="h-4 w-4" />
+                  <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
+                  <AlertDescription>
+                    {todaysScheduledVisits.map(v => v.companyName).join(', ')}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <div>
+                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
+                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
+                          <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Visits (Scheduled)
+                      </h2>
+                  </div>
+                  {scheduledVisits.length === 0 ? (
+                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                          <p className="text-xl text-muted-foreground mb-4">
+                              No visits with a specific date scheduled.
+                          </p>
+                          <p className="text-muted-foreground">
+                              Edit a visit and set a future meeting date, and it will appear here.
+                          </p>
+                      </div>
+                  ) : (
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          {scheduledVisits.map((visit) => (
+                              <VisitCard
+                                  key={visit.id}
+                                  visit={visit}
+                                  onEdit={handleEditVisit}
+                                  onDelete={handleDeleteVisit}
+                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                  onZoom={setZoomedVisit}
+                                  onLogFollowUp={handleLogFollowUp}
+                                  onDictateNotes={handleDictateNotes}
+                                  variant="planner"
+                              />
+                          ))}
+                      </div>
+                  )}
+              </div>
+              
+              <div>
+                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
+                      <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
+                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Future Visits (To Be Scheduled)
+                      </h2>
+                  </div>
+                  {unscheduledFutureVisits.length === 0 ? (
+                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                          <p className="text-xl text-muted-foreground mb-4">
+                              No unscheduled future visits.
+                          </p>
+                          <p className="text-muted-foreground">
+                              Convert a "Hot Lead" from the Debbie tab to add it here.
+                          </p>
+                      </div>
+                  ) : (
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          {unscheduledFutureVisits.map((visit) => (
+                              <VisitCard
+                                  key={visit.id}
+                                  visit={visit}
+                                  onEdit={handleEditVisit}
+                                  onDelete={handleDeleteVisit}
+                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                  onZoom={setZoomedVisit}
+                                  onLogFollowUp={handleLogFollowUp}
+                                  onDictateNotes={handleDictateNotes}
+                                  variant="planner"
+                              />
+                          ))}
+                      </div>
+                  )}
+              </div>
             </div>
           )}
 
