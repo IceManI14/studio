@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, Map, MapPin, Phone, Clock } from 'lucide-react';
+import { Loader2, Map, MapPin, Phone, Clock, PlusSquare } from 'lucide-react';
 import type { Visit, Territory, FoundPlace } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
@@ -131,6 +131,10 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                                             </div>
                                         )}
                                         <div className="flex items-center justify-between pt-2">
+                                            <Button size="sm" className="h-7 text-xs" onClick={() => handleAddVisit(place)}>
+                                                <PlusSquare className="mr-1 h-3 w-3" />
+                                                Add Future Visit
+                                            </Button>
                                             {place.latitude && place.longitude ? (
                                                 <Button variant="link" asChild className="p-0 h-auto text-xs">
                                                     <a href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`} target="_blank" rel="noopener noreferrer">
@@ -138,7 +142,6 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                                                     </a>
                                                 </Button>
                                             ) : <div />}
-                                            <Button size="sm" className="h-7 text-xs" onClick={() => handleAddVisit(place)}>Add as Visit</Button>
                                         </div>
                                     </CardContent>
                                 </Card>
