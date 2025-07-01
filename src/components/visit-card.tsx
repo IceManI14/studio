@@ -157,16 +157,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <div className="flex-grow space-y-2">
                 <div className="bg-muted/50 p-2 rounded-md">
                     <h4 className="font-semibold text-foreground flex items-center"><Building2 className="mr-2 h-4 w-4 shrink-0" />{visit.companyName}</h4>
-                    {visit.futureMeetingDateTime && (
-                         <p className="text-sm text-muted-foreground pl-6 flex items-center">
-                            <CalendarClock className="mr-2 h-4 w-4 shrink-0" />
-                            {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'MMM d, yyyy @ h:mm a')}
-                         </p>
-                    )}
                 </div>
 
                 <div className="space-y-1 bg-black p-2 rounded-md">
-                    <Label htmlFor={`planner-notes-${visit.id}`} className="text-xs font-medium text-muted-foreground">Visit Notes</Label>
+                    <Label htmlFor={`planner-notes-${visit.id}`} className="text-xs font-medium text-muted-foreground">Future Visit Notes</Label>
                     <div id={`planner-notes-${visit.id}`} className="text-sm text-white whitespace-pre-wrap h-20 overflow-y-auto p-2 border border-zinc-700 rounded bg-black">
                         {visit.notes || 'No notes for this visit.'}
                     </div>

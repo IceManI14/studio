@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -1025,7 +1025,7 @@ export default function HomePage() {
       companyName: lead.companyName,
       latitude: lead.latitude,
       longitude: lead.longitude,
-      notes: `Converted from Hot Lead.\nAddress: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
+      notes: `Scheduled for: ${format(futureDate, 'PPP p')}\n\nAddress: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
       decisionMakerContact: lead.phone,
       visitNumber: todaysVisits + 1,
       futureMeetingSet: true,
@@ -1426,9 +1426,8 @@ export default function HomePage() {
             <div className="space-y-6">
                 <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
                     <h2 id="planner-section-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                        <FolderKanban className="mr-3 h-7 w-7 text-primary" /> Future Visit Planner
+                        <FolderKanban className="mr-3 h-7 w-7 text-primary" /> Future Visit Cards
                     </h2>
-                    <p className="text-muted-foreground mt-2">This board shows all visits with a future meeting scheduled, sorted by date.</p>
                 </div>
 
                 {futureVisits.length === 0 ? (
@@ -1757,9 +1756,6 @@ export default function HomePage() {
                     <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
                         <InfoIcon className="mr-3 h-7 w-7" /> App Guide
                     </h2>
-                    <p className="text-foreground/90 mt-1">
-                        This guide explains the key features of each section of the app.
-                    </p>
                 </div>
 
                 <Tabs defaultValue="about-field-day" className="w-full">
