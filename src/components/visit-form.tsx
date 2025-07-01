@@ -512,6 +512,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             }
         }
 
+        let meetingWasScheduled = false;
         // Handle meeting date
         if (details.futureMeetingDateTime) {
             const meetingDate = new Date(details.futureMeetingDateTime);
@@ -527,6 +528,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 if (!currentDate || new Date(currentDate).getTime() !== meetingDate.getTime()) {
                     form.setValue('futureMeetingDateTime', meetingDate, { shouldValidate: true });
                     fieldsUpdated++;
+                    meetingWasScheduled = true; // A new, valid date was set
                 }
             }
         } else if (details.futureMeetingSet) {
@@ -534,7 +536,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             updateField('futureMeetingSet', details.futureMeetingSet);
         }
 
-        if (fieldsUpdated > 0) {
+        // Auto-save if a meeting was scheduled, otherwise provide feedback on updates
+        if (meetingWasScheduled) {
+            const data = form.getValues();
+            const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
+            await onSave(payload, { andClose: false });
+            toast({
+                title: "Meeting Auto-Scheduled!",
+                description: `I've updated the visit for ${data.companyName} with the new meeting time and saved the changes.`,
+            });
+        } else if (fieldsUpdated > 0) {
             toast({
               title: "AI Analysis Complete",
               description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes.`,
@@ -556,7 +567,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsAnalyzingNotes(false);
       analysisToast.dismiss();
     }
-  }, [form, toast]);
+  }, [form, toast, initialData, currentLatitude, currentLongitude, onSave]);
 
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
