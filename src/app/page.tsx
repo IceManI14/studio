@@ -1169,13 +1169,13 @@ export default function HomePage() {
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
-            </TabsTrigger>
             <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
+            </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
