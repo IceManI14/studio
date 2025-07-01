@@ -543,7 +543,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             await onSave(payload, { andClose: false });
             toast({
                 title: "Meeting Auto-Scheduled!",
-                description: `I've updated the visit for ${data.companyName} with the new meeting time and saved the changes.`,
+                description: `I've scheduled the meeting for ${data.companyName}. The visit card has been moved to the 'Scheduled' section in your planner.`,
             });
         } else if (fieldsUpdated > 0) {
             toast({
