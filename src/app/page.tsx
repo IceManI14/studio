@@ -1283,7 +1283,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          Click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location.
+                          Click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location, pre-filled with company details when possible.
                       </p>
                        <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
@@ -1629,7 +1629,7 @@ export default function HomePage() {
                             <ScrollArea className="h-full">
                                 <div className="space-y-3 pr-4">
                                     {hotLeads.map((lead, index) => (
-                                        <div key={lead.id} className="p-3 rounded-md border-2 border-primary/30 bg-background/50 space-y-2">
+                                        <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 bg-background/50 space-y-2 shadow-lg shadow-orange-500/20">
                                             <div>
                                                 <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
                                                 <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
