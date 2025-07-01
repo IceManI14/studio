@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -1282,7 +1281,7 @@ export default function HomePage() {
         onClose={() => setShowTerritoryUploadModal(false)}
       />
       <div className="container mx-auto px-4 pt-4 pb-8 sm:px-6 lg:px-8 space-y-8">
-        <header className="flex flex-col items-center justify-center w-full py-4 gap-2">
+        <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
@@ -1333,9 +1332,6 @@ export default function HomePage() {
                             </AlertDescription>
                           </Alert>
                         )}
-                      <Button variant="outline" onClick={() => handleChangeDestination()} className="w-full">
-                        Change Destination
-                      </Button>
                       <Button
                         onClick={handleHotspotCreation}
                         variant="outline"
@@ -1343,6 +1339,9 @@ export default function HomePage() {
                       >
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
+                      </Button>
+                      <Button variant="outline" onClick={() => handleChangeDestination()} className="w-full">
+                        Change Destination
                       </Button>
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
@@ -1374,13 +1373,13 @@ export default function HomePage() {
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <FolderKanban className="h-5 w-5" />
-              <span className="hidden sm:inline">Planner</span>
-            </TabsTrigger>
             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <FolderKanban className="h-5 w-5" />
+              <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
