@@ -1175,76 +1175,76 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson ? (
-            <Accordion type="single" collapsible className="w-full max-w-lg mx-auto mt-6">
-              <AccordionItem value="daily-plan" className="border-none">
-                <AccordionTrigger className="p-4 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                      <Compass className="h-5 w-5 text-primary" />
-                      <div className="flex flex-col items-start">
-                        <h2 className="text-lg font-headline font-semibold text-foreground text-left">
-                          Today's Navigation Plan
-                        </h2>
-                        <span className="text-xs text-muted-foreground flex items-center gap-2">
-                          <User className="h-3 w-3" />
-                          {selectedSalesperson.name}
-                          <Separator orientation="vertical" className="h-3 bg-border" />
-                          <CalendarIcon className="h-3 w-3" />
-                          {format(new Date(), 'MMMM d, yyyy')}
-                        </span>
+            <div className="w-full max-w-lg mx-auto mt-6">
+              <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
+                Navigation Plan
+              </h2>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="daily-plan" className="border-none">
+                  <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-primary" />
+                        <div className="flex flex-col items-start">
+                          <span className="font-semibold text-foreground">{selectedSalesperson.name}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-2">
+                            <CalendarIcon className="h-3 w-3" />
+                            {format(new Date(), 'MMMM d, yyyy')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    {targetDestination && (
-                      <Badge variant="secondary">{targetDestination.city}</Badge>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
-                    {isFetchingCity && (
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Determining current city...
-                      </div>
-                    )}
-                    {currentCity && !isFetchingCity && (
-                      <div className="flex items-center text-md font-medium text-foreground">
-                        <MapPin className="mr-2 h-4 w-4 text-primary" />
-                        <span>Currently Located: {currentCity}</span>
-                      </div>
-                    )}
-                     {todaysScheduledVisits.length > 0 && (
-                        <Alert variant="default" className="border-primary/50 bg-primary/10 text-left w-full">
-                          <CalendarCheck className="h-4 w-4" />
-                          <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
-                          <AlertDescription>
-                            {todaysScheduledVisits.map(v => v.companyName).join(', ')}
-                          </AlertDescription>
-                        </Alert>
+                      {targetDestination && (
+                        <Badge variant="secondary">{targetDestination.city}</Badge>
                       )}
-                    <Button variant="outline" onClick={() => handleChangeDestination()}>
-                      Change Destination
-                    </Button>
-                    {targetDestination?.description && (
-                      <div className="text-center w-full bg-background/20 p-3 rounded-md">
-                        <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
-                        <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
-                      </div>
-                    )}
-                    {navigationUrl && (
-                      <Button
-                        onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
-                        className="w-full"
-                        variant="default"
-                      >
-                        <Map className="mr-2 h-4 w-4" />
-                        Navigate to {targetDestination?.city}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
+                      {isFetchingCity && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Determining current city...
+                        </div>
+                      )}
+                      {currentCity && !isFetchingCity && (
+                        <div className="flex items-center text-md font-medium text-foreground">
+                          <MapPin className="mr-2 h-4 w-4 text-primary" />
+                          <span>Currently Located: {currentCity}</span>
+                        </div>
+                      )}
+                      {todaysScheduledVisits.length > 0 && (
+                          <Alert variant="default" className="border-primary/50 bg-primary/10 text-left w-full">
+                            <CalendarCheck className="h-4 w-4" />
+                            <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
+                            <AlertDescription>
+                              {todaysScheduledVisits.map(v => v.companyName).join(', ')}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      <Button variant="outline" onClick={() => handleChangeDestination()}>
+                        Change Destination
                       </Button>
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                      {targetDestination?.description && (
+                        <div className="text-center w-full bg-background/20 p-3 rounded-md">
+                          <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
+                          <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
+                        </div>
+                      )}
+                      {navigationUrl && (
+                        <Button
+                          onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
+                          className="w-full"
+                          variant="default"
+                        >
+                          <Map className="mr-2 h-4 w-4" />
+                          Navigate to {targetDestination?.city}
+                        </Button>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
           ) : (
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
               <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
@@ -1263,10 +1263,6 @@ export default function HomePage() {
             <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
-            </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <InfoIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">About</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
@@ -1288,6 +1284,10 @@ export default function HomePage() {
              <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <InfoIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
