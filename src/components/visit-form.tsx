@@ -203,6 +203,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const { toast } = useToast();
+  const [lastAnalyzedNotes, setLastAnalyzedNotes] = useState<string | undefined>(undefined);
 
 
   const form = useForm<VisitFormData>({
@@ -407,6 +408,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   useEffect(() => {
     if (isOpen) {
       resetFormAndState(initialData);
+      setLastAnalyzedNotes(initialData?.notes);
     }
   }, [initialData, isOpen, resetFormAndState]);
 
@@ -456,6 +458,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const analyzeNotesAndPopulateForm = useCallback(async (notes: string) => {
     if (!notes.trim()) return;
 
+    setLastAnalyzedNotes(notes);
     setIsAnalyzingNotes(true);
     const analysisToast = toast({
       title: "AI is analyzing your notes...",
@@ -1623,6 +1626,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       placeholder="Details about the visit, key discussion points, etc. You can also use the microphone to dictate notes."
                       className="mt-1 min-h-[100px]"
                       {...field}
+                      onBlur={(e) => {
+                        field.onBlur(e);
+                        const currentNotes = form.getValues('notes');
+                        if (currentNotes && currentNotes.trim() && currentNotes !== lastAnalyzedNotes) {
+                            analyzeNotesAndPopulateForm(currentNotes);
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
