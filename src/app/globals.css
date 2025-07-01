@@ -61,6 +61,21 @@ body {
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, #0a0a0a 0%, #1a2e4a 50%, #2e1a4a 100%);
   }
+  
+  /* Custom Calendar Day Modifiers */
+  .day-logged:not([aria-selected]) {
+    @apply font-bold text-cyan-400;
+  }
+  .day-logged:hover:not([aria-selected]) {
+    @apply bg-cyan-900/50 rounded-md text-cyan-300;
+  }
+
+  .day-scheduled:not([aria-selected]) {
+    @apply font-bold text-orange-400;
+  }
+  .day-scheduled:hover:not([aria-selected]) {
+    @apply bg-orange-900/50 rounded-md text-orange-300;
+  }
 }
 
 @layer utilities {

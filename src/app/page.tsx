@@ -12,7 +12,7 @@ import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { format, subDays, isSameDay, isToday } from 'date-fns';
+import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
@@ -320,6 +320,17 @@ export default function HomePage() {
         }
     }
   }, [selectedSalesperson]);
+
+  const scheduledFutureVisitDays = useMemo(() => {
+    return visits
+      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime)
+      .map(visit => startOfDay(new Date(visit.futureMeetingDateTime!)));
+  }, [visits]);
+
+  const loggedVisitDays = useMemo(() => {
+    const uniqueTimestamps = new Set(visits.map(v => startOfDay(new Date(v.timestamp)).getTime()));
+    return Array.from(uniqueTimestamps).map(time => new Date(time));
+  }, [visits]);
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visits.length === 0) {
@@ -1187,12 +1198,12 @@ export default function HomePage() {
                         <User className="h-5 w-5 text-primary" />
                         <div className="flex flex-col items-start">
                           <span className="font-semibold text-foreground">{selectedSalesperson.name}</span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-2">
-                            <CalendarIcon className="h-3 w-3" />
-                            {format(new Date(), 'MMMM d, yyyy')}
-                          </span>
                         </div>
                       </div>
+                      <span className="text-xs text-muted-foreground flex items-center gap-2">
+                        <CalendarIcon className="h-3 w-3" />
+                        {format(new Date(), 'MMMM d, yyyy')}
+                      </span>
                       {targetDestination && (
                         <Badge variant="secondary">{targetDestination.city}</Badge>
                       )}
@@ -1369,6 +1380,14 @@ export default function HomePage() {
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       className="rounded-md border self-center"
+                      modifiers={{
+                        scheduled: scheduledFutureVisitDays,
+                        logged: loggedVisitDays,
+                      }}
+                      modifiersClassNames={{
+                        scheduled: 'day-scheduled',
+                        logged: 'day-logged',
+                      }}
                     />
                     {selectedDate && (
                       <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
