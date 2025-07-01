@@ -1282,13 +1282,13 @@ export default function HomePage() {
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
             <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
-            </TabsTrigger>
-             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <InfoIcon className="h-5 w-5" />
