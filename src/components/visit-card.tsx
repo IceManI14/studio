@@ -147,7 +147,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return (
       <Card
         className={cn(
-          "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
+          "flex flex-col shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
           'border-orange-500 shadow-lg shadow-orange-500/20',
           !isZoomedView && 'cursor-pointer'
         )}
@@ -161,7 +161,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
                 <div className="space-y-1 bg-black p-2 rounded-md">
                     <Label htmlFor={`planner-notes-${visit.id}`} className="text-xs font-medium text-muted-foreground">Future Visit Notes</Label>
-                    <div id={`planner-notes-${visit.id}`} className="text-sm text-white whitespace-pre-wrap h-20 overflow-y-auto p-2 border border-zinc-700 rounded bg-black">
+                    <div id={`planner-notes-${visit.id}`} className="text-sm text-white whitespace-pre-wrap p-2 border border-zinc-700 rounded bg-black">
                         {visit.futureMeetingDateTime && (
                           <p className="font-bold text-yellow-300 mb-2">
                             Scheduled: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'MMM d, yyyy, h:mm a')}
