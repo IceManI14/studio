@@ -8,7 +8,7 @@ import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { extractVisitDetails } from '@/ai/flows/extract-visit-details-flow';
 import { getCompanyIntel } from '@/ai/flows/get-company-intel-flow.ts';
-import { findPlacesFromText } from '@/services/google-places';
+import { findPlacesFromText, type PlaceDetails } from '@/services/google-places';
 import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -309,6 +309,7 @@ export async function extractCitiesFromPdfAction(
 const findCompanySchema = z.object({
   companyName: z.string().min(1, "Company name is required."),
   city: z.string().optional(),
+  territoryCities: z.array(z.string()).optional(),
 });
 
 export async function findCompanyAction(
@@ -327,14 +328,46 @@ export async function findCompanyAction(
 }> {
   try {
     const validatedPayload = findCompanySchema.parse(payload);
-    const query = `${validatedPayload.companyName}${validatedPayload.city ? `, ${validatedPayload.city}` : ''}`;
+    const { companyName, city, territoryCities } = validatedPayload;
 
-    const results = await findPlacesFromText(query);
-    if (!results || results.length === 0) {
-      return { error: 'Company not found.' };
+    const citiesToSearch = city && city.trim() ? [city.trim()] : (territoryCities || []);
+
+    if (citiesToSearch.length === 0) {
+      const results = await findPlacesFromText(companyName);
+      if (!results || results.length === 0) {
+        return { error: 'Company not found.' };
+      }
+      const places = results.map(result => ({
+        companyName: result.suggestedCompanyName,
+        address: result.address,
+        city: result.city,
+        phone: result.phone,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        openingHours: result.openingHours,
+      }));
+      return { places };
     }
 
-    const places = results.map(result => ({
+    const allPlaces: PlaceDetails[] = [];
+    const foundPlaceIds = new Set<string>();
+
+    for (const searchCity of citiesToSearch) {
+      const query = `${companyName}, ${searchCity}`;
+      const results = await findPlacesFromText(query);
+      for (const place of results) {
+        if (place.placeId && !foundPlaceIds.has(place.placeId)) {
+          allPlaces.push(place);
+          foundPlaceIds.add(place.placeId);
+        }
+      }
+    }
+    
+    if (allPlaces.length === 0) {
+      return { error: `No branches of '${companyName}' found in the specified territory.` };
+    }
+
+    const places = allPlaces.map(result => ({
         companyName: result.suggestedCompanyName,
         address: result.address,
         city: result.city,

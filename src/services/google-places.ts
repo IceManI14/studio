@@ -11,6 +11,7 @@
 // instead of the @googlemaps/google-maps-services-js library to avoid bundling issues.
 
 export interface PlaceDetails {
+  placeId: string;
   suggestedCompanyName: string;
   address: string;
   city: string;
@@ -111,6 +112,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
 
                     const city = getBestEffortCity(placeDetails.address_components);
                     return {
+                        placeId: bestPlaceCandidate.place_id,
                         suggestedCompanyName: isGeographicArea ? '' : (placeDetails.name || ''),
                         address: placeDetails.formatted_address || (city ? '' : 'No address found'),
                         city: city || "Unknown Location",
@@ -141,6 +143,7 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
             const city = getBestEffortCity(firstResult.address_components);
             
             return {
+                placeId: firstResult.place_id,
                 suggestedCompanyName: '', // Do not use address as a fallback for company name
                 address: firstResult.formatted_address,
                 city: city || "Unknown Location",
@@ -200,6 +203,7 @@ export async function findPlacesFromText(query: string): Promise<PlaceDetails[]>
                 const placeDetails = detailsData.result;
                 const city = getBestEffortCity(placeDetails.address_components);
                 return {
+                    placeId: candidate.place_id,
                     suggestedCompanyName: placeDetails.name || '',
                     address: placeDetails.formatted_address || '',
                     city: city || "Unknown Location",

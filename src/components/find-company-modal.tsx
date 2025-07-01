@@ -32,7 +32,7 @@ interface FindCompanyModalProps {
 
 export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destinationCities }: FindCompanyModalProps) {
     const [companyName, setCompanyName] = useState('');
-    const [city, setCity] = useState(destinationCities[0] || '');
+    const [city, setCity] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
     const { toast } = useToast();
@@ -45,7 +45,11 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
         setIsSearching(true);
         setFoundPlaces([]);
         try {
-            const result = await findCompanyAction({ companyName, city });
+            const result = await findCompanyAction({ 
+                companyName, 
+                city: city.trim() ? city.trim() : undefined,
+                territoryCities: destinationCities
+            });
             if (result.error) {
                 toast({ variant: 'destructive', title: "Search Failed", description: result.error });
             } else if (result.places && result.places.length > 0) {
@@ -76,6 +80,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
     
     const handleClose = () => {
         setCompanyName('');
+        setCity('');
         setFoundPlaces([]);
         onClose();
     }
@@ -86,7 +91,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                 <DialogHeader>
                     <DialogTitle>Find a Company</DialogTitle>
                     <DialogDescription>
-                        Search for a company to get its address and add it as a potential visit.
+                        Search for all branches of a company within your territory. You can optionally narrow the search to a specific city.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -100,12 +105,12 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="city-search">State / City / Town / County</Label>
+                        <Label htmlFor="city-search">City (Optional)</Label>
                         <Input
                             id="city-search"
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
-                            placeholder="e.g., Boston, MA"
+                            placeholder="Leave blank to search entire territory"
                         />
                     </div>
                     <Button onClick={handleSearch} disabled={isSearching} className="w-full">
