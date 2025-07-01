@@ -40,6 +40,7 @@ import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeade
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -1182,10 +1183,13 @@ export default function HomePage() {
                       <Compass className="h-5 w-5 text-primary" />
                       <div className="flex flex-col items-start">
                         <h2 className="text-lg font-headline font-semibold text-foreground text-left">
-                          {selectedSalesperson.name}'s Plan
+                          Today's Navigation Plan
                         </h2>
-                        <span className="text-xs text-muted-foreground flex items-center">
-                          <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        <span className="text-xs text-muted-foreground flex items-center gap-2">
+                          <User className="h-3 w-3" />
+                          {selectedSalesperson.name}
+                          <Separator orientation="vertical" className="h-3 bg-border" />
+                          <CalendarIcon className="h-3 w-3" />
                           {format(new Date(), 'MMMM d, yyyy')}
                         </span>
                       </div>
@@ -1260,6 +1264,10 @@ export default function HomePage() {
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <InfoIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">About</span>
+            </TabsTrigger>
             <TabsTrigger
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
@@ -1280,10 +1288,6 @@ export default function HomePage() {
              <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
-            </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <InfoIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
