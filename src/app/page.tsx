@@ -1404,8 +1404,16 @@ export default function HomePage() {
                             </AlertDescription>
                           </Alert>
                         )}
-                      <Button variant="outline" onClick={() => handleChangeDestination()}>
+                      <Button variant="outline" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
+                      </Button>
+                      <Button
+                        onClick={handleToggleWakeWordListener}
+                        variant={isWakeWordListening ? "destructive" : "outline"}
+                        className="w-full"
+                      >
+                        {isWakeWordListening ? <MicOff className="mr-2 h-5 w-5 animate-pulse" /> : <Mic className="mr-2 h-5 w-5" />}
+                        {isWakeWordListening ? 'Listening...' : 'Hotspot Listener'}
                       </Button>
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
@@ -1441,10 +1449,6 @@ export default function HomePage() {
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
-            </TabsTrigger>
             <TabsTrigger
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
@@ -1457,6 +1461,10 @@ export default function HomePage() {
             >
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
+            </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
@@ -1476,15 +1484,6 @@ export default function HomePage() {
                     <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!userCurrentLatitude || isFetchingCity}>
                         {isFetchingCity ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
                         Quicklog Visit
-                    </Button>
-                    <Button
-                      onClick={handleToggleWakeWordListener}
-                      variant={isWakeWordListening ? "destructive" : "outline"}
-                      size="sm"
-                      className="flex-1"
-                    >
-                      {isWakeWordListening ? <MicOff className="mr-2 h-5 w-5 animate-pulse" /> : <Mic className="mr-2 h-5 w-5" />}
-                      {isWakeWordListening ? 'Listening...' : 'Hotspot Listener'}
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
