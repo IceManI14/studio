@@ -1,17 +1,18 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, Map, MapPin, Phone, Clock, PlusSquare } from 'lucide-react';
+import { Loader2, Map, MapPin, Phone, Clock, PlusSquare, Mic } from 'lucide-react';
 import type { Visit, Territory, FoundPlace } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface FindCompanyModalProps {
     isOpen: boolean;
@@ -28,6 +29,63 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
     const [isSearching, setIsSearching] = useState(false);
     const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
     const { toast } = useToast();
+    const [recordingField, setRecordingField] = useState<'company' | 'city' | null>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+    const handleToggleVoice = useCallback((field: 'company' | 'city') => {
+        const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
+            return;
+        }
+
+        if (recordingField && recognitionRef.current) {
+            recognitionRef.current.stop();
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            setRecordingField(field);
+            toast({ title: `Listening for ${field}...` });
+        };
+
+        recognition.onend = () => {
+            setRecordingField(null);
+            recognitionRef.current = null;
+        };
+        
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+            toast({ variant: 'destructive', title: 'Voice Error', description: event.error });
+            setRecordingField(null);
+            recognitionRef.current = null;
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript) {
+                if (field === 'company') {
+                    setCompanyName(transcript);
+                } else if (field === 'city') {
+                    setCity(transcript);
+                }
+                toast({ title: `${field.charAt(0).toUpperCase() + field.slice(1)} Updated` });
+            }
+        };
+
+        try {
+            recognition.start();
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Could not start recording', description: e.message });
+        }
+
+    }, [recordingField, toast]);
 
     const handleSearch = async () => {
         if (!companyName.trim()) {
@@ -76,6 +134,9 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
         setCompanyName('');
         setCity('');
         setFoundPlaces([]);
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
         onClose();
     }
 
@@ -91,23 +152,59 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="company-name-search">Company Name</Label>
-                        <Input
-                            id="company-name-search"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            placeholder="e.g., Optimum Water Solutions"
-                        />
+                        <div className="relative flex items-center">
+                            <Input
+                                id="company-name-search"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder="e.g., Optimum Water Solutions"
+                                className="pr-10"
+                                disabled={!!recordingField}
+                            />
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleVoice('company')}
+                                className="absolute right-1 h-8 w-8"
+                                aria-label="Dictate company name"
+                            >
+                                {recordingField === 'company' ? (
+                                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                ) : (
+                                    <Mic className="h-4 w-4 text-muted-foreground" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="city-search">City (Optional)</Label>
-                        <Input
-                            id="city-search"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            placeholder="Leave blank to search entire territory"
-                        />
+                         <div className="relative flex items-center">
+                            <Input
+                                id="city-search"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                placeholder="Leave blank to search entire territory"
+                                className="pr-10"
+                                disabled={!!recordingField}
+                            />
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleVoice('city')}
+                                className="absolute right-1 h-8 w-8"
+                                aria-label="Dictate city"
+                            >
+                                {recordingField === 'city' ? (
+                                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                ) : (
+                                    <Mic className="h-4 w-4 text-muted-foreground" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
-                    <Button onClick={handleSearch} disabled={isSearching} className="w-full">
+                    <Button onClick={handleSearch} disabled={isSearching || !!recordingField} className="w-full">
                         {isSearching ? <Loader2 className="animate-spin" /> : 'Search'}
                     </Button>
                 </div>
