@@ -213,7 +213,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           ? 'border-orange-500 shadow-lg shadow-orange-500/20' 
           : visit.dealClosed 
             ? 'border-green-500' 
-            : 'border-primary/40',
+            : 'border-sky-500',
         !isZoomedView && 'cursor-pointer'
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
