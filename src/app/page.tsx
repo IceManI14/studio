@@ -1090,20 +1090,18 @@ export default function HomePage() {
           
           {activeTab === 'call-day' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4 p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                <h2 className="text-2xl font-semibold text-foreground text-center">
-                  Call Day Priority List
-                </h2>
-              </div>
-
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
+                <div className="mb-4">
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
+                        <Search className="mr-2 h-4 w-4" /> Find Company by Name
+                    </Button>
+                </div>
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground">Filter &amp; Sort Options</h3>
+                  <h3 className="text-lg font-medium text-foreground">Show Visits by Date</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div className="flex flex-col items-center">
-                    <Label className="text-sm mb-2 block w-full text-left">Filter by Date</Label>
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -1118,7 +1116,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5 w-full">
-                      <Label htmlFor="sort-criteria" className="text-sm">Sort By</Label>
+                      <Label htmlFor="sort-criteria" className="text-sm">Sort Visit Cards By</Label>
                       <Select
                         value={sortCriteria}
                         onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
@@ -1148,11 +1146,6 @@ export default function HomePage() {
                       </Select>
                     </div>
                   </div>
-                </div>
-                <div className="mt-4 pt-4 border-t">
-                  <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
-                      <Search className="mr-2 h-4 w-4" /> Find Company by Name
-                  </Button>
                 </div>
               </div>
 
