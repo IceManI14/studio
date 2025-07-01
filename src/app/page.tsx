@@ -1645,43 +1645,45 @@ export default function HomePage() {
                                     {hotLeads.map((lead, index) => {
                                       const isConverted = convertedHotLeads.has(lead.id);
                                       return (
-                                        <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 bg-background/50 space-y-2 shadow-lg shadow-orange-500/20">
-                                            <div>
-                                                <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
-                                                {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
-                                            </div>
+                                        <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 space-y-2 shadow-lg shadow-orange-500/20 flex flex-col">
+                                            <div className="flex-grow space-y-2">
+                                                <div className="bg-muted/50 p-2 rounded-md">
+                                                    <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
+                                                    <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
+                                                    {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
+                                                </div>
 
-                                            <div className="space-y-1">
-                                                <Label htmlFor={`hot-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
-                                                <div className="relative">
-                                                  <Textarea
-                                                      id={`hot-lead-notes-${lead.id}`}
-                                                      value={lead.notes || ''}
-                                                      onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                      placeholder="e.g., Competitor: Blue Drop. Contract with Quench is up in a few months."
-                                                      className="text-sm h-20 bg-background pr-10"
-                                                      rows={3}
-                                                      disabled={isRecordingHotLeadNotes === lead.id}
-                                                  />
-                                                  <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleToggleVoiceForHotLead(lead.id)}
-                                                    className="absolute right-1 top-1 h-8 w-8"
-                                                    aria-label="Dictate hot lead notes"
-                                                  >
-                                                    {isRecordingHotLeadNotes === lead.id ? (
-                                                      <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                                    ) : (
-                                                      <Mic className="h-4 w-4 text-muted-foreground" />
-                                                    )}
-                                                  </Button>
+                                                <div className="space-y-1 bg-black p-2 rounded-md">
+                                                    <Label htmlFor={`hot-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
+                                                    <div className="relative">
+                                                      <Textarea
+                                                          id={`hot-lead-notes-${lead.id}`}
+                                                          value={lead.notes || ''}
+                                                          onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
+                                                          placeholder="e.g., Competitor: Blue Drop. Contract with Quench is up in a few months."
+                                                          className="text-sm h-20 bg-black pr-10"
+                                                          rows={3}
+                                                          disabled={isRecordingHotLeadNotes === lead.id}
+                                                      />
+                                                      <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleToggleVoiceForHotLead(lead.id)}
+                                                        className="absolute right-1 top-1 h-8 w-8"
+                                                        aria-label="Dictate hot lead notes"
+                                                      >
+                                                        {isRecordingHotLeadNotes === lead.id ? (
+                                                          <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                                        ) : (
+                                                          <Mic className="h-4 w-4 text-muted-foreground" />
+                                                        )}
+                                                      </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50">
+                                            <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50 shrink-0">
                                                  <Button 
                                                     variant={isConverted ? "default" : "outline"}
                                                     size="sm" 
