@@ -118,10 +118,21 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                         ].includes(type)
                     );
 
+                    // NEW check: if the name looks like a street address or intersection, it's not a company name.
+                    const looksLikeAddress = (name: string | undefined): boolean => {
+                        if (!name) return false;
+                        // Checks for a number at the beginning of a string, or common intersection patterns.
+                        // This helps filter out results like "123 Main St" or "Main St & 1st Ave".
+                        return /^\d+\s/.test(name) || /\s(&|and|@|opp)\s/i.test(name);
+                    };
+
+                    // A name is considered invalid if it's a geographic area or looks like an address.
+                    const companyNameIsInvalid = isGeographicArea || looksLikeAddress(placeDetails.name);
+
                     const city = getBestEffortCity(placeDetails.address_components);
                     return {
                         placeId: bestPlaceCandidate.place_id,
-                        suggestedCompanyName: isGeographicArea ? '' : (placeDetails.name || ''),
+                        suggestedCompanyName: companyNameIsInvalid ? '' : (placeDetails.name || ''),
                         address: placeDetails.formatted_address || (city ? '' : 'No address found'),
                         city: city || "Unknown Location",
                         phone: placeDetails.formatted_phone_number || '',
