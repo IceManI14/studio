@@ -64,14 +64,14 @@ body {
   
   /* Custom Calendar Day Modifiers */
   .day-logged:not([aria-selected]) {
-    @apply rounded-md bg-cyan-400 font-bold text-black;
+    @apply rounded-md bg-cyan-400 font-bold text-white;
   }
   .day-logged:hover:not([aria-selected]) {
     @apply bg-cyan-300;
   }
 
   .day-scheduled:not([aria-selected]) {
-    @apply rounded-md bg-orange-500 font-bold text-black;
+    @apply rounded-md bg-orange-500 font-bold text-white;
   }
   .day-scheduled:hover:not([aria-selected]) {
     @apply bg-orange-400;
