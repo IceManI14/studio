@@ -343,6 +343,12 @@ export default function HomePage() {
     return sorted;
   }, [visits, sortCriteria, sortOrder, selectedDate]);
 
+  const futureVisits = useMemo(() => {
+    return visits
+      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date())
+      .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
+  }, [visits]);
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1090,7 +1096,7 @@ export default function HomePage() {
         </header>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 -mt-6">
+          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 -mt-6">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -1098,6 +1104,10 @@ export default function HomePage() {
             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <FolderKanban className="h-5 w-5" />
+              <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
@@ -1191,7 +1201,7 @@ export default function HomePage() {
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
+                  <h3 className="text-lg font-medium text-foreground text-center">Show Visit Cards by Date</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div className="flex flex-col items-center">
@@ -1269,6 +1279,43 @@ export default function HomePage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'planner' && (
+            <div className="space-y-6">
+                <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
+                    <h2 id="planner-section-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
+                        <FolderKanban className="mr-3 h-7 w-7 text-primary" /> Future Visit Planner
+                    </h2>
+                    <p className="text-muted-foreground mt-2">This board shows all visits with a future meeting scheduled, sorted by date.</p>
+                </div>
+
+                {futureVisits.length === 0 ? (
+                    <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                        <p className="text-xl text-muted-foreground mb-4">
+                            No future visits scheduled.
+                        </p>
+                        <p className="text-muted-foreground">
+                            Set a future meeting date on a visit card, and it will appear here.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {futureVisits.map((visit) => (
+                            <VisitCard
+                                key={visit.id}
+                                visit={visit}
+                                onEdit={handleEditVisit}
+                                onDelete={handleDeleteVisit}
+                                onUpdateDealClosed={handleUpdateDealClosed}
+                                onZoom={setZoomedVisit}
+                                onLogFollowUp={handleLogFollowUp}
+                                onDictateNotes={handleDictateNotes}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
           )}
 
