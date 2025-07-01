@@ -142,6 +142,69 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
+  
+  if (variant === 'planner' && !isZoomedView) {
+    return (
+      <Card
+        className={cn(
+          "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
+          'border-orange-500 shadow-lg shadow-orange-500/20',
+          !isZoomedView && 'cursor-pointer'
+        )}
+        onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
+      >
+        <CardContent className="p-3 flex-grow flex flex-col space-y-2">
+            <div className="flex-grow space-y-2">
+                <div className="bg-muted/50 p-2 rounded-md">
+                    <h4 className="font-semibold text-foreground flex items-center"><Building2 className="mr-2 h-4 w-4 shrink-0" />{visit.companyName}</h4>
+                    {visit.futureMeetingDateTime && (
+                         <p className="text-sm text-muted-foreground pl-6 flex items-center">
+                            <CalendarClock className="mr-2 h-4 w-4 shrink-0" />
+                            {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'MMM d, yyyy @ h:mm a')}
+                         </p>
+                    )}
+                </div>
+
+                <div className="space-y-1 bg-black p-2 rounded-md">
+                    <Label htmlFor={`planner-notes-${visit.id}`} className="text-xs font-medium text-muted-foreground">Visit Notes</Label>
+                    <div id={`planner-notes-${visit.id}`} className="text-sm text-white whitespace-pre-wrap h-20 overflow-y-auto p-2 border border-zinc-700 rounded bg-black">
+                        {visit.notes || 'No notes for this visit.'}
+                    </div>
+                </div>
+            </div>
+        </CardContent>
+        <CardFooter className="flex justify-end items-center gap-2 border-t pt-2 mt-auto p-3">
+             {onDictateNotes && (
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
+                    <Mic className="h-4 w-4" />
+                </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card 
