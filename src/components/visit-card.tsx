@@ -268,7 +268,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
             >
                 <Building2 className="mr-2 h-5 w-5 shrink-0" />
-                <span className="break-all">{visit.companyName}</span>
+                <span className="truncate">{visit.companyName}</span>
             </CardTitle>
             
             {isCoordsVisible && visit.latitude && visit.longitude && (
