@@ -374,11 +374,18 @@ export default function HomePage() {
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visits]);
 
-  const unscheduledFutureVisits = useMemo(() => {
+  const flaggedHotspots = useMemo(() => {
     return visits
-      .filter(visit => visit.futureMeetingSet && !visit.futureMeetingDateTime)
+      .filter(visit => visit.notes?.startsWith('Flagged as a hotspot.'))
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visits]);
+
+  const unscheduledFutureVisits = useMemo(() => {
+    const hotspotIds = new Set(flaggedHotspots.map(h => h.id));
+    return visits
+      .filter(visit => visit.futureMeetingSet && !visit.futureMeetingDateTime && !hotspotIds.has(visit.id))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [visits, flaggedHotspots]);
 
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
@@ -1621,14 +1628,48 @@ export default function HomePage() {
               
               <div>
                   <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
+                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
+                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
+                      </h2>
+                  </div>
+                  {flaggedHotspots.length === 0 ? (
+                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                          <p className="text-xl text-muted-foreground mb-4">
+                              No hotspots flagged yet.
+                          </p>
+                          <p className="text-muted-foreground">
+                              Use the "Flag Hotspot" button to mark locations while driving.
+                          </p>
+                      </div>
+                  ) : (
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          {flaggedHotspots.map((visit) => (
+                              <VisitCard
+                                  key={visit.id}
+                                  visit={visit}
+                                  onEdit={handleEditVisit}
+                                  onDelete={handleDeleteVisit}
+                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                  onZoom={setZoomedVisit}
+                                  onLogFollowUp={handleLogFollowUp}
+                                  onDictateNotes={handleDictateNotes}
+                                  variant="planner"
+                              />
+                          ))}
+                      </div>
+                  )}
+              </div>
+
+              <div>
+                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
                       <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Future Visits
+                          <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (To Be Scheduled)
                       </h2>
                   </div>
                   {unscheduledFutureVisits.length === 0 ? (
                       <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                           <p className="text-xl text-muted-foreground mb-4">
-                              No unscheduled future visits.
+                              No other unscheduled future visits.
                           </p>
                           <p className="text-muted-foreground">
                               Convert a "Hot Lead" from the Debbie tab to add it here.
