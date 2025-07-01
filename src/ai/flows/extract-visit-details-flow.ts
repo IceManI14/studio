@@ -23,6 +23,7 @@ const ExtractVisitDetailsOutputSchema = z.object({
   tdsValue: z.number().optional().describe("The numerical TDS (Total Dissolved Solids) value if mentioned in the notes (e.g., 'TDS was 150')."),
   interestedUnit: z.string().optional().describe("The specific water cooler model or type the client is interested in."),
   futureMeetingSet: z.boolean().optional().describe("Set to true if the notes mention that a future meeting or follow-up was scheduled or booked."),
+  futureMeetingDateTime: z.string().optional().describe("If a future meeting is set, extract the specific date and time. Return in a machine-readable format like 'YYYY-MM-DDTHH:mm:ss'. If only a date is mentioned, assume 9:00 AM local time."),
   freeTrial: z.boolean().optional().describe("Set to true if a free trial was discussed, agreed upon, or set up."),
 });
 export type ExtractVisitDetailsOutput = z.infer<typeof ExtractVisitDetailsOutputSchema>;
@@ -43,7 +44,7 @@ Analyze the following notes. Based ONLY on the text provided, extract the specif
 - If a person's name and/or title is mentioned as a contact or decision-maker, extract them.
 - If a specific TDS parts-per-million (PPM) value is mentioned, extract the number.
 - If they are interested in a specific unit, extract its name.
-- If a future meeting was booked or scheduled, set futureMeetingSet to true.
+- If a future meeting was booked or scheduled, set futureMeetingSet to true and extract the date/time into futureMeetingDateTime. If no specific time is mentioned, default to 9:00 AM.
 - If a free trial was set up, set freeTrial to true.
 
 Do not infer or make up information that isn't explicitly in the notes. If a piece of information is not present, omit its key from the output.

@@ -499,7 +499,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         updateField('decisionMakerName', details.decisionMakerName);
         updateField('decisionMakerTitle', details.decisionMakerTitle);
         updateField('interestedUnit', details.interestedUnit);
-        updateField('futureMeetingSet', details.futureMeetingSet);
         updateField('freeTrial', details.freeTrial);
         
         if (details.tdsValue !== undefined && details.tdsValue !== null) {
@@ -511,6 +510,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 form.setValue('tdsValue', details.tdsValue, { shouldValidate: true });
                 fieldsUpdated++;
             }
+        }
+
+        // Handle meeting date
+        if (details.futureMeetingDateTime) {
+            const meetingDate = new Date(details.futureMeetingDateTime);
+            if (meetingDate.toString() !== 'Invalid Date') {
+                const currentSet = form.getValues('futureMeetingSet');
+                const currentDate = form.getValues('futureMeetingDateTime');
+                
+                if (currentSet !== true) {
+                    form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                    fieldsUpdated++;
+                }
+
+                if (!currentDate || new Date(currentDate).getTime() !== meetingDate.getTime()) {
+                    form.setValue('futureMeetingDateTime', meetingDate, { shouldValidate: true });
+                    fieldsUpdated++;
+                }
+            }
+        } else if (details.futureMeetingSet) {
+            // This is a fallback if the AI only sets the boolean
+            updateField('futureMeetingSet', details.futureMeetingSet);
         }
 
         if (fieldsUpdated > 0) {

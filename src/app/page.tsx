@@ -1629,7 +1629,7 @@ export default function HomePage() {
               <div>
                   <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
                       <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                          <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (To Be Scheduled)
+                          <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
                       </h2>
                   </div>
                   {unscheduledFutureVisits.length === 0 ? (
