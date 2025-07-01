@@ -1165,7 +1165,7 @@ export default function HomePage() {
           {activeTab === 'call-day' && (
             <div className="space-y-6">
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center justify-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
                   <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
                 </div>
@@ -1183,9 +1183,9 @@ export default function HomePage() {
                       </Button>
                     )}
                   </div>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <Label htmlFor="sort-criteria" className="text-sm">Sort Visit Cards By</Label>
+                  <div className="flex flex-col gap-4 items-center">
+                    <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                      <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                       <Select
                         value={sortCriteria}
                         onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
@@ -1200,8 +1200,8 @@ export default function HomePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <Label htmlFor="sort-order" className="text-sm">Order</Label>
+                    <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                      <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
                       <Select
                         value={sortOrder}
                         onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
