@@ -27,7 +27,7 @@ const ExportHotLeadsCsvButton: React.FC<ExportHotLeadsCsvButtonProps> = ({ hotLe
     }
 
     const headers = [
-      'ID', 'Company Name', 'Address', 'City', 'Phone', 'Latitude', 'Longitude', 'Added At'
+      'ID', 'Company Name', 'Address', 'City', 'Phone', 'Latitude', 'Longitude', 'Added At', 'Notes'
     ];
 
     const rows = hotLeads.map(lead => [
@@ -39,6 +39,7 @@ const ExportHotLeadsCsvButton: React.FC<ExportHotLeadsCsvButtonProps> = ({ hotLe
       lead.latitude ?? '',
       lead.longitude ?? '',
       new Date(lead.addedAt).toISOString(),
+      `"${(lead.notes ?? '').replace(/"/g, '""')}"`,
     ].join(','));
 
     const csvContent = [headers.join(','), ...rows].join('\n');

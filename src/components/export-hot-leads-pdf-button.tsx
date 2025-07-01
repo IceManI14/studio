@@ -46,6 +46,7 @@ const ExportHotLeadsPdfButton: React.FC<ExportHotLeadsPdfButtonProps> = ({ hotLe
         "City",
         "Phone",
         "Added At",
+        "Notes",
       ];
 
       const tableRows = hotLeads.map(lead => {
@@ -56,6 +57,7 @@ const ExportHotLeadsPdfButton: React.FC<ExportHotLeadsPdfButtonProps> = ({ hotLe
           lead.city || 'N/A',
           lead.phone || 'N/A',
           addedDate,
+          lead.notes || 'N/A',
         ];
       });
 
@@ -66,6 +68,9 @@ const ExportHotLeadsPdfButton: React.FC<ExportHotLeadsPdfButtonProps> = ({ hotLe
         theme: 'striped',
         headStyles: { fillColor: [36, 104, 180] },
         styles: { fontSize: 8, cellPadding: 1.5, overflow: 'linebreak' },
+        columnStyles: {
+            5: { cellWidth: 50 }, // Notes column width
+        },
         didDrawPage: function (data) {
           let str = "Page " + doc.internal.getNumberOfPages();
           doc.setFontSize(10);

@@ -83,4 +83,5 @@ export interface HotLead {
   latitude?: number;
   longitude?: number;
   addedAt: Date;
+  notes?: string;
 }
