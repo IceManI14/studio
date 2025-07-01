@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
@@ -176,6 +176,20 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         fullscreenControl: false,
       }}
     >
+      {isLoaded && userLatitude && userLongitude && (
+          <MarkerF
+            position={{ lat: userLatitude, lng: userLongitude }}
+            title="Your Location"
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "white",
+              strokeWeight: 2,
+            }}
+          />
+      )}
       {validVisits.map((visit) => (
         <MarkerF
           key={visit.id}
@@ -239,16 +253,28 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                     <p className="text-xs text-destructive mt-2">Could not retrieve details.</p>
                 )}
 
-                {!intel[visit.id] && (
+                <div className="mt-2 flex items-center justify-between border-t pt-2">
                     <Button
                         size="sm"
                         variant="link"
-                        className="p-0 h-auto text-xs mt-2"
+                        className="p-0 h-auto text-xs"
                         onClick={() => handleGetIntel(visit)}
+                        disabled={intel[visit.id] === 'loading'}
                     >
-                        Get More Info
+                        {intel[visit.id] && intel[visit.id] !== 'loading' ? 'Refresh Intel' : 'Get More Info'}
                     </Button>
-                )}
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="link"
+                        className="p-0 h-auto text-xs"
+                    >
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer">
+                            <Navigation className="w-3 h-3 mr-1" />
+                            Directions
+                        </a>
+                    </Button>
+                </div>
               </div>
             </InfoWindowF>
           )}
