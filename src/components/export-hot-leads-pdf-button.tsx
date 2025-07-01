@@ -98,7 +98,7 @@ const ExportHotLeadsPdfButton: React.FC<ExportHotLeadsPdfButtonProps> = ({ hotLe
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="outline" disabled={hotLeads.length === 0} size={size} className={cn(className)}>
+    <Button onClick={handleExportPdf} variant="default" disabled={hotLeads.length === 0} size={size} className={cn(className)}>
       <Download className="mr-2 h-4 w-4" />
       Export PDF
     </Button>

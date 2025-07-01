@@ -148,6 +148,8 @@ export default function HomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
   const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
+  const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
+  const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -1026,6 +1028,62 @@ export default function HomePage() {
     );
   }, []);
 
+  const handleToggleVoiceForHotLead = useCallback((leadId: string) => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
+      return;
+    }
+  
+    if (isRecordingHotLeadNotes && hotLeadNotesRecognitionRef.current) {
+      hotLeadNotesRecognitionRef.current.stop();
+      return;
+    }
+  
+    const recognition = new SpeechRecognition();
+    hotLeadNotesRecognitionRef.current = recognition;
+  
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+  
+    recognition.onstart = () => {
+      setIsRecordingHotLeadNotes(leadId);
+      toast({ title: 'Listening for notes...' });
+    };
+  
+    recognition.onend = () => {
+      setIsRecordingHotLeadNotes(null);
+      hotLeadNotesRecognitionRef.current = null;
+    };
+  
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      toast({ variant: 'destructive', title: 'Voice Error', description: event.error });
+      setIsRecordingHotLeadNotes(null);
+      hotLeadNotesRecognitionRef.current = null;
+    };
+  
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setHotLeads(prevLeads =>
+          prevLeads.map(lead =>
+            lead.id === leadId
+              ? { ...lead, notes: (lead.notes ? lead.notes + '\n' : '') + transcript }
+              : lead
+          )
+        );
+        toast({ title: 'Notes Added' });
+      }
+    };
+  
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: e.message });
+    }
+  }, [isRecordingHotLeadNotes, toast]);
+
   return (
     <div className="min-h-screen">
        {!selectedSalesperson && (
@@ -1530,14 +1588,31 @@ export default function HomePage() {
 
                                             <div className="space-y-1">
                                                 <Label htmlFor={`hot-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
-                                                <Textarea
-                                                    id={`hot-lead-notes-${lead.id}`}
-                                                    value={lead.notes || ''}
-                                                    onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                    placeholder="e.g., Competitor: Blue Drop..."
-                                                    className="text-sm h-20 bg-background"
-                                                    rows={3}
-                                                />
+                                                <div className="relative">
+                                                  <Textarea
+                                                      id={`hot-lead-notes-${lead.id}`}
+                                                      value={lead.notes || ''}
+                                                      onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
+                                                      placeholder="e.g., Competitor: Blue Drop..."
+                                                      className="text-sm h-20 bg-background pr-10"
+                                                      rows={3}
+                                                      disabled={isRecordingHotLeadNotes === lead.id}
+                                                  />
+                                                  <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleToggleVoiceForHotLead(lead.id)}
+                                                    className="absolute right-1 top-1 h-8 w-8"
+                                                    aria-label="Dictate hot lead notes"
+                                                  >
+                                                    {isRecordingHotLeadNotes === lead.id ? (
+                                                      <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                                    ) : (
+                                                      <Mic className="h-4 w-4 text-muted-foreground" />
+                                                    )}
+                                                  </Button>
+                                                </div>
                                             </div>
                                             
                                             <div className="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-border/50">
@@ -1575,7 +1650,7 @@ export default function HomePage() {
                         <UiCardFooter className="flex-wrap gap-2">
                             <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" />
                             <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" />
-                            <Button onClick={handleEmailHotLeads} variant="outline" size="sm">
+                            <Button onClick={handleEmailHotLeads} variant="default" size="sm">
                                 <Mail className="mr-2 h-4 w-4" /> Email List to Self
                             </Button>
                         </UiCardFooter>

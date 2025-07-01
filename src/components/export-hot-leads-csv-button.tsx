@@ -73,7 +73,7 @@ const ExportHotLeadsCsvButton: React.FC<ExportHotLeadsCsvButtonProps> = ({ hotLe
   };
 
   return (
-    <Button onClick={handleExport} variant="outline" disabled={hotLeads.length === 0} size={size} className={cn(className)}>
+    <Button onClick={handleExport} variant="default" disabled={hotLeads.length === 0} size={size} className={cn(className)}>
       <Download className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
