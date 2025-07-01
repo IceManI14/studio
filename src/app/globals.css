@@ -76,6 +76,13 @@ body {
   .day-scheduled:hover:not([aria-selected]) {
     @apply text-orange-400;
   }
+
+  /* Override for selected today */
+  .day_today[aria-selected="true"],
+  .day_today[aria-selected="true"]:hover,
+  .day_today[aria-selected="true"]:focus {
+    @apply bg-cyan-400 text-black;
+  }
 }
 
 @layer utilities {
