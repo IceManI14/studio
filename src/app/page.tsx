@@ -847,7 +847,16 @@ export default function HomePage() {
                     </h2>
                 </div>
                  {targetDestination?.description && (
-                  <p className="text-sm text-muted-foreground mt-1 text-center">AI Suggestion: {targetDestination.description}</p>
+                  <Accordion type="single" collapsible className="w-full max-w-md text-center mt-1">
+                    <AccordionItem value="ai-suggestion" className="border-b-0">
+                      <AccordionTrigger className="p-1 text-sm font-normal text-muted-foreground hover:no-underline justify-center">
+                          View AI Parking Suggestion
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground px-4 pb-2 text-center">
+                        {targetDestination.description}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 )}
                 {navigationUrl && (
                   <Button
