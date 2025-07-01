@@ -1493,6 +1493,7 @@ export default function HomePage() {
           onClose={() => setIsFindCompanyModalOpen(false)}
           onAddAsVisit={handleAddFoundCompanyAsVisit}
           destinationCities={destinationCities}
+          territory={selectedSalesperson?.territory}
         />
         
         <ManageFilesModal

@@ -21,6 +21,14 @@ export interface PlaceDetails {
   openingHours?: string[];
 }
 
+// New interface for search bounds
+export interface SearchBounds {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
+
 // Helper to extract address components
 const getAddressComponent = (components: any[], type: string) => {
     const component = components.find(c => c.types.includes(type));
@@ -164,7 +172,8 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
     }
 }
 
-export async function findPlacesFromText(query: string): Promise<PlaceDetails[]> {
+// Updated function to accept optional bounds
+export async function findPlacesFromText(query: string, bounds?: SearchBounds): Promise<PlaceDetails[]> {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey || apiKey.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE')) {
         throw new Error("Google Maps API key is not configured correctly in .env file.");
@@ -174,6 +183,12 @@ export async function findPlacesFromText(query: string): Promise<PlaceDetails[]>
         const textSearchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
         textSearchUrl.searchParams.set('query', query);
         textSearchUrl.searchParams.set('region', 'us'); // Bias to USA
+        
+        // Add location bias if bounds are provided
+        if (bounds) {
+          textSearchUrl.searchParams.set('locationbias', `rectangle:${bounds.minLat},${bounds.minLng}|${bounds.maxLat},${bounds.maxLng}`);
+        }
+        
         textSearchUrl.searchParams.set('key', apiKey);
 
         const textSearchResponse = await fetch(textSearchUrl.toString());

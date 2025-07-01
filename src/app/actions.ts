@@ -1,3 +1,4 @@
+
 'use server';
 
 import { scrapeContactInfo } from '@/ai/flows/scrape-contact-info';
@@ -8,8 +9,8 @@ import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { extractVisitDetails } from '@/ai/flows/extract-visit-details-flow';
 import { getCompanyIntel } from '@/ai/flows/get-company-intel-flow.ts';
-import { findPlacesFromText, type PlaceDetails } from '@/services/google-places';
-import type { Visit, ContactInfo, ManagedFile } from '@/lib/types';
+import { findPlacesFromText, type PlaceDetails, type SearchBounds } from '@/services/google-places';
+import type { Visit, ContactInfo, ManagedFile, Territory } from '@/lib/types';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { db, firebaseConfigured } from '@/lib/firebase';
@@ -310,6 +311,16 @@ const findCompanySchema = z.object({
   companyName: z.string().min(1, "Company name is required."),
   city: z.string().optional(),
   territoryCities: z.array(z.string()).optional(),
+  territory: z.array(z.object({
+      name: z.string(),
+      bounds: z.object({
+        minLat: z.number(),
+        maxLat: z.number(),
+        minLng: z.number(),
+        maxLng: z.number(),
+      }),
+      cities: z.array(z.string()).optional()
+  })).optional()
 });
 
 export async function findCompanyAction(
@@ -328,39 +339,57 @@ export async function findCompanyAction(
 }> {
   try {
     const validatedPayload = findCompanySchema.parse(payload);
-    const { companyName, city, territoryCities } = validatedPayload;
+    const { companyName, city, territoryCities, territory } = validatedPayload;
 
     const citiesToSearch = city && city.trim() ? [city.trim()] : (territoryCities || []);
-
-    if (citiesToSearch.length === 0) {
-      const results = await findPlacesFromText(companyName);
-      if (!results || results.length === 0) {
-        return { error: 'Company not found.' };
-      }
-      const places = results.map(result => ({
-        companyName: result.suggestedCompanyName,
-        address: result.address,
-        city: result.city,
-        phone: result.phone,
-        latitude: result.latitude,
-        longitude: result.longitude,
-        openingHours: result.openingHours,
-      }));
-      return { places };
-    }
-
     const allPlaces: PlaceDetails[] = [];
     const foundPlaceIds = new Set<string>();
 
-    for (const searchCity of citiesToSearch) {
-      const query = `${companyName}, ${searchCity}`;
-      const results = await findPlacesFromText(query);
-      for (const place of results) {
-        if (place.placeId && !foundPlaceIds.has(place.placeId)) {
-          allPlaces.push(place);
-          foundPlaceIds.add(place.placeId);
+    if (citiesToSearch.length > 0) {
+      // If cities are provided, search within each city (more precise).
+      for (const searchCity of citiesToSearch) {
+        const query = `${companyName}, ${searchCity}`;
+        const results = await findPlacesFromText(query);
+        for (const place of results) {
+          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
+            allPlaces.push(place);
+            foundPlaceIds.add(place.placeId);
+          }
         }
       }
+    } else if (territory && territory.length > 0) {
+      // If no cities, but territory bounds exist, search within each territory's bounds.
+      for (const t of territory) {
+        const searchBounds: SearchBounds = t.bounds;
+        const results = await findPlacesFromText(companyName, searchBounds);
+        
+        // Post-filter to ensure results are strictly within bounds, as locationbias is a hint.
+        const filteredResults = results.filter(p => {
+          if (!p.latitude || !p.longitude) return false;
+          return (
+            p.latitude >= searchBounds.minLat &&
+            p.latitude <= searchBounds.maxLat &&
+            p.longitude >= searchBounds.minLng &&
+            p.longitude <= searchBounds.maxLng
+          );
+        });
+
+        for (const place of filteredResults) {
+          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
+            allPlaces.push(place);
+            foundPlaceIds.add(place.placeId);
+          }
+        }
+      }
+    } else {
+      // Fallback to a general search if no territory info is available.
+      const results = await findPlacesFromText(companyName);
+      for (const place of results) {
+          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
+            allPlaces.push(place);
+            foundPlaceIds.add(place.placeId);
+          }
+        }
     }
     
     if (allPlaces.length === 0) {

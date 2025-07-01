@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
 import { Loader2, Map, MapPin, Phone, Clock } from 'lucide-react';
-import type { Visit } from '@/lib/types';
+import type { Visit, Territory } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -28,9 +28,10 @@ interface FindCompanyModalProps {
     onClose: () => void;
     onAddAsVisit: (visitData: Partial<Visit>) => void;
     destinationCities: string[];
+    territory?: Territory[];
 }
 
-export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destinationCities }: FindCompanyModalProps) {
+export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destinationCities, territory }: FindCompanyModalProps) {
     const [companyName, setCompanyName] = useState('');
     const [city, setCity] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -48,7 +49,8 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, destin
             const result = await findCompanyAction({ 
                 companyName, 
                 city: city.trim() ? city.trim() : undefined,
-                territoryCities: destinationCities
+                territoryCities: destinationCities,
+                territory: territory
             });
             if (result.error) {
                 toast({ variant: 'destructive', title: "Search Failed", description: result.error });
