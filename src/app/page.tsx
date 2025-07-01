@@ -991,19 +991,50 @@ export default function HomePage() {
     futureDate.setDate(futureDate.getDate() + 1);
     futureDate.setHours(10, 0, 0, 0);
   
-    const newVisitTemplate: Partial<Visit> = {
+    const newVisit: Visit = {
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
       companyName: lead.companyName,
       latitude: lead.latitude,
       longitude: lead.longitude,
-      notes: `Address: ${lead.address}\n\nHot Lead Notes: ${lead.notes || ''}`.trim(),
+      notes: `Converted from Hot Lead.\nAddress: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
       decisionMakerContact: lead.phone,
       visitNumber: todaysVisits + 1,
       futureMeetingSet: true,
       futureMeetingDateTime: futureDate,
+      partnershipConfidence: undefined,
+      hasBusinessCard: false,
+      businessCardImageUrl: undefined,
+      discussedCompetitors: false,
+      competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: '',
+      decisionMakerTitle: '',
+      interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
+      freeTrial: false,
+      dealClosed: false,
+      contactInfo: undefined,
+      notesSummary: undefined,
     };
     
-    setCurrentEditingVisit(newVisitTemplate as Visit);
-    setIsVisitFormOpen(true);
+    setVisits(prevVisits => {
+        const newVisits = [newVisit, ...prevVisits];
+        localStorage.setItem('visits', JSON.stringify(newVisits));
+        return newVisits;
+    });
+
+    setHotLeads(prevHotLeads => {
+        const updatedLeads = prevHotLeads.filter(l => l.id !== lead.id);
+        localStorage.setItem('hotLeads', JSON.stringify(updatedLeads));
+        return updatedLeads;
+    });
+
+    toast({
+        title: "Future Visit Scheduled",
+        description: `${lead.companyName} has been added to your Planner.`,
+    });
   };
 
   const handleEmailHotLeads = useCallback(() => {
@@ -1145,7 +1176,7 @@ export default function HomePage() {
                     {currentCity && !isFetchingCity && (
                       <div className="flex items-center text-md font-medium text-foreground">
                         <MapPin className="mr-2 h-4 w-4 text-primary" />
-                        <span>Current City: {currentCity}</span>
+                        <span>Currently Located: {currentCity}</span>
                       </div>
                     )}
                     <Button variant="outline" onClick={() => handleChangeDestination()}>
@@ -1288,7 +1319,7 @@ export default function HomePage() {
                   <div className="flex flex-col items-center">
                     <div className="flex items-center justify-center gap-2 mb-3 w-full">
                       <ListFilter className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
+                      <h3 className="text-lg font-medium text-foreground text-center">Show Visit Cards by Date</h3>
                     </div>
                     <Calendar
                       mode="single"
@@ -1598,7 +1629,7 @@ export default function HomePage() {
                             <ScrollArea className="h-full">
                                 <div className="space-y-3 pr-4">
                                     {hotLeads.map((lead, index) => (
-                                        <div key={lead.id} className="p-3 rounded-md border bg-background/50 space-y-2">
+                                        <div key={lead.id} className="p-3 rounded-md border-2 border-primary/30 bg-background/50 space-y-2">
                                             <div>
                                                 <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
                                                 <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
