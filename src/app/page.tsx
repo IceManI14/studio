@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -1209,48 +1210,68 @@ export default function HomePage() {
     navigator.geolocation.getCurrentPosition(
         async (position) => {
             const { latitude, longitude } = position.coords;
-            
-            let companyName = 'Flagged Hotspot';
-            let address = 'Address lookup in progress...';
-            let city = '...';
-            let phone = '';
-
-            const flagToast = toast({ title: "Location Captured!", description: `Saving hotspot...` });
+            const flagToast = toast({ title: "Location Captured!", description: `Identifying nearby business...` });
 
             try {
                 const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
                 if (result.error) {
-                    console.error("Error getting company name for hotspot:", result.error);
-                    address = result.address || 'Address not found';
-                } else {
-                    companyName = result.suggestedCompanyName || 'Flagged Hotspot';
-                    address = result.address || 'Address not found';
-                    city = result.city || 'City not found';
-                    phone = result.phone || '';
+                    throw new Error(result.error);
                 }
 
-                const newHotLead: HotLead = {
-                    id: crypto.randomUUID(),
-                    companyName,
-                    address,
-                    city,
-                    phone,
-                    latitude,
-                    longitude,
-                    addedAt: new Date(),
-                    notes: 'Flagged as a hotspot.',
-                };
+                const companyName = result.suggestedCompanyName || 'Flagged Hotspot';
+                
+                // Check if a similar visit already exists
+                const existingVisitForCompany = visits.find(
+                  (visit) =>
+                    visit.companyName === companyName &&
+                    visit.latitude === latitude &&
+                    visit.longitude === longitude
+                );
 
-                setHotLeads(prevHotLeads => {
-                    const existingAddresses = new Set(prevHotLeads.map(lead => lead.address));
-                    if (newHotLead.address !== 'Address not found' && existingAddresses.has(newHotLead.address)) {
-                        flagToast.dismiss();
-                        toast({ title: "Hotspot Already Exists", description: `${newHotLead.companyName} at this address is already on your list.` });
-                        return prevHotLeads;
-                    }
-                    flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newHotLead.companyName} has been added to your Hot Leads.` });
-                    return [...prevHotLeads, newHotLead];
+                if (existingVisitForCompany) {
+                  flagToast.dismiss();
+                  toast({
+                    title: 'Visit Already Exists',
+                    description: `A visit for ${companyName} is already in your planner or history.`,
+                  });
+                  return;
+                }
+
+                const newVisit: Visit = {
+                    id: `temp_${crypto.randomUUID()}`,
+                    timestamp: new Date(),
+                    companyName: companyName,
+                    notes: `Flagged as a hotspot. Address: ${result.address || 'Unknown'}`.trim(),
+                    latitude: latitude,
+                    longitude: longitude,
+                    contactInfo: undefined,
+                    notesSummary: undefined,
+                    partnershipConfidence: undefined,
+                    hasBusinessCard: false,
+                    businessCardImageUrl: undefined,
+                    discussedCompetitors: false,
+                    competitorName: undefined,
+                    coolerType: undefined,
+                    decisionMakerName: '',
+                    decisionMakerTitle: '',
+                    decisionMakerContact: result.phone || '',
+                    visitNumber: undefined,
+                    interestedUnit: undefined,
+                    hasTDSReading: false,
+                    tdsValue: undefined,
+                    futureMeetingSet: true, // This makes it a future visit
+                    futureMeetingDateTime: undefined, // This makes it an UNSCHEDULED future visit
+                    freeTrial: false,
+                    dealClosed: false,
+                };
+                
+                setVisits(prevVisits => {
+                    const newVisits = [newVisit, ...prevVisits];
+                    localStorage.setItem('visits', JSON.stringify(newVisits));
+                    return newVisits;
                 });
+
+                flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner for a future visit.` });
 
             } catch (e: any) {
                  flagToast.dismiss();
@@ -1266,7 +1287,7 @@ export default function HomePage() {
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [toast, setHotLeads]);
+  }, [visits, toast]);
 
   return (
     <div className="min-h-screen">
@@ -1280,7 +1301,7 @@ export default function HomePage() {
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
       />
-      <div className="container mx-auto px-4 pt-4 pb-8 sm:px-6 lg:px-8 space-y-8">
+      <div className="container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
@@ -1373,13 +1394,13 @@ export default function HomePage() {
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
-            </TabsTrigger>
             <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
+            </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
