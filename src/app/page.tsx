@@ -917,6 +917,21 @@ export default function HomePage() {
   }, [isRecordingChat, toast]);
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
+    const existingVisitForCompany = visits.find(
+      (visit) =>
+        visit.companyName === visitData.companyName &&
+        visit.latitude === visitData.latitude &&
+        visit.longitude === visitData.longitude
+    );
+
+    if (existingVisitForCompany) {
+      toast({
+        title: 'Visit Already Exists',
+        description: `A visit for ${visitData.companyName} is already in your planner or history.`,
+      });
+      return;
+    }
+
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
     
     const futureDate = new Date();
@@ -1035,6 +1050,22 @@ export default function HomePage() {
   const handleAddHotLeadAsVisit = (lead: HotLead) => {
     if (convertedHotLeads.has(lead.id)) return;
     
+    const existingVisitForCompany = visits.find(
+      (visit) =>
+        visit.companyName === lead.companyName &&
+        visit.latitude === lead.latitude &&
+        visit.longitude === lead.longitude
+    );
+
+    if (existingVisitForCompany) {
+      toast({
+        title: 'Visit Already Exists',
+        description: `A visit for ${lead.companyName} is already in your planner or history.`,
+      });
+      setConvertedHotLeads((prev) => new Set(prev).add(lead.id));
+      return;
+    }
+
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
   
     const newVisit: Visit = {
@@ -1269,6 +1300,10 @@ export default function HomePage() {
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
             <TabsTrigger
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
@@ -1281,10 +1316,6 @@ export default function HomePage() {
             >
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
-            </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
