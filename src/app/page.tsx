@@ -930,50 +930,58 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson ? (
-            <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
-                {isFetchingCity && (
-                    <div className="flex items-center text-sm text-muted-foreground">
+            <Accordion type="single" collapsible className="w-full max-w-lg mx-auto mt-6">
+              <AccordionItem value="daily-plan" className="border-none">
+                <AccordionTrigger className="p-4 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-headline font-semibold text-foreground text-left">
+                        {selectedSalesperson.name}'s Plan
+                      </h2>
+                    </div>
+                    {targetDestination && (
+                      <Badge variant="secondary">{targetDestination.city}</Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
+                    {isFetchingCity && (
+                      <div className="flex items-center text-sm text-muted-foreground">
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Determining current city...
-                    </div>
-                )}
-                {currentCity && !isFetchingCity && (
-                    <div className="flex items-center text-md font-medium text-foreground">
+                      </div>
+                    )}
+                    {currentCity && !isFetchingCity && (
+                      <div className="flex items-center text-md font-medium text-foreground">
                         <MapPin className="mr-2 h-4 w-4 text-primary" />
                         <span>Current City: {currentCity}</span>
-                    </div>
-                )}
-                <div 
-                  className="flex items-center gap-2 cursor-pointer group"
-                  onClick={() => handleChangeDestination()}
-                >
-                    <User className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-headline font-semibold text-foreground text-center transition-colors group-hover:text-primary">
-                      {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination.city}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
-                    </h2>
-                </div>
-                 <Accordion type="single" collapsible className="w-full max-w-md text-center mt-1">
-                    <AccordionItem value="ai-suggestion" className="border-b-0">
-                      <AccordionTrigger className="p-1 text-sm font-normal text-muted-foreground hover:no-underline justify-center">
-                          View AI Parking Suggestion
-                      </AccordionTrigger>
-                      <AccordionContent className="text-sm text-muted-foreground px-4 pb-2 text-center">
-                        {targetDestination?.description}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                {navigationUrl && (
-                  <Button
-                    onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
-                    className="mt-2"
-                    variant="default"
-                    size="sm"
-                  >
-                    <Map className="mr-2 h-4 w-4" />
-                    Navigate to AI Destination
-                  </Button>
-                )}
-            </div>
+                      </div>
+                    )}
+                    <Button variant="outline" onClick={() => handleChangeDestination()}>
+                      Change Destination
+                    </Button>
+                    {targetDestination?.description && (
+                      <div className="text-center w-full bg-background/20 p-3 rounded-md">
+                        <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
+                        <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
+                      </div>
+                    )}
+                    {navigationUrl && (
+                      <Button
+                        onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
+                        className="w-full"
+                        variant="default"
+                      >
+                        <Map className="mr-2 h-4 w-4" />
+                        Navigate to {targetDestination?.city}
+                      </Button>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           ) : (
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
               <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
