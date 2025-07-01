@@ -931,6 +931,18 @@ export default function HomePage() {
           </h1>
           {selectedSalesperson ? (
             <div className="flex flex-col justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
+                {isFetchingCity && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Determining current city...
+                    </div>
+                )}
+                {currentCity && !isFetchingCity && (
+                    <div className="flex items-center text-md font-medium text-foreground">
+                        <MapPin className="mr-2 h-4 w-4 text-primary" />
+                        <span>Current City: {currentCity}</span>
+                    </div>
+                )}
                 <div 
                   className="flex items-center gap-2 cursor-pointer group"
                   onClick={() => handleChangeDestination()}
@@ -960,18 +972,6 @@ export default function HomePage() {
                     <Map className="mr-2 h-4 w-4" />
                     Navigate to AI Destination
                   </Button>
-                )}
-                {isFetchingCity && (
-                    <div className="flex items-center text-sm text-muted-foreground mt-2">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Determining current city...
-                    </div>
-                )}
-                {currentCity && !isFetchingCity && (
-                    <div className="flex items-center text-md font-medium text-foreground mt-2">
-                        <MapPin className="mr-2 h-4 w-4 text-primary" />
-                        <span>Current City: {currentCity}</span>
-                    </div>
                 )}
             </div>
           ) : (
