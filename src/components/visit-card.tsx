@@ -28,9 +28,10 @@ interface VisitCardProps {
   isZoomedView?: boolean;
   onLogFollowUp?: (visit: Visit) => void;
   onDictateNotes?: (visit: Visit) => void;
+  variant?: 'default' | 'planner';
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const timeZone = 'America/New_York'; 
   const [isDateVisible, setIsDateVisible] = useState(false);
@@ -146,7 +147,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     <Card 
       className={cn(
         "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
-        visit.dealClosed ? 'border-green-500' : 'border-primary/40',
+        variant === 'planner' 
+          ? 'border-orange-500 shadow-lg shadow-orange-500/20' 
+          : visit.dealClosed 
+            ? 'border-green-500' 
+            : 'border-primary/40',
         !isZoomedView && 'cursor-pointer'
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
