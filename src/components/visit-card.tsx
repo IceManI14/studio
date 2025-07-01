@@ -264,15 +264,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow space-y-1.5 min-w-0">
             <CardTitle 
-              className="font-headline text-2xl text-accent flex items-center justify-center w-full cursor-pointer text-center"
+              className="font-headline text-2xl text-accent flex items-center justify-start w-full cursor-pointer text-left"
               onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
             >
                 <Building2 className="mr-2 h-5 w-5 shrink-0" />
-                <span className="truncate">{visit.companyName}</span>
+                <span className="break-words">{visit.companyName}</span>
             </CardTitle>
             
             {isCoordsVisible && visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center justify-center w-full">
+                <p className="text-xs text-muted-foreground flex items-center justify-start w-full pl-7">
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
