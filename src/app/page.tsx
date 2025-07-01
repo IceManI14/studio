@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, MicOff, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -152,8 +152,6 @@ export default function HomePage() {
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
-  const [isWakeWordListening, setIsWakeWordListening] = useState(false);
-  const wakeWordRecognitionRef = useRef<SpeechRecognition | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -1202,7 +1200,7 @@ export default function HomePage() {
   }, [isRecordingHotLeadNotes, toast]);
 
   const handleHotspotCreation = useCallback(async () => {
-    toast({ title: "Hotspot Command Detected!", description: "Getting your current location..." });
+    toast({ title: "Flagging Hotspot...", description: "Getting your current location." });
 
     if (!navigator.geolocation) {
         toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Could not access location services." });
@@ -1213,21 +1211,20 @@ export default function HomePage() {
         async (position) => {
             const { latitude, longitude } = position.coords;
             
-            let companyName = 'Voice-Marked Hotspot';
+            let companyName = 'Flagged Hotspot';
             let address = 'Address lookup in progress...';
             let city = '...';
             let phone = '';
 
-            const creationToast = toast({ title: "Location Captured!", description: `Saving hotspot at ${address}` });
+            const flagToast = toast({ title: "Location Captured!", description: `Saving hotspot...` });
 
             try {
                 const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
                 if (result.error) {
-                    // Don't throw, just log and proceed with generic names
                     console.error("Error getting company name for hotspot:", result.error);
                     address = result.address || 'Address not found';
                 } else {
-                    companyName = result.suggestedCompanyName || 'Voice-Marked Hotspot';
+                    companyName = result.suggestedCompanyName || 'Flagged Hotspot';
                     address = result.address || 'Address not found';
                     city = result.city || 'City not found';
                     phone = result.phone || '';
@@ -1242,23 +1239,23 @@ export default function HomePage() {
                     latitude,
                     longitude,
                     addedAt: new Date(),
-                    notes: 'Marked via "Hey Trailblazer" voice command.',
+                    notes: 'Flagged as a hotspot.',
                 };
 
                 setHotLeads(prevHotLeads => {
                     const existingAddresses = new Set(prevHotLeads.map(lead => lead.address));
-                    if (existingAddresses.has(newHotLead.address)) {
-                        creationToast.dismiss();
+                    if (newHotLead.address !== 'Address not found' && existingAddresses.has(newHotLead.address)) {
+                        flagToast.dismiss();
                         toast({ title: "Hotspot Already Exists", description: `${newHotLead.companyName} at this address is already on your list.` });
                         return prevHotLeads;
                     }
-                    creationToast.update({ id: creationToast.id, title: "Hotspot Saved!", description: `${newHotLead.companyName} has been added to your Hot Leads.` });
+                    flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newHotLead.companyName} has been added to your Hot Leads.` });
                     return [...prevHotLeads, newHotLead];
                 });
 
             } catch (e: any) {
-                 creationToast.dismiss();
-                 toast({ variant: "destructive", title: "Could Not Create Hotspot", description: e.message });
+                 flagToast.dismiss();
+                 toast({ variant: "destructive", title: "Could Not Flag Hotspot", description: e.message });
             }
         },
         (error) => {
@@ -1271,74 +1268,6 @@ export default function HomePage() {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [toast, setHotLeads]);
-
-  const handleToggleWakeWordListener = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
-      return;
-    }
-
-    if (isWakeWordListening && wakeWordRecognitionRef.current) {
-      wakeWordRecognitionRef.current.stop();
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    wakeWordRecognitionRef.current = recognition;
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsWakeWordListening(true);
-      toast({ title: 'Hotspot Listener Active', description: 'Say "Hey Trailblazer set a hotspot" to mark your location.', duration: 10000 });
-    };
-
-    recognition.onend = () => {
-      setIsWakeWordListening(false);
-      wakeWordRecognitionRef.current = null;
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      let errorMessage = 'An unknown error occurred.';
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        errorMessage = "Microphone access denied. Please check your browser's site permissions.";
-      } else if (event.error === 'no-speech') {
-        return; // Ignore this common error in continuous mode.
-      }
-      toast({ variant: 'destructive', title: 'Listener Error', description: errorMessage });
-      setIsWakeWordListening(false);
-      wakeWordRecognitionRef.current = null;
-    };
-    
-    let processing = false;
-
-    recognition.onresult = (event) => {
-      if (processing) return;
-
-      const transcript = Array.from(event.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('')
-        .toLowerCase();
-      
-      if (transcript.includes("hey trailblazer set a hotspot")) {
-        processing = true;
-        if (wakeWordRecognitionRef.current) {
-          wakeWordRecognitionRef.current.stop();
-        }
-        handleHotspotCreation();
-      }
-    };
-
-    try {
-      recognition.start();
-    } catch (e: any) {
-      toast({ variant: 'destructive', title: 'Could not start listener', description: e.message });
-    }
-  }, [isWakeWordListening, toast, handleHotspotCreation]);
 
   return (
     <div className="min-h-screen">
@@ -1408,12 +1337,12 @@ export default function HomePage() {
                         Change Destination
                       </Button>
                       <Button
-                        onClick={handleToggleWakeWordListener}
-                        variant={isWakeWordListening ? "destructive" : "outline"}
+                        onClick={handleHotspotCreation}
+                        variant="outline"
                         className="w-full"
                       >
-                        {isWakeWordListening ? <MicOff className="mr-2 h-5 w-5 animate-pulse" /> : <Mic className="mr-2 h-5 w-5" />}
-                        {isWakeWordListening ? 'Listening...' : 'Hotspot Listener'}
+                        <Flame className="mr-2 h-5 w-5" />
+                        Flag Hotspot
                       </Button>
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
