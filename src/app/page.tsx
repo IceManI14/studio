@@ -1165,11 +1165,6 @@ export default function HomePage() {
           {activeTab === 'call-day' && (
             <div className="space-y-6">
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
-                <div className="mb-4">
-                    <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
-                        <Search className="mr-2 h-4 w-4" /> Find Company by Name
-                    </Button>
-                </div>
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
                   <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
@@ -1222,65 +1217,6 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-
-              <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20">
-                <UiCardHeader>
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <Flame className="h-6 w-6 text-orange-500" />
-                            <UiCardTitle>Hot Leads ({hotLeads.length})</UiCardTitle>
-                        </div>
-                        {hotLeads.length > 0 && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Clear List
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete all {hotLeads.length} hot leads from your local device. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleClearHotLeads}>Clear</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
-                    </div>
-                    <UiCardDescription>Leads generated from your company searches. Saved locally to your device.</UiCardDescription>
-                </UiCardHeader>
-                <UiCardContent>
-                    {hotLeads.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
-                    ) : (
-                        <ScrollArea className="h-60">
-                            <div className="space-y-3 pr-4">
-                                {hotLeads.map(lead => (
-                                    <div key={lead.id} className="p-3 rounded-md border bg-background/50">
-                                        <h4 className="font-semibold text-foreground flex items-center"><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                        <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
-                                        {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    )}
-                </UiCardContent>
-                {hotLeads.length > 0 && (
-                    <UiCardFooter className="flex-wrap gap-2">
-                        <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" />
-                        <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" />
-                        <Button onClick={handleEmailHotLeads} variant="outline" size="sm">
-                            <Mail className="mr-2 h-4 w-4" /> Email List to Self
-                        </Button>
-                    </UiCardFooter>
-                )}
-              </UiCard>
 
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
@@ -1343,7 +1279,7 @@ export default function HomePage() {
           )}
 
           {activeTab === 'ai-chat' && (
-            <>
+            <div className="space-y-6">
               {!isGenkitConfigured ? (
                 <Alert variant="destructive" className="max-w-2xl mx-auto">
                   <WifiOff className="h-4 w-4" />
@@ -1461,7 +1397,71 @@ export default function HomePage() {
                 </UiCardFooter>
               </UiCard>
               )}
-            </>
+              <div className="w-full max-w-2xl mx-auto space-y-6">
+                <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
+                    <Search className="mr-2 h-4 w-4" /> Find Company by Name
+                </Button>
+
+                <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20">
+                    <UiCardHeader>
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <Flame className="h-6 w-6 text-orange-500" />
+                                <UiCardTitle>Hot Leads ({hotLeads.length})</UiCardTitle>
+                            </div>
+                            {hotLeads.length > 0 && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Clear List
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete all {hotLeads.length} hot leads from your local device. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleClearHotLeads}>Clear</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
+                        <UiCardDescription>Leads generated from your company searches. Saved locally to your device.</UiCardDescription>
+                    </UiCardHeader>
+                    <UiCardContent>
+                        {hotLeads.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
+                        ) : (
+                            <ScrollArea className="h-60">
+                                <div className="space-y-3 pr-4">
+                                    {hotLeads.map(lead => (
+                                        <div key={lead.id} className="p-3 rounded-md border bg-background/50">
+                                            <h4 className="font-semibold text-foreground flex items-center"><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
+                                            <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
+                                            {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        )}
+                    </UiCardContent>
+                    {hotLeads.length > 0 && (
+                        <UiCardFooter className="flex-wrap gap-2">
+                            <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" />
+                            <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" />
+                            <Button onClick={handleEmailHotLeads} variant="outline" size="sm">
+                                <Mail className="mr-2 h-4 w-4" /> Email List to Self
+                            </Button>
+                        </UiCardFooter>
+                    )}
+                </UiCard>
+              </div>
+            </div>
           )}
           
           {activeTab === 'about' && (
