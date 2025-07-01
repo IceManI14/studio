@@ -1209,6 +1209,15 @@ export default function HomePage() {
                         <span>Currently Located: {currentCity}</span>
                       </div>
                     )}
+                     {todaysScheduledVisits.length > 0 && (
+                        <Alert variant="default" className="border-primary/50 bg-primary/10 text-left w-full">
+                          <CalendarCheck className="h-4 w-4" />
+                          <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
+                          <AlertDescription>
+                            {todaysScheduledVisits.map(v => v.companyName).join(', ')}
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     <Button variant="outline" onClick={() => handleChangeDestination()}>
                       Change Destination
                     </Button>
@@ -1430,15 +1439,6 @@ export default function HomePage() {
 
           {activeTab === 'planner' && (
             <div className="space-y-8">
-              {todaysScheduledVisits.length > 0 && (
-                <Alert variant="default" className="border-primary/50 bg-primary/10">
-                  <CalendarCheck className="h-4 w-4" />
-                  <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
-                  <AlertDescription>
-                    {todaysScheduledVisits.map(v => v.companyName).join(', ')}
-                  </AlertDescription>
-                </Alert>
-              )}
               <div>
                   <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
                       <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
@@ -1476,7 +1476,7 @@ export default function HomePage() {
               <div>
                   <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
                       <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Future Visits (To Be Scheduled)
+                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Future Visits
                       </h2>
                   </div>
                   {unscheduledFutureVisits.length === 0 ? (
@@ -1746,7 +1746,7 @@ export default function HomePage() {
                                                  <Button 
                                                     variant={isConverted ? "default" : "outline"}
                                                     size="sm" 
-                                                    className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                                    className="h-7 px-2 text-xs"
                                                     onClick={() => handleAddHotLeadAsVisit(lead)}
                                                     disabled={isConverted}
                                                 >

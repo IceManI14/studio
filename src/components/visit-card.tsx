@@ -264,10 +264,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         <div className="flex flex-row justify-between items-start w-full">
           <div className="flex-grow space-y-1.5 min-w-0">
             <CardTitle 
-              className="font-headline text-2xl text-accent flex items-center justify-start w-full cursor-pointer text-left"
+              className="font-headline text-2xl text-accent flex items-start justify-start w-full cursor-pointer text-left"
               onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
             >
-                <Building2 className="mr-2 h-5 w-5 shrink-0" />
+                <Building2 className="mr-2 h-5 w-5 shrink-0 mt-1.5" />
                 <span className="break-words">{visit.companyName}</span>
             </CardTitle>
             
