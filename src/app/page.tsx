@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -150,6 +150,7 @@ export default function HomePage() {
   const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -243,6 +244,12 @@ export default function HomePage() {
         }));
         setHotLeads(parsedHotLeads);
       }
+      
+      const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
+      if (storedConvertedHotLeads) {
+        setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+      }
+
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
@@ -299,6 +306,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
   }, [hotLeads]);
+  
+  useEffect(() => {
+    localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
+  }, [convertedHotLeads]);
 
   useEffect(() => {
     if (selectedSalesperson) { 
@@ -973,6 +984,7 @@ export default function HomePage() {
   const handleClearHotLeads = useCallback(() => {
     if (hotLeads.length === 0) return;
     setHotLeads([]);
+    setConvertedHotLeads(new Set());
     toast({ title: "Hot Leads Cleared", description: "The hot leads list has been cleared from this device." });
   }, [hotLeads.length, toast]);
 
@@ -981,10 +993,17 @@ export default function HomePage() {
         const updatedLeads = prevHotLeads.filter(lead => lead.id !== leadId);
         return updatedLeads;
     });
+    setConvertedHotLeads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(leadId);
+        return newSet;
+    });
     toast({ title: "Hot Lead Removed" });
   }, [toast]);
   
   const handleAddHotLeadAsVisit = (lead: HotLead) => {
+    if (convertedHotLeads.has(lead.id)) return;
+    
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
 
     const futureDate = new Date();
@@ -1024,16 +1043,12 @@ export default function HomePage() {
         localStorage.setItem('visits', JSON.stringify(newVisits));
         return newVisits;
     });
-
-    setHotLeads(prevHotLeads => {
-        const updatedLeads = prevHotLeads.filter(l => l.id !== lead.id);
-        localStorage.setItem('hotLeads', JSON.stringify(updatedLeads));
-        return updatedLeads;
-    });
+    
+    setConvertedHotLeads(prev => new Set(prev).add(lead.id));
 
     toast({
-        title: "Future Visit Scheduled",
-        description: `${lead.companyName} has been added to your Planner.`,
+        title: "Added to Planner",
+        description: `${lead.companyName} has been scheduled for a future visit.`,
     });
   };
 
@@ -1238,7 +1253,7 @@ export default function HomePage() {
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+             <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
@@ -1497,7 +1512,6 @@ export default function HomePage() {
                       </Select>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground pt-2">Recent Visits, Pdfs containg products and pricing, and analyzed scanned documents are used as context</p>
                 </UiCardHeader>
                 <UiCardContent className="p-0">
                   <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
@@ -1628,7 +1642,9 @@ export default function HomePage() {
                         ) : (
                             <ScrollArea className="h-full">
                                 <div className="space-y-3 pr-4">
-                                    {hotLeads.map((lead, index) => (
+                                    {hotLeads.map((lead, index) => {
+                                      const isConverted = convertedHotLeads.has(lead.id);
+                                      return (
                                         <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 bg-background/50 space-y-2 shadow-lg shadow-orange-500/20">
                                             <div>
                                                 <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
@@ -1666,9 +1682,22 @@ export default function HomePage() {
                                             </div>
                                             
                                             <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50">
-                                                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAddHotLeadAsVisit(lead)}>
-                                                    <PlusSquare className="mr-1 h-3 w-3" />
-                                                    Add Future Visit
+                                                 <Button 
+                                                    variant={isConverted ? "default" : "outline"}
+                                                    size="sm" 
+                                                    className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                                    onClick={() => handleAddHotLeadAsVisit(lead)}
+                                                    disabled={isConverted}
+                                                >
+                                                    {isConverted ? (
+                                                        <>
+                                                            <CheckCircle className="mr-1 h-3 w-3" /> Added to Planner
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <PlusSquare className="mr-1 h-3 w-3" /> Add Future Visit
+                                                        </>
+                                                    )}
                                                 </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
@@ -1691,15 +1720,15 @@ export default function HomePage() {
                                                 </AlertDialog>
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </ScrollArea>
                         )}
                     </UiCardContent>
                     {hotLeads.length > 0 && (
                         <UiCardFooter className="flex-wrap gap-2 shrink-0">
-                            <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" />
-                            <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" />
+                            <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" variant="default" />
+                            <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" variant="default" />
                             <Button onClick={handleEmailHotLeads} variant="default" size="sm">
                                 <Mail className="mr-2 h-4 w-4" /> Email List to Self
                             </Button>
