@@ -1185,7 +1185,7 @@ export default function HomePage() {
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
             Optimum Trailblazer
           </h1>
-          {selectedSalesperson ? (
+          {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto mt-6">
               <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
                 Navigation Plan
@@ -1193,19 +1193,19 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daily-plan" className="border-none">
                   <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        <User className="h-5 w-5 text-primary" />
+                    <div className="flex items-center justify-between w-full gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <User className="h-5 w-5 text-primary flex-shrink-0" />
                         <div className="flex flex-col items-start">
-                          <span className="font-semibold text-foreground">{selectedSalesperson.name}</span>
+                          <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
                         <CalendarIcon className="h-3 w-3" />
-                        {format(new Date(), 'MMMM d, yyyy')}
+                        {format(new Date(), 'MMM d, yyyy')}
                       </span>
                       {targetDestination && (
-                        <Badge variant="secondary">{targetDestination.city}</Badge>
+                        <Badge variant="secondary" className="shrink-0">{targetDestination.city}</Badge>
                       )}
                     </div>
                   </AccordionTrigger>
@@ -1255,12 +1255,6 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 mt-6">
-              <h2 className="text-lg font-headline font-semibold italic text-foreground text-center">
-                Good Luck Today!
-              </h2>
             </div>
           )}
         </header>
