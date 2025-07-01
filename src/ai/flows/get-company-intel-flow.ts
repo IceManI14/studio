@@ -22,7 +22,8 @@ export type GetCompanyIntelInput = z.infer<typeof GetCompanyIntelInputSchema>;
 const GetCompanyIntelOutputSchema = z.object({
   phone: z.string().optional().describe('The main phone number found for the business.'),
   hours: z.array(z.string()).optional().describe('A list of weekly business hours (e.g., "Monday: 9:00 AM – 5:00 PM").'),
-  decisionMaker: z.string().optional().describe('A brief summary identifying a potential decision-maker (e.g., owner, office manager), including their name and title if found.'),
+  decisionMakerName: z.string().optional().describe("The name of a potential decision-maker (e.g., owner, office manager)."),
+  decisionMakerTitle: z.string().optional().describe("The job title of the potential decision-maker."),
 });
 export type GetCompanyIntelOutput = z.infer<typeof GetCompanyIntelOutputSchema>;
 
@@ -33,8 +34,11 @@ export async function getCompanyIntel(input: GetCompanyIntelInput): Promise<GetC
 const decisionMakerPrompt = ai.definePrompt({
     name: 'findDecisionMakerPrompt',
     input: { schema: z.object({ companyName: z.string() }) },
-    output: { schema: z.object({ decisionMaker: z.string().optional().describe('A brief summary identifying a potential decision-maker (e.g., owner, office manager), including their name and title if found.') }) },
-    prompt: `You are a business intelligence expert. For the company named "{{companyName}}", perform a web search to identify a likely decision-maker. This could be an Owner, Founder, CEO, or Office Manager. Provide a concise summary with their name and title. If no clear person is found, state that it could not be determined.`,
+    output: { schema: z.object({ 
+        decisionMakerName: z.string().optional().describe('The name of a potential decision-maker (e.g., owner, office manager).'),
+        decisionMakerTitle: z.string().optional().describe('The job title of the potential decision-maker.'),
+    }) },
+    prompt: `You are a business intelligence expert. For the company named "{{companyName}}", perform a web search to identify a likely decision-maker. This could be an Owner, Founder, CEO, or Office Manager. Provide their name and title. If no clear person is found, omit the fields.`,
 });
 
 const getCompanyIntelFlow = ai.defineFlow(
@@ -55,7 +59,8 @@ const getCompanyIntelFlow = ai.defineFlow(
     return {
       phone: placeDetails?.phone,
       hours: placeDetails?.openingHours,
-      decisionMaker: decisionMakerOutput?.decisionMaker,
+      decisionMakerName: decisionMakerOutput?.decisionMakerName,
+      decisionMakerTitle: decisionMakerOutput?.decisionMakerTitle,
     };
   }
 );

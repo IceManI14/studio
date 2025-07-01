@@ -902,6 +902,16 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
+  const handleUpdateVisit = useCallback((visitId: string, updatedData: Partial<Visit>) => {
+    setVisits(prevVisits => {
+      const newVisits = prevVisits.map(v => 
+        v.id === visitId ? { ...v, ...updatedData } : v
+      );
+      localStorage.setItem('visits', JSON.stringify(newVisits));
+      return newVisits;
+    });
+  }, []);
+
   return (
     <div className="min-h-screen">
        {!selectedSalesperson && (
@@ -1194,6 +1204,7 @@ export default function HomePage() {
                 visits={visits} 
                 userLatitude={userCurrentLatitude}
                 userLongitude={userCurrentLongitude}
+                onUpdateVisit={handleUpdateVisit}
               />
             </section>
           )}

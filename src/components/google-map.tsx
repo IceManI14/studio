@@ -8,12 +8,14 @@ import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation } 
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface GoogleMapComponentProps {
   visits: Visit[];
   userLatitude?: number;
   userLongitude?: number;
+  onUpdateVisit: (visitId: string, updatedData: Partial<Visit>) => void;
 }
 
 interface GoogleMapLoaderProps {
@@ -21,6 +23,7 @@ interface GoogleMapLoaderProps {
   apiKey: string;
   userLatitude?: number;
   userLongitude?: number;
+  onUpdateVisit: (visitId: string, updatedData: Partial<Visit>) => void;
 }
 
 const mapContainerStyle = {
@@ -35,7 +38,7 @@ const defaultCenter = {
   lng: -98.5795,
 };
 
-const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userLatitude, userLongitude }) => {
+const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userLatitude, userLongitude, onUpdateVisit }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: ['marker'],
@@ -45,6 +48,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoomLevel, setZoomLevel] = useState(4);
   const [intel, setIntel] = useState<Record<string, GetCompanyIntelOutput | 'loading' | 'error'>>({});
+  const { toast } = useToast();
 
   const validVisits = useMemo(() =>
     visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
@@ -93,8 +97,28 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
       setIntel(prev => ({ ...prev, [visit.id]: 'error' }));
     } else {
       setIntel(prev => ({ ...prev, [visit.id]: result.details! }));
+      
+      const updatePayload: Partial<Visit> = {};
+      const details = result.details;
+
+      if (details.phone && details.phone !== visit.decisionMakerContact) {
+        updatePayload.decisionMakerContact = details.phone;
+      }
+      if (details.decisionMakerName && details.decisionMakerName !== visit.decisionMakerName) {
+        updatePayload.decisionMakerName = details.decisionMakerName;
+      }
+      if (details.decisionMakerTitle && details.decisionMakerTitle !== visit.decisionMakerTitle) {
+        updatePayload.decisionMakerTitle = details.decisionMakerTitle;
+      }
+
+      if (Object.keys(updatePayload).length > 0) {
+        onUpdateVisit(visit.id, updatePayload);
+        toast({ title: 'Intel Added!', description: `Visit card for ${visit.companyName} updated with new info.` });
+      } else {
+        toast({ title: 'Intel Up-to-date', description: `No new details were found for ${visit.companyName}.` });
+      }
     }
-  }, []);
+  }, [onUpdateVisit, toast]);
 
   if (loadError) {
     const isApiTargetBlockedError = loadError.message?.includes('ApiTargetBlockedMapError') || loadError.message?.includes('API target is not authorized');
@@ -236,13 +260,13 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                                     </div>
                                 </div>
                             )}
-                            {companyIntel.decisionMaker && (
+                            {companyIntel.decisionMakerName && (
                                  <div className="flex items-start">
                                     <UserSearch className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                    <span>{companyIntel.decisionMaker}</span>
+                                    <span>{companyIntel.decisionMakerName}{companyIntel.decisionMakerTitle && ` (${companyIntel.decisionMakerTitle})`}</span>
                                 </div>
                             )}
-                             {(!companyIntel.phone && !companyIntel.hours && !companyIntel.decisionMaker) && (
+                             {(!companyIntel.phone && !companyIntel.hours && !companyIntel.decisionMakerName) && (
                                 <p className="text-muted-foreground">No additional details found.</p>
                              )}
                         </div>
@@ -285,7 +309,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 };
 
 
-const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLatitude, userLongitude }) => {
+const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLatitude, userLongitude, onUpdateVisit }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
@@ -305,7 +329,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLat
     );
   }
 
-  return <GoogleMapLoader visits={visits} apiKey={apiKey} userLatitude={userLatitude} userLongitude={userLongitude} />;
+  return <GoogleMapLoader visits={visits} apiKey={apiKey} userLatitude={userLatitude} userLongitude={userLongitude} onUpdateVisit={onUpdateVisit} />;
 };
 
 
