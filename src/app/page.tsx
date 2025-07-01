@@ -1275,10 +1275,6 @@ export default function HomePage() {
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <InfoIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">About</span>
-            </TabsTrigger>
             <TabsTrigger
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
@@ -1299,6 +1295,10 @@ export default function HomePage() {
              <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <InfoIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
