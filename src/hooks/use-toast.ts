@@ -1,3 +1,4 @@
+
 "use client"
 
 // Inspired by react-hot-toast library
@@ -135,8 +136,11 @@ let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
+  // Defer listener calls to after the current render cycle.
+  queueMicrotask(() => {
+    listeners.forEach((listener) => {
+      listener(memoryState)
+    })
   })
 }
 
@@ -182,7 +186,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [])
 
   return {
     ...state,
