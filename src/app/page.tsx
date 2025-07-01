@@ -1200,7 +1200,7 @@ export default function HomePage() {
                           <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
+                       <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
                         <CalendarIcon className="h-3 w-3" />
                         {format(new Date(), 'MMM d, yyyy')}
                       </span>
