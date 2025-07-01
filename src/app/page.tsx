@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map, RefreshCw, UploadCloud, Mic } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday } from 'date-fns';
@@ -121,6 +121,8 @@ export default function HomePage() {
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isRecordingChat, setIsRecordingChat] = useState(false);
+  const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
@@ -774,6 +776,88 @@ export default function HomePage() {
     }
   };
 
+  const handleToggleChatVoice = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature. Extensions or browser settings might be the cause.' });
+      return;
+    }
+
+    if (isRecordingChat && chatRecognitionRef.current) {
+      chatRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    chatRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingChat(true);
+      toast({ title: 'Listening...' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingChat(false);
+      chatRecognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+       switch (event.error) {
+        case 'no-speech':
+          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+          break;
+        case 'network':
+          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+          break;
+        case 'aborted':
+          console.log("Speech recognition aborted.");
+          setIsRecordingChat(false);
+          chatRecognitionRef.current = null;
+          return;
+        case 'language-not-supported':
+          errorMessage = "The language for dictation is not supported by your browser.";
+          break;
+        case 'bad-grammar':
+           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+           break;
+      }
+      
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
+      setIsRecordingChat(false);
+      chatRecognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setChatInput(transcript);
+          toast({ title: 'Message Transcribed', description: "Press send to submit." });
+        }
+      } else {
+        console.warn("Speech recognition returned a result with no transcript.");
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
+    }
+  }, [isRecordingChat, toast]);
+
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
     const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
     const newVisit: Visit = {
@@ -846,18 +930,16 @@ export default function HomePage() {
                       {selectedSalesperson.name} | {targetDestination ? `Destination: ${targetDestination.city}` : `Today's Territory: ${selectedSalesperson.territory.map(t => t.name).join(', ')}`}
                     </h2>
                 </div>
-                 {targetDestination?.description && (
-                  <Accordion type="single" collapsible className="w-full max-w-md text-center mt-1">
+                 <Accordion type="single" collapsible className="w-full max-w-md text-center mt-1">
                     <AccordionItem value="ai-suggestion" className="border-b-0">
                       <AccordionTrigger className="p-1 text-sm font-normal text-muted-foreground hover:no-underline justify-center">
                           View AI Parking Suggestion
                       </AccordionTrigger>
                       <AccordionContent className="text-sm text-muted-foreground px-4 pb-2 text-center">
-                        {targetDestination.description}
+                        {targetDestination?.description}
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
-                )}
                 {navigationUrl && (
                   <Button
                     onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
@@ -1207,8 +1289,27 @@ export default function HomePage() {
                     <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
                     <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
                     <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
-                    <Input type="text" placeholder="Type your message..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} className="flex-1" disabled={isAiResponding} />
-                    <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding}>
+                    <Input 
+                      type="text" 
+                      placeholder={isRecordingChat ? "Listening..." : "Type your message..."} 
+                      value={chatInput} 
+                      onChange={(e) => setChatInput(e.target.value)} 
+                      onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} 
+                      className="flex-1" 
+                      disabled={isAiResponding || isRecordingChat} 
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={handleToggleChatVoice} 
+                      disabled={isAiResponding}
+                      aria-label="Speak message"
+                      title="Speak message"
+                    >
+                      {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                    <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
                       {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                       <span className="sr-only">Send</span>
                     </Button>
