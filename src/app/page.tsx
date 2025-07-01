@@ -1098,7 +1098,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground">Show Visits by Date</h3>
+                  <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div className="flex flex-col items-center">
