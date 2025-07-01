@@ -1173,10 +1173,6 @@ export default function HomePage() {
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
-              <ListChecks className="h-5 w-5" />
-              <span className="hidden sm:inline">Call Day</span>
-            </TabsTrigger>
             <TabsTrigger
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
@@ -1193,6 +1189,10 @@ export default function HomePage() {
             <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
+            </TabsTrigger>
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+              <ListChecks className="h-5 w-5" />
+              <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <InfoIcon className="h-5 w-5" />
@@ -1269,7 +1269,7 @@ export default function HomePage() {
               <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <ListFilter className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium text-foreground text-center">Show Visit Cards by Date</h3>
+                  <h3 className="text-lg font-medium text-foreground">Show Visit Cards by Date</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <div className="flex flex-col items-center">
