@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload, extractVisitDetailsAction } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -174,6 +174,7 @@ const buildVisitPayload = (data: VisitFormData, initialData: Visit | undefined, 
 const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
+  const [isEditingCompanyName, setIsEditingCompanyName] = useState(true);
 
   const [currentLatitude, setCurrentLatitude] = useState<number | undefined>(initialData?.latitude);
   const [currentLongitude, setCurrentLongitude] = useState<number | undefined>(initialData?.longitude);
@@ -331,6 +332,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         
         if (result.suggestedCompanyName && result.suggestedCompanyName.trim() !== '') {
             form.setValue('companyName', result.suggestedCompanyName, { shouldValidate: true });
+            setIsEditingCompanyName(false);
         } else {
             toast({ variant: "destructive", title: "No Company Found", description: "Could not identify a company at this location." });
         }
@@ -448,6 +450,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     if (isOpen) {
       resetFormAndState(initialData);
       setLastAnalyzedNotes(initialData?.notes);
+      setIsEditingCompanyName(!initialData?.id || !initialData.companyName);
     }
   }, [initialData, isOpen, resetFormAndState]);
 
@@ -581,14 +584,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
         // Auto-save and close if a meeting was scheduled, otherwise provide feedback on updates
         if (meetingWasScheduled) {
-            const data = form.getValues();
-            const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
-            await onSave(payload, { andClose: true });
+            handleFormSubmit(form.getValues());
+            analysisToast.dismiss(); // Dismiss the "analyzing" toast before showing the new one
             toast({
                 title: "Meeting Auto-Scheduled!",
-                description: `I've scheduled the meeting for ${data.companyName}. The visit card has been moved to the 'Scheduled' section in your planner.`,
+                description: `I've scheduled the meeting for ${form.getValues('companyName')}. The visit card has been moved to the 'Scheduled' section in your planner.`,
                 duration: 7000,
             });
+            return; // Exit early as the form is closing
         } else if (fieldsUpdated > 0) {
             toast({
               title: "AI Analysis Complete",
@@ -611,7 +614,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsAnalyzingNotes(false);
       analysisToast.dismiss();
     }
-  }, [form, toast, initialData, currentLatitude, currentLongitude, onSave]);
+  }, [form, toast, handleFormSubmit]);
 
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -989,53 +992,63 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <FormItem>
                   <FormLabel>Company Name</FormLabel>
                   <FormControl>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-grow">
-                        <Input
-                          placeholder="e.g., Acme Corp"
-                          {...field}
-                          className={cn(field.value && 'pr-9')}
-                        />
-                        {field.value && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              form.setValue('companyName', '', { shouldValidate: true });
-                              form.setFocus('companyName');
-                            }}
-                            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-                            aria-label="Clear company name"
-                          >
-                            <X className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        )}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleToggleVoiceCompanyName}
-                        className="h-9 w-9"
-                        aria-label="Dictate company name"
-                      >
-                        {isRecordingCompanyName ? (
-                          <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                        ) : (
-                          <Mic className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                      <Button
+                    {isEditingCompanyName ? (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-grow">
+                          <Input
+                            placeholder="e.g., Acme Corp"
+                            {...field}
+                            className={cn(field.value && 'pr-9')}
+                          />
+                          {field.value && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                form.setValue('companyName', '', { shouldValidate: true });
+                                form.setFocus('companyName');
+                              }}
+                              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                              aria-label="Clear company name"
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <Button
                           type="button"
-                          onClick={handleFindButtonClick}
-                          variant="outline"
-                          size="sm"
-                          disabled={isSuggestingCompany || isSaving}
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleToggleVoiceCompanyName}
+                          className="h-9 w-9"
+                          aria-label="Dictate company name"
+                        >
+                          {isRecordingCompanyName ? (
+                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                          ) : (
+                            <Mic className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleFindButtonClick}
+                            variant="outline"
+                            size="sm"
+                            disabled={isSuggestingCompany || isSaving}
+                        >
+                          {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div 
+                        className="flex items-center justify-between gap-2 min-h-[40px] rounded-md border border-input bg-background px-3 py-2 cursor-pointer group"
+                        onClick={() => setIsEditingCompanyName(true)}
                       >
-                        {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
-                      </Button>
-                    </div>
+                        <p className="font-bold text-base text-foreground">{field.value}</p>
+                        <Edit className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    )}
                   </FormControl>
                   {!initialData?.id && (
                     <Button
