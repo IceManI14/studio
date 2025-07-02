@@ -1435,6 +1435,21 @@ export default function HomePage() {
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto">
               <div className="text-center font-semibold text-lg text-primary mb-2">Navigator</div>
+              
+              {isFetchingCity && (
+                <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Determining current city...
+                </div>
+              )}
+
+              {currentCity && !isFetchingCity && (
+                <div className="flex justify-center items-center text-md font-medium text-foreground my-2">
+                  <MapPin className="mr-2 h-4 w-4 text-primary" />
+                  <span>Currently Located: {currentCity}</span>
+                </div>
+              )}
+
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daily-plan" className="border-none">
                   <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
@@ -1497,29 +1512,6 @@ export default function HomePage() {
                           </Alert>
                         )}
                       
-                       {isFetchingCity && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Determining current city...
-                        </div>
-                      )}
-
-                      <Button
-                        onClick={handleHotspotCreation}
-                        variant="default"
-                        className="w-full"
-                      >
-                        <Flame className="mr-2 h-5 w-5" />
-                        Flag Hotspot
-                      </Button>
-                      
-                      {currentCity && !isFetchingCity && (
-                        <div className="flex items-center text-md font-medium text-foreground my-2">
-                          <MapPin className="mr-2 h-4 w-4 text-primary" />
-                          <span>Currently Located: {currentCity}</span>
-                        </div>
-                      )}
-
                       <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
                       </Button>
@@ -2447,6 +2439,13 @@ export default function HomePage() {
           startDictation={startDictationOnOpen}
         />
       </div>
+      <button
+        onClick={handleHotspotCreation}
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        aria-label="Flag Hotspot"
+      >
+        <Flame className="h-8 w-8" />
+      </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
          <p className="text-xs mt-1">
@@ -2461,6 +2460,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
