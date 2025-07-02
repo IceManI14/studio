@@ -49,7 +49,7 @@ import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import ManageFilesModal from '@/components/manage-files-modal';
-import { fileToDataUri } from '@/lib/utils';
+import { fileToDataUri, cn } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
 import { firebaseConfigured } from '@/lib/firebase';
@@ -1434,6 +1434,7 @@ export default function HomePage() {
           </h1>
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto">
+              <div className="text-center font-semibold text-lg text-primary mb-2">Navigator</div>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daily-plan" className="border-none">
                   <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
@@ -1456,11 +1457,42 @@ export default function HomePage() {
                   <AccordionContent>
                     <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
                       {todaysScheduledVisits.length > 0 && (
-                          <Alert variant="default" className="border-primary/50 bg-primary/10 text-left w-full">
+                          <Alert
+                            variant="default"
+                            className={cn(
+                              "border-primary/50 bg-primary/10 text-left w-full",
+                              todaysScheduledVisits.length === 1 && "cursor-pointer transition-colors hover:bg-primary/20"
+                            )}
+                            onClick={() => {
+                              if (todaysScheduledVisits.length === 1) {
+                                setZoomedVisit(todaysScheduledVisits[0]);
+                              }
+                            }}
+                          >
                             <CalendarCheck className="h-4 w-4" />
                             <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
                             <AlertDescription>
-                              {todaysScheduledVisits.map(v => v.companyName).join(', ')}
+                              {todaysScheduledVisits.length === 1 ? (
+                                todaysScheduledVisits[0].companyName
+                              ) : (
+                                <div className="flex flex-wrap items-center gap-x-1">
+                                  {todaysScheduledVisits.map((v, index) => (
+                                    <div key={v.id} className="inline-flex items-center">
+                                      <Button
+                                        variant="link"
+                                        className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setZoomedVisit(v);
+                                        }}
+                                      >
+                                        {v.companyName}
+                                      </Button>
+                                      {index < todaysScheduledVisits.length - 1 && <span className="text-sm text-muted-foreground">,</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </AlertDescription>
                           </Alert>
                         )}
@@ -1517,7 +1549,7 @@ export default function HomePage() {
         </header>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 -mt-6">
+          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 mt-2">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -2429,5 +2461,6 @@ export default function HomePage() {
  
 
     
+
 
 
