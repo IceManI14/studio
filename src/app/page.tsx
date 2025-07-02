@@ -134,7 +134,7 @@ export default function HomePage() {
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
 
-  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(salespeople[0]);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
@@ -156,7 +156,7 @@ export default function HomePage() {
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
   const [isStartupNavigationConfirmOpen, setIsStartupNavigationConfirmOpen] = useState(false);
-  const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ city: string; companyName: string } | null>(null);
+  const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ companyName: string; latitude: number; longitude: number; } | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -241,13 +241,12 @@ export default function HomePage() {
             const firstMeeting = scheduledToday[0];
             if (firstMeeting.latitude && firstMeeting.longitude) {
               sessionStorage.setItem('startupNavigationPrompted', 'true');
-              getCompanyNameFromCoordsAction({ latitude: firstMeeting.latitude, longitude: firstMeeting.longitude })
-                .then(result => {
-                  if (result.city) {
-                    setStartupNavigationTarget({ city: result.city, companyName: firstMeeting.companyName });
-                    setIsStartupNavigationConfirmOpen(true);
-                  }
-                });
+              setStartupNavigationTarget({ 
+                  companyName: firstMeeting.companyName, 
+                  latitude: firstMeeting.latitude, 
+                  longitude: firstMeeting.longitude 
+              });
+              setIsStartupNavigationConfirmOpen(true);
             }
           }
       }
@@ -1442,29 +1441,16 @@ export default function HomePage() {
   
   const handleConfirmStartupNavigation = async () => {
     if (!startupNavigationTarget) return;
-
-    const { city } = startupNavigationTarget;
-    setIsFindingParking(true);
-    toast({ title: "Finding Optimal Parking...", description: `Please wait while I find the best spot in ${city}.` });
-    try {
-        const result = await findOptimalParkingAction({ city });
-        if (result.error) throw new Error(result.error);
-        
-        if (result.latitude && result.longitude) {
-            setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
-            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-            setNavigationUrl(googleMapsUrl);
-            toast({ title: "Destination Set!", description: `Optimal parking location found in ${city}. Check the navigator.` });
-        } else {
-            throw new Error('AI did not return a valid location.');
-        }
-    } catch (e: any) {
-        toast({ variant: "destructive", title: 'Could Not Find Location', description: e.message || 'An unexpected error occurred.'});
-    } finally {
-        setIsFindingParking(false);
-        setStartupNavigationTarget(null);
-        setIsStartupNavigationConfirmOpen(false);
-    }
+  
+    const { latitude, longitude, companyName } = startupNavigationTarget;
+  
+    setTargetDestination({ city: companyName, description: `Navigating directly to ${companyName}.` });
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+    setNavigationUrl(googleMapsUrl);
+    toast({ title: "Destination Set!", description: `Check the navigator to get directions to ${companyName}.` });
+  
+    setStartupNavigationTarget(null);
+    setIsStartupNavigationConfirmOpen(false);
   };
 
   return (
@@ -2498,12 +2484,12 @@ export default function HomePage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Navigate to Today's Meeting?</AlertDialogTitle>
               <AlertDialogDescription>
-                You have a meeting scheduled today with {startupNavigationTarget?.companyName} in {startupNavigationTarget?.city}. Would you like to set this as your destination?
+                You have a meeting with {startupNavigationTarget?.companyName}. Would you like to navigate there now?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>No</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmStartupNavigation}>Yes, Set Destination</AlertDialogAction>
+              <AlertDialogAction onClick={handleConfirmStartupNavigation}>Yes, Navigate</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -2530,6 +2516,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
