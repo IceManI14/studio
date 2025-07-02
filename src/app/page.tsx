@@ -1320,7 +1320,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto">
+            <div className="w-full max-w-lg mx-auto mt-2">
               <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
                 Navigation Plan
               </h2>
@@ -1345,18 +1345,6 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
-                      {isFetchingCity && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Determining current city...
-                        </div>
-                      )}
-                      {currentCity && !isFetchingCity && (
-                        <div className="flex items-center text-md font-medium text-foreground">
-                          <MapPin className="mr-2 h-4 w-4 text-primary" />
-                          <span>Currently Located: {currentCity}</span>
-                        </div>
-                      )}
                       {todaysScheduledVisits.length > 0 && (
                           <Alert variant="default" className="border-primary/50 bg-primary/10 text-left w-full">
                             <CalendarCheck className="h-4 w-4" />
@@ -1374,6 +1362,18 @@ export default function HomePage() {
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
                       </Button>
+                      {isFetchingCity && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Determining current city...
+                        </div>
+                      )}
+                      {currentCity && !isFetchingCity && (
+                        <div className="flex items-center text-md font-medium text-foreground">
+                          <MapPin className="mr-2 h-4 w-4 text-primary" />
+                          <span>Currently Located: {currentCity}</span>
+                        </div>
+                      )}
                       <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
                       </Button>
