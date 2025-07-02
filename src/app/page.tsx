@@ -157,6 +157,9 @@ export default function HomePage() {
   const [isStartupNavigationConfirmOpen, setIsStartupNavigationConfirmOpen] = useState(false);
   const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ companyName: string; latitude: number; longitude: number; } | null>(null);
   const locationWatchId = useRef<number | null>(null);
+  const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
+  const [isRecordingDestinationSearch, setIsRecordingDestinationSearch] = useState(false);
+  const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -1510,7 +1513,7 @@ export default function HomePage() {
     );
   }, [visits, toast]);
   
-  const handleSelectDestination = async (city: string) => {
+  const handleSelectDestination = useCallback(async (city: string) => {
     setIsDestinationModalOpen(false);
     setIsFindingParking(true);
     toast({ title: "Finding Optimal Parking...", description: `Please wait while Debbie finds the best spot in ${city}.` });
@@ -1531,7 +1534,7 @@ export default function HomePage() {
     } finally {
         setIsFindingParking(false);
     }
-  };
+  }, [toast]);
 
   const handleConfirmStartupNavigation = async () => {
     if (!startupNavigationTarget) return;
@@ -1549,6 +1552,92 @@ export default function HomePage() {
     setStartupNavigationTarget(null);
     setIsStartupNavigationConfirmOpen(false);
   };
+  
+  const handleDestinationSearch = useCallback(() => {
+    if (destinationSearchTerm.trim()) {
+        handleSelectDestination(destinationSearchTerm.trim());
+        setDestinationSearchTerm('');
+    }
+  }, [destinationSearchTerm, handleSelectDestination]);
+
+  const handleToggleVoiceDestinationSearch = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
+      return;
+    }
+
+    if (isRecordingDestinationSearch && destinationSearchRecognitionRef.current) {
+      destinationSearchRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    destinationSearchRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingDestinationSearch(true);
+      toast({ title: 'Listening for destination...' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingDestinationSearch(false);
+      destinationSearchRecognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+        switch (event.error) {
+            case 'no-speech':
+                errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+                break;
+            case 'not-allowed':
+            case 'service-not-allowed':
+                errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+                break;
+            case 'audio-capture':
+                errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+                break;
+            case 'network':
+                errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+                break;
+            case 'aborted':
+                console.log("Speech recognition aborted.");
+                setIsRecordingDestinationSearch(false);
+                destinationSearchRecognitionRef.current = null;
+                return;
+            case 'language-not-supported':
+                errorMessage = "The language for dictation is not supported by your browser.";
+                break;
+            case 'bad-grammar':
+                errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+                break;
+        }
+        toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
+        setIsRecordingDestinationSearch(false);
+        destinationSearchRecognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript;
+      if (transcript) {
+        const trimmedTranscript = transcript.trim();
+        setDestinationSearchTerm(trimmedTranscript);
+        handleSelectDestination(trimmedTranscript);
+        setDestinationSearchTerm(''); // Clear after initiating search
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
+    }
+  }, [isRecordingDestinationSearch, toast, handleSelectDestination]);
 
   return (
     <div className="min-h-screen">
@@ -1649,6 +1738,35 @@ export default function HomePage() {
                         Change Destination
                       </Button>
                       
+                      <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder={isRecordingDestinationSearch ? "Listening for city..." : "Or search for a city..."}
+                            className="pl-10 pr-10"
+                            value={destinationSearchTerm}
+                            onChange={(e) => setDestinationSearchTerm(e.target.value)}
+                            onKeyPress={(e) => { if (e.key === 'Enter') handleDestinationSearch(); }}
+                            disabled={isRecordingDestinationSearch || isFindingParking}
+                        />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleVoiceDestinationSearch}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                            aria-label="Search destination with voice"
+                            title="Search destination with voice"
+                            disabled={isFindingParking}
+                        >
+                            {isRecordingDestinationSearch ? (
+                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                            ) : (
+                                <Mic className="h-4 w-4 text-muted-foreground" />
+                            )}
+                        </Button>
+                      </div>
+
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
                           <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
