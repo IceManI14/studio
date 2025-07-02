@@ -110,6 +110,7 @@ export default function HomePage() {
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
@@ -337,17 +338,22 @@ export default function HomePage() {
     if (visits.length === 0) {
       return [];
     }
-
-    const filteredVisits = selectedDate
-      ? visits.filter(visit => 
+  
+    const dateFilteredVisits = selectedDate
+      ? visits.filter(visit =>
           isSameDay(new Date(visit.timestamp), selectedDate) ||
           (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
         )
       : visits;
-    
-    // Deduplicate visits in case a visit is both logged and scheduled on the same day.
-    const uniqueVisits = Array.from(new Map(filteredVisits.map(visit => [visit.id, visit])).values());
-
+  
+    const searchFilteredVisits = searchTerm.trim() !== ''
+      ? dateFilteredVisits.filter(visit =>
+          visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : dateFilteredVisits;
+  
+    const uniqueVisits = Array.from(new Map(searchFilteredVisits.map(visit => [visit.id, visit])).values());
+  
     const sorted = uniqueVisits.sort((a, b) => {
       const confidenceA = a.partnershipConfidence ?? 0;
       const confidenceB = b.partnershipConfidence ?? 0;
@@ -355,9 +361,9 @@ export default function HomePage() {
       const timeB = new Date(b.timestamp).getTime();
       const dealClosedA = a.dealClosed ? 1 : 0;
       const dealClosedB = b.dealClosed ? 1 : 0;
-
+  
       let comparison = 0;
-
+  
       if (sortCriteria === 'dealClosed') {
         comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
         if (comparison !== 0) return comparison;
@@ -365,15 +371,15 @@ export default function HomePage() {
       } else if (sortCriteria === 'partnershipConfidence') {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
-        return timeB - timeA; 
-      } else { 
+        return timeB - timeA;
+      } else {
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       }
     });
     return sorted;
-  }, [visits, sortCriteria, sortOrder, selectedDate]);
+  }, [visits, sortCriteria, sortOrder, selectedDate, searchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visits
@@ -1593,6 +1599,16 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+                <div className="relative mt-6 max-w-sm mx-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="Search company name..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
               </div>
 
               {sortedVisitsForCallDay.length === 0 ? (
@@ -2284,3 +2300,5 @@ export default function HomePage() {
 
     
  
+
+    
