@@ -582,6 +582,8 @@ export default function HomePage() {
         const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
         if (result.error) {
             toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
+            setIsFetchingCity(false);
+            return;
         } else {
             companyName = result.suggestedCompanyName;
             notes = result.address ? `Company Address: ${result.address}` : '';
@@ -590,9 +592,36 @@ export default function HomePage() {
     } catch (e: any) {
         console.error("Error fetching company name for quicklog:", e);
         toast({ variant: "destructive", title: "Location Lookup Error", description: e.message });
-    } finally {
         setIsFetchingCity(false);
+        return;
     }
+
+    if (companyName) {
+      const existingVisitForCompany = visits.find(
+        (visit) =>
+          visit.companyName === companyName &&
+          visit.latitude &&
+          visit.longitude &&
+          getDistanceFromLatLonInM(
+            userCurrentLatitude,
+            userCurrentLongitude,
+            visit.latitude,
+            visit.longitude
+          ) < 50
+      );
+
+      if (existingVisitForCompany) {
+        toast({
+          title: "Existing Visit Found",
+          description: `Opening the visit log for ${companyName} to prevent a duplicate.`,
+        });
+        handleEditVisit(existingVisitForCompany);
+        setIsFetchingCity(false);
+        return;
+      }
+    }
+
+    setIsFetchingCity(false);
     
     const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
 
@@ -1094,12 +1123,17 @@ export default function HomePage() {
 
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
-    const existingVisitForCompany = visits.find(
-      (visit) =>
-        visit.companyName === visitData.companyName &&
-        visit.latitude === visitData.latitude &&
-        visit.longitude === visitData.longitude
-    );
+    const existingVisitForCompany = visits.find((visit) => {
+        if (visit.companyName !== visitData.companyName) return false;
+        if (!visit.latitude || !visit.longitude || !visitData.latitude || !visitData.longitude) return false;
+        
+        return getDistanceFromLatLonInM(
+            visitData.latitude,
+            visitData.longitude,
+            visit.latitude,
+            visit.longitude
+        ) < 50; // 50 meters proximity check
+    });
 
     if (existingVisitForCompany) {
       toast({
@@ -1228,12 +1262,16 @@ export default function HomePage() {
   const handleAddHotLeadAsVisit = (lead: HotLead) => {
     if (convertedHotLeads.has(lead.id)) return;
     
-    const existingVisitForCompany = visits.find(
-      (visit) =>
-        visit.companyName === lead.companyName &&
-        visit.latitude === lead.latitude &&
-        visit.longitude === lead.longitude
-    );
+    const existingVisitForCompany = visits.find((visit) => {
+        if (visit.companyName !== lead.companyName) return false;
+        if (!visit.latitude || !visit.longitude || !lead.latitude || !lead.longitude) return false;
+        return getDistanceFromLatLonInM(
+            lead.latitude,
+            lead.longitude,
+            visit.latitude,
+            visit.longitude
+          ) < 50;
+    });
 
     if (existingVisitForCompany) {
       toast({
@@ -1399,13 +1437,16 @@ export default function HomePage() {
 
                 const companyName = result.suggestedCompanyName || 'Flagged Hotspot';
                 
-                // Check if a similar visit already exists
-                const existingVisitForCompany = visits.find(
-                  (visit) =>
-                    visit.companyName === companyName &&
-                    visit.latitude === latitude &&
-                    visit.longitude === longitude
-                );
+                const existingVisitForCompany = visits.find((visit) => {
+                    if (visit.companyName !== companyName) return false;
+                    if (!visit.latitude || !visit.longitude) return false;
+                    return getDistanceFromLatLonInM(
+                        latitude,
+                        longitude,
+                        visit.latitude,
+                        visit.longitude
+                      ) < 50;
+                });
 
                 if (existingVisitForCompany) {
                   flagToast.dismiss();
