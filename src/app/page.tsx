@@ -8,7 +8,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -138,7 +138,7 @@ export default function HomePage() {
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
-  const [isFetchingCity, setIsFetchingCity] = useState(false);
+  const [isFetchingCity, setIsFetchingCity] = useState(true);
   const [isFindingParking, setIsFindingParking] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -156,6 +156,7 @@ export default function HomePage() {
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
   const [isStartupNavigationConfirmOpen, setIsStartupNavigationConfirmOpen] = useState(false);
   const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ companyName: string; latitude: number; longitude: number; } | null>(null);
+  const locationWatchId = useRef<number | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -217,7 +218,7 @@ export default function HomePage() {
   useEffect(() => {
     // Set default salesperson to "Paul L."
     const defaultSalesperson = salespeople.find(s => s.name === 'Paul L.') || salespeople[0];
-    setSelectedSalesperson(defaultSalesperson);
+    handleSelectSalesperson(defaultSalesperson);
 
     // Load all data from localStorage on initial render
     try {
@@ -288,14 +289,24 @@ export default function HomePage() {
     }
 
     // Get Geolocation
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          setUserCurrentLatitude(lat);
-          setUserCurrentLongitude(lon);
-          
+    const handlePositionUpdate = async (position: GeolocationPosition) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        let shouldUpdateCity = false;
+        
+        if (userCurrentLatitude === undefined || userCurrentLongitude === undefined) {
+            shouldUpdateCity = true;
+        } else {
+            const distance = getDistanceFromLatLonInM(lat, lon, userCurrentLatitude, userCurrentLongitude);
+            if (distance > 500) { // Update if moved more than 500 meters
+                shouldUpdateCity = true;
+            }
+        }
+        
+        setUserCurrentLatitude(lat);
+        setUserCurrentLongitude(lon);
+
+        if (shouldUpdateCity) {
           setIsFetchingCity(true);
           try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
@@ -313,21 +324,59 @@ export default function HomePage() {
           } finally {
             setIsFetchingCity(false);
           }
-        },
-        (error) => {
-          let errorMessage = "Could not retrieve location.";
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = "Location access denied. Please enable it in your browser settings.";
-          }
-          toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-          setCurrentCity("Location access denied.");
+        } else {
+           setIsFetchingCity(false);
         }
-      );
+    };
+    
+    if (navigator.geolocation) {
+      // Get initial position
+      navigator.geolocation.getCurrentPosition(handlePositionUpdate, (error) => {
+        let errorMessage = "Could not retrieve location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Location access denied. Please enable it in your browser settings.";
+        }
+        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+        setCurrentCity("Location access denied.");
+        setIsFetchingCity(false);
+      }, { enableHighAccuracy: true });
+
+      // Watch for subsequent position changes
+      locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
+          // Errors in watchPosition are often less critical, so we can log them quietly.
+          console.warn("Geolocation watch error:", error.message);
+      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+
     } else {
       toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
       setCurrentCity("Geolocation not supported.");
+      setIsFetchingCity(false);
     }
-  }, [toast]);
+    
+    return () => {
+        if (locationWatchId.current && navigator.geolocation) {
+            navigator.geolocation.clearWatch(locationWatchId.current);
+        }
+    };
+  }, [toast, userCurrentLatitude, userCurrentLongitude]);
+
+  function getDistanceFromLatLonInM(lat1:number, lon1:number, lat2:number, lon2:number) {
+      var R = 6371; // Radius of the earth in km
+      var dLat = deg2rad(lat2-lat1);
+      var dLon = deg2rad(lon2-lon1); 
+      var a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2)
+        ; 
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      var d = R * c; // Distance in km
+      return d * 1000; // Distance in m
+  }
+
+  function deg2rad(deg:number) {
+    return deg * (Math.PI/180)
+  }
 
   // Save suggestions whenever they change
   useEffect(() => {
@@ -441,6 +490,12 @@ export default function HomePage() {
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visits, scheduledVisits]);
+
+  const activeFreeTrials = useMemo(() => {
+    return visits
+      .filter(visit => visit.freeTrial && visit.freeTrialStartDate)
+      .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
+  }, [visits]);
 
   const todaysVisits = useMemo(() => {
     return visits.filter(visit => isToday(new Date(visit.timestamp)));
@@ -1447,7 +1502,10 @@ export default function HomePage() {
   
     const { latitude, longitude, companyName } = startupNavigationTarget;
   
-    setTargetDestination({ city: companyName, description: `Navigating directly to ${companyName}.` });
+    const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+    const city = result.city || "Destination";
+    
+    setTargetDestination({ city: city, description: `Navigating directly to ${companyName}.` });
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
     setNavigationUrl(googleMapsUrl);
     toast({ title: "Destination Set!", description: `Check the navigator to get directions to ${companyName}.` });
@@ -1458,9 +1516,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-       {!selectedSalesperson && (
-        <div className="fixed inset-0 bg-black/80 z-50" />
-      )}
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
@@ -1474,19 +1529,21 @@ export default function HomePage() {
             <div className="w-full max-w-lg mx-auto">
               <div className="text-center font-semibold text-lg text-primary mb-2">Navigator</div>
               
-              {isFetchingCity && (
-                <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Determining current city...
-                </div>
-              )}
-
-              {currentCity && !isFetchingCity && (
-                <div className="flex justify-center items-center text-md font-medium text-foreground my-2">
-                  <MapPin className="mr-2 h-4 w-4 text-primary" />
-                  <span>Currently Located: {currentCity}</span>
-                </div>
-              )}
+              <div className="flex justify-center items-center text-md font-medium text-foreground my-2">
+                {isFetchingCity ? (
+                  <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <span>Determining current city...</span>
+                  </div>
+                ) : (
+                  currentCity && (
+                    <>
+                      <MapPin className="mr-2 h-4 w-4 text-primary" />
+                      <span>Currently Located: {currentCity}</span>
+                    </>
+                  )
+                )}
+              </div>
 
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daily-plan" className="border-none">
@@ -1955,6 +2012,44 @@ export default function HomePage() {
                               ))}
                           </div>
                       )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              <Accordion type="single" collapsible className="w-full" defaultValue="active-free-trials">
+                <AccordionItem value="active-free-trials" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {activeFreeTrials.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No active free trials.
+                            </p>
+                            <p className="text-muted-foreground">
+                                When you set up a free trial for a visit, it will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {activeFreeTrials.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
+                        </div>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
