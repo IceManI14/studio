@@ -339,6 +339,7 @@ export default function HomePage() {
       return [];
     }
   
+    // Filter by selected date (if any)
     const dateFilteredVisits = selectedDate
       ? visits.filter(visit =>
           isSameDay(new Date(visit.timestamp), selectedDate) ||
@@ -346,12 +347,14 @@ export default function HomePage() {
         )
       : visits;
   
+    // Then filter by search term
     const searchFilteredVisits = searchTerm.trim() !== ''
       ? dateFilteredVisits.filter(visit =>
           visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
         )
       : dateFilteredVisits;
   
+    // Deduplicate visits in case a visit is both logged and scheduled on the same day.
     const uniqueVisits = Array.from(new Map(searchFilteredVisits.map(visit => [visit.id, visit])).values());
   
     const sorted = uniqueVisits.sort((a, b) => {
@@ -1538,78 +1541,84 @@ export default function HomePage() {
           
           {activeTab === 'call-day' && (
             <div className="space-y-6">
-              <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center justify-center gap-2 mb-3 w-full">
+              <Accordion type="single" collapsible className="w-full mb-6">
+                <AccordionItem value="item-1" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
+                    <h3 className="text-lg font-medium text-foreground text-center w-full flex items-center justify-center gap-2">
                       <ListFilter className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-medium text-foreground text-center">Show Visit Cards by Date</h3>
+                      Filter, Sort & Search Visits
+                    </h3>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                      <div className="flex flex-col items-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          className="rounded-md border self-center"
+                          modifiers={{
+                            scheduled: scheduledFutureVisitDays,
+                            logged: loggedVisitDays,
+                          }}
+                          modifiersClassNames={{
+                            scheduled: 'day-scheduled',
+                            logged: 'day-logged',
+                            today_selected: 'bg-cyan-400 text-black',
+                          }}
+                        />
+                        {selectedDate && (
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
+                            Clear Date Filter
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-4 items-center">
+                        <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                          <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
+                          <Select
+                            value={sortCriteria}
+                            onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
+                          >
+                            <SelectTrigger id="sort-criteria" className="w-full">
+                              <SelectValue placeholder="Select criteria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
+                              <SelectItem value="timestamp">Date Visited</SelectItem>
+                              <SelectItem value="dealClosed">Closed Deals</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                          <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
+                          <Select
+                            value={sortOrder}
+                            onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                          >
+                            <SelectTrigger id="sort-order" className="w-full">
+                              <SelectValue placeholder="Select order" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className="rounded-md border self-center"
-                      modifiers={{
-                        scheduled: scheduledFutureVisitDays,
-                        logged: loggedVisitDays,
-                      }}
-                      modifiersClassNames={{
-                        scheduled: 'day-scheduled',
-                        logged: 'day-logged',
-                        today_selected: 'bg-cyan-400 text-black',
-                      }}
-                    />
-                    {selectedDate && (
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
-                        Clear Date Filter
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-4 items-center">
-                    <div className="flex flex-col gap-1.5 w-full max-w-xs">
-                      <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
-                      <Select
-                        value={sortCriteria}
-                        onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
-                      >
-                        <SelectTrigger id="sort-criteria" className="w-full">
-                          <SelectValue placeholder="Select criteria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
-                          <SelectItem value="timestamp">Date Visited</SelectItem>
-                          <SelectItem value="dealClosed">Closed Deals</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="relative mt-6 max-w-sm mx-auto">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="Search company name..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                    <div className="flex flex-col gap-1.5 w-full max-w-xs">
-                      <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
-                      <Select
-                        value={sortOrder}
-                        onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-                      >
-                        <SelectTrigger id="sort-order" className="w-full">
-                          <SelectValue placeholder="Select order" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                <div className="relative mt-6 max-w-sm mx-auto">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search company name..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-              </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
