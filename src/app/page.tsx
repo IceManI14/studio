@@ -1512,13 +1512,15 @@ export default function HomePage() {
                           <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
                         </div>
                       </div>
-                       <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
                         <CalendarIcon className="h-3 w-3" />
                         {format(new Date(), 'MMM d, yyyy')}
                       </span>
-                      {targetDestination && (
-                        <Badge variant="secondary" className="shrink-0">{targetDestination.city}</Badge>
-                      )}
+                      <div className="flex justify-end min-w-[80px]">
+                        {targetDestination && (
+                            <Badge variant="secondary" className="shrink-0">{targetDestination.city}</Badge>
+                        )}
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -2528,6 +2530,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
