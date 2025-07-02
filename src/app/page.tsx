@@ -1737,35 +1737,6 @@ export default function HomePage() {
                       <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
                       </Button>
-                      
-                      <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder={isRecordingDestinationSearch ? "Listening for city..." : "Or search for a city..."}
-                            className="pl-10 pr-10"
-                            value={destinationSearchTerm}
-                            onChange={(e) => setDestinationSearchTerm(e.target.value)}
-                            onKeyPress={(e) => { if (e.key === 'Enter') handleDestinationSearch(); }}
-                            disabled={isRecordingDestinationSearch || isFindingParking}
-                        />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleToggleVoiceDestinationSearch}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                            aria-label="Search destination with voice"
-                            title="Search destination with voice"
-                            disabled={isFindingParking}
-                        >
-                            {isRecordingDestinationSearch ? (
-                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                            ) : (
-                                <Mic className="h-4 w-4 text-muted-foreground" />
-                            )}
-                        </Button>
-                      </div>
 
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
@@ -2648,14 +2619,14 @@ export default function HomePage() {
                 <DialogHeader>
                     <DialogTitle>Choose Your Destination</DialogTitle>
                     <DialogDescription>
-                        {isExtractingCities ? "Debbie is reading your territory file to find cities..." : "Select a city to get an AI-optimized parking location for your day."}
+                        {isExtractingCities ? "Debbie is reading your territory file..." : "Select a city from your territory, or search for one."}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="max-h-[400px] overflow-y-auto pr-2">
+                <div className="max-h-[500px] overflow-y-auto pr-2">
                     {isExtractingCities ? (
                         <div className="flex justify-center items-center h-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-4">
                            <Button
                                 key="call-day-seabrook"
                                 variant="default"
@@ -2666,10 +2637,40 @@ export default function HomePage() {
                                <Phone className="mr-3 h-5 w-5" />
                                Call Day (Seabrook)
                             </Button>
+                            
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder={isRecordingDestinationSearch ? "Listening for city..." : "Or search for a city..."}
+                                    className="pl-10 pr-10"
+                                    value={destinationSearchTerm}
+                                    onChange={(e) => setDestinationSearchTerm(e.target.value)}
+                                    onKeyPress={(e) => { if (e.key === 'Enter') handleDestinationSearch(); }}
+                                    disabled={isRecordingDestinationSearch || isFindingParking}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleToggleVoiceDestinationSearch}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                    aria-label="Search destination with voice"
+                                    title="Search destination with voice"
+                                    disabled={isFindingParking}
+                                >
+                                    {isRecordingDestinationSearch ? (
+                                        <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                    ) : (
+                                        <Mic className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                </Button>
+                            </div>
+
                             {destinationCities.length > 0 && (
                                <div className="relative my-2">
                                     <Separator />
-                                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">OR</span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">Territory Cities</span>
                                 </div>
                             )}
                             {destinationCities.map(city => (
@@ -2691,7 +2692,7 @@ export default function HomePage() {
                 </div>
                  <DialogFooter>
                     <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking || isExtractingCities}>
-                        {isFindingParking || isExtractingCities ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Skip'}
+                        {isFindingParking || isExtractingCities ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Close'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
