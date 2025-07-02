@@ -117,14 +117,6 @@ const visitFormSchema = z.object({
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
   freeTrialStartDate: z.coerce.date().optional(),
-}).refine(data => {
-  if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
-    return false;
-  }
-  return true;
-}, {
-  message: "TDS value (0-1500) is required when TDS Reading is checked.",
-  path: ["tdsValue"],
 });
 
 export type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -692,25 +684,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
-    recognition.continuous = false; // Stops after the first pause in speech
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
       setIsRecordingNotes(true);
-      toast({ title: 'Listening...', description: 'Start speaking. Recording will stop automatically after you pause.' });
+      toast({ title: 'Listening...', description: 'Click the microphone again to stop.' });
     };
 
     recognition.onend = () => {
       setIsRecordingNotes(false);
       recognitionRef.current = null;
       
-      // Auto-save and close if a meeting was scheduled by voice
-      const wasMeetingScheduled = form.getValues('futureMeetingSet') && form.getValues('futureMeetingDateTime');
-      const isNewMeeting = initialData ? new Date(initialData.futureMeetingDateTime || 0).getTime() !== new Date(form.getValues('futureMeetingDateTime') || 1).getTime() : !!wasMeetingScheduled;
-
-      if(wasMeetingScheduled && isNewMeeting) {
-        handleFormSubmit(form.getValues());
+      const finalNotes = form.getValues('notes');
+      if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
+        analyzeNotesAndPopulateForm(finalNotes);
       }
     };
 
@@ -749,17 +738,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     };
 
     recognition.onresult = (event) => {
-      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
-          const transcript = event.results[0][0].transcript;
-          if (transcript) {
-            const currentNotes = form.getValues('notes') || '';
-            const newNotes = currentNotes ? `${currentNotes}\n${transcript}` : transcript;
-            form.setValue('notes', newNotes, { shouldValidate: true });
-            toast({ title: 'Notes Added Via Voice' });
-            analyzeNotesAndPopulateForm(newNotes);
-          }
-      } else {
-        console.warn("Speech recognition returned a result with no transcript.");
+      let newTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          newTranscript += event.results[i][0].transcript + ' ';
+        }
+      }
+    
+      if (newTranscript) {
+        const currentNotes = form.getValues('notes') || '';
+        const newNotes = currentNotes ? `${currentNotes} ${newTranscript.trim()}` : newTranscript.trim();
+        form.setValue('notes', newNotes, { shouldValidate: true });
+        toast({ title: 'Notes Updated' });
       }
     };
     
@@ -768,7 +758,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, initialData, handleFormSubmit]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes]);
 
 
   useEffect(() => {

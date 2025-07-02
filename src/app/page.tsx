@@ -1369,13 +1369,13 @@ export default function HomePage() {
     const recognition = new SpeechRecognition();
     hotLeadNotesRecognitionRef.current = recognition;
   
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
   
     recognition.onstart = () => {
       setIsRecordingHotLeadNotes(leadId);
-      toast({ title: 'Listening for notes...' });
+      toast({ title: 'Listening for notes...', description: 'Click the microphone again to stop.' });
     };
   
     recognition.onend = () => {
@@ -1390,16 +1390,21 @@ export default function HomePage() {
     };
   
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
+      let newTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          newTranscript += event.results[i][0].transcript + ' ';
+        }
+      }
+      if (newTranscript) {
         setHotLeads(prevLeads =>
           prevLeads.map(lead =>
             lead.id === leadId
-              ? { ...lead, notes: (lead.notes ? lead.notes + '\n' : '') + transcript }
+              ? { ...lead, notes: (lead.notes ? `${lead.notes} ${newTranscript.trim()}` : newTranscript.trim()) }
               : lead
           )
         );
-        toast({ title: 'Notes Added' });
+        toast({ title: 'Notes Updated' });
       }
     };
   
