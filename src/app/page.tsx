@@ -1323,10 +1323,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-0">
-              <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
-                Navigation Plan
-              </h2>
+            <div className="w-full max-w-lg mx-auto">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daily-plan" className="border-none">
                   <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
@@ -1365,6 +1362,7 @@ export default function HomePage() {
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
                       </Button>
+                      
                        {isFetchingCity && (
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1372,14 +1370,16 @@ export default function HomePage() {
                         </div>
                       )}
                       {currentCity && !isFetchingCity && (
-                        <div className="flex items-center text-md font-medium text-foreground">
+                        <div className="flex items-center text-md font-medium text-foreground my-2">
                           <MapPin className="mr-2 h-4 w-4 text-primary" />
                           <span>Currently Located: {currentCity}</span>
                         </div>
                       )}
+
                       <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
                       </Button>
+                      
                       {targetDestination?.description && (
                         <div className="text-center w-full bg-background/20 p-3 rounded-md">
                           <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
@@ -1602,39 +1602,43 @@ export default function HomePage() {
 
           {activeTab === 'planner' && (
             <div className="space-y-8">
-              <div>
-                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
-                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                          <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Visits (Scheduled)
-                      </h2>
-                  </div>
-                  {scheduledVisits.length === 0 ? (
-                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                          <p className="text-xl text-muted-foreground mb-4">
-                              No visits with a specific date scheduled.
-                          </p>
-                          <p className="text-muted-foreground">
-                              Edit a visit and set a future meeting date, and it will appear here.
-                          </p>
-                      </div>
-                  ) : (
-                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                          {scheduledVisits.map((visit) => (
-                              <VisitCard
-                                  key={visit.id}
-                                  visit={visit}
-                                  onEdit={handleEditVisit}
-                                  onDelete={handleDeleteVisit}
-                                  onUpdateDealClosed={handleUpdateDealClosed}
-                                  onZoom={setZoomedVisit}
-                                  onLogFollowUp={handleLogFollowUp}
-                                  onDictateNotes={handleDictateNotes}
-                                  variant="planner"
-                              />
-                          ))}
-                      </div>
-                  )}
-              </div>
+              <Accordion type="single" collapsible className="w-full" defaultValue="scheduled-visits">
+                <AccordionItem value="scheduled-visits" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Visits (Scheduled)
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {scheduledVisits.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No visits with a specific date scheduled.
+                            </p>
+                            <p className="text-muted-foreground">
+                                Edit a visit and set a future meeting date, and it will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {scheduledVisits.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
+                        </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
               
               <Accordion type="single" collapsible className="w-full" defaultValue="unscheduled-visits">
                 <AccordionItem value="unscheduled-visits" className="border-none">
@@ -2243,3 +2247,4 @@ export default function HomePage() {
 }
 
     
+ 
