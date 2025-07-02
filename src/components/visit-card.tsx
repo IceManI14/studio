@@ -218,7 +218,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
-      <CardHeader className="space-y-2 pb-3">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-start min-h-[3rem]">
             {/* Left side: Visit number and toggleable date */}
             <div className="flex flex-col items-start" onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} >
