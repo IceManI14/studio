@@ -374,24 +374,27 @@ export default function HomePage() {
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visits]);
 
-  const flaggedHotspots = useMemo(() => {
-    return visits
-      .filter(visit => visit.notes?.startsWith('Flagged as a hotspot.') && !visit.futureMeetingDateTime)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits]);
-
   const unscheduledFutureVisits = useMemo(() => {
     const scheduledIds = new Set(scheduledVisits.map(v => v.id));
-    const hotspotIds = new Set(flaggedHotspots.map(h => h.id));
     return visits
       .filter(visit => 
         visit.futureMeetingSet && 
         !visit.futureMeetingDateTime && 
-        !hotspotIds.has(visit.id) &&
         !scheduledIds.has(visit.id)
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits, scheduledVisits, flaggedHotspots]);
+  }, [visits, scheduledVisits]);
+
+  const flaggedHotspots = useMemo(() => {
+    const scheduledIds = new Set(scheduledVisits.map(v => v.id));
+    return visits
+      .filter(visit => 
+        visit.notes?.startsWith('Flagged as a hotspot.') && 
+        !visit.futureMeetingDateTime && 
+        !scheduledIds.has(visit.id)
+      )
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [visits, scheduledVisits]);
 
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
@@ -1362,7 +1365,7 @@ export default function HomePage() {
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
                       </Button>
-                      {isFetchingCity && (
+                       {isFetchingCity && (
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Determining current city...
@@ -1633,39 +1636,43 @@ export default function HomePage() {
                   )}
               </div>
               
-              <div>
-                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
-                      <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
-                          <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
-                      </h2>
-                  </div>
-                  {unscheduledFutureVisits.length === 0 ? (
-                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                          <p className="text-xl text-muted-foreground mb-4">
-                              No other unscheduled future visits.
-                          </p>
-                          <p className="text-muted-foreground">
-                              Convert a "Hot Lead" from the Debbie tab to add it here.
-                          </p>
-                      </div>
-                  ) : (
-                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                          {unscheduledFutureVisits.map((visit) => (
-                              <VisitCard
-                                  key={visit.id}
-                                  visit={visit}
-                                  onEdit={handleEditVisit}
-                                  onDelete={handleDeleteVisit}
-                                  onUpdateDealClosed={handleUpdateDealClosed}
-                                  onZoom={setZoomedVisit}
-                                  onLogFollowUp={handleLogFollowUp}
-                                  onDictateNotes={handleDictateNotes}
-                                  variant="planner"
-                              />
-                          ))}
-                      </div>
-                  )}
-              </div>
+              <Accordion type="single" collapsible className="w-full" defaultValue="unscheduled-visits">
+                <AccordionItem value="unscheduled-visits" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {unscheduledFutureVisits.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No other unscheduled future visits.
+                            </p>
+                            <p className="text-muted-foreground">
+                                Convert a "Hot Lead" from the Debbie tab to add it here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {unscheduledFutureVisits.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
+                        </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
               
               <div>
                   <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
