@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -134,7 +133,7 @@ export default function HomePage() {
   const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
 
-  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(salespeople[0]);
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
@@ -216,6 +215,10 @@ export default function HomePage() {
 
 
   useEffect(() => {
+    // Set default salesperson to "Paul L."
+    const defaultSalesperson = salespeople.find(s => s.name === 'Paul L.') || salespeople[0];
+    setSelectedSalesperson(defaultSalesperson);
+
     // Load all data from localStorage on initial render
     try {
       const localVisits = localStorage.getItem('visits');
@@ -1456,10 +1459,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
        {!selectedSalesperson && (
-        <SalespersonSelectorModal
-          salespeople={salespeople}
-          onSelectSalesperson={handleSelectSalesperson}
-        />
+        <div className="fixed inset-0 bg-black/80 z-50" />
       )}
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
@@ -1569,7 +1569,7 @@ export default function HomePage() {
                           variant="default"
                         >
                           <MapIcon className="mr-2 h-4 w-4" />
-                          Navigate to {targetDestination?.city}
+                          Navigate
                         </Button>
                       )}
                     </div>
@@ -2511,15 +2511,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
- 
-
-    
-
-
-
-
-
-
-
