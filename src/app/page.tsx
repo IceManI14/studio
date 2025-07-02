@@ -111,6 +111,8 @@ export default function HomePage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isRecordingSearch, setIsRecordingSearch] = useState(false);
+  const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
@@ -954,6 +956,89 @@ export default function HomePage() {
     }
   }, [isRecordingChat, toast]);
 
+  const handleToggleVoiceSearch = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported', description: 'Your browser does not support this feature. Extensions or browser settings might be the cause.' });
+      return;
+    }
+
+    if (isRecordingSearch && searchRecognitionRef.current) {
+      searchRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    searchRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingSearch(true);
+      toast({ title: 'Listening...' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingSearch(false);
+      searchRecognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+       switch (event.error) {
+        case 'no-speech':
+          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+          break;
+        case 'network':
+          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+          break;
+        case 'aborted':
+          console.log("Speech recognition aborted.");
+          setIsRecordingSearch(false);
+          searchRecognitionRef.current = null;
+          return;
+        case 'language-not-supported':
+          errorMessage = "The language for dictation is not supported by your browser.";
+          break;
+        case 'bad-grammar':
+           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+           break;
+      }
+      
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
+      setIsRecordingSearch(false);
+      searchRecognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setSearchTerm(transcript);
+          toast({ title: 'Search Term Transcribed' });
+        }
+      } else {
+        console.warn("Speech recognition returned a result with no transcript.");
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
+    }
+  }, [isRecordingSearch, toast]);
+
+
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
     const existingVisitForCompany = visits.find(
       (visit) =>
@@ -1001,6 +1086,7 @@ export default function HomePage() {
         futureMeetingSet: true,
         futureMeetingDateTime: futureDate,
         freeTrial: false,
+        freeTrialStartDate: undefined,
         dealClosed: false,
     };
     
@@ -1129,6 +1215,7 @@ export default function HomePage() {
       hasTDSReading: false,
       tdsValue: undefined,
       freeTrial: false,
+      freeTrialStartDate: undefined,
       dealClosed: false,
       contactInfo: undefined,
       notesSummary: undefined,
@@ -1300,6 +1387,7 @@ export default function HomePage() {
                     futureMeetingSet: true, // This makes it a future visit
                     futureMeetingDateTime: undefined, // This makes it an UNSCHEDULED future visit
                     freeTrial: false,
+                    freeTrialStartDate: undefined,
                     dealClosed: false,
                 };
                 
@@ -1610,11 +1698,27 @@ export default function HomePage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Search company name..."
-                            className="pl-10"
+                            placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                            className="pl-10 pr-10"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={isRecordingSearch}
                         />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleToggleVoiceSearch}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                            aria-label="Search with voice"
+                            title="Search with voice"
+                        >
+                            {isRecordingSearch ? (
+                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                            ) : (
+                                <Mic className="h-4 w-4 text-muted-foreground" />
+                            )}
+                        </Button>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -2311,3 +2415,4 @@ export default function HomePage() {
  
 
     
+
