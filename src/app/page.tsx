@@ -1314,7 +1314,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-6">
+            <div className="w-full max-w-lg mx-auto mt-2">
               <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
                 Navigation Plan
               </h2>
@@ -1997,12 +1997,24 @@ export default function HomePage() {
 
                 <Tabs defaultValue="about-field-day" className="w-full">
                     <TabsList className="grid w-full grid-cols-6 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
-                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Field Day</TabsTrigger>
-                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Planner</TabsTrigger>
-                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Call Day</TabsTrigger>
-                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Visits</TabsTrigger>
-                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Debbie</TabsTrigger>
-                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Feedback</TabsTrigger>
+                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <PlusCircle className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <FolderKanban className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <ListChecks className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <MapPin className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <Bot className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                           <MessagesSquare className="h-5 w-5" />
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
