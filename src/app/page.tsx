@@ -381,11 +381,17 @@ export default function HomePage() {
   }, [visits]);
 
   const unscheduledFutureVisits = useMemo(() => {
+    const scheduledIds = new Set(scheduledVisits.map(v => v.id));
     const hotspotIds = new Set(flaggedHotspots.map(h => h.id));
     return visits
-      .filter(visit => visit.futureMeetingSet && !visit.futureMeetingDateTime && !hotspotIds.has(visit.id))
+      .filter(visit => 
+        visit.futureMeetingSet && 
+        !visit.futureMeetingDateTime && 
+        !hotspotIds.has(visit.id) &&
+        !scheduledIds.has(visit.id)
+      )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits, flaggedHotspots]);
+  }, [visits, scheduledVisits, flaggedHotspots]);
 
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
@@ -1314,7 +1320,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-2">
+            <div className="w-full max-w-lg mx-auto">
               <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
                 Navigation Plan
               </h2>
@@ -1362,13 +1368,13 @@ export default function HomePage() {
                         )}
                       <Button
                         onClick={handleHotspotCreation}
-                        variant="outline"
+                        variant="default"
                         className="w-full"
                       >
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
                       </Button>
-                      <Button variant="outline" onClick={() => handleChangeDestination()} className="w-full">
+                      <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
                         Change Destination
                       </Button>
                       {targetDestination?.description && (
