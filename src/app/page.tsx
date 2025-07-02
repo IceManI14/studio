@@ -1589,7 +1589,7 @@ export default function HomePage() {
                   <AccordionItem value="visit-cards" className="border-none">
                     <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
                        <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                          Visit Cards ({sortedVisitsForCallDay.length})
+                          {selectedDate ? `Visits for ${format(selectedDate, 'PPP')}` : 'All Visit Cards'} ({sortedVisitsForCallDay.length})
                       </h2>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -2267,4 +2267,3 @@ export default function HomePage() {
 
     
  
-
