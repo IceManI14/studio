@@ -338,10 +338,16 @@ export default function HomePage() {
     }
 
     const filteredVisits = selectedDate
-      ? visits.filter(visit => isSameDay(new Date(visit.timestamp), selectedDate))
+      ? visits.filter(visit => 
+          isSameDay(new Date(visit.timestamp), selectedDate) ||
+          (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
+        )
       : visits;
+    
+    // Deduplicate visits in case a visit is both logged and scheduled on the same day.
+    const uniqueVisits = Array.from(new Map(filteredVisits.map(visit => [visit.id, visit])).values());
 
-    const sorted = [...filteredVisits].sort((a, b) => {
+    const sorted = uniqueVisits.sort((a, b) => {
       const confidenceA = a.partnershipConfidence ?? 0;
       const confidenceB = b.partnershipConfidence ?? 0;
       const timeA = new Date(a.timestamp).getTime();
@@ -380,7 +386,8 @@ export default function HomePage() {
       .filter(visit => 
         visit.futureMeetingSet && 
         !visit.futureMeetingDateTime && 
-        !scheduledIds.has(visit.id)
+        !scheduledIds.has(visit.id) &&
+        !visit.notes?.startsWith('Flagged as a hotspot.')
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visits, scheduledVisits]);
