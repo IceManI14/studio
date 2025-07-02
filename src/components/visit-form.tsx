@@ -230,6 +230,45 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     },
   });
 
+  const handleFormSubmit = async (data: VisitFormData) => {
+    setIsSaving(true);
+    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
+    try {
+      await onSave(payload, { andClose: true });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save operation." });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
+  const handleQuickSave = async () => {
+    const isValid = await form.trigger("companyName");
+    if (!isValid) {
+      return;
+    }
+    const companyName = form.getValues('companyName');
+
+    setIsSaving(true);
+
+    const payload: SaveVisitPayload = {
+      companyName: companyName.trim(),
+      latitude: currentLatitude,
+      longitude: currentLongitude,
+      timestamp: initialData?.timestamp || new Date(),
+      visitNumber: initialData?.visitNumber,
+    };
+
+    try {
+      await onSave(payload);
+      onClose();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the quick save." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
@@ -501,7 +540,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         updateField('interestedUnit', details.interestedUnit);
         updateField('freeTrial', details.freeTrial);
         
-        if (details.tdsValue !== undefined && details.tdsValue !== null) {
+        if (
+          details.tdsValue !== undefined &&
+          details.tdsValue !== null &&
+          notes.includes(String(details.tdsValue)) // Safeguard against hallucination
+        ) {
             if (form.getValues('hasTDSReading') !== true) {
                 form.setValue('hasTDSReading', true, { shouldValidate: true });
                 fieldsUpdated++;
@@ -544,6 +587,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             toast({
                 title: "Meeting Auto-Scheduled!",
                 description: `I've scheduled the meeting for ${data.companyName}. The visit card has been moved to the 'Scheduled' section in your planner.`,
+                duration: 7000,
             });
         } else if (fieldsUpdated > 0) {
             toast({
@@ -679,6 +723,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     recognition.onend = () => {
       setIsRecordingNotes(false);
       recognitionRef.current = null;
+      
+      // Auto-save and close if a meeting was scheduled by voice
+      const wasMeetingScheduled = form.getValues('futureMeetingSet') && form.getValues('futureMeetingDateTime');
+      const isNewMeeting = initialData ? new Date(initialData.futureMeetingDateTime || 0).getTime() !== new Date(form.getValues('futureMeetingDateTime') || 1).getTime() : !!wasMeetingScheduled;
+
+      if(wasMeetingScheduled && isNewMeeting) {
+        handleFormSubmit(form.getValues());
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -735,7 +787,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, initialData, handleFormSubmit]);
 
 
   useEffect(() => {
@@ -902,46 +954,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         toast({ variant: "destructive", title: "Invalid Name", description: "Please enter a cooler name." });
     }
   };
-
-  const handleFormSubmit = async (data: VisitFormData) => {
-    setIsSaving(true);
-    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
-    try {
-      await onSave(payload, { andClose: true });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save operation." });
-    } finally {
-        setIsSaving(false);
-    }
-  };
-
-  const handleQuickSave = async () => {
-    const isValid = await form.trigger("companyName");
-    if (!isValid) {
-      return;
-    }
-    const companyName = form.getValues('companyName');
-
-    setIsSaving(true);
-
-    const payload: SaveVisitPayload = {
-      companyName: companyName.trim(),
-      latitude: currentLatitude,
-      longitude: currentLongitude,
-      timestamp: initialData?.timestamp || new Date(),
-      visitNumber: initialData?.visitNumber,
-    };
-
-    try {
-      await onSave(payload);
-      onClose();
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the quick save." });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[480px] bg-card/80 backdrop-blur-md border-primary/30">
