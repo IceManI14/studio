@@ -1376,6 +1376,7 @@ export default function HomePage() {
                           Determining current city...
                         </div>
                       )}
+                      
                       {currentCity && !isFetchingCity && (
                         <div className="flex items-center text-md font-medium text-foreground my-2">
                           <MapPin className="mr-2 h-4 w-4 text-primary" />
@@ -1580,29 +1581,40 @@ export default function HomePage() {
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
-                    {selectedDate ? `No visits logged on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
+                    {selectedDate ? `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {sortedVisitsForCallDay.map((visit, index) => (
-                    <div 
-                      key={visit.id}
-                      ref={(el) => { callDayCardRefs.current[index] = el; }}
-                      data-card-index={index.toString()}
-                    >
-                      <VisitCard
-                        visit={visit}
-                        onEdit={handleEditVisit}
-                        onDelete={handleDeleteVisit}
-                        onUpdateDealClosed={handleUpdateDealClosed}
-                        onZoom={setZoomedVisit}
-                        onLogFollowUp={handleLogFollowUp}
-                        onDictateNotes={handleDictateNotes}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full" defaultValue="visit-cards">
+                  <AccordionItem value="visit-cards" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                       <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          Visit Cards ({sortedVisitsForCallDay.length})
+                      </h2>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {sortedVisitsForCallDay.map((visit, index) => (
+                          <div 
+                            key={visit.id}
+                            ref={(el) => { callDayCardRefs.current[index] = el; }}
+                            data-card-index={index.toString()}
+                          >
+                            <VisitCard
+                              visit={visit}
+                              onEdit={handleEditVisit}
+                              onDelete={handleDeleteVisit}
+                              onUpdateDealClosed={handleUpdateDealClosed}
+                              onZoom={setZoomedVisit}
+                              onLogFollowUp={handleLogFollowUp}
+                              onDictateNotes={handleDictateNotes}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
             </div>
           )}
@@ -2255,3 +2267,4 @@ export default function HomePage() {
 
     
  
+
