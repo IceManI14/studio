@@ -966,7 +966,7 @@ export default function HomePage() {
     const recognition = new SpeechRecognition();
     chatRecognitionRef.current = recognition;
 
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
@@ -1015,14 +1015,15 @@ export default function HomePage() {
     };
 
     recognition.onresult = (event) => {
-      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setChatInput(transcript);
-          toast({ title: 'Message Transcribed', description: "Press send to submit." });
+      let newTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          newTranscript += event.results[i][0].transcript + ' ';
         }
-      } else {
-        console.warn("Speech recognition returned a result with no transcript.");
+      }
+      if (newTranscript) {
+        setChatInput(prev => (prev ? `${prev} ${newTranscript.trim()}` : newTranscript.trim()));
+        toast({ title: 'Message Transcribed', description: "Press send to submit." });
       }
     };
 
@@ -1509,6 +1510,29 @@ export default function HomePage() {
     );
   }, [visits, toast]);
   
+  const handleSelectDestination = async (city: string) => {
+    setIsDestinationModalOpen(false);
+    setIsFindingParking(true);
+    toast({ title: "Finding Optimal Parking...", description: `Please wait while Debbie finds the best spot in ${city}.` });
+    try {
+        const result = await findOptimalParkingAction({ city });
+        if (result.error) throw new Error(result.error);
+        
+        if (result.latitude && result.longitude) {
+            setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
+            setNavigationUrl(googleMapsUrl);
+            toast({ title: "Destination Set!", description: `Parking suggestion for ${city} loaded.` });
+        } else {
+            throw new Error('AI did not return a valid location.');
+        }
+    } catch (e: any) {
+        toast({ variant: "destructive", title: 'Could Not Find Location', description: e.message || 'An unexpected error occurred.'});
+    } finally {
+        setIsFindingParking(false);
+    }
+  };
+
   const handleConfirmStartupNavigation = async () => {
     if (!startupNavigationTarget) return;
   
@@ -1594,7 +1618,7 @@ export default function HomePage() {
                             }}
                           >
                             <CalendarCheck className="h-4 w-4" />
-                            <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} visit(s) scheduled for today!</AlertTitle>
+                            <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} meeting(s) scheduled for today!</AlertTitle>
                             <AlertDescription>
                               {todaysScheduledVisits.length === 1 ? (
                                 todaysScheduledVisits[0].companyName
@@ -1918,14 +1942,14 @@ export default function HomePage() {
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Visits (Scheduled)
+                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings (Scheduled)
                     </h2>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     {scheduledVisits.length === 0 ? (
                         <div className="text-center py-4">
                             <p className="text-xl text-muted-foreground mb-4">
-                                No visits with a specific date scheduled.
+                                No meetings with a specific date scheduled.
                             </p>
                             <p className="text-muted-foreground">
                                 Edit a visit and set a future meeting date, and it will appear here.
@@ -2217,7 +2241,7 @@ export default function HomePage() {
               </UiCard>
               )}
               <div className="w-full max-w-2xl mx-auto space-y-6">
-                <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full">
+                <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full" size="sm">
                     <Search className="mr-2 h-4 w-4" /> Find Company by Name
                 </Button>
 
@@ -2411,7 +2435,7 @@ export default function HomePage() {
                         <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into three key sections:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
-                                <strong>Future Visits (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
+                                <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
                             </li>
                             <li>
                                 <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
@@ -2512,41 +2536,39 @@ export default function HomePage() {
                 <div className="max-h-[400px] overflow-y-auto pr-2">
                     {isExtractingCities ? (
                         <div className="flex justify-center items-center h-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : destinationCities.length > 0 ? (
+                    ) : (
                         <div className="flex flex-col space-y-2">
+                           <Button
+                                key="call-day-seabrook"
+                                variant="default"
+                                className="justify-start text-base py-6"
+                                disabled={isFindingParking}
+                                onClick={() => handleSelectDestination('Seabrook, NH')}
+                            >
+                               <Phone className="mr-3 h-5 w-5" />
+                               Call Day (Seabrook)
+                            </Button>
+                            {destinationCities.length > 0 && (
+                               <div className="relative my-2">
+                                    <Separator />
+                                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">OR</span>
+                                </div>
+                            )}
                             {destinationCities.map(city => (
                                 <Button
                                     key={city}
                                     variant="ghost"
                                     className="justify-start"
                                     disabled={isFindingParking}
-                                    onClick={async () => {
-                                        setIsDestinationModalOpen(false);
-                                        setIsFindingParking(true);
-                                        try {
-                                            const result = await findOptimalParkingAction({ city });
-                                            if (result.error) throw new Error(result.error);
-                                            
-                                            if (result.latitude && result.longitude) {
-                                                setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
-                                                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
-                                                setNavigationUrl(googleMapsUrl);
-                                            } else {
-                                                throw new Error('AI did not return a valid location.');
-                                            }
-                                        } catch (e: any) {
-                                            toast({ variant: "destructive", title: 'Could Not Find Location', description: e.message || 'An unexpected error occurred.'});
-                                        } finally {
-                                            setIsFindingParking(false);
-                                        }
-                                    }}
+                                    onClick={() => handleSelectDestination(city)}
                                 >
                                    {city}
                                 </Button>
                             ))}
+                            {destinationCities.length === 0 && (
+                                <p className="text-muted-foreground text-center py-4 text-sm">No other destination cities found in your territory file.</p>
+                            )}
                         </div>
-                    ) : (
-                         <p className="text-muted-foreground text-center py-4">No destination cities found. You can upload a territory PDF or ensure your profile has cities assigned.</p>
                     )}
                 </div>
                  <DialogFooter>
