@@ -403,6 +403,10 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visits, scheduledVisits]);
 
+  const todaysVisits = useMemo(() => {
+    return visits.filter(visit => isToday(new Date(visit.timestamp)));
+  }, [visits]);
+
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
   }, [scheduledVisits]);
@@ -524,13 +528,13 @@ export default function HomePage() {
         setIsFetchingCity(false);
     }
     
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
 
     const newVisitTemplate: Partial<Visit> = {
       latitude: userCurrentLatitude,
       longitude: userCurrentLongitude,
       timestamp: new Date(),
-      visitNumber: todaysVisits + 1,
+      visitNumber: todaysVisitsCount + 1,
       companyName: companyName || '',
       notes: notes || '',
       decisionMakerContact: phone || '',
@@ -555,7 +559,7 @@ export default function HomePage() {
 
   const handleLogFollowUp = (existingVisit: Visit) => {
     toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
   
     const newVisitTemplate: Partial<Visit> = {
       companyName: existingVisit.companyName,
@@ -566,7 +570,7 @@ export default function HomePage() {
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: todaysVisits + 1,
+      visitNumber: todaysVisitsCount + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -641,8 +645,8 @@ export default function HomePage() {
   };
 
   const confirmEndDay = async () => {
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp)));
-    const numberOfVisits = todaysVisits.length;
+    const todaysVisitsForReport = visits.filter(v => isToday(new Date(v.timestamp)));
+    const numberOfVisits = todaysVisitsForReport.length;
 
     if (numberOfVisits === 0) {
         toast({ title: "No visits to create a report for today." });
@@ -660,7 +664,7 @@ export default function HomePage() {
     toast({ title: "Generating Daily Report...", description: `Processing ${numberOfVisits} visit(s) and uploading to cloud storage.` });
 
     try {
-      const result = await saveDailyReportAction(todaysVisits);
+      const result = await saveDailyReportAction(todaysVisitsForReport);
 
       if (result.error) {
         throw new Error(result.error);
@@ -955,7 +959,7 @@ export default function HomePage() {
       return;
     }
 
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
     
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 1);
@@ -979,7 +983,7 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: todaysVisits + 1,
+        visitNumber: todaysVisitsCount + 1,
         interestedUnit: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
@@ -1089,7 +1093,7 @@ export default function HomePage() {
       return;
     }
 
-    const todaysVisits = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
   
     const newVisit: Visit = {
       id: `temp_${crypto.randomUUID()}`,
@@ -1099,7 +1103,7 @@ export default function HomePage() {
       longitude: lead.longitude,
       notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
       decisionMakerContact: lead.phone,
-      visitNumber: todaysVisits + 1,
+      visitNumber: todaysVisitsCount + 1,
       futureMeetingSet: true,
       futureMeetingDateTime: undefined,
       partnershipConfidence: undefined,
@@ -1480,7 +1484,7 @@ export default function HomePage() {
                     </AlertDialog>
                 </div>
 
-                {visits.length === 0 ? (
+                {todaysVisits.length === 0 ? (
                     <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
@@ -1495,20 +1499,31 @@ export default function HomePage() {
                         </Alert>
                     </div>
                 ) : (
-                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                      {visits.map(visit => (
-                          <VisitCard
-                          key={visit.id}
-                          visit={visit}
-                          onEdit={handleEditVisit}
-                          onDelete={handleDeleteVisit}
-                          onUpdateDealClosed={handleUpdateDealClosed}
-                          onZoom={setZoomedVisit}
-                          onLogFollowUp={handleLogFollowUp}
-                          onDictateNotes={handleDictateNotes}
-                          />
-                      ))}
-                    </div>
+                  <Accordion type="single" collapsible className="w-full" defaultValue="todays-visits">
+                    <AccordionItem value="todays-visits" className="border-none">
+                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                        <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          {`Visits for ${format(new Date(), 'PPP')} (${todaysVisits.length})`}
+                        </h2>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          {todaysVisits.map(visit => (
+                              <VisitCard
+                              key={visit.id}
+                              visit={visit}
+                              onEdit={handleEditVisit}
+                              onDelete={handleDeleteVisit}
+                              onUpdateDealClosed={handleUpdateDealClosed}
+                              onZoom={setZoomedVisit}
+                              onLogFollowUp={handleLogFollowUp}
+                              onDictateNotes={handleDictateNotes}
+                              />
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 )}
             </div>
           )}
