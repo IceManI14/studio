@@ -1996,8 +1996,9 @@ export default function HomePage() {
                 </div>
 
                 <Tabs defaultValue="about-field-day" className="w-full">
-                    <TabsList className="grid w-full grid-cols-5 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                    <TabsList className="grid w-full grid-cols-6 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
                         <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Field Day</TabsTrigger>
+                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Planner</TabsTrigger>
                         <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Call Day</TabsTrigger>
                         <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Visits</TabsTrigger>
                         <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Debbie</TabsTrigger>
@@ -2005,22 +2006,40 @@ export default function HomePage() {
                     </TabsList>
 
                     <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">This is your main workspace for logging new visits. Here's how it works:</p>
+                        <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
-                                Click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> button to instantly create a new visit record at your current location, pre-filled with company details when possible.
+                                <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                As you interact with the potential partner, edit the visit card to add details. Capturing business cards, competitor info, and notes makes the app—and our AI assistant, Debbie—more powerful.
+                                <strong>Flag Hotspot:</strong> While driving, see a promising area? Tap <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Flag Hotspot</span>. It instantly saves your GPS location as a "Flagged Hotspot" in your Planner for later review.
                             </li>
                             <li>
-                                Once you're done for the day, click the <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">End Day!</span> button. This summarizes your daily accomplishments.
+                                <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
+                            </li>
+                            <li>
+                                <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
+                            </li>
+                        </ul>
+                    </TabsContent>
+
+                     <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into three key sections:</p>
+                        <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                <strong>Future Visits (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
+                            </li>
+                            <li>
+                                <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
+                            </li>
+                            <li>
+                                <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
                             </li>
                         </ul>
                     </TabsContent>
 
                     <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>The "Call Day" tab is your command center for follow-ups. It provides a prioritized list of your visits, helping you focus your calls on the most promising leads. You can sort by partnership confidence or visit date to strategize your outreach effectively.</p>
+                        <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
                     </TabsContent>
 
                     <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
@@ -2028,7 +2047,21 @@ export default function HomePage() {
                     </TabsContent>
 
                     <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>"Debbie" is your customized AI agent, powered by Gemini. She can analyze visit notes, answer questions about recent activities, and even review documents like product lists if you upload a PDF. The more information you log in your visits, the more helpful Debbie becomes. Challenge her with your questions!</p>
+                        <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
+                         <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
+                            </li>
+                            <li>
+                                <strong>Smart Scheduling:</strong> If your notes mention a meeting (e.g., "follow up next Tuesday at 2pm"), Debbie automatically schedules it and moves the visit card to the "Scheduled" section in your Planner.
+                            </li>
+                            <li>
+                                <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
+                            </li>
+                             <li>
+                                <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
+                            </li>
+                        </ul>
                     </TabsContent>
                     
                     <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
