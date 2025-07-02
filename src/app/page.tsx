@@ -1323,7 +1323,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-2">
+            <div className="w-full max-w-lg mx-auto mt-0">
               <h2 className="text-lg font-headline font-semibold text-foreground text-center mb-2">
                 Navigation Plan
               </h2>
@@ -1674,39 +1674,43 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <div>
-                  <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg mb-6 text-center">
-                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground">
+              <Accordion type="single" collapsible className="w-full" defaultValue="flagged-hotspots">
+                <AccordionItem value="flagged-hotspots" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                           <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
                       </h2>
-                  </div>
-                  {flaggedHotspots.length === 0 ? (
-                      <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                          <p className="text-xl text-muted-foreground mb-4">
-                              No hotspots flagged yet.
-                          </p>
-                          <p className="text-muted-foreground">
-                              Use the "Flag Hotspot" button to mark locations while driving.
-                          </p>
-                      </div>
-                  ) : (
-                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                          {flaggedHotspots.map((visit) => (
-                              <VisitCard
-                                  key={visit.id}
-                                  visit={visit}
-                                  onEdit={handleEditVisit}
-                                  onDelete={handleDeleteVisit}
-                                  onUpdateDealClosed={handleUpdateDealClosed}
-                                  onZoom={setZoomedVisit}
-                                  onLogFollowUp={handleLogFollowUp}
-                                  onDictateNotes={handleDictateNotes}
-                                  variant="planner"
-                              />
-                          ))}
-                      </div>
-                  )}
-              </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                      {flaggedHotspots.length === 0 ? (
+                          <div className="text-center py-4">
+                              <p className="text-xl text-muted-foreground mb-4">
+                                  No hotspots flagged yet.
+                              </p>
+                              <p className="text-muted-foreground">
+                                  Use the "Flag Hotspot" button to mark locations while driving.
+                              </p>
+                          </div>
+                      ) : (
+                          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                              {flaggedHotspots.map((visit) => (
+                                  <VisitCard
+                                      key={visit.id}
+                                      visit={visit}
+                                      onEdit={handleEditVisit}
+                                      onDelete={handleDeleteVisit}
+                                      onUpdateDealClosed={handleUpdateDealClosed}
+                                      onZoom={setZoomedVisit}
+                                      onLogFollowUp={handleLogFollowUp}
+                                      onDictateNotes={handleDictateNotes}
+                                      variant="planner"
+                                  />
+                              ))}
+                          </div>
+                      )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           )}
 
@@ -2237,3 +2241,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
