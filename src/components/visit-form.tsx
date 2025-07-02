@@ -192,7 +192,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const [businessCardPreviewUrl, setBusinessCardPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const tdsInputRef = useRef<HTMLInputElement>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
   const [openAccordion, setOpenAccordion] = useState<string[]>([]);
@@ -276,7 +275,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
-  const hasTDSReadingValue = form.watch('hasTDSReading');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
   
@@ -389,16 +387,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [handleSuggestCompany, toast, form]);
-
-
-  useEffect(() => {
-    if (hasTDSReadingValue) {
-      const timer = setTimeout(() => {
-        tdsInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [hasTDSReadingValue]);
 
   const stopCameraStream = () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -548,21 +536,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         updateField('interestedUnit', details.interestedUnit);
         updateField('freeTrial', details.freeTrial);
         
-        if (
-          details.tdsValue !== undefined &&
-          details.tdsValue !== null &&
-          notes.includes(String(details.tdsValue)) // Safeguard against hallucination
-        ) {
-            if (form.getValues('hasTDSReading') !== true) {
-                form.setValue('hasTDSReading', true, { shouldValidate: true });
-                fieldsUpdated++;
-            }
-            if (form.getValues('tdsValue') !== details.tdsValue) {
-                form.setValue('tdsValue', details.tdsValue, { shouldValidate: true });
-                fieldsUpdated++;
-            }
-        }
-
         let meetingWasScheduled = false;
         // Handle meeting date
         if (details.futureMeetingDateTime) {
@@ -1301,7 +1274,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               )}
             />
 
-            {hasTDSReadingValue && (
+            {form.watch('hasTDSReading') && (
               <FormField
                 control={form.control}
                 name="tdsValue"
@@ -1316,10 +1289,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         type="number"
                         placeholder="Enter TDS value"
                         {...field}
-                        ref={(e) => {
-                          field.ref(e);
-                          tdsInputRef.current = e;
-                        }}
+                        ref={field.ref}
                         onChange={(e) =>
                           field.onChange(
                             e.target.value === "" ? undefined : e.target.value
