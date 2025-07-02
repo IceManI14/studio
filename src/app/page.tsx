@@ -196,104 +196,87 @@ export default function HomePage() {
     setDestinationCities(cities);
   };
 
-  const handleSelectSalesperson = async (salesperson: Salesperson) => {
-    setSelectedSalesperson(salesperson);
-    setTargetDestination(null);
-    setNavigationUrl(null);
-    setDestinationCities([]);
-
-    const hasTerritoryPdf = !!localStorage.getItem('userTerritoryPdfUrl');
-    const hasDefaultTerritory = salesperson.territory.length > 0 && salesperson.name !== 'Corporate';
-
-    if (hasTerritoryPdf || hasDefaultTerritory) {
-      handleChangeDestination(salesperson);
-    } else if (salesperson.territory.length === 0 && salesperson.name !== 'Corporate') {
-      toast({ variant: "destructive", title: `Welcome, ${salesperson.name}!`, description: "You have no territories assigned. Please contact your manager to have them set up." });
-    } else {
-       toast({ title: `Welcome, ${salesperson.name}!`, description: `Your territory for today: ${salesperson.territory.map(t => t.name).join(', ')}` });
-    }
-  };
-
-
   useEffect(() => {
-    // Set default salesperson to "Paul L."
-    const defaultSalesperson = salespeople.find(s => s.name === 'Paul L.') || salespeople[0];
-    handleSelectSalesperson(defaultSalesperson);
-
-    // Load all data from localStorage on initial render
+    // This effect runs once on initial mount to load data and run startup sequences.
     try {
+      // Set default salesperson
+      const defaultSalesperson = salespeople.find(s => s.name === 'Paul L.') || salespeople[0];
+      setSelectedSalesperson(defaultSalesperson);
+
+      // Load all data from localStorage
       const localVisits = localStorage.getItem('visits');
-      if (localVisits) {
-          const parsedVisits = JSON.parse(localVisits).map((v: any) => ({
-              ...v,
-              timestamp: new Date(v.timestamp),
-              futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-              freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
-          }));
-          setVisits(parsedVisits);
-          
-          // --- Startup Navigation Prompt ---
-          const scheduledToday = parsedVisits.filter(visit =>
-            visit.futureMeetingSet &&
-            visit.futureMeetingDateTime &&
-            isToday(new Date(visit.futureMeetingDateTime))
-          );
-          
-          const startupPromptShown = sessionStorage.getItem('startupNavigationPrompted');
-          
-          if (scheduledToday.length > 0 && !startupPromptShown) {
-            const firstMeeting = scheduledToday[0];
-            if (firstMeeting.latitude && firstMeeting.longitude) {
-              sessionStorage.setItem('startupNavigationPrompted', 'true');
-              setStartupNavigationTarget({ 
-                  companyName: firstMeeting.companyName, 
-                  latitude: firstMeeting.latitude, 
-                  longitude: firstMeeting.longitude 
-              });
-              setIsStartupNavigationConfirmOpen(true);
-            }
-          }
-      }
+      const parsedVisits = localVisits ? JSON.parse(localVisits).map((v: any) => ({
+          ...v,
+          timestamp: new Date(v.timestamp),
+          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
+      })) : [];
+      setVisits(parsedVisits);
       
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
-        const parsedSuggestions: SubmittedSuggestion[] = JSON.parse(storedSuggestions).map((s: any) => ({
-          ...s,
-          timestamp: new Date(s.timestamp)
-        }));
-        setSubmittedSuggestions(parsedSuggestions);
+        setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
       }
 
       const storedFiles = localStorage.getItem('managedFiles');
-      if (storedFiles) {
-          setManagedFiles(JSON.parse(storedFiles));
-      }
+      if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
 
       const storedHotLeads = localStorage.getItem('hotLeads');
       if (storedHotLeads) {
-        const parsedHotLeads: HotLead[] = JSON.parse(storedHotLeads).map((hl: any) => ({
-          ...hl,
-          addedAt: new Date(hl.addedAt)
-        }));
-        setHotLeads(parsedHotLeads);
+        setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
       }
       
       const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
-      if (storedConvertedHotLeads) {
-        setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+      if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+      
+      const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
+      if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
+      
+
+      // --- One-Time Startup Sequence ---
+      const startupSequenceDone = sessionStorage.getItem('startupSequenceDone');
+      if (!startupSequenceDone) {
+          sessionStorage.setItem('startupSequenceDone', 'true');
+
+          const scheduledToday = parsedVisits.filter(visit =>
+              visit.futureMeetingSet &&
+              visit.futureMeetingDateTime &&
+              isToday(new Date(visit.futureMeetingDateTime))
+          );
+          
+          if (scheduledToday.length > 0) {
+              const firstMeeting = scheduledToday[0];
+              if (firstMeeting.latitude && firstMeeting.longitude) {
+                  setStartupNavigationTarget({ 
+                      companyName: firstMeeting.companyName, 
+                      latitude: firstMeeting.latitude, 
+                      longitude: firstMeeting.longitude 
+                  });
+                  setIsStartupNavigationConfirmOpen(true);
+              }
+          } else {
+              const hasTerritoryPdf = !!localStorage.getItem('userTerritoryPdfUrl');
+              const hasDefaultTerritory = defaultSalesperson.territory.length > 0 && defaultSalesperson.name !== 'Corporate';
+              if (hasTerritoryPdf || hasDefaultTerritory) {
+                  handleChangeDestination(defaultSalesperson);
+              }
+          }
       }
 
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
     }
-
-    // Get Geolocation
+  }, []); // Empty dependency array ensures this runs only once.
+  
+  useEffect(() => {
+    // This effect handles ongoing location tracking.
     const handlePositionUpdate = async (position: GeolocationPosition) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         let shouldUpdateCity = false;
         
+        // This check prevents fetching city on every minor movement.
         if (userCurrentLatitude === undefined || userCurrentLongitude === undefined) {
             shouldUpdateCity = true;
         } else {
@@ -311,16 +294,17 @@ export default function HomePage() {
           try {
             const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
             if (result.error) {
-              toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
-              setCurrentCity("Location lookup failed");
+              // Non-blocking toast for background failures
+              toast({ title: "Location Update Failed", description: result.error, duration: 3000 });
+              setCurrentCity(prev => prev || "Location lookup failed");
             } else if (result.city) {
               setCurrentCity(result.city);
             } else {
-              setCurrentCity("Location Unknown");
+              setCurrentCity(prev => prev || "Location Unknown");
             }
           } catch (e: any) {
             console.error("Error fetching city:", e);
-            setCurrentCity("Error fetching city.");
+            setCurrentCity(prev => prev || "Error fetching city.");
           } finally {
             setIsFetchingCity(false);
           }
@@ -330,7 +314,6 @@ export default function HomePage() {
     };
     
     if (navigator.geolocation) {
-      // Get initial position
       navigator.geolocation.getCurrentPosition(handlePositionUpdate, (error) => {
         let errorMessage = "Could not retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
@@ -341,9 +324,7 @@ export default function HomePage() {
         setIsFetchingCity(false);
       }, { enableHighAccuracy: true });
 
-      // Watch for subsequent position changes
       locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
-          // Errors in watchPosition are often less critical, so we can log them quietly.
           console.warn("Geolocation watch error:", error.message);
       }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
 
@@ -391,15 +372,6 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
   }, [convertedHotLeads]);
-
-  useEffect(() => {
-    if (selectedSalesperson) { 
-        const hasUploaded = localStorage.getItem('territoryPdfUploaded');
-        if (!hasUploaded) {
-            setShowTerritoryUploadModal(true);
-        }
-    }
-  }, [selectedSalesperson]);
 
   const scheduledFutureVisitDays = useMemo(() => {
     return visits
