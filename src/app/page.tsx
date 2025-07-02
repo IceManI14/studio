@@ -155,6 +155,8 @@ export default function HomePage() {
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
+  const [isStartupNavigationConfirmOpen, setIsStartupNavigationConfirmOpen] = useState(false);
+  const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ city: string; companyName: string } | null>(null);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -225,6 +227,29 @@ export default function HomePage() {
               freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
           }));
           setVisits(parsedVisits);
+          
+          // --- Startup Navigation Prompt ---
+          const scheduledToday = parsedVisits.filter(visit =>
+            visit.futureMeetingSet &&
+            visit.futureMeetingDateTime &&
+            isToday(new Date(visit.futureMeetingDateTime))
+          );
+          
+          const startupPromptShown = sessionStorage.getItem('startupNavigationPrompted');
+          
+          if (scheduledToday.length > 0 && !startupPromptShown) {
+            const firstMeeting = scheduledToday[0];
+            if (firstMeeting.latitude && firstMeeting.longitude) {
+              sessionStorage.setItem('startupNavigationPrompted', 'true');
+              getCompanyNameFromCoordsAction({ latitude: firstMeeting.latitude, longitude: firstMeeting.longitude })
+                .then(result => {
+                  if (result.city) {
+                    setStartupNavigationTarget({ city: result.city, companyName: firstMeeting.companyName });
+                    setIsStartupNavigationConfirmOpen(true);
+                  }
+                });
+            }
+          }
       }
       
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
@@ -1414,6 +1439,33 @@ export default function HomePage() {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [visits, toast]);
+  
+  const handleConfirmStartupNavigation = async () => {
+    if (!startupNavigationTarget) return;
+
+    const { city } = startupNavigationTarget;
+    setIsFindingParking(true);
+    toast({ title: "Finding Optimal Parking...", description: `Please wait while I find the best spot in ${city}.` });
+    try {
+        const result = await findOptimalParkingAction({ city });
+        if (result.error) throw new Error(result.error);
+        
+        if (result.latitude && result.longitude) {
+            setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
+            setNavigationUrl(googleMapsUrl);
+            toast({ title: "Destination Set!", description: `Optimal parking location found in ${city}. Check the navigator.` });
+        } else {
+            throw new Error('AI did not return a valid location.');
+        }
+    } catch (e: any) {
+        toast({ variant: "destructive", title: 'Could Not Find Location', description: e.message || 'An unexpected error occurred.'});
+    } finally {
+        setIsFindingParking(false);
+        setStartupNavigationTarget(null);
+        setIsStartupNavigationConfirmOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -2290,7 +2342,7 @@ export default function HomePage() {
                                 <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
                             </li>
                             <li>
-                                <strong>Smart Scheduling:</strong> If your notes mention a meeting (e.g., "follow up next Tuesday at 2pm"), Debbie automatically schedules it and moves the visit card to the "Scheduled" section in your Planner.
+                                <strong>Smart Scheduling:</strong> If your notes mention a meeting (e.g., "follow up next Tuesday at 2pm"), Debbie automatically schedules it and moves the visit card to the "Scheduled" section in your planner.
                             </li>
                             <li>
                                 <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
@@ -2438,6 +2490,22 @@ export default function HomePage() {
           salesperson={selectedSalesperson}
           startDictation={startDictationOnOpen}
         />
+        
+        <AlertDialog open={isStartupNavigationConfirmOpen} onOpenChange={setIsStartupNavigationConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Navigate to Today's Meeting?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have a meeting scheduled today with {startupNavigationTarget?.companyName} in {startupNavigationTarget?.city}. Would you like to set this as your destination?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmStartupNavigation}>Yes, Set Destination</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
       </div>
       <button
         onClick={handleHotspotCreation}
@@ -2460,6 +2528,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
