@@ -52,6 +52,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "Competitor",
         "Cooler",
         "Free Trial",
+        "Trial Start",
         "Deal Closed",
       ];
 
@@ -70,6 +71,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.competitorName || (visit.discussedCompetitors ? 'Yes (Unspecified)' : 'No'),
           visit.coolerType || (visit.discussedCompetitors ? 'N/A' : 'N/A'),
           visit.freeTrial ? 'Yes' : 'No',
+          visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MM/dd/yy') : 'N/A',
           visit.dealClosed ? 'Yes' : 'No',
         ];
       });

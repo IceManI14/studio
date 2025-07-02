@@ -219,6 +219,7 @@ export default function HomePage() {
               ...v,
               timestamp: new Date(v.timestamp),
               futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+              freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
           }));
           setVisits(parsedVisits);
       }
@@ -614,6 +615,7 @@ export default function HomePage() {
         futureMeetingSet: payload.futureMeetingSet ?? false,
         futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
         freeTrial: payload.freeTrial ?? false,
+        freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
         dealClosed: payload.dealClosed ?? false,
         contactInfo: payload.contactInfo ?? undefined,
         notesSummary: notesSummaryToSave,

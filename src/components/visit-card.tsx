@@ -303,6 +303,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <div className="flex items-center text-xs text-muted-foreground">
                 {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Free Trial: {visit.freeTrial ? 'Yes' : 'No'}
+                {visit.freeTrial && visit.freeTrialStartDate && (
+                   <span className="ml-2 font-semibold">({formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MMM d, yyyy')})</span>
+                )}
               </div>
             </div>
           </div>
@@ -449,6 +452,27 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </AccordionContent>
               </AccordionItem>
             )}
+
+            {/* Free Trial */}
+            {visit.freeTrial && (
+              <AccordionItem value="free-trial">
+                <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
+                  <PackageCheck className="mr-2 h-5 w-5" /> Free Trial Details
+                </AccordionTrigger>
+                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                  <p><strong>Status:</strong> A free trial was set up.</p>
+                  {visit.freeTrialStartDate && (
+                    <p>
+                      <strong>Start Date:</strong>{' '}
+                      <span className="font-semibold text-foreground">
+                        {formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'eeee, MMMM d, yyyy')}
+                      </span>
+                    </p>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
           </Accordion>
         </CardContent>
       )}

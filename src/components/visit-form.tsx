@@ -116,6 +116,7 @@ const visitFormSchema = z.object({
   futureMeetingSet: z.boolean().optional(),
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
+  freeTrialStartDate: z.coerce.date().optional(),
 }).refine(data => {
   if (data.hasTDSReading && (data.tdsValue === undefined || data.tdsValue === null || isNaN(data.tdsValue))) {
     return false;
@@ -164,6 +165,7 @@ const buildVisitPayload = (data: VisitFormData, initialData: Visit | undefined, 
     futureMeetingSet: data.futureMeetingSet,
     futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
     freeTrial: data.freeTrial,
+    freeTrialStartDate: data.freeTrial ? data.freeTrialStartDate : undefined,
     dealClosed: initialData?.dealClosed,
     visitNumber: initialData?.visitNumber,
     contactInfo: initialData?.contactInfo,
@@ -228,6 +230,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: false,
       futureMeetingDateTime: undefined,
       freeTrial: false,
+      freeTrialStartDate: undefined,
     },
   });
 
@@ -275,6 +278,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const hasTDSReadingValue = form.watch('hasTDSReading');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
+  const freeTrialValue = form.watch('freeTrial');
   
   const handleRemoveImage = useCallback(() => {
     setBusinessCardPreviewUrl(null);
@@ -435,6 +439,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingSet: data?.futureMeetingSet || false,
       futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
       freeTrial: data?.freeTrial || false,
+      freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
     };
     form.reset(defaultValues);
     setCurrentLatitude(data?.latitude ?? undefined);
@@ -1481,7 +1486,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        const boolValue = !!checked;
+                        field.onChange(boolValue);
+                        if (boolValue) {
+                           if (!form.getValues('freeTrialStartDate')) {
+                            form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
+                          }
+                        } else {
+                           form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                        }
+                      }}
                       id="freeTrial"
                     />
                   </FormControl>
@@ -1493,6 +1508,48 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
+
+            {freeTrialValue && (
+               <FormField
+                control={form.control}
+                name="freeTrialStartDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+                    <FormLabel>Free Trial Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>A notification will be created to follow up one week after this date.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Info (Optional)</Label>

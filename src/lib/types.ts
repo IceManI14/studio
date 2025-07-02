@@ -41,6 +41,7 @@ export interface Visit {
   futureMeetingSet?: boolean;
   futureMeetingDateTime?: Date;
   freeTrial?: boolean;
+  freeTrialStartDate?: Date;
   dealClosed?: boolean;
 }
 
