@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -1464,6 +1464,14 @@ export default function HomePage() {
                             </AlertDescription>
                           </Alert>
                         )}
+                      
+                       {isFetchingCity && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Determining current city...
+                        </div>
+                      )}
+
                       <Button
                         onClick={handleHotspotCreation}
                         variant="default"
@@ -1472,13 +1480,6 @@ export default function HomePage() {
                         <Flame className="mr-2 h-5 w-5" />
                         Flag Hotspot
                       </Button>
-                      
-                       {isFetchingCity && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Determining current city...
-                        </div>
-                      )}
                       
                       {currentCity && !isFetchingCity && (
                         <div className="flex items-center text-md font-medium text-foreground my-2">
@@ -1699,11 +1700,24 @@ export default function HomePage() {
                         <Input
                             type="text"
                             placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-20"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             disabled={isRecordingSearch}
                         />
+                        {searchTerm && !isRecordingSearch && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                                aria-label="Clear search"
+                                title="Clear search"
+                            >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                        )}
                         <Button
                             type="button"
                             variant="ghost"
@@ -2415,4 +2429,5 @@ export default function HomePage() {
  
 
     
+
 
