@@ -254,12 +254,6 @@ export default function HomePage() {
                   });
                   setIsStartupNavigationConfirmOpen(true);
               }
-          } else {
-              const hasTerritoryPdf = !!localStorage.getItem('userTerritoryPdfUrl');
-              const hasDefaultTerritory = defaultSalesperson.territory.length > 0 && defaultSalesperson.name !== 'Corporate';
-              if (hasTerritoryPdf || hasDefaultTerritory) {
-                  handleChangeDestination(defaultSalesperson);
-              }
           }
       }
 
