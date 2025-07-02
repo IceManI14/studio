@@ -536,11 +536,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             updateField('futureMeetingSet', details.futureMeetingSet);
         }
 
-        // Auto-save if a meeting was scheduled, otherwise provide feedback on updates
+        // Auto-save and close if a meeting was scheduled, otherwise provide feedback on updates
         if (meetingWasScheduled) {
             const data = form.getValues();
             const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
-            await onSave(payload, { andClose: false });
+            await onSave(payload, { andClose: true });
             toast({
                 title: "Meeting Auto-Scheduled!",
                 description: `I've scheduled the meeting for ${data.companyName}. The visit card has been moved to the 'Scheduled' section in your planner.`,
