@@ -376,7 +376,7 @@ export default function HomePage() {
 
   const flaggedHotspots = useMemo(() => {
     return visits
-      .filter(visit => visit.notes?.startsWith('Flagged as a hotspot.'))
+      .filter(visit => visit.notes?.startsWith('Flagged as a hotspot.') && !visit.futureMeetingDateTime)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visits]);
 
@@ -1517,6 +1517,7 @@ export default function HomePage() {
                       modifiersClassNames={{
                         scheduled: 'day-scheduled',
                         logged: 'day-logged',
+                        today_selected: 'bg-cyan-400 text-black',
                       }}
                     />
                     {selectedDate && (
