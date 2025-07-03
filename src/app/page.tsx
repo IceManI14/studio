@@ -672,12 +672,25 @@ export default function HomePage() {
         }
 
         const findIndexAndSave = (currentVisits: Visit[]): {updatedVisits: Visit[], finalVisit: Visit, wasNew: boolean} => {
-            const existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
+            let existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
+
+            // If no match by ID, for new visits, check if a card for this company was already created today.
+            // This is the key change to prevent duplicates from rapid saves.
+            if (existingVisitIndex === -1 && (!payload.id || payload.id.startsWith('temp_'))) {
+                existingVisitIndex = currentVisits.findIndex(v => 
+                    v.companyName === payload.companyName && 
+                    isToday(new Date(v.timestamp))
+                );
+            }
 
             if (existingVisitIndex !== -1) {
                 // UPDATE
                 const existingVisit = currentVisits[existingVisitIndex];
-                const mergedVisit: Visit = { ...existingVisit, ...payload };
+                // Ensure we are using the ID of the visit we found, not a temporary one from the payload.
+                const finalPayload = { ...payload, id: existingVisit.id };
+                const mergedVisit: Visit = { ...existingVisit, ...finalPayload };
+
+                // This logic is important. If notes changed, summary should be cleared.
                 if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
                     mergedVisit.notesSummary = undefined;
                 }
@@ -1137,12 +1150,13 @@ export default function HomePage() {
         if (visit.companyName !== visitData.companyName) return false;
         if (!visit.latitude || !visit.longitude || !visitData.latitude || !visitData.longitude) return false;
         
+        // Use a small radius to check for proximity
         return getDistanceFromLatLonInM(
             visitData.latitude,
             visitData.longitude,
             visit.latitude,
             visit.longitude
-        ) < 50; // 50 meters proximity check
+        ) < 50; // 50 meters
     });
 
     if (existingVisitForCompany) {
