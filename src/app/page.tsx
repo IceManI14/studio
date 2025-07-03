@@ -675,52 +675,45 @@ export default function HomePage() {
     if (andClose) {
       setIsVisitFormOpen(false);
     }
-  
+
     const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-    const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
-  
-    const optimisticVisit: Visit = {
-      id: tempId!,
-      timestamp: payload.timestamp || new Date(),
-      companyName: payload.companyName,
-      notes: payload.notes ?? undefined,
-      latitude: payload.latitude ?? undefined,
-      longitude: payload.longitude ?? undefined,
-      partnershipConfidence: payload.partnershipConfidence ?? undefined,
-      hasBusinessCard: payload.hasBusinessCard ?? false,
-      businessCardImageUrl: payload.businessCardImageUrl ?? undefined,
-      discussedCompetitors: !!payload.competitorName,
-      competitorName: payload.competitorName ?? undefined,
-      coolerType: payload.coolerType ?? undefined,
-      decisionMakerName: payload.decisionMakerName ?? '',
-      decisionMakerTitle: payload.decisionMakerTitle ?? '',
-      decisionMakerContact: payload.decisionMakerContact ?? '',
-      visitNumber: payload.visitNumber,
-      interestedUnit: payload.interestedUnit ?? undefined,
-      hasTDSReading: payload.hasTDSReading ?? false,
-      tdsValue: payload.tdsValue ?? undefined,
-      futureMeetingSet: payload.futureMeetingSet ?? false,
-      futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
-      freeTrial: payload.freeTrial ?? false,
-      freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
-      dealClosed: payload.dealClosed ?? false,
-      contactInfo: payload.contactInfo ?? undefined,
-      notesSummary: payload.notesSummary,
-    };
-  
+    const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
+
     setVisits(prevVisits => {
-      if (isNewVisit && !optimisticVisit.visitNumber) {
-        optimisticVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
+      const existingVisit = prevVisits.find(v => v.id === visitId);
+      
+      // Deep merge payload with the latest state of the visit to prevent data loss from race conditions
+      const finalVisit: Visit = {
+        // Start with the most recent version of the visit from state
+        ...(existingVisit || {}),
+        // Overwrite with any new data from the current save operation
+        ...payload,
+        // Ensure ID and timestamps are correctly handled
+        id: visitId,
+        timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
+        // Explicitly handle date objects to avoid invalid date issues
+        futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : (existingVisit?.futureMeetingDateTime ? new Date(existingVisit.futureMeetingDateTime) : undefined),
+        freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : (existingVisit?.freeTrialStartDate ? new Date(existingVisit.freeTrialStartDate) : undefined),
+      };
+
+      // When notes change, the old summary is no longer valid.
+      if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
+        finalVisit.notesSummary = undefined;
       }
-  
+      
+      // Assign visit number for new visits
+      if (isNewVisit && !finalVisit.visitNumber) {
+        finalVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
+      }
+      
       const updatedVisits = isNewVisit
-        ? [optimisticVisit, ...prevVisits]
-        : prevVisits.map(v => (v.id === optimisticVisit.id ? { ...v, ...optimisticVisit } : v));
+        ? [finalVisit, ...prevVisits]
+        : prevVisits.map(v => (v.id === visitId ? finalVisit : v));
       
       localStorage.setItem('visits', JSON.stringify(updatedVisits));
       return updatedVisits;
     });
-  
+
     toast({
       title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
       description: `Visit for ${payload.companyName} has been saved to your device.`,
@@ -2036,7 +2029,7 @@ export default function HomePage() {
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings (Scheduled)
+                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
                     </h2>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
