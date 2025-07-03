@@ -679,7 +679,6 @@ export default function HomePage() {
     const isNewVisit = !payload.id || payload.id.startsWith('temp_');
     const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
   
-    // The optimistic visit object to be used for the state update.
     const optimisticVisit: Visit = {
       id: tempId!,
       timestamp: payload.timestamp || new Date(),
@@ -696,7 +695,7 @@ export default function HomePage() {
       decisionMakerName: payload.decisionMakerName ?? '',
       decisionMakerTitle: payload.decisionMakerTitle ?? '',
       decisionMakerContact: payload.decisionMakerContact ?? '',
-      visitNumber: payload.visitNumber, // Pass through, will be calculated in setVisits if needed
+      visitNumber: payload.visitNumber,
       interestedUnit: payload.interestedUnit ?? undefined,
       hasTDSReading: payload.hasTDSReading ?? false,
       tdsValue: payload.tdsValue ?? undefined,
@@ -706,27 +705,17 @@ export default function HomePage() {
       freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
       dealClosed: payload.dealClosed ?? false,
       contactInfo: payload.contactInfo ?? undefined,
-      notesSummary: payload.notesSummary, // Pass through, cleared in form logic
+      notesSummary: payload.notesSummary,
     };
   
-    // Use the functional form of setVisits to avoid state race conditions.
     setVisits(prevVisits => {
-      // If it's a new visit and doesn't have a number, calculate it now based on the most recent state.
       if (isNewVisit && !optimisticVisit.visitNumber) {
         optimisticVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
       }
   
-      // Clear notesSummary if notes have changed from what's in the state
-      if (!isNewVisit) {
-        const originalVisit = prevVisits.find(v => v.id === optimisticVisit.id);
-        if (originalVisit && originalVisit.notes !== optimisticVisit.notes) {
-          optimisticVisit.notesSummary = undefined;
-        }
-      }
-  
       const updatedVisits = isNewVisit
         ? [optimisticVisit, ...prevVisits]
-        : prevVisits.map(v => (v.id === optimisticVisit.id ? optimisticVisit : v));
+        : prevVisits.map(v => (v.id === optimisticVisit.id ? { ...v, ...optimisticVisit } : v));
       
       localStorage.setItem('visits', JSON.stringify(updatedVisits));
       return updatedVisits;
