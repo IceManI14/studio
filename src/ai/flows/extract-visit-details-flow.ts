@@ -40,6 +40,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an intelligent assistant that analyzes sales visit notes and extracts structured information.
   
 The current date is {{{currentDate}}}. Use this for context when interpreting relative dates (e.g., "next Tuesday", "July 8th").
+When interpreting dates that do not specify a year (e.g., "July 8th"), assume it refers to the next upcoming occurrence of that date. For example, if today is August 1st, 2024, then "July 8th" should be interpreted as July 8th, 2025.
 
 Analyze the following notes. Based ONLY on the text provided, extract the specified fields.
 - If the notes say they got a business card, set hasBusinessCard to true.
