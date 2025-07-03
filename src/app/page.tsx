@@ -107,7 +107,7 @@ export default function HomePage() {
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
-  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed'>('partnershipConfidence');
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -412,10 +412,20 @@ export default function HomePage() {
       const timeB = new Date(b.timestamp).getTime();
       const dealClosedA = a.dealClosed ? 1 : 0;
       const dealClosedB = b.dealClosed ? 1 : 0;
+      const futureMeetingSetA = a.futureMeetingSet ? 1 : 0;
+      const futureMeetingSetB = b.futureMeetingSet ? 1 : 0;
   
       let comparison = 0;
   
-      if (sortCriteria === 'dealClosed') {
+      if (sortCriteria === 'futureMeetingsSet') {
+        comparison = sortOrder === 'desc' ? futureMeetingSetB - futureMeetingSetA : futureMeetingSetA - futureMeetingSetB;
+        if (comparison !== 0) return comparison;
+        // Fallback sort: meetings with dates come before those without.
+        const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
+        const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime).getTime() : Infinity;
+        if (meetingTimeA !== meetingTimeB) return meetingTimeA - meetingTimeB; // Earliest meeting first
+        return timeB - timeA; // Then newest visit first
+      } else if (sortCriteria === 'dealClosed') {
         comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
@@ -423,7 +433,7 @@ export default function HomePage() {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
         return timeB - timeA;
-      } else {
+      } else { // 'timestamp'
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
@@ -1911,7 +1921,7 @@ export default function HomePage() {
                           <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                           <Select
                             value={sortCriteria}
-                            onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed')}
+                            onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet')}
                           >
                             <SelectTrigger id="sort-criteria" className="w-full">
                               <SelectValue placeholder="Select criteria" />
@@ -1920,6 +1930,7 @@ export default function HomePage() {
                               <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
                               <SelectItem value="timestamp">Date Visited</SelectItem>
                               <SelectItem value="dealClosed">Closed Deals</SelectItem>
+                              <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1933,7 +1944,7 @@ export default function HomePage() {
                               <SelectValue placeholder="Select order" />
                             </SelectTrigger>
                             <SelectContent>
-                              {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </>)}
+                              {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : sortCriteria === 'dealClosed' ? ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> ) : ( <> <SelectItem value="desc">Scheduled First</SelectItem> <SelectItem value="asc">Unscheduled First</SelectItem> </>)}
                             </SelectContent>
                           </Select>
                         </div>
