@@ -12,6 +12,7 @@ import {z} from 'genkit';
 
 const ExtractVisitDetailsInputSchema = z.object({
   notes: z.string().describe('The unstructured text notes from a sales visit.'),
+  currentDate: z.string().describe('The current date in YYYY-MM-DD format, to provide context for relative dates like "next Tuesday".'),
 });
 export type ExtractVisitDetailsInput = z.infer<typeof ExtractVisitDetailsInputSchema>;
 
@@ -38,6 +39,8 @@ const prompt = ai.definePrompt({
   output: {schema: ExtractVisitDetailsOutputSchema},
   prompt: `You are an intelligent assistant that analyzes sales visit notes and extracts structured information.
   
+The current date is {{{currentDate}}}. Use this for context when interpreting relative dates (e.g., "next Tuesday", "July 8th").
+
 Analyze the following notes. Based ONLY on the text provided, extract the specified fields.
 - If the notes say they got a business card, set hasBusinessCard to true.
 - If a competitor is mentioned by name, extract it.

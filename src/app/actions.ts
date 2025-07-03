@@ -531,7 +531,11 @@ export async function extractVisitDetailsAction(
 ): Promise<{ details?: z.infer<typeof import('@/ai/flows/extract-visit-details-flow').ExtractVisitDetailsOutput>; error?: string }> {
   try {
     const validatedPayload = extractDetailsSchema.parse(payload);
-    const result = await extractVisitDetails({ notes: validatedPayload.notes });
+    const currentDate = format(new Date(), 'yyyy-MM-dd');
+    const result = await extractVisitDetails({ 
+        notes: validatedPayload.notes,
+        currentDate: currentDate 
+    });
     return { details: result };
   } catch (error: any) {
     console.error("Error in extractVisitDetailsAction:", error);
