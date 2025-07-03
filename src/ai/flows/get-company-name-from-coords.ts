@@ -30,8 +30,10 @@ export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsIn
   const placeDetails = await findPlaceFromLatLng(input.latitude, input.longitude);
 
   if (placeDetails) {
-    // If the city is not found, fall back to the full address for display.
-    const displayCity = placeDetails.city || placeDetails.address;
+    // Combine city and state for a cleaner display, e.g., "Boston, MA".
+    const displayCity = placeDetails.city && placeDetails.state
+      ? `${placeDetails.city}, ${placeDetails.state}`
+      : placeDetails.city || placeDetails.address;
     
     return {
       suggestedCompanyName: placeDetails.suggestedCompanyName,

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -48,7 +49,7 @@ import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import ManageFilesModal from '@/components/manage-files-modal';
-import { fileToDataUri, cn } from '@/lib/utils';
+import { fileToDataUri, cn, stateNameToAbbreviation } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
 import { firebaseConfigured } from '@/lib/firebase';
@@ -1516,16 +1517,19 @@ export default function HomePage() {
   const handleSelectDestination = useCallback(async (city: string) => {
     setIsDestinationModalOpen(false);
     setIsFindingParking(true);
-    toast({ title: "Finding Optimal Parking...", description: `Please wait while Debbie finds the best spot in ${city}.` });
+    
+    const abbreviatedCity = stateNameToAbbreviation(city);
+
+    toast({ title: "Finding Optimal Parking...", description: `Please wait while Debbie finds the best spot in ${abbreviatedCity}.` });
     try {
-        const result = await findOptimalParkingAction({ city });
+        const result = await findOptimalParkingAction({ city: abbreviatedCity });
         if (result.error) throw new Error(result.error);
         
         if (result.latitude && result.longitude) {
-            setTargetDestination({ city, description: result.locationDescription || 'Central Business Area' });
+            setTargetDestination({ city: abbreviatedCity, description: result.locationDescription || 'Central Business Area' });
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${result.latitude},${result.longitude}`;
             setNavigationUrl(googleMapsUrl);
-            toast({ title: "Destination Set!", description: `Parking suggestion for ${city} loaded.` });
+            toast({ title: "Destination Set!", description: `Parking suggestion for ${abbreviatedCity} loaded.` });
         } else {
             throw new Error('AI did not return a valid location.');
         }

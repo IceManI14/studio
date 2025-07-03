@@ -15,6 +15,7 @@ export interface PlaceDetails {
   suggestedCompanyName: string;
   address: string;
   city: string;
+  state: string;
   phone: string;
   latitude?: number;
   longitude?: number;
@@ -30,9 +31,10 @@ export interface SearchBounds {
 }
 
 // Helper to extract address components
-const getAddressComponent = (components: any[], type: string) => {
+const getAddressComponent = (components: any[], type: string, useShortName = false) => {
     const component = components.find(c => c.types.includes(type));
-    return component ? component.long_name : '';
+    if (!component) return '';
+    return useShortName ? component.short_name : component.long_name;
 };
 
 const getBestEffortCity = (components: any[] | undefined): string => {
@@ -130,11 +132,13 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
                     const companyNameIsInvalid = isGeographicArea || looksLikeAddress(placeDetails.name);
 
                     const city = getBestEffortCity(placeDetails.address_components);
+                    const state = getAddressComponent(placeDetails.address_components, 'administrative_area_level_1', true);
                     return {
                         placeId: bestPlaceCandidate.place_id,
                         suggestedCompanyName: companyNameIsInvalid ? '' : (placeDetails.name || ''),
                         address: placeDetails.formatted_address || (city ? '' : 'No address found'),
                         city: city || "Unknown Location",
+                        state: state,
                         phone: placeDetails.formatted_phone_number || '',
                         latitude: placeDetails.geometry?.location?.lat,
                         longitude: placeDetails.geometry?.location?.lng,
@@ -160,12 +164,14 @@ export async function findPlaceFromLatLng(latitude: number, longitude: number): 
         if (reverseGeocodeData.results && reverseGeocodeData.results.length > 0) {
             const firstResult = reverseGeocodeData.results[0];
             const city = getBestEffortCity(firstResult.address_components);
+            const state = getAddressComponent(firstResult.address_components, 'administrative_area_level_1', true);
             
             return {
                 placeId: firstResult.place_id,
                 suggestedCompanyName: '', // Do not use address as a fallback for company name
                 address: firstResult.formatted_address,
                 city: city || "Unknown Location",
+                state: state,
                 phone: '',
                 latitude: firstResult.geometry?.location?.lat,
                 longitude: firstResult.geometry?.location?.lng,
@@ -228,11 +234,13 @@ export async function findPlacesFromText(query: string, bounds?: SearchBounds): 
             if (detailsData.status === 'OK' && detailsData.result) {
                 const placeDetails = detailsData.result;
                 const city = getBestEffortCity(placeDetails.address_components);
+                const state = getAddressComponent(placeDetails.address_components, 'administrative_area_level_1', true);
                 return {
                     placeId: candidate.place_id,
                     suggestedCompanyName: placeDetails.name || '',
                     address: placeDetails.formatted_address || '',
                     city: city || "Unknown Location",
+                    state: state,
                     phone: placeDetails.formatted_phone_number || '',
                     latitude: placeDetails.geometry?.location?.lat,
                     longitude: placeDetails.geometry?.location?.lng,
