@@ -238,11 +238,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleQuickSave = useCallback(async () => {
+  const handleQuickSave = useCallback(async (): Promise<Visit | undefined> => {
     const isValid = await form.trigger("companyName");
     if (!isValid) {
       toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name before saving.' });
-      return;
+      return undefined;
     }
     
     setIsSaving(true);
@@ -252,8 +252,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     try {
       const savedVisit = await onSave(payload, { andClose: false });
       setFormInitialData(savedVisit);
+      return savedVisit;
     } catch (error) {
       toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save." });
+      return undefined;
     } finally {
       setIsSaving(false);
     }
@@ -461,7 +463,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [partnershipConfidenceValue, form]);
 
-  const analyzeNotesAndPopulateForm = useCallback(async (notes: string) => {
+  const analyzeNotesAndPopulateForm = useCallback(async (notes: string, upToDateVisit: Visit) => {
     if (!notes.trim()) return;
 
     setLastAnalyzedNotes(notes);
@@ -472,80 +474,86 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     });
 
     try {
-      const result = await extractVisitDetailsAction({ notes });
-      if (result.error) throw new Error(result.error);
-      if (!result.details) return;
-
-      const { details } = result;
-      const currentFormValues = form.getValues();
-      const updatedData = {...currentFormValues};
-
-      // Special case: If a meeting is detected, update the form, save, and close.
-      if (details.futureMeetingDateTime) {
-        const meetingDate = new Date(details.futureMeetingDateTime);
-        if (meetingDate.toString() !== 'Invalid Date') {
-          updatedData.futureMeetingSet = true;
-          updatedData.futureMeetingDateTime = meetingDate;
-          
-          handleFormSubmit(updatedData);
-          analysisToast.dismiss(); 
-          toast({
-              title: "Meeting Auto-Scheduled!",
-              description: `I've scheduled the meeting for ${updatedData.companyName}. The visit card has been moved to your Planner.`,
-              duration: 7000,
-          });
-          return; // Stop further processing as the form will close
+        const result = await extractVisitDetailsAction({ notes });
+        if (result.error) throw new Error(result.error);
+        if (!result.details) {
+            toast({ title: "AI Analysis Complete", description: "No new details found in notes." });
+            setIsAnalyzingNotes(false);
+            analysisToast.dismiss();
+            return;
         }
-      }
 
-      // If no meeting is found, update other fields without closing
-      let fieldsUpdated = 0;
-      const updateField = <T extends keyof VisitFormData>(field: T, value: VisitFormData[T]) => {
-          if (value !== undefined && value !== null) {
-              const currentValue = form.getValues(field);
-              if (typeof value === 'boolean') {
-                  if (value === true && currentValue !== true) {
-                      form.setValue(field, value, { shouldValidate: true });
-                      fieldsUpdated++;
-                  }
-              } else if (value !== currentValue) {
-                  form.setValue(field, value as any, { shouldValidate: true });
-                  fieldsUpdated++;
-              }
-          }
-      };
+        const { details } = result;
+        const currentFormValues = form.getValues();
+        const updatedData: VisitFormData = { ...currentFormValues };
+        let fieldsUpdatedCount = 0;
+        let meetingScheduled = false;
 
-      updateField('hasBusinessCard', details.hasBusinessCard);
-      updateField('competitorName', details.competitorName);
-      updateField('decisionMakerName', details.decisionMakerName);
-      updateField('decisionMakerTitle', details.decisionMakerTitle);
-      updateField('interestedUnit', details.interestedUnit);
-      updateField('freeTrial', details.freeTrial);
-      updateField('futureMeetingSet', details.futureMeetingSet); // Handles unscheduled meetings
-      
-      if (fieldsUpdated > 0) {
-        await handleQuickSave();
-        toast({
-          title: "AI Analysis Complete",
-          description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes and saved the progress.`,
-        });
-      } else {
-        toast({
-          title: "AI Analysis Complete",
-          description: "I didn't find any new details to add to the form from your notes.",
-        });
-      }
+        const updateField = <T extends keyof VisitFormData>(field: T, value: VisitFormData[T] | undefined) => {
+            if (value === undefined || value === null) return;
+            const currentValue = updatedData[field];
+            // A simple !== check is sufficient for most types here
+            if (currentValue !== value) {
+                // @ts-ignore
+                updatedData[field] = value;
+                form.setValue(field, value as any, { shouldValidate: true });
+                fieldsUpdatedCount++;
+            }
+        };
+        
+        // This logic was changed to be more careful with updates
+        if (details.futureMeetingDateTime) {
+            const meetingDate = new Date(details.futureMeetingDateTime);
+            if (meetingDate.toString() !== 'Invalid Date') {
+                updateField('futureMeetingSet', true);
+                updateField('futureMeetingDateTime', meetingDate);
+                meetingScheduled = true;
+            }
+        } else if (details.futureMeetingSet) {
+             if (updatedData.futureMeetingSet !== true) {
+               updateField('futureMeetingSet', true);
+             }
+        }
+
+        updateField('hasBusinessCard', details.hasBusinessCard);
+        updateField('competitorName', details.competitorName);
+        updateField('decisionMakerName', details.decisionMakerName);
+        updateField('decisionMakerTitle', details.decisionMakerTitle);
+        updateField('interestedUnit', details.interestedUnit);
+        updateField('freeTrial', details.freeTrial);
+
+        if (fieldsUpdatedCount > 0) {
+            const payload = buildVisitPayload(updatedData, upToDateVisit, currentLatitude, currentLongitude);
+            const savedVisit = await onSave(payload, { andClose: meetingScheduled });
+
+            if (meetingScheduled) {
+                onClose();
+                toast({
+                    title: "Meeting Auto-Scheduled!",
+                    description: `I've scheduled the meeting for ${updatedData.companyName}. Your data has been saved.`,
+                    duration: 7000,
+                });
+            } else {
+                setFormInitialData(savedVisit); // Update form state for next save
+                toast({
+                    title: "AI Analysis Complete",
+                    description: `I've updated ${fieldsUpdatedCount} field(s) from your notes and saved progress.`,
+                });
+            }
+        } else {
+            toast({ title: "AI Analysis Complete", description: "No new details to update from your notes." });
+        }
     } catch (e: any) {
-      toast({
-        variant: "destructive",
-        title: "AI Analysis Failed",
-        description: e.message || "Could not extract details from notes.",
-      });
+        toast({
+            variant: "destructive",
+            title: "AI Analysis Failed",
+            description: e.message || "Could not extract details from notes.",
+        });
     } finally {
-      setIsAnalyzingNotes(false);
-      analysisToast.dismiss();
+        setIsAnalyzingNotes(false);
+        analysisToast.dismiss();
     }
-  }, [form, toast, handleFormSubmit, handleQuickSave]);
+}, [form, toast, onSave, onClose, currentLatitude, currentLongitude]);
 
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -659,10 +667,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       recognitionRef.current = null;
       
       setTimeout(() => {
-        handleQuickSave().then(() => {
-          const finalNotes = form.getValues('notes');
-          if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
-            analyzeNotesAndPopulateForm(finalNotes);
+        handleQuickSave().then((savedVisit) => {
+          if (savedVisit) {
+            const finalNotes = form.getValues('notes');
+            if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
+                analyzeNotesAndPopulateForm(finalNotes, savedVisit);
+            }
           }
         });
       }, 500);
@@ -943,18 +953,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       </div>
                     )}
                   </FormControl>
-                  {!formInitialData?.id && (
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        className="w-full mt-2"
-                        onClick={handleQuickSave}
-                        disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
-                    >
-                        <Save className="mr-2 h-4 w-4" />
-                        Save and Continue Editing
-                    </Button>
-                  )}
+                  
+                  <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full mt-2"
+                      onClick={handleQuickSave}
+                      disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
+                  >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save and Continue Editing
+                  </Button>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1630,7 +1639,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         field.onBlur(e);
                         const currentNotes = form.getValues('notes');
                         if (currentNotes && currentNotes.trim() && currentNotes !== lastAnalyzedNotes) {
-                            analyzeNotesAndPopulateForm(currentNotes);
+                           handleQuickSave().then((savedVisit) => {
+                              if (savedVisit) {
+                                  analyzeNotesAndPopulateForm(currentNotes, savedVisit);
+                              }
+                          });
                         }
                       }}
                     />
