@@ -161,6 +161,11 @@ export default function HomePage() {
   const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
   const [isRecordingDestinationSearch, setIsRecordingDestinationSearch] = useState(false);
   const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const visitsRef = useRef<Visit[]>([]);
+
+  useEffect(() => {
+      visitsRef.current = visits;
+  }, [visits]);
 
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
@@ -666,48 +671,73 @@ export default function HomePage() {
             setIsVisitFormOpen(false);
         }
 
-        let resolvedVisit: Visit | undefined;
+        const currentVisits = visitsRef.current;
+        let finalVisitData: Visit;
+        let updatedVisits: Visit[];
 
-        setVisits(prevVisits => {
-            const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-            const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
-            const existingVisit = prevVisits.find(v => v.id === visitId);
+        const existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
 
-            const mergedVisit: Visit = {
-                ...(existingVisit || {}),
-                ...payload,
-                id: visitId,
-                timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
-            };
+        if (existingVisitIndex !== -1) {
+            // --- UPDATE PATH ---
+            const existingVisit = currentVisits[existingVisitIndex];
+            const mergedVisit: Visit = { ...existingVisit, ...payload };
             
-            if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
+            if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
                 mergedVisit.notesSummary = undefined;
             }
-            
-            resolvedVisit = mergedVisit;
 
-            const updatedVisits = isNewVisit
-                ? [mergedVisit, ...prevVisits]
-                : prevVisits.map(v => (v.id === visitId ? mergedVisit : v));
+            finalVisitData = mergedVisit;
+            updatedVisits = [...currentVisits];
+            updatedVisits[existingVisitIndex] = mergedVisit;
 
-            if (!andClose) {
-                setCurrentEditingVisit(mergedVisit);
-            }
+        } else {
+            // --- CREATE PATH ---
+            const visitId = payload.id && !payload.id.startsWith('temp_') ? payload.id : `temp_${crypto.randomUUID()}`;
             
-            localStorage.setItem('visits', JSON.stringify(updatedVisits));
-            return updatedVisits;
-        });
+            const newVisit: Visit = {
+              id: visitId,
+              timestamp: payload.timestamp || new Date(),
+              companyName: payload.companyName || '',
+              notes: payload.notes || undefined,
+              latitude: payload.latitude || undefined,
+              longitude: payload.longitude || undefined,
+              partnershipConfidence: payload.partnershipConfidence || undefined,
+              hasBusinessCard: payload.hasBusinessCard || false,
+              businessCardImageUrl: payload.businessCardImageUrl || undefined,
+              discussedCompetitors: !!payload.competitorName,
+              competitorName: payload.competitorName || undefined,
+              coolerType: payload.coolerType || undefined,
+              decisionMakerName: payload.decisionMakerName || undefined,
+              decisionMakerTitle: payload.decisionMakerTitle || undefined,
+              decisionMakerContact: payload.decisionMakerContact || undefined,
+              visitNumber: payload.visitNumber || undefined,
+              interestedUnit: payload.interestedUnit || undefined,
+              hasTDSReading: payload.hasTDSReading || false,
+              tdsValue: payload.tdsValue ?? undefined,
+              futureMeetingSet: payload.futureMeetingSet || false,
+              futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
+              freeTrial: payload.freeTrial || false,
+              freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
+              notesSummary: payload.notesSummary || undefined,
+              contactInfo: payload.contactInfo || undefined,
+              dealClosed: payload.dealClosed || false,
+            };
+            
+            finalVisitData = newVisit;
+            updatedVisits = [newVisit, ...currentVisits];
+        }
+
+        setVisits(updatedVisits);
+        localStorage.setItem('visits', JSON.stringify(updatedVisits));
 
         toast({
-            title: !payload.id || payload.id.startsWith('temp_') ? "Visit Logged" : (andClose ? "Visit Updated" : "Progress Saved"),
-            description: `${payload.companyName} data saved to device.`,
+            title: existingVisitIndex !== -1 ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
+            description: `${finalVisitData.companyName} data saved to device.`,
         });
-        
-        // The updater function for setVisits runs synchronously before the next render,
-        // so `resolvedVisit` will have been assigned.
-        resolve(resolvedVisit!);
+
+        resolve(finalVisitData);
     });
-  }, [toast]);
+}, [setIsVisitFormOpen, toast]);
 
 
   const handleDeleteVisit = async (visitId: string) => {
