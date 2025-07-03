@@ -671,73 +671,71 @@ export default function HomePage() {
             setIsVisitFormOpen(false);
         }
 
-        const currentVisits = visitsRef.current;
-        let finalVisitData: Visit;
-        let updatedVisits: Visit[];
+        const findIndexAndSave = (currentVisits: Visit[]): {updatedVisits: Visit[], finalVisit: Visit, wasNew: boolean} => {
+            const existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
 
-        const existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
-
-        if (existingVisitIndex !== -1) {
-            // --- UPDATE PATH ---
-            const existingVisit = currentVisits[existingVisitIndex];
-            const mergedVisit: Visit = { ...existingVisit, ...payload };
-            
-            if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
-                mergedVisit.notesSummary = undefined;
+            if (existingVisitIndex !== -1) {
+                // UPDATE
+                const existingVisit = currentVisits[existingVisitIndex];
+                const mergedVisit: Visit = { ...existingVisit, ...payload };
+                if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
+                    mergedVisit.notesSummary = undefined;
+                }
+                const updatedVisits = [...currentVisits];
+                updatedVisits[existingVisitIndex] = mergedVisit;
+                return { updatedVisits, finalVisit: mergedVisit, wasNew: false };
+            } else {
+                // CREATE
+                const visitId = payload.id && !payload.id.startsWith('temp_') ? payload.id : `temp_${crypto.randomUUID()}`;
+                
+                const newVisit: Visit = {
+                  id: visitId,
+                  timestamp: payload.timestamp || new Date(),
+                  companyName: payload.companyName || '',
+                  notes: payload.notes || undefined,
+                  latitude: payload.latitude || undefined,
+                  longitude: payload.longitude || undefined,
+                  partnershipConfidence: payload.partnershipConfidence || undefined,
+                  hasBusinessCard: payload.hasBusinessCard || false,
+                  businessCardImageUrl: payload.businessCardImageUrl || undefined,
+                  discussedCompetitors: !!payload.competitorName,
+                  competitorName: payload.competitorName || undefined,
+                  coolerType: payload.coolerType || undefined,
+                  decisionMakerName: payload.decisionMakerName || undefined,
+                  decisionMakerTitle: payload.decisionMakerTitle || undefined,
+                  decisionMakerContact: payload.decisionMakerContact || undefined,
+                  visitNumber: payload.visitNumber || undefined,
+                  interestedUnit: payload.interestedUnit || undefined,
+                  hasTDSReading: payload.hasTDSReading || false,
+                  tdsValue: payload.tdsValue ?? undefined,
+                  futureMeetingSet: payload.futureMeetingSet || false,
+                  futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
+                  freeTrial: payload.freeTrial || false,
+                  freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
+                  notesSummary: payload.notesSummary || undefined,
+                  contactInfo: payload.contactInfo || undefined,
+                  dealClosed: payload.dealClosed || false,
+                };
+                
+                const updatedVisits = [newVisit, ...currentVisits];
+                return { updatedVisits, finalVisit: newVisit, wasNew: true };
             }
-
-            finalVisitData = mergedVisit;
-            updatedVisits = [...currentVisits];
-            updatedVisits[existingVisitIndex] = mergedVisit;
-
-        } else {
-            // --- CREATE PATH ---
-            const visitId = payload.id && !payload.id.startsWith('temp_') ? payload.id : `temp_${crypto.randomUUID()}`;
-            
-            const newVisit: Visit = {
-              id: visitId,
-              timestamp: payload.timestamp || new Date(),
-              companyName: payload.companyName || '',
-              notes: payload.notes || undefined,
-              latitude: payload.latitude || undefined,
-              longitude: payload.longitude || undefined,
-              partnershipConfidence: payload.partnershipConfidence || undefined,
-              hasBusinessCard: payload.hasBusinessCard || false,
-              businessCardImageUrl: payload.businessCardImageUrl || undefined,
-              discussedCompetitors: !!payload.competitorName,
-              competitorName: payload.competitorName || undefined,
-              coolerType: payload.coolerType || undefined,
-              decisionMakerName: payload.decisionMakerName || undefined,
-              decisionMakerTitle: payload.decisionMakerTitle || undefined,
-              decisionMakerContact: payload.decisionMakerContact || undefined,
-              visitNumber: payload.visitNumber || undefined,
-              interestedUnit: payload.interestedUnit || undefined,
-              hasTDSReading: payload.hasTDSReading || false,
-              tdsValue: payload.tdsValue ?? undefined,
-              futureMeetingSet: payload.futureMeetingSet || false,
-              futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
-              freeTrial: payload.freeTrial || false,
-              freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
-              notesSummary: payload.notesSummary || undefined,
-              contactInfo: payload.contactInfo || undefined,
-              dealClosed: payload.dealClosed || false,
-            };
-            
-            finalVisitData = newVisit;
-            updatedVisits = [newVisit, ...currentVisits];
         }
 
+        const { updatedVisits, finalVisit, wasNew } = findIndexAndSave(visitsRef.current);
+        
         setVisits(updatedVisits);
+        visitsRef.current = updatedVisits;
         localStorage.setItem('visits', JSON.stringify(updatedVisits));
 
         toast({
-            title: existingVisitIndex !== -1 ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
-            description: `${finalVisitData.companyName} data saved to device.`,
+            title: !wasNew ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
+            description: `${finalVisit.companyName} data saved to device.`,
         });
 
-        resolve(finalVisitData);
+        resolve(finalVisit);
     });
-}, [setIsVisitFormOpen, toast]);
+  }, [setIsVisitFormOpen, toast]);
 
 
   const handleDeleteVisit = async (visitId: string) => {
@@ -2777,5 +2775,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
