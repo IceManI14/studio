@@ -670,61 +670,73 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = async (payload: SaveVisitPayload, options: { andClose?: boolean } = {}) => {
+  const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean } = {}) => {
     const { andClose = true } = options;
     if (andClose) {
       setIsVisitFormOpen(false);
     }
-    
+  
     const isNewVisit = !payload.id || payload.id.startsWith('temp_');
     const tempId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id;
-    
-    let notesSummaryToSave = payload.notesSummary;
-    if (currentEditingVisit?.notes !== payload.notes) {
-      notesSummaryToSave = undefined; // Clear old summary if notes changed
-    }
-
+  
+    // The optimistic visit object to be used for the state update.
     const optimisticVisit: Visit = {
-        id: tempId!,
-        timestamp: payload.timestamp || new Date(),
-        companyName: payload.companyName,
-        notes: payload.notes ?? undefined,
-        latitude: payload.latitude ?? undefined,
-        longitude: payload.longitude ?? undefined,
-        partnershipConfidence: payload.partnershipConfidence ?? undefined,
-        hasBusinessCard: payload.hasBusinessCard ?? false,
-        businessCardImageUrl: payload.businessCardImageUrl ?? undefined,
-        discussedCompetitors: !!payload.competitorName,
-        competitorName: payload.competitorName ?? undefined,
-        coolerType: payload.coolerType ?? undefined,
-        decisionMakerName: payload.decisionMakerName ?? '',
-        decisionMakerTitle: payload.decisionMakerTitle ?? '',
-        decisionMakerContact: payload.decisionMakerContact ?? '',
-        visitNumber: payload.visitNumber ?? visits.filter(v => isToday(new Date(v.timestamp))).length + 1,
-        interestedUnit: payload.interestedUnit ?? undefined,
-        hasTDSReading: payload.hasTDSReading ?? false,
-        tdsValue: payload.tdsValue ?? undefined,
-        futureMeetingSet: payload.futureMeetingSet ?? false,
-        futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
-        freeTrial: payload.freeTrial ?? false,
-        freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
-        dealClosed: payload.dealClosed ?? false,
-        contactInfo: payload.contactInfo ?? undefined,
-        notesSummary: notesSummaryToSave,
+      id: tempId!,
+      timestamp: payload.timestamp || new Date(),
+      companyName: payload.companyName,
+      notes: payload.notes ?? undefined,
+      latitude: payload.latitude ?? undefined,
+      longitude: payload.longitude ?? undefined,
+      partnershipConfidence: payload.partnershipConfidence ?? undefined,
+      hasBusinessCard: payload.hasBusinessCard ?? false,
+      businessCardImageUrl: payload.businessCardImageUrl ?? undefined,
+      discussedCompetitors: !!payload.competitorName,
+      competitorName: payload.competitorName ?? undefined,
+      coolerType: payload.coolerType ?? undefined,
+      decisionMakerName: payload.decisionMakerName ?? '',
+      decisionMakerTitle: payload.decisionMakerTitle ?? '',
+      decisionMakerContact: payload.decisionMakerContact ?? '',
+      visitNumber: payload.visitNumber, // Pass through, will be calculated in setVisits if needed
+      interestedUnit: payload.interestedUnit ?? undefined,
+      hasTDSReading: payload.hasTDSReading ?? false,
+      tdsValue: payload.tdsValue ?? undefined,
+      futureMeetingSet: payload.futureMeetingSet ?? false,
+      futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
+      freeTrial: payload.freeTrial ?? false,
+      freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
+      dealClosed: payload.dealClosed ?? false,
+      contactInfo: payload.contactInfo ?? undefined,
+      notesSummary: payload.notesSummary, // Pass through, cleared in form logic
     };
-    
-    const updatedVisits = isNewVisit
-      ? [optimisticVisit, ...visits]
-      : visits.map(v => v.id === payload.id ? optimisticVisit : v);
-    
-    setVisits(updatedVisits);
-    localStorage.setItem('visits', JSON.stringify(updatedVisits));
-
+  
+    // Use the functional form of setVisits to avoid state race conditions.
+    setVisits(prevVisits => {
+      // If it's a new visit and doesn't have a number, calculate it now based on the most recent state.
+      if (isNewVisit && !optimisticVisit.visitNumber) {
+        optimisticVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
+      }
+  
+      // Clear notesSummary if notes have changed from what's in the state
+      if (!isNewVisit) {
+        const originalVisit = prevVisits.find(v => v.id === optimisticVisit.id);
+        if (originalVisit && originalVisit.notes !== optimisticVisit.notes) {
+          optimisticVisit.notesSummary = undefined;
+        }
+      }
+  
+      const updatedVisits = isNewVisit
+        ? [optimisticVisit, ...prevVisits]
+        : prevVisits.map(v => (v.id === optimisticVisit.id ? optimisticVisit : v));
+      
+      localStorage.setItem('visits', JSON.stringify(updatedVisits));
+      return updatedVisits;
+    });
+  
     toast({
       title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
       description: `Visit for ${payload.companyName} has been saved to your device.`,
     });
-  };
+  }, [toast]);
 
 
   const handleDeleteVisit = async (visitId: string) => {
