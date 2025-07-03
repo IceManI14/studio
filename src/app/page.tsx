@@ -387,23 +387,31 @@ export default function HomePage() {
       return [];
     }
   
+    // Start with all visits
+    let processedVisits = [...visits];
+  
     // Filter by selected date (if any)
-    const dateFilteredVisits = selectedDate
-      ? visits.filter(visit =>
-          isSameDay(new Date(visit.timestamp), selectedDate) ||
-          (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
-        )
-      : visits;
+    if (selectedDate) {
+      processedVisits = processedVisits.filter(visit =>
+        isSameDay(new Date(visit.timestamp), selectedDate) ||
+        (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
+      );
+    }
   
     // Then filter by search term
-    const searchFilteredVisits = searchTerm.trim() !== ''
-      ? dateFilteredVisits.filter(visit =>
-          visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : dateFilteredVisits;
+    if (searchTerm.trim() !== '') {
+      processedVisits = processedVisits.filter(visit =>
+        visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+  
+    // If sorting by future meetings, first filter to only show those.
+    if (sortCriteria === 'futureMeetingsSet') {
+      processedVisits = processedVisits.filter(visit => visit.futureMeetingSet);
+    }
   
     // Deduplicate visits in case a visit is both logged and scheduled on the same day.
-    const uniqueVisits = Array.from(new Map(searchFilteredVisits.map(visit => [visit.id, visit])).values());
+    const uniqueVisits = Array.from(new Map(processedVisits.map(visit => [visit.id, visit])).values());
   
     const sorted = uniqueVisits.sort((a, b) => {
       const confidenceA = a.partnershipConfidence ?? 0;
