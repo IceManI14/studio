@@ -240,25 +240,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const handleQuickSave = async () => {
     const isValid = await form.trigger("companyName");
     if (!isValid) {
+      toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name before saving.' });
       return;
     }
-    const companyName = form.getValues('companyName');
-
+    
     setIsSaving(true);
-
-    const payload: SaveVisitPayload = {
-      companyName: companyName.trim(),
-      latitude: currentLatitude,
-      longitude: currentLongitude,
-      timestamp: initialData?.timestamp || new Date(),
-      visitNumber: initialData?.visitNumber,
-    };
+    const data = form.getValues();
+    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
 
     try {
-      await onSave(payload);
-      onClose();
+      await onSave(payload, { andClose: false });
+      toast({
+        title: "Visit Saved",
+        description: "Your progress is saved. You can continue editing.",
+      });
     } catch (error) {
-      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the quick save." });
+      toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save." });
     } finally {
       setIsSaving(false);
     }
@@ -980,8 +977,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         onClick={handleQuickSave}
                         disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
                     >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Quick Save Company & Continue Later
+                        <Save className="mr-2 h-4 w-4" />
+                        Save and Continue Editing
                     </Button>
                   )}
                   <FormMessage />
