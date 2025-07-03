@@ -608,31 +608,6 @@ export default function HomePage() {
         return;
     }
 
-    if (companyName) {
-      const existingVisitForCompany = visits.find(
-        (visit) =>
-          visit.companyName === companyName &&
-          visit.latitude &&
-          visit.longitude &&
-          getDistanceFromLatLonInM(
-            userCurrentLatitude,
-            userCurrentLongitude,
-            visit.latitude,
-            visit.longitude
-          ) < 50
-      );
-
-      if (existingVisitForCompany) {
-        toast({
-          title: "Existing Visit Found",
-          description: `Opening the visit log for ${companyName} to prevent a duplicate.`,
-        });
-        handleEditVisit(existingVisitForCompany);
-        setIsFetchingCity(false);
-        return;
-      }
-    }
-
     setIsFetchingCity(false);
     
     const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
