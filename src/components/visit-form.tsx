@@ -697,44 +697,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsRecordingNotes(false);
       recognitionRef.current = null;
       
+      // Auto-save after 2 seconds
+      setTimeout(() => {
+        handleSaveAndContinue();
+        toast({ title: "Notes Auto-Saved", description: "Your dictated notes have been saved." });
+      }, 2000);
+
       const finalNotes = form.getValues('notes');
       if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
         analyzeNotesAndPopulateForm(finalNotes);
       }
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
-      switch (event.error) {
-        case 'no-speech':
-          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
-          break;
-        case 'not-allowed':
-        case 'service-not-allowed':
-          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
-          break;
-        case 'audio-capture':
-          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
-          break;
-        case 'network':
-          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
-          break;
-        case 'aborted':
-          console.log("Speech recognition aborted.");
-          setIsRecordingNotes(false);
-          recognitionRef.current = null;
-          return;
-        case 'language-not-supported':
-          errorMessage = "The language for dictation is not supported by your browser.";
-          break;
-        case 'bad-grammar':
-           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
-           break;
-      }
-      
-      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
-      setIsRecordingNotes(false);
-      recognitionRef.current = null;
     };
 
     recognition.onresult = (event) => {
@@ -758,7 +730,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes, handleSaveAndContinue]);
 
 
   useEffect(() => {
