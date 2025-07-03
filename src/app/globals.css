@@ -77,6 +77,11 @@ body {
     @apply text-orange-400;
   }
 
+  /* Ensure today's date is highly visible */
+  .day_today:not([aria-selected]) {
+    @apply bg-cyan-400 text-black;
+  }
+
   /* Override for selected today */
   .day_today[aria-selected="true"],
   .day_today[aria-selected="true"]:hover,

@@ -691,12 +691,11 @@ export default function HomePage() {
             setIsVisitFormOpen(false);
         }
 
-        const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-        const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
-        
-        let finalVisitForPromise: Visit | undefined;
+        let resolvedVisit: Visit | undefined;
 
         setVisits(prevVisits => {
+            const isNewVisit = !payload.id || payload.id.startsWith('temp_');
+            const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
             const existingVisit = prevVisits.find(v => v.id === visitId);
 
             const mergedVisit: Visit = {
@@ -710,7 +709,7 @@ export default function HomePage() {
                 mergedVisit.notesSummary = undefined;
             }
             
-            finalVisitForPromise = mergedVisit;
+            resolvedVisit = mergedVisit;
 
             const updatedVisits = isNewVisit
                 ? [mergedVisit, ...prevVisits]
@@ -725,11 +724,13 @@ export default function HomePage() {
         });
 
         toast({
-            title: isNewVisit ? "Visit Logged" : (andClose ? "Visit Updated" : "Progress Saved"),
+            title: !payload.id || payload.id.startsWith('temp_') ? "Visit Logged" : (andClose ? "Visit Updated" : "Progress Saved"),
             description: `${payload.companyName} data saved to device.`,
         });
-
-        resolve(finalVisitForPromise!);
+        
+        // The updater function for setVisits runs synchronously before the next render,
+        // so `resolvedVisit` will have been assigned.
+        resolve(resolvedVisit!);
     });
   }, [toast]);
 
@@ -1910,7 +1911,7 @@ export default function HomePage() {
                           modifiersClassNames={{
                             scheduled: 'day-scheduled',
                             logged: 'day-logged',
-                            today_selected: 'bg-cyan-400 text-black',
+                            today: 'day_today',
                           }}
                         />
                         {selectedDate && (
