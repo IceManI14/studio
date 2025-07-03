@@ -407,7 +407,7 @@ export default function HomePage() {
   
     // If sorting by future meetings, first filter to only show those.
     if (sortCriteria === 'futureMeetingsSet') {
-      processedVisits = processedVisits.filter(visit => visit.futureMeetingSet);
+      processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
     }
   
     // Deduplicate visits in case a visit is both logged and scheduled on the same day.
@@ -420,19 +420,15 @@ export default function HomePage() {
       const timeB = new Date(b.timestamp).getTime();
       const dealClosedA = a.dealClosed ? 1 : 0;
       const dealClosedB = b.dealClosed ? 1 : 0;
-      const futureMeetingSetA = a.futureMeetingSet ? 1 : 0;
-      const futureMeetingSetB = b.futureMeetingSet ? 1 : 0;
   
       let comparison = 0;
   
       if (sortCriteria === 'futureMeetingsSet') {
-        comparison = sortOrder === 'desc' ? futureMeetingSetB - futureMeetingSetA : futureMeetingSetA - futureMeetingSetB;
-        if (comparison !== 0) return comparison;
-        // Fallback sort: meetings with dates come before those without.
         const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
         const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime).getTime() : Infinity;
-        if (meetingTimeA !== meetingTimeB) return meetingTimeA - meetingTimeB; // Earliest meeting first
-        return timeB - timeA; // Then newest visit first
+        comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
+        if (comparison !== 0) return comparison;
+        return timeB - timeA;
       } else if (sortCriteria === 'dealClosed') {
         comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
         if (comparison !== 0) return comparison;
@@ -688,49 +684,52 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean } = {}) => {
-    const { andClose = true } = options;
-    if (andClose) {
-        setIsVisitFormOpen(false);
-    }
-
-    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-    const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
-
-    setVisits(prevVisits => {
-        const existingVisit = prevVisits.find(v => v.id === visitId) || ({} as Partial<Visit>);
-
-        // Create the new visit data by merging the existing data with the new payload.
-        // This prevents race conditions where one save overwrites another.
-        const finalVisit: Visit = {
-            ...existingVisit,
-            ...payload,
-            id: visitId,
-            timestamp: payload.timestamp || existingVisit.timestamp || new Date(),
-        };
-
-        // If notes have changed, clear the summary so it can be regenerated.
-        if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
-            finalVisit.notesSummary = undefined;
+  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean } = {}): Promise<Visit> => {
+    return new Promise((resolve) => {
+        const { andClose = true } = options;
+        if (andClose) {
+            setIsVisitFormOpen(false);
         }
 
-        const updatedVisits = isNewVisit
-            ? [finalVisit, ...prevVisits]
-            : prevVisits.map(v => (v.id === visitId ? finalVisit : v));
+        const isNewVisit = !payload.id || payload.id.startsWith('temp_');
+        const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
         
-        // Find the newly saved/updated visit to pass to setCurrentEditingVisit if needed
-        const newCurrentVisit = updatedVisits.find(v => v.id === visitId);
-        if (!andClose && newCurrentVisit) {
-            setCurrentEditingVisit(newCurrentVisit);
-        }
+        let finalVisitForPromise: Visit | undefined;
 
-        localStorage.setItem('visits', JSON.stringify(updatedVisits));
-        return updatedVisits;
-    });
-    
-    toast({
-        title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
-        description: `Visit for ${payload.companyName} has been saved to your device.`,
+        setVisits(prevVisits => {
+            const existingVisit = prevVisits.find(v => v.id === visitId);
+
+            const mergedVisit: Visit = {
+                ...(existingVisit || {}),
+                ...payload,
+                id: visitId,
+                timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
+            };
+            
+            if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
+                mergedVisit.notesSummary = undefined;
+            }
+            
+            finalVisitForPromise = mergedVisit;
+
+            const updatedVisits = isNewVisit
+                ? [mergedVisit, ...prevVisits]
+                : prevVisits.map(v => (v.id === visitId ? mergedVisit : v));
+
+            if (!andClose) {
+                setCurrentEditingVisit(mergedVisit);
+            }
+            
+            localStorage.setItem('visits', JSON.stringify(updatedVisits));
+            return updatedVisits;
+        });
+
+        toast({
+            title: isNewVisit ? "Visit Logged" : (andClose ? "Visit Updated" : "Progress Saved"),
+            description: `${payload.companyName} data saved to device.`,
+        });
+
+        resolve(finalVisitForPromise!);
     });
   }, [toast]);
 
@@ -1948,7 +1947,7 @@ export default function HomePage() {
                               <SelectValue placeholder="Select order" />
                             </SelectTrigger>
                             <SelectContent>
-                              {sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : sortCriteria === 'dealClosed' ? ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> ) : ( <> <SelectItem value="desc">Scheduled First</SelectItem> <SelectItem value="asc">Unscheduled First</SelectItem> </>)}
+                              {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
                             </SelectContent>
                           </Select>
                         </div>

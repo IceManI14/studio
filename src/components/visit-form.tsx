@@ -124,21 +124,21 @@ export type VisitFormData = z.infer<typeof visitFormSchema>;
 interface VisitFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean }) => Promise<void>;
+  onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean }) => Promise<Visit>;
   initialData?: Visit;
   salesperson: Salesperson | null;
   startDictation?: boolean;
 }
 
-const buildVisitPayload = (data: VisitFormData, initialData: Visit | undefined, currentLatitude?: number, currentLongitude?: number): SaveVisitPayload => {
-  let notesSummaryToSave = initialData?.notesSummary;
-  if (initialData?.notes !== data.notes) {
+const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, currentLatitude?: number, currentLongitude?: number): SaveVisitPayload => {
+  let notesSummaryToSave = visitState?.notesSummary;
+  if (visitState?.notes !== data.notes) {
     notesSummaryToSave = undefined;
   }
 
   return {
-    id: initialData?.id,
-    timestamp: initialData?.timestamp,
+    id: visitState?.id,
+    timestamp: visitState?.timestamp,
     companyName: data.companyName,
     notes: data.notes,
     latitude: currentLatitude,
@@ -158,9 +158,9 @@ const buildVisitPayload = (data: VisitFormData, initialData: Visit | undefined, 
     futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
     freeTrial: data.freeTrial,
     freeTrialStartDate: data.freeTrial ? data.freeTrialStartDate : undefined,
-    dealClosed: initialData?.dealClosed,
-    visitNumber: initialData?.visitNumber,
-    contactInfo: initialData?.contactInfo,
+    dealClosed: visitState?.dealClosed,
+    visitNumber: visitState?.visitNumber,
+    contactInfo: visitState?.contactInfo,
     notesSummary: notesSummaryToSave,
   };
 };
@@ -198,6 +198,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const { toast } = useToast();
   const [lastAnalyzedNotes, setLastAnalyzedNotes] = useState<string | undefined>(undefined);
+  const [formInitialData, setFormInitialData] = useState<Visit | undefined>(initialData);
 
 
   const form = useForm<VisitFormData>({
@@ -227,7 +228,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const handleFormSubmit = async (data: VisitFormData) => {
     setIsSaving(true);
-    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
+    const payload = buildVisitPayload(data, formInitialData, currentLatitude, currentLongitude);
     try {
       await onSave(payload, { andClose: true });
     } catch (error) {
@@ -237,7 +238,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleQuickSave = async () => {
+  const handleQuickSave = useCallback(async () => {
     const isValid = await form.trigger("companyName");
     if (!isValid) {
       toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name before saving.' });
@@ -246,20 +247,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     
     setIsSaving(true);
     const data = form.getValues();
-    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
+    const payload = buildVisitPayload(data, formInitialData, currentLatitude, currentLongitude);
 
     try {
-      await onSave(payload, { andClose: false });
-      toast({
-        title: "Visit Saved",
-        description: "Your progress is saved. You can continue editing.",
-      });
+      const savedVisit = await onSave(payload, { andClose: false });
+      setFormInitialData(savedVisit);
     } catch (error) {
       toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save." });
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
 
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const watchedCompetitorName = form.watch('competitorName');
@@ -430,6 +428,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     if (isOpen) {
+      setFormInitialData(initialData);
       resetFormAndState(initialData);
       setLastAnalyzedNotes(initialData?.notes);
       setIsEditingCompanyName(!initialData?.id || !initialData.companyName);
@@ -462,23 +461,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [partnershipConfidenceValue, form]);
 
-  const handleSaveAndContinue = useCallback(async () => {
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast({ variant: 'destructive', title: 'Invalid Data', description: 'Please fill in all required fields before saving.' });
-      return;
-    }
-
-    const data = form.getValues();
-    const payload = buildVisitPayload(data, initialData, currentLatitude, currentLongitude);
-
-    try {
-      await onSave(payload, { andClose: false });
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save your changes.' });
-    }
-  }, [form, initialData, currentLatitude, currentLongitude, onSave, toast]);
-
   const analyzeNotesAndPopulateForm = useCallback(async (notes: string) => {
     if (!notes.trim()) return;
 
@@ -495,17 +477,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (!result.details) return;
 
       const { details } = result;
+      const currentFormValues = form.getValues();
+      const updatedData = {...currentFormValues};
 
       // Special case: If a meeting is detected, update the form, save, and close.
       if (details.futureMeetingDateTime) {
         const meetingDate = new Date(details.futureMeetingDateTime);
         if (meetingDate.toString() !== 'Invalid Date') {
-          const updatedData = {
-            ...form.getValues(),
-            ...details,
-            futureMeetingSet: true,
-            futureMeetingDateTime: meetingDate,
-          };
+          updatedData.futureMeetingSet = true;
+          updatedData.futureMeetingDateTime = meetingDate;
           
           handleFormSubmit(updatedData);
           analysisToast.dismiss(); 
@@ -544,9 +524,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       updateField('futureMeetingSet', details.futureMeetingSet); // Handles unscheduled meetings
       
       if (fieldsUpdated > 0) {
+        await handleQuickSave();
         toast({
           title: "AI Analysis Complete",
-          description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes.`,
+          description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes and saved the progress.`,
         });
       } else {
         toast({
@@ -564,7 +545,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsAnalyzingNotes(false);
       analysisToast.dismiss();
     }
-  }, [form, toast, handleFormSubmit]);
+  }, [form, toast, handleFormSubmit, handleQuickSave]);
 
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -635,7 +616,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           if (transcript) {
             form.setValue('companyName', transcript, { shouldValidate: true });
             toast({ title: 'Company Name Updated' });
-            handleSaveAndContinue();
+            handleQuickSave();
           }
       } else {
         console.warn("Speech recognition returned a result with no transcript.");
@@ -647,7 +628,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingCompanyName, toast, handleSaveAndContinue]);
+  }, [form, isRecordingCompanyName, toast, handleQuickSave]);
 
   const handleToggleVoiceNotes = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -678,14 +659,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       recognitionRef.current = null;
       
       setTimeout(() => {
-        handleSaveAndContinue().then(() => {
-          toast({ title: "Notes Auto-Saved", description: "Your dictated notes have been saved." });
+        handleQuickSave().then(() => {
           const finalNotes = form.getValues('notes');
           if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
             analyzeNotesAndPopulateForm(finalNotes);
           }
         });
-      }, 2000);
+      }, 500);
     };
 
     recognition.onresult = (event) => {
@@ -709,7 +689,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes, handleSaveAndContinue]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes, handleQuickSave]);
 
 
   useEffect(() => {
@@ -721,29 +701,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startDictation]);
-
-  useEffect(() => {
-    const stopAudioAndCamera = () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      if (companyNameRecognitionRef.current) {
-        companyNameRecognitionRef.current.stop();
-      }
-      stopCameraStream();
-    };
-
-    if (!isOpen) {
-      stopAudioAndCamera();
-      setBusinessCardPreviewUrl(null);
-      setCustomCoolerNameInput('');
-      setIsCameraViewVisible(false);
-    }
-
-    return () => {
-      stopAudioAndCamera();
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -877,6 +834,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
   
+  useEffect(() => {
+    const stopAudioAndCamera = () => {
+        if (recognitionRef.current) recognitionRef.current.stop();
+        if (companyNameRecognitionRef.current) companyNameRecognitionRef.current.stop();
+        stopCameraStream();
+    };
+
+    if (!isOpen) {
+        stopAudioAndCamera();
+        setBusinessCardPreviewUrl(null);
+        setCustomCoolerNameInput('');
+        setIsCameraViewVisible(false);
+    }
+
+    return () => stopAudioAndCamera();
+  }, [isOpen]);
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[480px] bg-card/80 backdrop-blur-md border-primary/30">
@@ -969,7 +943,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       </div>
                     )}
                   </FormControl>
-                  {!initialData?.id && (
+                  {!formInitialData?.id && (
                     <Button
                         type="button"
                         variant="secondary"
@@ -1625,7 +1599,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={handleSaveAndContinue}
+                            onClick={handleQuickSave}
                             className="h-7 w-7"
                             aria-label="Save and continue editing"
                         >
