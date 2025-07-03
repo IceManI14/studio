@@ -11,7 +11,7 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -696,41 +696,37 @@ export default function HomePage() {
 
     const isNewVisit = !payload.id || payload.id.startsWith('temp_');
     const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
-    let finalVisitDataForStateUpdate: Visit | undefined;
 
     setVisits(prevVisits => {
-        const existingVisit = prevVisits.find(v => v.id === visitId);
+        const existingVisit = prevVisits.find(v => v.id === visitId) || ({} as Partial<Visit>);
 
+        // Create the new visit data by merging the existing data with the new payload.
+        // This prevents race conditions where one save overwrites another.
         const finalVisit: Visit = {
-            ...(existingVisit || {}),
+            ...existingVisit,
             ...payload,
             id: visitId,
-            timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
-            futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : (existingVisit?.futureMeetingDateTime ? new Date(existingVisit.futureMeetingDateTime) : undefined),
-            freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : (existingVisit?.freeTrialStartDate ? new Date(existingVisit.freeTrialStartDate) : undefined),
+            timestamp: payload.timestamp || existingVisit.timestamp || new Date(),
         };
 
-        if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
+        // If notes have changed, clear the summary so it can be regenerated.
+        if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
             finalVisit.notesSummary = undefined;
-        }
-
-        if (isNewVisit && !finalVisit.visitNumber) {
-            finalVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
         }
 
         const updatedVisits = isNewVisit
             ? [finalVisit, ...prevVisits]
             : prevVisits.map(v => (v.id === visitId ? finalVisit : v));
         
-        finalVisitDataForStateUpdate = updatedVisits.find(v => v.id === visitId);
+        // Find the newly saved/updated visit to pass to setCurrentEditingVisit if needed
+        const newCurrentVisit = updatedVisits.find(v => v.id === visitId);
+        if (!andClose && newCurrentVisit) {
+            setCurrentEditingVisit(newCurrentVisit);
+        }
 
         localStorage.setItem('visits', JSON.stringify(updatedVisits));
         return updatedVisits;
     });
-
-    if (!andClose && finalVisitDataForStateUpdate) {
-        setCurrentEditingVisit(finalVisitDataForStateUpdate);
-    }
     
     toast({
         title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
@@ -2776,3 +2772,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
