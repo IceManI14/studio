@@ -691,50 +691,50 @@ export default function HomePage() {
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean } = {}) => {
     const { andClose = true } = options;
     if (andClose) {
-      setIsVisitFormOpen(false);
+        setIsVisitFormOpen(false);
     }
 
     const isNewVisit = !payload.id || payload.id.startsWith('temp_');
     const visitId = isNewVisit ? `temp_${crypto.randomUUID()}` : payload.id!;
+    let finalVisitDataForStateUpdate: Visit | undefined;
 
     setVisits(prevVisits => {
-      const existingVisit = prevVisits.find(v => v.id === visitId);
-      
-      // Deep merge payload with the latest state of the visit to prevent data loss from race conditions
-      const finalVisit: Visit = {
-        // Start with the most recent version of the visit from state
-        ...(existingVisit || {}),
-        // Overwrite with any new data from the current save operation
-        ...payload,
-        // Ensure ID and timestamps are correctly handled
-        id: visitId,
-        timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
-        // Explicitly handle date objects to avoid invalid date issues
-        futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : (existingVisit?.futureMeetingDateTime ? new Date(existingVisit.futureMeetingDateTime) : undefined),
-        freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : (existingVisit?.freeTrialStartDate ? new Date(existingVisit.freeTrialStartDate) : undefined),
-      };
+        const existingVisit = prevVisits.find(v => v.id === visitId);
 
-      // When notes change, the old summary is no longer valid.
-      if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
-        finalVisit.notesSummary = undefined;
-      }
-      
-      // Assign visit number for new visits
-      if (isNewVisit && !finalVisit.visitNumber) {
-        finalVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
-      }
-      
-      const updatedVisits = isNewVisit
-        ? [finalVisit, ...prevVisits]
-        : prevVisits.map(v => (v.id === visitId ? finalVisit : v));
-      
-      localStorage.setItem('visits', JSON.stringify(updatedVisits));
-      return updatedVisits;
+        const finalVisit: Visit = {
+            ...(existingVisit || {}),
+            ...payload,
+            id: visitId,
+            timestamp: payload.timestamp || existingVisit?.timestamp || new Date(),
+            futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : (existingVisit?.futureMeetingDateTime ? new Date(existingVisit.futureMeetingDateTime) : undefined),
+            freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : (existingVisit?.freeTrialStartDate ? new Date(existingVisit.freeTrialStartDate) : undefined),
+        };
+
+        if (payload.notes !== undefined && payload.notes !== existingVisit?.notes) {
+            finalVisit.notesSummary = undefined;
+        }
+
+        if (isNewVisit && !finalVisit.visitNumber) {
+            finalVisit.visitNumber = prevVisits.filter(v => isToday(new Date(v.timestamp))).length + 1;
+        }
+
+        const updatedVisits = isNewVisit
+            ? [finalVisit, ...prevVisits]
+            : prevVisits.map(v => (v.id === visitId ? finalVisit : v));
+        
+        finalVisitDataForStateUpdate = updatedVisits.find(v => v.id === visitId);
+
+        localStorage.setItem('visits', JSON.stringify(updatedVisits));
+        return updatedVisits;
     });
 
+    if (!andClose && finalVisitDataForStateUpdate) {
+        setCurrentEditingVisit(finalVisitDataForStateUpdate);
+    }
+    
     toast({
-      title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
-      description: `Visit for ${payload.companyName} has been saved to your device.`,
+        title: isNewVisit ? "Visit Logged Locally" : (andClose ? "Visit Updated Locally" : "Notes Auto-Saved"),
+        description: `Visit for ${payload.companyName} has been saved to your device.`,
     });
   }, [toast]);
 
@@ -1702,7 +1702,7 @@ export default function HomePage() {
                       </span>
                       <div className="flex justify-end min-w-[80px]">
                         {targetDestination && (
-                            <Badge variant="secondary" className="shrink-0">{targetDestination.city}</Badge>
+                            <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
                         )}
                       </div>
                     </div>

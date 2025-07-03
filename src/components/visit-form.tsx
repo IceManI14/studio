@@ -505,6 +505,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         if (meetingDate.toString() !== 'Invalid Date') {
           const updatedData = {
             ...form.getValues(),
+            ...details,
             futureMeetingSet: true,
             futureMeetingDateTime: meetingDate,
           };
