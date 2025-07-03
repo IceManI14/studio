@@ -488,91 +488,73 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setLastAnalyzedNotes(notes);
     setIsAnalyzingNotes(true);
     const analysisToast = toast({
-      title: "AI is analyzing your notes...",
+      title: "Debbie is analyzing your notes...",
       description: "Please wait while I extract the details.",
     });
 
     try {
       const result = await extractVisitDetailsAction({ notes });
+      if (result.error) throw new Error(result.error);
+      if (!result.details) return;
 
-      if (result.error) {
-        throw new Error(result.error);
+      const { details } = result;
+
+      // Special case: If a meeting is detected, update the form, save, and close.
+      if (details.futureMeetingDateTime) {
+        const meetingDate = new Date(details.futureMeetingDateTime);
+        if (meetingDate.toString() !== 'Invalid Date') {
+          const updatedData = {
+            ...form.getValues(),
+            futureMeetingSet: true,
+            futureMeetingDateTime: meetingDate,
+          };
+          
+          handleFormSubmit(updatedData);
+          analysisToast.dismiss(); 
+          toast({
+              title: "Meeting Auto-Scheduled!",
+              description: `I've scheduled the meeting for ${updatedData.companyName}. The visit card has been moved to your Planner.`,
+              duration: 7000,
+          });
+          return; // Stop further processing as the form will close
+        }
       }
 
-      if (result.details) {
-        const { details } = result;
-        let fieldsUpdated = 0;
-        
-        const updateField = <T extends keyof VisitFormData>(
-            field: T, 
-            value: VisitFormData[T]
-        ) => {
-            if (value !== undefined && value !== null) {
-                const currentValue = form.getValues(field);
-                if (typeof value === 'boolean') {
-                    if (value === true && currentValue !== true) {
-                        form.setValue(field, value, { shouldValidate: true });
-                        fieldsUpdated++;
-                    }
-                } else if (value !== currentValue) {
-                    form.setValue(field, value as any, { shouldValidate: true });
-                    fieldsUpdated++;
-                }
-            }
-        };
+      // If no meeting is found, update other fields without closing
+      let fieldsUpdated = 0;
+      const updateField = <T extends keyof VisitFormData>(field: T, value: VisitFormData[T]) => {
+          if (value !== undefined && value !== null) {
+              const currentValue = form.getValues(field);
+              if (typeof value === 'boolean') {
+                  if (value === true && currentValue !== true) {
+                      form.setValue(field, value, { shouldValidate: true });
+                      fieldsUpdated++;
+                  }
+              } else if (value !== currentValue) {
+                  form.setValue(field, value as any, { shouldValidate: true });
+                  fieldsUpdated++;
+              }
+          }
+      };
 
-        updateField('hasBusinessCard', details.hasBusinessCard);
-        updateField('competitorName', details.competitorName);
-        updateField('decisionMakerName', details.decisionMakerName);
-        updateField('decisionMakerTitle', details.decisionMakerTitle);
-        updateField('interestedUnit', details.interestedUnit);
-        updateField('freeTrial', details.freeTrial);
-        
-        let meetingWasScheduled = false;
-        // Handle meeting date
-        if (details.futureMeetingDateTime) {
-            const meetingDate = new Date(details.futureMeetingDateTime);
-            if (meetingDate.toString() !== 'Invalid Date') {
-                const currentSet = form.getValues('futureMeetingSet');
-                const currentDate = form.getValues('futureMeetingDateTime');
-                
-                if (currentSet !== true) {
-                    form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                    fieldsUpdated++;
-                }
-
-                if (!currentDate || new Date(currentDate).getTime() !== meetingDate.getTime()) {
-                    form.setValue('futureMeetingDateTime', meetingDate, { shouldValidate: true });
-                    fieldsUpdated++;
-                    meetingWasScheduled = true; // A new, valid date was set
-                }
-            }
-        } else if (details.futureMeetingSet) {
-            // This is a fallback if the AI only sets the boolean
-            updateField('futureMeetingSet', details.futureMeetingSet);
-        }
-
-        // Auto-save and close if a meeting was scheduled, otherwise provide feedback on updates
-        if (meetingWasScheduled) {
-            handleFormSubmit(form.getValues());
-            analysisToast.dismiss(); // Dismiss the "analyzing" toast before showing the new one
-            toast({
-                title: "Meeting Auto-Scheduled!",
-                description: `I've scheduled the meeting for ${form.getValues('companyName')}. The visit card has been moved to the 'Scheduled' section in your planner.`,
-                duration: 7000,
-            });
-            return; // Exit early as the form is closing
-        } else if (fieldsUpdated > 0) {
-            toast({
-              title: "AI Analysis Complete",
-              description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes.`,
-            });
-        } else {
-             toast({
-              title: "AI Analysis Complete",
-              description: "I didn't find any new details to add to the form from your notes.",
-            });
-        }
+      updateField('hasBusinessCard', details.hasBusinessCard);
+      updateField('competitorName', details.competitorName);
+      updateField('decisionMakerName', details.decisionMakerName);
+      updateField('decisionMakerTitle', details.decisionMakerTitle);
+      updateField('interestedUnit', details.interestedUnit);
+      updateField('freeTrial', details.freeTrial);
+      updateField('futureMeetingSet', details.futureMeetingSet); // Handles unscheduled meetings
+      
+      if (fieldsUpdated > 0) {
+        toast({
+          title: "AI Analysis Complete",
+          description: `I've updated ${fieldsUpdated} field(s) on the form based on your notes.`,
+        });
+      } else {
+        toast({
+          title: "AI Analysis Complete",
+          description: "I didn't find any new details to add to the form from your notes.",
+        });
       }
     } catch (e: any) {
       toast({
@@ -697,16 +679,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsRecordingNotes(false);
       recognitionRef.current = null;
       
-      // Auto-save after 2 seconds
       setTimeout(() => {
-        handleSaveAndContinue();
-        toast({ title: "Notes Auto-Saved", description: "Your dictated notes have been saved." });
+        handleSaveAndContinue().then(() => {
+          toast({ title: "Notes Auto-Saved", description: "Your dictated notes have been saved." });
+          const finalNotes = form.getValues('notes');
+          if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
+            analyzeNotesAndPopulateForm(finalNotes);
+          }
+        });
       }, 2000);
-
-      const finalNotes = form.getValues('notes');
-      if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
-        analyzeNotesAndPopulateForm(finalNotes);
-      }
     };
 
     recognition.onresult = (event) => {
