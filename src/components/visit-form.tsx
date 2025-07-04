@@ -474,7 +474,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     });
 
     try {
-        const result = await extractVisitDetailsAction({ notes });
+        const result = await extractVisitDetailsAction({ notes, currentDate: format(new Date(), 'yyyy-MM-dd') });
         if (result.error) throw new Error(result.error);
         if (!result.details) {
             toast({ title: "AI Analysis Complete", description: "No new details found in notes." });
@@ -553,7 +553,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         setIsAnalyzingNotes(false);
         analysisToast.dismiss();
     }
-}, [form, toast, onSave, onClose, currentLatitude, currentLongitude]);
+  }, [form, toast, onSave, onClose, currentLatitude, currentLongitude]);
 
   const handleToggleVoiceCompanyName = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1130,7 +1130,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={handleTakeLater}
                     disabled={isUploadingCard}
                   >
