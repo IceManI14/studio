@@ -63,6 +63,13 @@ body {
   }
   
   /* Custom Calendar Day Modifiers */
+  .day-deal-closed:not([aria-selected]) {
+    @apply text-pink-500 font-bold;
+  }
+  .day-deal-closed:hover:not([aria-selected]) {
+    @apply text-pink-400;
+  }
+  
   .day-logged:not([aria-selected]) {
     @apply text-cyan-400 font-bold;
   }

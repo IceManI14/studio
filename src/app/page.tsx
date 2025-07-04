@@ -377,14 +377,25 @@ export default function HomePage() {
   }, [convertedHotLeads]);
 
   const scheduledFutureVisitDays = useMemo(() => {
+    const today = startOfDay(new Date());
     return visits
-      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime)
+      .filter(visit => 
+        visit.futureMeetingSet && 
+        visit.futureMeetingDateTime && 
+        new Date(visit.futureMeetingDateTime) >= today
+      )
       .map(visit => startOfDay(new Date(visit.futureMeetingDateTime!)));
   }, [visits]);
 
   const loggedVisitDays = useMemo(() => {
     const uniqueTimestamps = new Set(visits.map(v => startOfDay(new Date(v.timestamp)).getTime()));
     return Array.from(uniqueTimestamps).map(time => new Date(time));
+  }, [visits]);
+
+  const dealClosedDays = useMemo(() => {
+    return visits
+      .filter(visit => visit.dealClosed)
+      .map(visit => startOfDay(new Date(visit.timestamp)));
   }, [visits]);
 
   const sortedVisitsForCallDay = useMemo(() => {
@@ -1998,12 +2009,14 @@ export default function HomePage() {
                           onSelect={setSelectedDate}
                           className="rounded-md border self-center"
                           modifiers={{
-                            scheduled: scheduledFutureVisitDays,
                             logged: loggedVisitDays,
+                            scheduled: scheduledFutureVisitDays,
+                            dealClosed: dealClosedDays,
                           }}
                           modifiersClassNames={{
                             scheduled: 'day-scheduled',
                             logged: 'day-logged',
+                            dealClosed: 'day-deal-closed',
                             today: 'day_today',
                           }}
                         />
