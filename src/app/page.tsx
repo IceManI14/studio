@@ -1914,7 +1914,47 @@ export default function HomePage() {
                     </h3>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div className="flex flex-col gap-6 items-center">
+                      <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                          className="pl-10 pr-20"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          disabled={isRecordingSearch}
+                        />
+                        {searchTerm && !isRecordingSearch && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                            aria-label="Clear search"
+                            title="Clear search"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleToggleVoiceSearch}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                          aria-label="Search with voice"
+                          title="Search with voice"
+                        >
+                          {isRecordingSearch ? (
+                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                          ) : (
+                            <Mic className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+
                       <div className="flex flex-col items-center">
                         <Calendar
                           mode="single"
@@ -1937,8 +1977,9 @@ export default function HomePage() {
                           </Button>
                         )}
                       </div>
-                      <div className="flex flex-col gap-4 items-center">
-                        <div className="flex flex-col gap-1.5 w-full max-w-xs">
+
+                      <div className="flex flex-col sm:flex-row gap-4 items-center w-full max-w-sm">
+                        <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
                           <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                           <Select
                             value={sortCriteria}
@@ -1955,7 +1996,7 @@ export default function HomePage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                        <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
                           <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
                           <Select
                             value={sortOrder}
@@ -1970,45 +2011,6 @@ export default function HomePage() {
                           </Select>
                         </div>
                       </div>
-                    </div>
-                    <div className="relative mt-6 max-w-sm mx-auto">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                            className="pl-10 pr-20"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            disabled={isRecordingSearch}
-                        />
-                        {searchTerm && !isRecordingSearch && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                                aria-label="Clear search"
-                                title="Clear search"
-                            >
-                                <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                        )}
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleToggleVoiceSearch}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                            aria-label="Search with voice"
-                            title="Search with voice"
-                        >
-                            {isRecordingSearch ? (
-                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                            ) : (
-                                <Mic className="h-4 w-4 text-muted-foreground" />
-                            )}
-                        </Button>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
