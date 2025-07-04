@@ -674,8 +674,6 @@ export default function HomePage() {
         const findIndexAndSave = (currentVisits: Visit[]): {updatedVisits: Visit[], finalVisit: Visit, wasNew: boolean} => {
             let existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
 
-            // If no match by ID, for new visits, check if a card for this company was already created today.
-            // This is the key change to prevent duplicates from rapid saves.
             if (existingVisitIndex === -1 && (!payload.id || payload.id.startsWith('temp_'))) {
                 existingVisitIndex = currentVisits.findIndex(v => 
                     v.companyName === payload.companyName && 
@@ -684,13 +682,10 @@ export default function HomePage() {
             }
 
             if (existingVisitIndex !== -1) {
-                // UPDATE
                 const existingVisit = currentVisits[existingVisitIndex];
-                // Ensure we are using the ID of the visit we found, not a temporary one from the payload.
                 const finalPayload = { ...payload, id: existingVisit.id };
                 const mergedVisit: Visit = { ...existingVisit, ...finalPayload };
 
-                // This logic is important. If notes changed, summary should be cleared.
                 if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
                     mergedVisit.notesSummary = undefined;
                 }
@@ -698,7 +693,6 @@ export default function HomePage() {
                 updatedVisits[existingVisitIndex] = mergedVisit;
                 return { updatedVisits, finalVisit: mergedVisit, wasNew: false };
             } else {
-                // CREATE
                 const visitId = payload.id && !payload.id.startsWith('temp_') ? payload.id : `temp_${crypto.randomUUID()}`;
                 
                 const newVisit: Visit = {
@@ -1905,89 +1899,97 @@ export default function HomePage() {
           
           {activeTab === 'call-day' && (
             <div className="space-y-6">
+              <div className="relative w-full max-w-sm mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                  className="pl-10 pr-20"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={isRecordingSearch}
+                />
+                {searchTerm && !isRecordingSearch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleVoiceSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  aria-label="Search with voice"
+                  title="Search with voice"
+                >
+                  {isRecordingSearch ? (
+                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+
               <Accordion type="single" collapsible className="w-full mb-6">
                 <AccordionItem value="item-1" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
                     <h3 className="text-lg font-medium text-foreground text-center w-full flex items-center justify-center gap-2">
                       <ListFilter className="h-5 w-5 text-primary" />
-                      Filter, Sort & Search Visits
+                      Filter & Sort Options
                     </h3>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
-                      <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                          className="pl-10 pr-20"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          disabled={isRecordingSearch}
-                        />
-                        {searchTerm && !isRecordingSearch && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSearchTerm('')}
-                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                            aria-label="Clear search"
-                            title="Clear search"
-                          >
-                            <X className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleToggleVoiceSearch}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                          aria-label="Search with voice"
-                          title="Search with voice"
-                        >
-                          {isRecordingSearch ? (
-                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                          ) : (
-                            <Mic className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-4 items-center w-full max-w-sm">
-                        <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
-                          <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
-                          <Select
-                            value={sortCriteria}
-                            onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet')}
-                          >
-                            <SelectTrigger id="sort-criteria" className="w-full">
-                              <SelectValue placeholder="Select criteria" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
-                              <SelectItem value="timestamp">Date Visited</SelectItem>
-                              <SelectItem value="dealClosed">Closed Deals</SelectItem>
-                              <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
-                          <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
-                          <Select
-                            value={sortOrder}
-                            onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-                          >
-                            <SelectTrigger id="sort-order" className="w-full">
-                              <SelectValue placeholder="Select order" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+                      <Accordion type="single" collapsible className="w-full max-w-sm">
+                        <AccordionItem value="sorters" className="border-b-0">
+                          <AccordionTrigger className="text-sm">Sort Options</AccordionTrigger>
+                          <AccordionContent>
+                             <div className="flex flex-col sm:flex-row gap-4 items-center w-full pt-2">
+                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                  <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
+                                  <Select
+                                    value={sortCriteria}
+                                    onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet')}
+                                  >
+                                    <SelectTrigger id="sort-criteria" className="w-full">
+                                      <SelectValue placeholder="Select criteria" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
+                                      <SelectItem value="timestamp">Date Visited</SelectItem>
+                                      <SelectItem value="dealClosed">Closed Deals</SelectItem>
+                                      <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                  <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
+                                  <Select
+                                    value={sortOrder}
+                                    onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                                  >
+                                    <SelectTrigger id="sort-order" className="w-full">
+                                      <SelectValue placeholder="Select order" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                      
 
                       <div className="flex flex-col items-center">
                         <Calendar
