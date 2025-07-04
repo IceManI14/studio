@@ -388,14 +388,41 @@ export default function HomePage() {
   }, [visits]);
 
   const loggedVisitDays = useMemo(() => {
-    const uniqueTimestamps = new Set(visits.map(v => startOfDay(new Date(v.timestamp)).getTime()));
-    return Array.from(uniqueTimestamps).map(time => new Date(time));
+    const today = startOfDay(new Date());
+    const timestamps = new Set<number>();
+    
+    visits.forEach(v => {
+      // A day is logged if a visit was created...
+      if (!v.dealClosed) {
+        timestamps.add(startOfDay(new Date(v.timestamp)).getTime());
+      }
+      
+      // ...or if a past meeting occurred, and it wasn't a closed deal.
+      if (v.futureMeetingSet && v.futureMeetingDateTime && !v.dealClosed) {
+          const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
+          if (meetingDay < today) {
+              timestamps.add(meetingDay.getTime());
+          }
+      }
+    });
+
+    return Array.from(timestamps).map(time => new Date(time));
   }, [visits]);
 
   const dealClosedDays = useMemo(() => {
-    return visits
-      .filter(visit => visit.dealClosed)
-      .map(visit => startOfDay(new Date(visit.timestamp)));
+    const closedDays = new Set<number>();
+    visits.forEach(visit => {
+        if (visit.dealClosed) {
+            // Mark the creation day as closed
+            closedDays.add(startOfDay(new Date(visit.timestamp)).getTime());
+            
+            // If there was an associated meeting, mark that day as closed too
+            if (visit.futureMeetingDateTime) {
+                closedDays.add(startOfDay(new Date(visit.futureMeetingDateTime)).getTime());
+            }
+        }
+    });
+    return Array.from(closedDays).map(time => new Date(time));
   }, [visits]);
 
   const sortedVisitsForCallDay = useMemo(() => {
@@ -1955,7 +1982,7 @@ export default function HomePage() {
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
                     <h3 className="text-lg font-medium text-foreground text-center w-full flex items-center justify-center gap-2">
                       <ListFilter className="h-5 w-5 text-primary" />
-                      Filter & Sort Options
+                      Filter, Sort & Search Visits
                     </h3>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
