@@ -48,10 +48,11 @@ Analyze the following notes. Based ONLY on the text provided, extract the specif
 - If a person's name and/or title is mentioned as a contact or decision-maker, extract them.
 - If a specific TDS parts-per-million (PPM) value is mentioned, extract the number.
 - If they are interested in a specific unit, extract its name.
-- If a future meeting was booked or scheduled, set futureMeetingSet to true and extract the date/time into futureMeetingDateTime. If no specific time is mentioned, default to 9:00 AM.
+- If a future meeting was booked, scheduled, or agreed upon (e.g., phrases like "set a meeting", "follow-up scheduled", "booked a demo"), set futureMeetingSet to true. Also, extract the specific date and time into futureMeetingDateTime.
+- **IMPORTANT DATE LOGIC:** If a meeting is confirmed but no specific date is mentioned, you MUST infer the date as the next business day (Monday-Friday) relative to the provided 'currentDate'. If no time is mentioned, you MUST default to 9:00 AM.
 - If a free trial was set up, set freeTrial to true.
 
-Do not infer or make up information that isn't explicitly in the notes. If a piece of information is not present, omit its key from the output.
+Do not infer or make up information that isn't explicitly in the notes beyond the date inference instruction above. If a piece of information is not present, omit its key from the output.
 
 Notes:
 {{{notes}}}`,
