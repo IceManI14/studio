@@ -1906,7 +1906,7 @@ export default function HomePage() {
                         </Alert>
                     </div>
                 ) : (
-                  <Accordion type="single" collapsible className="w-full" defaultValue="todays-visits">
+                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="todays-visits" className="border-none">
                       <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
                         <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2065,7 +2065,7 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <Accordion type="single" collapsible className="w-full" defaultValue="visit-cards">
+                <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="visit-cards" className="border-none">
                     <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
                        <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2101,7 +2101,7 @@ export default function HomePage() {
 
           {activeTab === 'planner' && (
             <div className="space-y-8">
-              <Accordion type="single" collapsible className="w-full" defaultValue="scheduled-visits">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2139,7 +2139,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible className="w-full" defaultValue="unscheduled-visits">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2177,7 +2177,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible className="w-full" defaultValue="flagged-hotspots">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2215,7 +2215,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <Accordion type="single" collapsible className="w-full" defaultValue="active-free-trials">
+              <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
