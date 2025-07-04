@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -1955,29 +1955,6 @@ export default function HomePage() {
                         </Button>
                       </div>
 
-                      <div className="flex flex-col items-center">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          className="rounded-md border self-center"
-                          modifiers={{
-                            scheduled: scheduledFutureVisitDays,
-                            logged: loggedVisitDays,
-                          }}
-                          modifiersClassNames={{
-                            scheduled: 'day-scheduled',
-                            logged: 'day-logged',
-                            today: 'day_today',
-                          }}
-                        />
-                        {selectedDate && (
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
-                            Clear Date Filter
-                          </Button>
-                        )}
-                      </div>
-
                       <div className="flex flex-col sm:flex-row gap-4 items-center w-full max-w-sm">
                         <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
                           <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
@@ -2010,6 +1987,29 @@ export default function HomePage() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          className="rounded-md border self-center"
+                          modifiers={{
+                            scheduled: scheduledFutureVisitDays,
+                            logged: loggedVisitDays,
+                          }}
+                          modifiersClassNames={{
+                            scheduled: 'day-scheduled',
+                            logged: 'day-logged',
+                            today: 'day_today',
+                          }}
+                        />
+                        {selectedDate && (
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
+                            Clear Date Filter
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </AccordionContent>
