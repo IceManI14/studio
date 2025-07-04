@@ -162,6 +162,8 @@ export default function HomePage() {
   const [isRecordingDestinationSearch, setIsRecordingDestinationSearch] = useState(false);
   const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const visitsRef = useRef<Visit[]>([]);
+  const [newsItems, setNewsItems] = useState<string[]>([]);
+  const [newNewsItem, setNewNewsItem] = useState<string>('');
 
   useEffect(() => {
       visitsRef.current = visits;
@@ -241,6 +243,18 @@ export default function HomePage() {
       const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
       if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
       
+      const defaultNewsItems = [
+          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
+          "To compensate, Friday and Tuesday are now fully open for new installations.",
+          "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
+          "The annual sales competition begins next month! More details to follow."
+      ];
+      const storedNews = localStorage.getItem('companyNews');
+      if (storedNews) {
+          setNewsItems(JSON.parse(storedNews));
+      } else {
+          setNewsItems(defaultNewsItems);
+      }
 
       // --- One-Time Startup Sequence ---
       const startupSequenceDone = sessionStorage.getItem('startupSequenceDone');
@@ -375,6 +389,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
   }, [convertedHotLeads]);
+
+  useEffect(() => {
+    localStorage.setItem('companyNews', JSON.stringify(newsItems));
+  }, [newsItems]);
 
   const scheduledFutureVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
@@ -1699,6 +1717,19 @@ export default function HomePage() {
       toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
   }, [isRecordingDestinationSearch, toast, handleSelectDestination]);
+  
+  const handleAddNewsItem = useCallback(() => {
+    if (newNewsItem.trim()) {
+      setNewsItems(prev => [newNewsItem.trim(), ...prev]);
+      setNewNewsItem('');
+      toast({ title: 'News Item Added' });
+    }
+  }, [newNewsItem, toast]);
+
+  const handleDeleteNewsItem = useCallback((indexToDelete: number) => {
+    setNewsItems(prev => prev.filter((_, index) => index !== indexToDelete));
+    toast({ title: 'News Item Removed' });
+  }, [toast]);
 
   return (
     <div className="min-h-screen">
@@ -2410,13 +2441,41 @@ export default function HomePage() {
                     <UiCardTitle>Optimum New England News</UiCardTitle>
                   </UiCardHeader>
                   <UiCardContent>
-                    <ul className="space-y-2 text-sm text-foreground list-disc pl-5">
-                      <li>Please note: No new installs are to be scheduled on Thursdays until further notice.</li>
-                      <li>To compensate, Friday and Tuesday are now fully open for new installations.</li>
-                      <li>We are temporarily out of stock on all i-14 models. Please offer alternatives.</li>
-                      <li>The annual sales competition begins next month! More details to follow.</li>
-                    </ul>
+                    {newsItems.length > 0 ? (
+                        <ul className="space-y-3 text-sm text-foreground list-disc pl-5">
+                          {newsItems.map((item, index) => (
+                            <li key={index} className="flex justify-between items-start group">
+                              <span>{item}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 ml-2"
+                                onClick={() => handleDeleteNewsItem(index)}
+                                aria-label="Delete news item"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-sm text-center">No news items. Add one below.</p>
+                    )}
                   </UiCardContent>
+                  <UiCardFooter className="flex-col items-start gap-2 border-t pt-4">
+                    <Label htmlFor="new-news-item" className="font-semibold text-foreground">Add News Item</Label>
+                    <Textarea 
+                      id="new-news-item"
+                      placeholder="Type a new update for the sales team..."
+                      value={newNewsItem}
+                      onChange={(e) => setNewNewsItem(e.target.value)}
+                      className="min-h-[60px]"
+                    />
+                    <Button onClick={handleAddNewsItem} size="sm" disabled={!newNewsItem.trim()}>
+                      <PlusSquare className="mr-2 h-4 w-4" />
+                      Add to News
+                    </Button>
+                  </UiCardFooter>
                 </UiCard>
                 <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full" size="sm">
                     <Search className="mr-2 h-4 w-4" /> Find Company by Name
