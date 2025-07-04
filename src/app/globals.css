@@ -62,12 +62,12 @@ body {
     background: linear-gradient(135deg, #0a0a0a 0%, #1a2e4a 50%, #2e1a4a 100%);
   }
   
-  /* Custom Calendar Day Modifiers */
-  .day-deal-closed:not([aria-selected]) {
-    @apply text-green-500 font-bold;
+  /* Custom Calendar Day Modifiers - Order defines priority (last one wins) */
+  .day-logged:not([aria-selected]) {
+    @apply text-cyan-400 font-bold;
   }
-  .day-deal-closed:hover:not([aria-selected]) {
-    @apply text-green-400;
+  .day-logged:hover:not([aria-selected]) {
+    @apply text-cyan-300;
   }
 
   .day-scheduled:not([aria-selected]) {
@@ -76,12 +76,12 @@ body {
   .day-scheduled:hover:not([aria-selected]) {
     @apply text-orange-400;
   }
-  
-  .day-logged:not([aria-selected]) {
-    @apply text-cyan-400 font-bold;
+
+  .day-deal-closed:not([aria-selected]) {
+    @apply text-green-500 font-bold;
   }
-  .day-logged:hover:not([aria-selected]) {
-    @apply text-cyan-300;
+  .day-deal-closed:hover:not([aria-selected]) {
+    @apply text-green-400;
   }
 
   /* Ensure today's date is highly visible */
