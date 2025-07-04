@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -731,7 +731,7 @@ export default function HomePage() {
                 updatedVisits[existingVisitIndex] = mergedVisit;
                 return { updatedVisits, finalVisit: mergedVisit, wasNew: false };
             } else {
-                const visitId = payload.id && !payload.id.startsWith('temp_') ? payload.id : `temp_${crypto.randomUUID()}`;
+                const visitId = payload.id && !payload.id.startsWith('temp_') ? `temp_${crypto.randomUUID()}` : payload.id || `temp_${crypto.randomUUID()}`;
                 
                 const newVisit: Visit = {
                   id: visitId,
@@ -2404,6 +2404,20 @@ export default function HomePage() {
               </UiCard>
               )}
               <div className="w-full max-w-2xl mx-auto space-y-6">
+                <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20">
+                  <UiCardHeader className="flex flex-row items-center gap-3">
+                    <Newspaper className="h-6 w-6 text-primary" />
+                    <UiCardTitle>Optimum New England News</UiCardTitle>
+                  </UiCardHeader>
+                  <UiCardContent>
+                    <ul className="space-y-2 text-sm text-foreground list-disc pl-5">
+                      <li>Please note: No new installs are to be scheduled on Thursdays until further notice.</li>
+                      <li>To compensate, Friday and Tuesday are now fully open for new installations.</li>
+                      <li>We are temporarily out of stock on all i-14 models. Please offer alternatives.</li>
+                      <li>The annual sales competition begins next month! More details to follow.</li>
+                    </ul>
+                  </UiCardContent>
+                </UiCard>
                 <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full" size="sm">
                     <Search className="mr-2 h-4 w-4" /> Find Company by Name
                 </Button>
