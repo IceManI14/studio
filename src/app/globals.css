@@ -63,11 +63,11 @@ body {
   }
   
   /* Custom Calendar Day Modifiers */
-  .day-logged:not([aria-selected]) {
-    @apply text-cyan-400 font-bold;
+  .day-deal-closed:not([aria-selected]) {
+    @apply text-green-500 font-bold;
   }
-  .day-logged:hover:not([aria-selected]) {
-    @apply text-cyan-300;
+  .day-deal-closed:hover:not([aria-selected]) {
+    @apply text-green-400;
   }
 
   .day-scheduled:not([aria-selected]) {
@@ -77,11 +77,11 @@ body {
     @apply text-orange-400;
   }
   
-  .day-deal-closed:not([aria-selected]) {
-    @apply text-pink-500 font-bold;
+  .day-logged:not([aria-selected]) {
+    @apply text-cyan-400 font-bold;
   }
-  .day-deal-closed:hover:not([aria-selected]) {
-    @apply text-pink-400;
+  .day-logged:hover:not([aria-selected]) {
+    @apply text-cyan-300;
   }
 
   /* Ensure today's date is highly visible */
