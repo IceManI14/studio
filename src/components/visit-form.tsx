@@ -1005,7 +1005,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   control={form.control}
                   name="interestedUnit"
                   render={({ field }) => (
-                    <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+                    <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                       <FormLabel className="flex items-center">
                         <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
                       </FormLabel>
@@ -1039,7 +1039,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="hasBusinessCard"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -1062,7 +1062,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             {hasBusinessCardValue && (
-              <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+              <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                 <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
                 
                 {isUploadingCard && (
@@ -1175,7 +1175,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="hasTDSReading"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -1203,7 +1203,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 control={form.control}
                 name="tdsValue"
                 render={({ field }) => (
-                  <FormItem className="space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+                  <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                     <FormLabel htmlFor="tdsValue" className="flex items-center">
                       <Droplets className="mr-2 h-5 w-5 text-primary" /> TDS Value (0-1500)
                     </FormLabel>
@@ -1235,7 +1235,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="futureMeetingSet"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -1273,7 +1273,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 control={form.control}
                 name="futureMeetingDateTime"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                     <FormLabel>Meeting Date & Time</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -1376,7 +1376,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               control={form.control}
               name="freeTrial"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -1408,7 +1408,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 control={form.control}
                 name="freeTrialStartDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border p-3 shadow-sm bg-background/10">
+                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                     <FormLabel>Free Trial Start Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -1445,7 +1445,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
             )}
 
-            <div className="space-y-3 pt-2 p-3 border rounded-md bg-background/10">
+            <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Info (Optional)</Label>
               <FormField
                 control={form.control}
@@ -1544,7 +1544,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             </div>
 
             <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="dm-info" className="border rounded-md bg-background/10 p-3">
+                <AccordionItem value="dm-info" className="border border-accent rounded-md bg-background/10 p-3">
                     <AccordionTrigger className="p-0 hover:no-underline font-medium text-base">
                         Decision Maker Info (Optional)
                     </AccordionTrigger>
