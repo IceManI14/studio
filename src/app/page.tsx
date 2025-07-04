@@ -1010,6 +1010,7 @@ export default function HomePage() {
         csvData: csvDataForAi,
         territoryPdfUrl: territoryPdfUrl,
         managedFiles: managedFiles,
+        newsItems: newsItems,
       });
 
       if (result.error) {

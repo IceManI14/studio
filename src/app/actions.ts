@@ -183,6 +183,7 @@ const aiChatPayloadSchema = z.object({
     type: z.string(),
     uploadedAt: z.string(),
   })).optional(),
+  newsItems: z.array(z.string()).optional(),
 });
 
 export async function getAiChatResponseAction(
@@ -217,6 +218,7 @@ export async function getAiChatResponseAction(
       csvData: validatedPayload.csvData,
       territoryPdfUrl: validatedPayload.territoryPdfUrl,
       managedFiles: validatedPayload.managedFiles?.map(f => ({ name: f.name, url: f.url })),
+      newsItems: validatedPayload.newsItems,
     });
 
     return { aiResponse: result.aiResponse };

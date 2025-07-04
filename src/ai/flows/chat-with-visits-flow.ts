@@ -23,6 +23,7 @@ const ChatWithVisitsInputSchema = z.object({
     name: z.string(),
     url: z.string(),
   })).optional().describe('A list of persistently uploaded files (PDFs or CSVs) to use as long-term context.'),
+  newsItems: z.array(z.string()).optional().describe('A list of recent company news items to provide context for advice.'),
 });
 export type ChatWithVisitsInput = z.infer<typeof ChatWithVisitsInputSchema>;
 
@@ -42,6 +43,13 @@ const prompt = ai.definePrompt({
   prompt: `You are Optimum Trailblazer AI, a friendly and highly knowledgeable sales assistant for Optimum, a company specializing in water solutions (filtration, bottle-free coolers, etc.).
 Your goal is to help the salesperson plan their day, analyze visit data, and strategize.
 
+{{#if newsItems}}
+IMPORTANT: You MUST consider the following recent company news items when providing advice. These are critical, time-sensitive updates.
+{{#each newsItems}}
+- {{this}}
+{{/each}}
+
+{{/if}}
 Current Conversation:
 {{{chatHistory}}}
 User: {{{userMessage}}}
@@ -133,10 +141,10 @@ const chatWithVisitsFlow = ai.defineFlow(
     outputSchema: ChatWithVisitsOutputSchema,
   },
   async (input) => {
-    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, csvData, territoryPdfUrl, managedFiles } = input;
+    const { chatHistory, userMessage, visitsContext, modelName, pdfUrl, csvData, territoryPdfUrl, managedFiles, newsItems } = input;
     
     const { output } = await prompt(
-        { chatHistory, userMessage, visitsContext, pdfUrl, csvData, territoryPdfUrl, managedFiles }, 
+        { chatHistory, userMessage, visitsContext, pdfUrl, csvData, territoryPdfUrl, managedFiles, newsItems }, 
         { model: modelName } 
     );
 
