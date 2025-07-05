@@ -237,23 +237,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     >
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start min-h-[3rem]">
-            {/* Left side: Visit number and toggleable date */}
-            <div className="flex flex-col items-start" onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} >
-              <div className="cursor-pointer">
-                  {visit.visitNumber && (
-                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
-                          <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
-                      </Badge>
-                  )}
-                  {isDateVisible && (
-                      <div className="flex items-center text-xs text-muted-foreground mt-1">
-                          <CalendarDays className="mr-1 h-3 w-3" />
-                          {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-                      </div>
-                  )}
-              </div>
+            <div className="flex flex-col items-start cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} >
+                {visit.visitNumber && (
+                    <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
+                        <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
+                    </Badge>
+                )}
+                {isDateVisible && (
+                    <div className="flex items-center text-xs text-muted-foreground mt-1">
+                        <CalendarDays className="mr-1 h-3 w-3" />
+                        {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                    </div>
+                )}
             </div>
-            {/* Confidence stars on the right */}
+            
             <div>
                 {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
                   <div className="flex flex-col items-center">
@@ -278,8 +275,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
         </div>
         
-        <div className="flex flex-row justify-between items-start w-full">
-          <div className="flex-grow space-y-1.5 min-w-0">
+        <div className="space-y-1.5 min-w-0">
+          <div className="space-y-1">
             <CardTitle 
               className="font-headline text-2xl text-accent flex items-start justify-start w-full cursor-pointer text-left"
               onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
@@ -293,38 +290,35 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
                 </p>
             )}
-            
-            <div className="flex flex-col items-start space-y-1 w-full">
-                {visit.interestedUnit && (
-                  <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30">
-                    <h4 className="font-medium text-green-700 dark:text-green-400 text-sm break-words">
-                      Unit of Interest: {visit.interestedUnit}
-                    </h4>
-                  </div>
-                )}
-            </div>
+          </div>
+          
+          {visit.interestedUnit && (
+              <div className="pt-1">
+                <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30 inline-block">
+                  <h4 className="font-medium text-green-700 dark:text-green-400 text-sm break-words">
+                    Unit of Interest: {visit.interestedUnit}
+                  </h4>
+                </div>
+              </div>
+          )}
 
-            <div className="flex flex-col items-start space-y-1">
-              <div className="flex items-center text-xs text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2">
+              <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Business Card: {visit.hasBusinessCard ? 'Yes' : 'No'}
+                Business Card
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
+              <div className="flex items-center">
                 {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading: {visit.hasTDSReading ? `${visit.tdsValue} PPM` : 'Not Yet'}
+                TDS Reading
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
+              <div className="flex items-center">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Future Meeting Set: {visit.futureMeetingSet ? 'Yes' : 'No'}
+                Future Meeting
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
+              <div className="flex items-center">
                 {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Free Trial: {visit.freeTrial ? 'Yes' : 'No'}
-                {visit.freeTrial && visit.freeTrialStartDate && (
-                   <span className="ml-2 font-semibold">({formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MMM d, yyyy')})</span>
-                )}
+                Free Trial
               </div>
-            </div>
           </div>
         </div>
       </CardHeader>
