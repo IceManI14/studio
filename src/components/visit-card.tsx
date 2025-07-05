@@ -4,12 +4,12 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, UserCircle, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation } from 'lucide-react';
+import { Building2, CalendarDays, Edit, FileText, Info, Loader2, MapPin, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeNotesAction } from '@/app/actions';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
@@ -54,9 +54,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       if (result.error) {
         throw new Error(result.error);
       }
-      // This is a temporary solution. Ideally the parent component would handle this update.
-      // For now, we are not updating the visit object here to avoid prop-drilling complexities.
-      // The summary will be updated on the next data fetch.
       toast({ title: "Notes Re-summarized", description: "Summary has been regenerated and will be updated." });
     } catch (error: any) {
       toast({ variant: 'destructive', title: "Error Summarizing", description: error.message || "Could not re-summarize notes." });
@@ -67,77 +64,31 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
 
-
   const getTDSInfo = () => {
     if (!visit.hasTDSReading || typeof visit.tdsValue !== 'number') {
       return null;
     }
     const tds = visit.tdsValue;
-    if (tds <= 50) {
-      return {
-        message: "Optimum Water Quality. Ideal for RO/DI.",
-        variant: "default" as const,
-        icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
-        className: "bg-green-500 hover:bg-green-600 text-white border-green-600"
-      };
-    } else if (tds > 50 && tds <= 100) {
-      return {
-        message: "High Quality Bottled Water.",
-        variant: "default" as const,
-        icon: <CheckCircle2 className="mr-1 h-3 w-3" />,
-        className: "bg-blue-500 hover:bg-blue-600 text-white border-blue-600"
-      };
-    } else if (tds > 100 && tds <= 150) {
-      return {
-        message: "Spring Water.",
-        variant: "secondary" as const,
-        icon: <Wind className="mr-1 h-3 w-3" /> ,
-        className: "bg-sky-500 hover:bg-sky-600 text-white border-sky-600"
-      };
-    } else if (tds > 150 && tds <= 275) {
-      return {
-        message: "Marginally Acceptable Water.",
-        variant: "outline" as const,
-        icon: <AlertTriangle className="mr-1 h-3 w-3" />,
-        className: "text-yellow-700 border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50"
-      };
-    } else if (tds > 275 && tds <= 500) {
-      return {
-        message: "HIGH TDS Water (Tap/Mineral Spring).",
-        variant: "outline" as const,
-        icon: <AlertTriangle className="mr-1 h-3 w-3" />,
-        className: "text-orange-700 border-orange-500 bg-orange-50 hover:bg-orange-100 dark:text-orange-400 dark:border-orange-600 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
-      };
-    } else if (tds > 500) {
-      return {
-        message: (
-          <div className="text-left text-xs w-full">
-            <p className="font-semibold uppercase text-center text-base">
-              Warning!!!!!!
-            </p>
-            <p className="font-semibold uppercase text-center text-xs">
-              EPA Maximum Contaminant Level Exceeded
-            </p>
-            <p className="font-medium text-center">
-              ({tds} PPM)
-            </p>
-            <ul className="list-disc list-outside mt-1 space-y-0.5 pl-4">
-              <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
-              <li>Techs may need to install a pre-filter.</li>
-            </ul>
-          </div>
-        ),
-        variant: "destructive" as const,
-        icon: <ShieldAlert className="mr-1 h-4 w-4" />,
-        className: "items-start"
-      };
-    }
-    return {
-        message: "TDS Level Undefined.",
-        variant: "outline" as const,
-        icon: <ShieldQuestion className="mr-1 h-3 w-3" />,
-        className: "text-gray-700 border-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50"
+    if (tds <= 50) return { message: "Optimum Water Quality. Ideal for RO/DI.", icon: <CheckCircle2 className="mr-1 h-3 w-3" />, className: "bg-green-500 hover:bg-green-600 text-white border-green-600" };
+    if (tds > 50 && tds <= 100) return { message: "High Quality Bottled Water.", icon: <CheckCircle2 className="mr-1 h-3 w-3" />, className: "bg-blue-500 hover:bg-blue-600 text-white border-blue-600" };
+    if (tds > 100 && tds <= 150) return { message: "Spring Water.", icon: <Wind className="mr-1 h-3 w-3" /> , className: "bg-sky-500 hover:bg-sky-600 text-white border-sky-600" };
+    if (tds > 150 && tds <= 275) return { message: "Marginally Acceptable Water.", icon: <AlertTriangle className="mr-1 h-3 w-3" />, className: "text-yellow-700 border-yellow-500 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50" };
+    if (tds > 275 && tds <= 500) return { message: "HIGH TDS Water (Tap/Mineral Spring).", icon: <AlertTriangle className="mr-1 h-3 w-3" />, className: "text-orange-700 border-orange-500 bg-orange-50 hover:bg-orange-100 dark:text-orange-400 dark:border-orange-600 dark:bg-orange-900/30 dark:hover:bg-orange-900/50" };
+    if (tds > 500) return {
+      message: (
+        <div className="text-left text-xs w-full">
+          <p className="font-semibold uppercase text-center text-base">Warning!!!!!!</p>
+          <p className="font-semibold uppercase text-center text-xs">EPA Maximum Contaminant Level Exceeded</p>
+          <p className="font-medium text-center">({tds} PPM)</p>
+          <ul className="list-disc list-outside mt-1 space-y-0.5 pl-4">
+            <li>Salesperson must inform about potential for more service calls (approx. $149 each).</li>
+            <li>Techs may need to install a pre-filter.</li>
+          </ul>
+        </div>
+      ),
+      icon: <ShieldAlert className="mr-1 h-4 w-4" />, className: "items-start bg-destructive text-destructive-foreground"
     };
+    return { message: "TDS Level Undefined.", icon: <ShieldQuestion className="mr-1 h-3 w-3" />, className: "text-gray-700 border-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50" };
   };
 
   const tdsInfo = getTDSInfo();
@@ -147,30 +98,28 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return (
       <Card
         className={cn(
-          "flex flex-col shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card border-2",
+          "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card border-2",
           'border-orange-500 shadow-lg shadow-orange-500/20',
-          !isZoomedView && 'cursor-pointer'
+          'cursor-pointer'
         )}
-        onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
+        onClick={() => onZoom?.(visit)}
       >
-        <CardContent className="p-3 flex-grow flex flex-col space-y-2">
-            <div className="flex-grow space-y-2">
-                <div className="bg-muted/50 p-2 rounded-md">
-                    <h4 className="font-semibold text-foreground flex items-center"><Building2 className="mr-2 h-4 w-4 shrink-0" />{visit.companyName}</h4>
-                </div>
-
-                <div className="space-y-1 bg-black p-2 rounded-md">
-                    <Label htmlFor={`planner-notes-${visit.id}`} className="text-xs font-medium text-muted-foreground">Future Visit Notes</Label>
-                    <div id={`planner-notes-${visit.id}`} className="text-sm text-white whitespace-pre-wrap p-2 border border-zinc-700 rounded bg-black">
-                        {visit.futureMeetingDateTime && (
-                          <p className="font-bold text-yellow-300 mb-2">
-                            Scheduled: {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'MMM d, yyyy, h:mm a')}
-                          </p>
-                        )}
-                        {visit.notes || 'No notes for this visit.'}
-                    </div>
-                </div>
-            </div>
+        <CardHeader className="p-3">
+          <CardTitle className="font-headline text-lg flex items-start">
+            <Building2 className="mr-2 h-4 w-4 shrink-0 mt-1" />
+            {visit.companyName}
+          </CardTitle>
+          {visit.futureMeetingDateTime && (
+              <Badge variant="secondary" className="mt-1 w-fit">
+                <CalendarClock className="mr-2 h-3 w-3"/>
+                {formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'MMM d, h:mm a')}
+              </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="p-3 pt-0 flex-grow">
+          <div className="text-sm text-muted-foreground bg-muted p-2 rounded-md whitespace-pre-wrap h-full">
+            {visit.notes || 'No notes for this visit.'}
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between items-center gap-2 border-t pt-2 mt-auto p-3">
             {visit.latitude && visit.longitude ? (
@@ -189,26 +138,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </Button>
             ) : <div />}
             <div className="flex justify-end items-center gap-2">
-                 {onDictateNotes && (
-                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
-                        <Mic className="h-4 w-4" />
-                    </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                        <Button variant="destructive" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>This action will permanently delete the visit log for {visit.companyName}.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -236,95 +178,44 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start min-h-[3rem]">
-            <div className="flex flex-col items-start cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsDateVisible(p => !p); }} >
-                {visit.visitNumber && (
-                    <Badge variant="secondary" className="text-base font-semibold px-2 py-1">
-                        <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
-                    </Badge>
-                )}
-                {isDateVisible && (
-                    <div className="flex items-center text-xs text-muted-foreground mt-1">
-                        <CalendarDays className="mr-1 h-3 w-3" />
-                        {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-                    </div>
-                )}
-            </div>
-            
-            <div>
-                {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-                  <div className="flex flex-col items-center">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((starValue) => (
-                        <Star
-                          key={starValue}
-                          className={cn(
-                            "h-5 w-5",
-                            starValue <= (visit.partnershipConfidence ?? 0)
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-muted-foreground/50"
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <div className="text-center text-xs text-muted-foreground mt-0.5">
-                      (Partnership Confidence)
-                    </div>
-                  </div>
+        <div className="flex justify-between items-start gap-4">
+            <div className="space-y-1.5 min-w-0 flex-1">
+                <div 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
+                >
+                    <CardTitle className="font-headline text-xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
+                </div>
+                {isCoordsVisible && visit.latitude && visit.longitude && (
+                    <p className="text-xs text-muted-foreground flex items-center justify-start w-full">
+                        <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
+                    </p>
                 )}
             </div>
+            {visit.visitNumber && (
+                <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
+                    <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
+                </Badge>
+            )}
         </div>
         
-        <div className="space-y-1.5 min-w-0">
-          <div className="space-y-1">
-            <CardTitle 
-              className="font-headline text-2xl text-accent flex items-start justify-start w-full cursor-pointer text-left"
-              onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
-            >
-                <Building2 className="mr-2 h-5 w-5 shrink-0 mt-1.5" />
-                <span className="break-words">{visit.companyName}</span>
-            </CardTitle>
-            
-            {isCoordsVisible && visit.latitude && visit.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center justify-start w-full pl-7">
-                    <MapPin className="mr-1 h-3 w-3" /> Lat: {visit.latitude.toFixed(4)}, Lng: {visit.longitude.toFixed(4)}
-                </p>
-            )}
-          </div>
-          
-          {visit.interestedUnit && (
-              <div className="pt-1">
-                <div className="p-1 bg-green-500/10 rounded-md border border-green-500/30 inline-block">
-                  <h4 className="font-medium text-green-700 dark:text-green-400 text-sm break-words">
-                    Unit of Interest: {visit.interestedUnit}
-                  </h4>
-                </div>
-              </div>
-          )}
-
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2">
-              <div className="flex items-center">
-                {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Business Card
-              </div>
-              <div className="flex items-center">
-                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading
-              </div>
-              <div className="flex items-center">
-                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Future Meeting
-              </div>
-              <div className="flex items-center">
-                {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Free Trial
-              </div>
-          </div>
-        </div>
+        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="flex flex-col items-start mt-2">
+            <div className="flex">
+                {[1, 2, 3, 4, 5].map((starValue) => (
+                <Star
+                    key={starValue}
+                    className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                />
+                ))}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">Partnership Confidence</div>
+            </div>
+        )}
       </CardHeader>
 
-      {isZoomedView && (
-        <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
+      <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
+        {isZoomedView ? (
           <Accordion type="multiple" value={openAccordionItems} onValueChange={setOpenAccordionItems} className="w-full space-y-2">
             {/* Future Meeting */}
             {visit.futureMeetingSet && visit.futureMeetingDateTime && (
@@ -332,7 +223,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <CalendarClock className="mr-2 h-5 w-5" /> Future Meeting
                 </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                <AccordionContent className="bg-muted p-3 rounded-md">
                   <p className="text-sm text-muted-foreground">
                     A follow-up meeting is scheduled for: <br />
                     <span className="font-semibold text-foreground">
@@ -349,7 +240,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <FileText className="mr-2 h-5 w-5" /> Notes & AI Summary
                 </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md space-y-3">
+                <AccordionContent className="bg-muted p-3 rounded-md space-y-3">
                   {visit.notesSummary && (
                     <div>
                       <h4 className="font-semibold text-sm mb-1 flex items-center">
@@ -385,7 +276,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <Contact className="mr-2 h-5 w-5" /> Decision Maker & Contact
                 </AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                <AccordionContent className="space-y-2 text-sm bg-muted p-3 rounded-md">
                   {visit.decisionMakerName && <p><strong>Name:</strong> {visit.decisionMakerName}</p>}
                   {visit.decisionMakerTitle && <p><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
                   {visit.decisionMakerContact && <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
@@ -405,7 +296,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <Swords className="mr-2 h-5 w-5" /> Competitor Info
                 </AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                <AccordionContent className="space-y-2 text-sm bg-muted p-3 rounded-md">
                   <p><strong>Competitor:</strong> {visit.competitorName || 'Not specified'}</p>
                   <p><strong>Cooler Type:</strong> {visit.coolerType || 'Not specified'}</p>
                   {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
@@ -426,7 +317,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <FileType className="mr-2 h-5 w-5" /> Business Card
                 </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
+                <AccordionContent className="bg-muted p-3 rounded-md">
                   {isHtmlCard ? (
                     <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md">
                       <p>Cannot display business card. The saved data appears to be HTML content instead of an image. This can happen if the image capture process was interrupted or failed. Please try re-uploading the business card image.</p>
@@ -439,7 +330,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                         data-ai-hint="business card professional"
                         fill
                         style={{ objectFit: 'contain' }}
-                        className="rounded-md border bg-muted"
+                        className="rounded-md border bg-background"
                       />
                     </div>
                   )}
@@ -453,8 +344,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <Droplets className="mr-2 h-5 w-5" /> TDS Reading Details
                 </AccordionTrigger>
-                <AccordionContent className="bg-primary/5 p-3 rounded-md">
-                  <Badge variant={tdsInfo.variant} className={cn("text-sm h-auto whitespace-normal text-left w-full justify-start", tdsInfo.className)}>
+                <AccordionContent className="bg-muted p-3 rounded-md">
+                  <Badge variant={tdsInfo.className.includes('bg-destructive') ? 'destructive' : 'default'} className={cn("text-sm h-auto whitespace-normal text-left w-full justify-start", tdsInfo.className)}>
                     <div className="flex items-start p-1 w-full">
                       <span className="shrink-0 mt-0.5 mr-2">{tdsInfo.icon}</span>
                       <span className="flex-1">{tdsInfo.message}</span>
@@ -470,7 +361,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <AccordionTrigger className="text-base font-semibold text-primary hover:no-underline">
                   <PackageCheck className="mr-2 h-5 w-5" /> Free Trial Details
                 </AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm bg-primary/5 p-3 rounded-md">
+                <AccordionContent className="space-y-2 text-sm bg-muted p-3 rounded-md">
                   <p><strong>Status:</strong> A free trial was set up.</p>
                   {visit.freeTrialStartDate && (
                     <p>
@@ -483,10 +374,39 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </AccordionContent>
               </AccordionItem>
             )}
-
           </Accordion>
-        </CardContent>
-      )}
+        ) : (
+          <div className="space-y-3">
+             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground pt-2">
+                <div className="flex items-center">
+                    {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                    Business Card
+                </div>
+                <div className="flex items-center">
+                    {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                    TDS Reading
+                </div>
+                <div className="flex items-center">
+                    {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                    Future Meeting
+                </div>
+                <div className="flex items-center">
+                    {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                    Free Trial
+                </div>
+            </div>
+            {visit.notesSummary && (
+                <div className="pt-2">
+                    <h4 className="font-semibold text-xs mb-1 flex items-center text-primary">
+                        <Sparkles className="h-3 w-3 mr-1.5" />
+                        AI Summary
+                    </h4>
+                    <p className="text-sm text-foreground bg-muted p-2 rounded-md whitespace-pre-wrap">{visit.notesSummary}</p>
+                </div>
+            )}
+          </div>
+        )}
+      </CardContent>
 
       <CardFooter className="flex justify-between items-center gap-2 border-t pt-4 mt-auto">
         <div 
@@ -506,25 +426,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
         <div className="flex justify-end gap-2">
             {onDictateNotes && (
-              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
                 <Mic className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
               <Edit className="h-4 w-4" />
             </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the visit log for {visit.companyName}.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>This action will permanently delete the visit log for {visit.companyName}.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
