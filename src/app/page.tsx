@@ -350,7 +350,7 @@ export default function HomePage() {
       }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
 
     } else {
-      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support geolocation." });
+      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
       setCurrentCity("Geolocation not supported.");
       setIsFetchingCity(false);
     }
@@ -2868,7 +2868,7 @@ export default function HomePage() {
                                 <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
                             </li>
                             <li>
-                                <strong>Smart Scheduling:</strong> If your notes mention a meeting (e.g., "follow up next Tuesday at 2pm"), Debbie automatically schedules it and moves the visit card to the "Scheduled" section in your planner.
+                                <strong>Smart Scheduling & Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, and <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field.
                             </li>
                             <li>
                                 <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
