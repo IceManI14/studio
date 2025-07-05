@@ -227,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="flex flex-col gap-y-2 text-xs text-muted-foreground pt-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -272,12 +272,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     >
       <CardHeader className="pb-3 relative">
           <div className="absolute top-2 left-2">
-              {visit.visitNumber && (
-                  <div className="flex flex-col items-center">
-                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
-                          {visit.visitNumber}
-                      </Badge>
-                  </div>
+              {visit.timestamp && (
+                  <Badge variant="secondary" className="text-xs font-medium px-2 py-1 h-auto">
+                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy, h:mm a')}
+                  </Badge>
               )}
           </div>
           
@@ -300,10 +298,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="flex flex-col items-center justify-center w-full pt-8">
               <CardTitle className="font-headline text-2xl text-accent-foreground text-center break-words">{visit.companyName}</CardTitle>
               <CardDescription className="text-xs pt-1 text-center">
-                  <div className="flex items-center justify-center">
-                      <CalendarDays className="mr-2 h-3 w-3" />
-                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-                  </div>
                   {(visit.latitude && visit.longitude) && (
                       <div className="flex items-center justify-center">
                           <LocateFixed className="mr-2 h-3 w-3" />
