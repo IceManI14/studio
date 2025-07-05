@@ -2121,7 +2121,7 @@ export default function HomePage() {
               </div>
 
               {sortedVisitsForCallDay.length === 0 ? (
-                <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
                     {selectedDate ? `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
                   </p>
@@ -2130,7 +2130,7 @@ export default function HomePage() {
                 <div className="space-y-4">
                   {sortedVisitsForCallDay.length > 0 && (
                       <>
-                          <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-center justify-center perspective-1000">
+                          <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-start pt-8 justify-center perspective-1000">
                               <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
                                   {sortedVisitsForCallDay.map((visit, i) => {
                                       const distance = i - callDayRolodexIndex;
@@ -2186,7 +2186,7 @@ export default function HomePage() {
               ) : (
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="visit-cards" className="border-none">
-                    <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
                       <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                           {selectedDate ? `Visits for ${format(selectedDate, 'PPP')}` : 'All Visit Cards'} ({sortedVisitsForCallDay.length})
                       </h2>
@@ -2233,7 +2233,7 @@ export default function HomePage() {
                  <div className="space-y-4">
                     {allPlannerVisits.length > 0 ? (
                         <>
-                            <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-center justify-center perspective-1000">
+                            <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-start pt-8 justify-center perspective-1000">
                                 <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
                                     {allPlannerVisits.map((visit, i) => {
                                         const distance = i - plannerRolodexIndex;
@@ -2286,7 +2286,7 @@ export default function HomePage() {
                             </div>
                         </>
                     ) : (
-                        <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                        <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                             <p className="text-xl text-muted-foreground mb-4">Your planner is empty.</p>
                             <p className="text-muted-foreground">Edit a visit to set a future meeting, or convert a "Hot Lead" from the Debbie tab to add it here.</p>
                         </div>
@@ -2296,7 +2296,7 @@ export default function HomePage() {
                 <>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="scheduled-visits" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                         <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                             <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
                         </h2>
@@ -2334,7 +2334,7 @@ export default function HomePage() {
                   
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="unscheduled-visits" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                         <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                             <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
                         </h2>
@@ -2372,7 +2372,7 @@ export default function HomePage() {
                   
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="flagged-hotspots" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                           <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                               <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
                           </h2>
@@ -2410,7 +2410,7 @@ export default function HomePage() {
 
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="active-free-trials" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                         <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                             <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
                         </h2>
@@ -2451,7 +2451,7 @@ export default function HomePage() {
           )}
 
           {activeTab === 'visits' && (
-            <section aria-labelledby="map-section-title" className="p-6 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-xl shadow-xl space-y-6">
+            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center justify-center">
                   <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
                       <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
@@ -2491,7 +2491,7 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card/60 backdrop-blur-sm border-primary/20">
+              <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card border-primary/20">
                 <UiCardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -2601,13 +2601,13 @@ export default function HomePage() {
               <div className="w-full max-w-2xl mx-auto space-y-6">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="news-feed" className="border-none">
-                    <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
                         <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                             <Newspaper className="mr-3 h-7 w-7 text-primary" /> Optimum New England News
                         </h2>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20">
+                      <UiCard className="bg-card border border-primary/20">
                         <UiCardContent className="pt-6">
                           {newsItems.length > 0 ? (
                               <ul className="space-y-3 text-sm text-foreground list-disc pl-5">
@@ -2652,7 +2652,7 @@ export default function HomePage() {
                     <Search className="mr-2 h-4 w-4" /> Find Company by Name
                 </Button>
 
-                <UiCard className="bg-card/60 backdrop-blur-sm border border-primary/20 flex flex-col min-h-[75vh]">
+                <UiCard className="bg-card border border-primary/20 flex flex-col min-h-[75vh]">
                     <UiCardHeader>
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
@@ -2791,7 +2791,7 @@ export default function HomePage() {
           )}
           
           {activeTab === 'about' && (
-            <div className="p-6 bg-card/60 backdrop-blur-sm border-primary/20 rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
+            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start justify-start space-y-6">
                 <div className="w-full text-center">
                     <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
                         <InfoIcon className="mr-3 h-7 w-7" /> App Guide
