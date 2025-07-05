@@ -1654,13 +1654,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || isSuggestingCompany || isCameraViewVisible || isUploadingCard || isAnalyzingNotes}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow">
+              <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow w-full">
                 {(isSaving || isSuggestingCompany || isUploadingCard || isAnalyzingNotes) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {(isRecordingNotes || isRecordingCompanyName) && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
-                {initialData?.id ? 'Save Changes' : 'Log Meeting'}
+                {initialData?.id ? 'Save Changes & Close' : 'Log Meeting & Close'}
               </Button>
             </DialogFooter>
           </form>
