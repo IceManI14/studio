@@ -184,7 +184,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     className="flex items-center gap-2 cursor-pointer"
                     onClick={(e) => { e.stopPropagation(); setIsCoordsVisible(p => !p); }}
                 >
-                    <CardTitle className="font-headline text-xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
+                    <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
                 </div>
                 {isCoordsVisible && visit.latitude && visit.longitude && (
                     <p className="text-xs text-muted-foreground flex items-center justify-start w-full">
