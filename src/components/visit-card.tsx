@@ -227,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-y-2 text-xs text-muted-foreground pt-2">
+        <div className="flex flex-col gap-y-2 text-xs text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -271,6 +271,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3 relative">
+          <div className="absolute top-2 left-2">
+              {visit.visitNumber && (
+                  <div className="flex flex-col items-center">
+                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
+                          {visit.visitNumber}
+                      </Badge>
+                  </div>
+              )}
+          </div>
+          
+          <div className="absolute top-2 right-2">
+              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+                  <div className="flex flex-col items-center shrink-0">
+                      <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
+                      <div className="flex">
+                          {[1, 2, 3, 4, 5].map((starValue) => (
+                              <Star
+                                  key={starValue}
+                                  className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                              />
+                          ))}
+                      </div>
+                  </div>
+              )}
+          </div>
+
           <div className="flex flex-col items-center justify-center w-full pt-8">
               <CardTitle className="font-headline text-2xl text-accent-foreground text-center break-words">{visit.companyName}</CardTitle>
               <CardDescription className="text-xs pt-1 text-center">
@@ -285,33 +311,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                       </div>
                   )}
               </CardDescription>
-          </div>
-
-          <div className="absolute top-2 left-2">
-              {visit.visitNumber && (
-                  <div className="flex flex-col items-center">
-                      <div className="text-xs text-muted-foreground mb-0.5">Visit #</div>
-                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
-                          {visit.visitNumber}
-                      </Badge>
-                  </div>
-              )}
-          </div>
-
-          <div className="absolute top-2 right-2">
-              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-                  <div className="flex flex-col items-center">
-                      <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
-                      <div className="flex">
-                          {[1, 2, 3, 4, 5].map((starValue) => (
-                              <Star
-                                  key={starValue}
-                                  className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
-                              />
-                          ))}
-                      </div>
-                  </div>
-              )}
           </div>
       </CardHeader>
 
@@ -373,5 +372,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    
