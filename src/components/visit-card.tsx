@@ -270,46 +270,49 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
-      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-4">
-        <div className="flex-1">
-          <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
-          <CardDescription className="text-xs pt-1">
-              <div className="flex items-center">
-                  <CalendarDays className="mr-2 h-3 w-3" />
-                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-              </div>
-              {(visit.latitude && visit.longitude) && (
-                  <div className="flex items-center">
-                      <LocateFixed className="mr-2 h-3 w-3" />
-                      {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
+      <CardHeader className="pb-3 relative">
+          <div className="flex flex-col items-center justify-center w-full pt-8">
+              <CardTitle className="font-headline text-2xl text-accent-foreground text-center break-words">{visit.companyName}</CardTitle>
+              <CardDescription className="text-xs pt-1 text-center">
+                  <div className="flex items-center justify-center">
+                      <CalendarDays className="mr-2 h-3 w-3" />
+                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+                  </div>
+                  {(visit.latitude && visit.longitude) && (
+                      <div className="flex items-center justify-center">
+                          <LocateFixed className="mr-2 h-3 w-3" />
+                          {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
+                      </div>
+                  )}
+              </CardDescription>
+          </div>
+
+          <div className="absolute top-2 left-2">
+              {visit.visitNumber && (
+                  <div className="flex flex-col items-center">
+                      <div className="text-xs text-muted-foreground mb-0.5">Visit #</div>
+                      <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
+                          {visit.visitNumber}
+                      </Badge>
                   </div>
               )}
-          </CardDescription>
-        </div>
+          </div>
 
-        <div className="flex items-start shrink-0 space-x-4">
-          {visit.visitNumber && (
-            <div className="flex flex-col items-center">
-              <div className="text-xs text-muted-foreground mb-0.5">Visit #</div>
-              <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
-                {visit.visitNumber}
-              </Badge>
-            </div>
-          )}
-          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex flex-col items-center">
-                <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
-                <div className="flex">
-                    {[1, 2, 3, 4, 5].map((starValue) => (
-                    <Star
-                        key={starValue}
-                        className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
-                    />
-                    ))}
-                </div>
-            </div>
-          )}
-        </div>
+          <div className="absolute top-2 right-2">
+              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+                  <div className="flex flex-col items-center">
+                      <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
+                      <div className="flex">
+                          {[1, 2, 3, 4, 5].map((starValue) => (
+                              <Star
+                                  key={starValue}
+                                  className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                              />
+                          ))}
+                      </div>
+                  </div>
+              )}
+          </div>
       </CardHeader>
 
       <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
@@ -370,3 +373,5 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
+    
