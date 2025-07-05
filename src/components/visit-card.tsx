@@ -260,9 +260,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card border-2",
+        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card border-2",
         variant === 'planner' 
-          ? 'border-orange-500 shadow-lg shadow-orange-500/20' 
+          ? 'border-orange-500 shadow-orange-500/20' 
           : visit.dealClosed 
             ? 'border-green-500' 
             : 'border-sky-500',
@@ -270,23 +270,25 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       )}
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
-      <CardHeader className="pb-3">
-        <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
-        <CardDescription className="text-xs pt-1">
-            <div className="flex items-center">
-                <CalendarDays className="mr-2 h-3 w-3" />
-                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
-            </div>
-            {(visit.latitude && visit.longitude) && (
-                <div className="flex items-center">
-                    <LocateFixed className="mr-2 h-3 w-3" />
-                    {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
-                </div>
-            )}
-        </CardDescription>
+      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-4">
+        <div className="flex-1">
+          <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
+          <CardDescription className="text-xs pt-1">
+              <div className="flex items-center">
+                  <CalendarDays className="mr-2 h-3 w-3" />
+                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+              </div>
+              {(visit.latitude && visit.longitude) && (
+                  <div className="flex items-center">
+                      <LocateFixed className="mr-2 h-3 w-3" />
+                      {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
+                  </div>
+              )}
+          </CardDescription>
+        </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex flex-col items-start mt-2">
+            <div className="flex flex-col items-end shrink-0">
             <div className="flex">
                 {[1, 2, 3, 4, 5].map((starValue) => (
                 <Star
