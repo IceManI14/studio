@@ -228,18 +228,18 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-y-2 text-sm text-muted-foreground pt-2">
+        <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
             </div>
             <div className="flex items-center">
-                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading
-            </div>
-            <div className="flex items-center">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Future Meeting
+            </div>
+            <div className="flex items-center">
+                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                TDS Reading
             </div>
             <div className="flex items-center">
                 {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
