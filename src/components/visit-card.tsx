@@ -272,16 +272,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3 relative">
-          <div className="absolute top-2 left-2">
-              {visit.timestamp && (
-                  <Badge variant="secondary" className="text-xs font-medium px-2 py-1 h-auto">
-                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy, h:mm a')}
-                  </Badge>
-              )}
-          </div>
-          
           <div className="absolute top-2 right-2 flex flex-col items-center">
-              <div className="text-xs text-muted-foreground">Partnership Confidence</div>
+              <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
               <div className="flex">
                   {[1, 2, 3, 4, 5].map((starValue) => (
                       <Star
@@ -292,7 +284,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center w-full pt-8">
+          <div className="flex flex-col items-center justify-center w-full pt-4">
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
@@ -302,14 +294,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               >
                 {visit.companyName}
               </CardTitle>
-              <CardDescription className="text-xs pt-1 text-center h-5">
+              {visit.timestamp && (
+                <CardDescription className="text-xs pt-1 text-center">
+                    {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
+                </CardDescription>
+              )}
+              <div className="text-xs pt-1 text-center h-5">
                   {showLocation && visit.latitude && visit.longitude && (
                       <div className="flex items-center justify-center animate-in fade-in">
                           <LocateFixed className="mr-2 h-3 w-3" />
                           {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
                       </div>
                   )}
-              </CardDescription>
+              </div>
           </div>
       </CardHeader>
 
