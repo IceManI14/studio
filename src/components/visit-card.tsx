@@ -227,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="flex flex-col gap-y-2 text-xs text-muted-foreground pt-2">
+        <div className="grid grid-cols-1 gap-y-2 text-xs text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -288,7 +288,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex flex-col items-end shrink-0">
+            <div className="flex flex-col items-center shrink-0">
                 <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
                 <div className="flex">
                     {[1, 2, 3, 4, 5].map((starValue) => (
