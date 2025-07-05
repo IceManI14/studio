@@ -33,7 +33,7 @@ body {
   .dark {
     --background: 240 10% 4%; /* Near-black */
     --foreground: 210 40% 98%; /* White */
-    --card: 243 79% 58% / 0.05;
+    --card: 240 6% 12%; /* Opaque dark blue-grey */
     --card-foreground: 210 40% 98%;
     --popover: 242 47% 10%;
     --popover-foreground: 210 40% 98%;
