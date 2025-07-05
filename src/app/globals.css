@@ -98,6 +98,12 @@ body {
 }
 
 @layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .rolodex-preserve-3d {
+    transform-style: preserve-3d;
+  }
   .aurora-text {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #a855f7 50%, #ec4899 75%, #06b6d4 100%);
     -webkit-background-clip: text;

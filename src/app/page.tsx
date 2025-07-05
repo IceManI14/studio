@@ -404,7 +404,8 @@ export default function HomePage() {
       .filter(visit => 
         visit.futureMeetingSet && 
         visit.futureMeetingDateTime && 
-        new Date(visit.futureMeetingDateTime) >= today
+        new Date(visit.futureMeetingDateTime) >= today &&
+        !visit.dealClosed
       )
       .map(visit => startOfDay(new Date(visit.futureMeetingDateTime!)));
   }, [visits]);
@@ -2125,77 +2126,94 @@ export default function HomePage() {
                     {selectedDate ? `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
                   </p>
                 </div>
+              ) : callDayViewMode === 'rolodex' ? (
+                <div className="space-y-4">
+                  {sortedVisitsForCallDay.length > 0 && (
+                      <>
+                          <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-center justify-center perspective-1000">
+                              <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
+                                  {sortedVisitsForCallDay.map((visit, i) => {
+                                      const distance = i - callDayRolodexIndex;
+                                      if (Math.abs(distance) > 2) return null;
+
+                                      return (
+                                          <div
+                                              key={visit.id}
+                                              className="absolute w-full h-full transition-all duration-300 ease-out"
+                                              style={{
+                                                  transform: `translateZ(-${Math.abs(distance) * 60}px) rotateX(${distance * -10}deg)`,
+                                                  zIndex: sortedVisitsForCallDay.length - Math.abs(distance),
+                                                  opacity: distance === 0 ? 1 : 0.4,
+                                                  pointerEvents: distance === 0 ? 'auto' : 'none',
+                                              }}
+                                          >
+                                              <VisitCard
+                                                  visit={visit}
+                                                  onEdit={handleEditVisit}
+                                                  onDelete={handleDeleteVisit}
+                                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                                  onLogFollowUp={handleLogFollowUp}
+                                                  onDictateNotes={handleDictateNotes}
+                                                  isZoomedView={true}
+                                              />
+                                          </div>
+                                      );
+                                  })}
+                              </div>
+                          </div>
+                          <div className="flex items-center justify-center gap-4">
+                              <Button
+                                  onClick={() => setCallDayRolodexIndex(prev => Math.max(0, prev - 1))}
+                                  disabled={callDayRolodexIndex === 0}
+                                  variant="outline"
+                              >
+                                  Previous
+                              </Button>
+                              <span className="text-sm font-medium text-muted-foreground">
+                                  {callDayRolodexIndex + 1} of {sortedVisitsForCallDay.length}
+                              </span>
+                              <Button
+                                  onClick={() => setCallDayRolodexIndex(prev => Math.min(sortedVisitsForCallDay.length - 1, prev + 1))}
+                                  disabled={callDayRolodexIndex === sortedVisitsForCallDay.length - 1}
+                                  variant="outline"
+                              >
+                                  Next
+                              </Button>
+                          </div>
+                      </>
+                  )}
+                </div>
               ) : (
-                callDayViewMode === 'grid' ? (
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="visit-cards" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
-                        <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                            {selectedDate ? `Visits for ${format(selectedDate, 'PPP')}` : 'All Visit Cards'} ({sortedVisitsForCallDay.length})
-                        </h2>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                          {sortedVisitsForCallDay.map((visit, index) => (
-                            <div 
-                              key={visit.id}
-                              ref={(el) => { callDayCardRefs.current[index] = el; }}
-                              data-card-index={index.toString()}
-                            >
-                              <VisitCard
-                                visit={visit}
-                                onEdit={handleEditVisit}
-                                onDelete={handleDeleteVisit}
-                                onUpdateDealClosed={handleUpdateDealClosed}
-                                onZoom={setZoomedVisit}
-                                onLogFollowUp={handleLogFollowUp}
-                                onDictateNotes={handleDictateNotes}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                ) : (
-                    <div className="space-y-4">
-                        {sortedVisitsForCallDay.length > 0 && (
-                            <>
-                                <div className="flex items-center justify-between">
-                                    <Button
-                                        onClick={() => setCallDayRolodexIndex(prev => Math.max(0, prev - 1))}
-                                        disabled={callDayRolodexIndex === 0}
-                                        variant="outline"
-                                    >
-                                        Previous
-                                    </Button>
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {callDayRolodexIndex + 1} of {sortedVisitsForCallDay.length}
-                                    </span>
-                                    <Button
-                                        onClick={() => setCallDayRolodexIndex(prev => Math.min(sortedVisitsForCallDay.length - 1, prev + 1))}
-                                        disabled={callDayRolodexIndex === sortedVisitsForCallDay.length - 1}
-                                        variant="outline"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                                {sortedVisitsForCallDay[callDayRolodexIndex] && (
-                                    <VisitCard
-                                        key={sortedVisitsForCallDay[callDayRolodexIndex].id}
-                                        visit={sortedVisitsForCallDay[callDayRolodexIndex]}
-                                        onEdit={handleEditVisit}
-                                        onDelete={handleDeleteVisit}
-                                        onUpdateDealClosed={handleUpdateDealClosed}
-                                        onLogFollowUp={handleLogFollowUp}
-                                        onDictateNotes={handleDictateNotes}
-                                        isZoomedView={true}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </div>
-                )
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="visit-cards" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                      <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          {selectedDate ? `Visits for ${format(selectedDate, 'PPP')}` : 'All Visit Cards'} ({sortedVisitsForCallDay.length})
+                      </h2>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {sortedVisitsForCallDay.map((visit, index) => (
+                          <div 
+                            key={visit.id}
+                            ref={(el) => { callDayCardRefs.current[index] = el; }}
+                            data-card-index={index.toString()}
+                          >
+                            <VisitCard
+                              visit={visit}
+                              onEdit={handleEditVisit}
+                              onDelete={handleDeleteVisit}
+                              onUpdateDealClosed={handleUpdateDealClosed}
+                              onZoom={setZoomedVisit}
+                              onLogFollowUp={handleLogFollowUp}
+                              onDictateNotes={handleDictateNotes}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
             </div>
           )}
@@ -2211,7 +2229,70 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              {plannerViewMode === 'grid' ? (
+              {plannerViewMode === 'rolodex' ? (
+                 <div className="space-y-4">
+                    {allPlannerVisits.length > 0 ? (
+                        <>
+                            <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-center justify-center perspective-1000">
+                                <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
+                                    {allPlannerVisits.map((visit, i) => {
+                                        const distance = i - plannerRolodexIndex;
+                                        if (Math.abs(distance) > 2) return null;
+
+                                        return (
+                                            <div
+                                                key={visit.id}
+                                                className="absolute w-full h-full transition-all duration-300 ease-out"
+                                                style={{
+                                                    transform: `translateZ(-${Math.abs(distance) * 60}px) rotateX(${distance * -10}deg)`,
+                                                    zIndex: allPlannerVisits.length - Math.abs(distance),
+                                                    opacity: distance === 0 ? 1 : 0.4,
+                                                    pointerEvents: distance === 0 ? 'auto' : 'none',
+                                                }}
+                                            >
+                                                <VisitCard
+                                                    visit={visit}
+                                                    onEdit={handleEditVisit}
+                                                    onDelete={handleDeleteVisit}
+                                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                                    onLogFollowUp={handleLogFollowUp}
+                                                    onDictateNotes={handleDictateNotes}
+                                                    isZoomedView={true}
+                                                    variant="planner"
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-center gap-4">
+                                <Button
+                                    onClick={() => setPlannerRolodexIndex(prev => Math.max(0, prev - 1))}
+                                    disabled={plannerRolodexIndex === 0}
+                                    variant="outline"
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    {plannerRolodexIndex + 1} of {allPlannerVisits.length}
+                                </span>
+                                <Button
+                                    onClick={() => setPlannerRolodexIndex(prev => Math.min(allPlannerVisits.length - 1, prev + 1))}
+                                    disabled={plannerRolodexIndex === allPlannerVisits.length - 1}
+                                    variant="outline"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
+                            <p className="text-xl text-muted-foreground mb-4">Your planner is empty.</p>
+                            <p className="text-muted-foreground">Edit a visit to set a future meeting, or convert a "Hot Lead" from the Debbie tab to add it here.</p>
+                        </div>
+                    )}
+                </div>
+              ) : (
                 <>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="scheduled-visits" className="border-none">
@@ -2365,50 +2446,6 @@ export default function HomePage() {
                     </AccordionItem>
                   </Accordion>
                 </>
-              ) : (
-                <div className="space-y-4">
-                    {allPlannerVisits.length > 0 ? (
-                        <>
-                            <div className="flex items-center justify-between">
-                                <Button
-                                    onClick={() => setPlannerRolodexIndex(prev => Math.max(0, prev - 1))}
-                                    disabled={plannerRolodexIndex === 0}
-                                    variant="outline"
-                                >
-                                    Previous
-                                </Button>
-                                <span className="text-sm font-medium text-muted-foreground">
-                                    {plannerRolodexIndex + 1} of {allPlannerVisits.length}
-                                </span>
-                                <Button
-                                    onClick={() => setPlannerRolodexIndex(prev => Math.min(allPlannerVisits.length - 1, prev + 1))}
-                                    disabled={plannerRolodexIndex === allPlannerVisits.length - 1}
-                                    variant="outline"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                            {allPlannerVisits[plannerRolodexIndex] && (
-                                <VisitCard
-                                    key={allPlannerVisits[plannerRolodexIndex].id}
-                                    visit={allPlannerVisits[plannerRolodexIndex]}
-                                    onEdit={handleEditVisit}
-                                    onDelete={handleDeleteVisit}
-                                    onUpdateDealClosed={handleUpdateDealClosed}
-                                    onLogFollowUp={handleLogFollowUp}
-                                    onDictateNotes={handleDictateNotes}
-                                    isZoomedView={true}
-                                    variant="planner"
-                                />
-                            )}
-                        </>
-                    ) : (
-                        <div className="text-center py-10 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-lg shadow-lg">
-                            <p className="text-xl text-muted-foreground mb-4">Your planner is empty.</p>
-                            <p className="text-muted-foreground">Edit a visit to set a future meeting, or convert a "Hot Lead" from the Debbie tab to add it here.</p>
-                        </div>
-                    )}
-                </div>
               )}
             </div>
           )}
