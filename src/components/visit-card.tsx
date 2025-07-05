@@ -147,7 +147,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return (
       <Card
         className={cn(
-          "flex flex-col shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
+          "flex flex-col shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card border-2",
           'border-orange-500 shadow-lg shadow-orange-500/20',
           !isZoomedView && 'cursor-pointer'
         )}
@@ -225,7 +225,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card/60 backdrop-blur-sm border-2",
+        "flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-card border-2",
         variant === 'planner' 
           ? 'border-orange-500 shadow-lg shadow-orange-500/20' 
           : visit.dealClosed 
