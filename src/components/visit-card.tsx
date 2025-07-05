@@ -260,7 +260,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card border-2",
+        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card/95 border-2",
         variant === 'planner' 
           ? 'border-orange-500 shadow-orange-500/20' 
           : visit.dealClosed 
