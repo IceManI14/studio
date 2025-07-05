@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { readFromDropboxLinkTool } from './dropbox-tool';
 
 const ChatWithVisitsInputSchema = z.object({
   chatHistory: z.string().describe('The conversation history between the user and AI, with each turn on a new line, prefixed by "User:" or "AI:".'),
@@ -40,6 +41,7 @@ const prompt = ai.definePrompt({
   name: 'chatWithVisitsPrompt',
   input: {schema: ChatWithVisitsInputSchema.omit({modelName: true})}, // modelName is used by the flow, not the prompt template directly
   output: {schema: ChatWithVisitsOutputSchema},
+  tools: [readFromDropboxLinkTool],
   prompt: `You are Optimum Trailblazer AI, a friendly and highly knowledgeable sales assistant for Optimum, a company specializing in water solutions (filtration, bottle-free coolers, etc.).
 Your goal is to help the salesperson plan their day, analyze visit data, and strategize.
 
@@ -104,9 +106,9 @@ When analyzing the attached CSV data, provide insights based on its content.
 {{/if}}
 {{/if}}
 
-{{#if pdfUrl}}
-If a file is provided, refer to its content when answering questions or providing analysis related to it.
-{{/if}}
+**File Handling Instructions:**
+- For PDFs or CSVs attached via the app's upload feature, their content is already available to you under the "Managed Files", "Territory Document", or temporary PDF/CSV sections.
+- If the user provides a Dropbox link in their message, you MUST use the \`readFromDropboxLink\` tool to fetch its content. Analyze the retrieved content to answer the user's query.
 
 Always consider the territory information and any managed files when providing recommendations about locations or planning.
 Keep your responses focused on sales strategy, visit planning, and analyzing customer interactions.
