@@ -131,9 +131,6 @@ export default function HomePage() {
   const [isRecordingChat, setIsRecordingChat] = useState(false);
   const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const callDayCardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const isAutoScrollingRef = useRef(false);
-
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
@@ -164,10 +161,6 @@ export default function HomePage() {
   const visitsRef = useRef<Visit[]>([]);
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState<string>('');
-  const [callDayViewMode, setCallDayViewMode] = useState<'grid' | 'rolodex'>('grid');
-  const [plannerViewMode, setPlannerViewMode] = useState<'grid' | 'rolodex'>('grid');
-  const [callDayRolodexIndex, setCallDayRolodexIndex] = useState(0);
-  const [plannerRolodexIndex, setPlannerRolodexIndex] = useState(0);
 
   useEffect(() => {
       visitsRef.current = visits;
@@ -547,22 +540,6 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
   }, [visits]);
 
-  const allPlannerVisits = useMemo(() => {
-    const all = [...scheduledVisits, ...unscheduledFutureVisits, ...flaggedHotspots, ...activeFreeTrials];
-    const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
-    unique.sort((a, b) => {
-        const timeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
-        const timeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime).getTime() : Infinity;
-        if (timeA !== Infinity || timeB !== Infinity) {
-            if (timeA === Infinity) return 1;
-            if (timeB === Infinity) return -1;
-            return timeA - timeB;
-        }
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    });
-    return unique;
-  }, [scheduledVisits, unscheduledFutureVisits, flaggedHotspots, activeFreeTrials]);
-
   const todaysVisits = useMemo(() => {
     return visits.filter(visit => isToday(new Date(visit.timestamp)));
   }, [visits]);
@@ -576,10 +553,6 @@ export default function HomePage() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
-
-  useEffect(() => {
-    callDayCardRefs.current = Array(sortedVisitsForCallDay.length).fill(null);
-  }, [sortedVisitsForCallDay.length]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -2111,77 +2084,11 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <div className="flex justify-center gap-2">
-                  <Button variant={callDayViewMode === 'grid' ? 'default' : 'outline'} size="icon" onClick={() => setCallDayViewMode('grid')} aria-label="Grid View">
-                      <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button variant={callDayViewMode === 'rolodex' ? 'default' : 'outline'} size="icon" onClick={() => { setCallDayViewMode('rolodex'); setCallDayRolodexIndex(0); }} aria-label="Roladex View">
-                      <Square className="h-4 w-4" />
-                  </Button>
-              </div>
-
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
                     {selectedDate ? `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
                   </p>
-                </div>
-              ) : callDayViewMode === 'rolodex' ? (
-                <div className="space-y-4">
-                  {sortedVisitsForCallDay.length > 0 && (
-                      <>
-                          <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-start pt-8 justify-center perspective-1000">
-                              <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
-                                  {sortedVisitsForCallDay.map((visit, i) => {
-                                      const distance = i - callDayRolodexIndex;
-                                      if (Math.abs(distance) > 2) return null;
-
-                                      return (
-                                          <div
-                                              key={visit.id}
-                                              className="absolute w-full h-full transition-all duration-300 ease-out"
-                                              style={{
-                                                  transform: `translateZ(-${Math.abs(distance) * 60}px) rotateX(${distance * -10}deg)`,
-                                                  zIndex: sortedVisitsForCallDay.length - Math.abs(distance),
-                                                  opacity: distance === 0 ? 1 : 0.4,
-                                                  pointerEvents: distance === 0 ? 'auto' : 'none',
-                                              }}
-                                          >
-                                              <VisitCard
-                                                  visit={visit}
-                                                  onEdit={handleEditVisit}
-                                                  onDelete={handleDeleteVisit}
-                                                  onUpdateDealClosed={handleUpdateDealClosed}
-                                                  onLogFollowUp={handleLogFollowUp}
-                                                  onDictateNotes={handleDictateNotes}
-                                                  isZoomedView={true}
-                                              />
-                                          </div>
-                                      );
-                                  })}
-                              </div>
-                          </div>
-                          <div className="flex items-center justify-center gap-4">
-                              <Button
-                                  onClick={() => setCallDayRolodexIndex(prev => Math.max(0, prev - 1))}
-                                  disabled={callDayRolodexIndex === 0}
-                                  variant="outline"
-                              >
-                                  Previous
-                              </Button>
-                              <span className="text-sm font-medium text-muted-foreground">
-                                  {callDayRolodexIndex + 1} of {sortedVisitsForCallDay.length}
-                              </span>
-                              <Button
-                                  onClick={() => setCallDayRolodexIndex(prev => Math.min(sortedVisitsForCallDay.length - 1, prev + 1))}
-                                  disabled={callDayRolodexIndex === sortedVisitsForCallDay.length - 1}
-                                  variant="outline"
-                              >
-                                  Next
-                              </Button>
-                          </div>
-                      </>
-                  )}
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
@@ -2193,11 +2100,9 @@ export default function HomePage() {
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {sortedVisitsForCallDay.map((visit, index) => (
+                        {sortedVisitsForCallDay.map((visit) => (
                           <div 
                             key={visit.id}
-                            ref={(el) => { callDayCardRefs.current[index] = el; }}
-                            data-card-index={index.toString()}
                           >
                             <VisitCard
                               visit={visit}
@@ -2220,233 +2125,157 @@ export default function HomePage() {
 
           {activeTab === 'planner' && (
             <div className="space-y-8">
-              <div className="flex justify-center gap-2">
-                <Button variant={plannerViewMode === 'grid' ? 'default' : 'outline'} size="icon" onClick={() => setPlannerViewMode('grid')} aria-label="Grid View">
-                    <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button variant={plannerViewMode === 'rolodex' ? 'default' : 'outline'} size="icon" onClick={() => { setPlannerViewMode('rolodex'); setPlannerRolodexIndex(0); }} aria-label="Roladex View">
-                    <Square className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {plannerViewMode === 'rolodex' ? (
-                 <div className="space-y-4">
-                    {allPlannerVisits.length > 0 ? (
-                        <>
-                            <div className="relative w-full min-h-[550px] sm:min-h-[600px] flex items-start pt-8 justify-center perspective-1000">
-                                <div className="w-full sm:w-4/5 md:w-3/5 lg:w-1/2 h-full rolodex-preserve-3d relative">
-                                    {allPlannerVisits.map((visit, i) => {
-                                        const distance = i - plannerRolodexIndex;
-                                        if (Math.abs(distance) > 2) return null;
-
-                                        return (
-                                            <div
-                                                key={visit.id}
-                                                className="absolute w-full h-full transition-all duration-300 ease-out"
-                                                style={{
-                                                    transform: `translateZ(-${Math.abs(distance) * 60}px) rotateX(${distance * -10}deg)`,
-                                                    zIndex: allPlannerVisits.length - Math.abs(distance),
-                                                    opacity: distance === 0 ? 1 : 0.4,
-                                                    pointerEvents: distance === 0 ? 'auto' : 'none',
-                                                }}
-                                            >
-                                                <VisitCard
-                                                    visit={visit}
-                                                    onEdit={handleEditVisit}
-                                                    onDelete={handleDeleteVisit}
-                                                    onUpdateDealClosed={handleUpdateDealClosed}
-                                                    onLogFollowUp={handleLogFollowUp}
-                                                    onDictateNotes={handleDictateNotes}
-                                                    isZoomedView={true}
-                                                    variant="planner"
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-center gap-4">
-                                <Button
-                                    onClick={() => setPlannerRolodexIndex(prev => Math.max(0, prev - 1))}
-                                    disabled={plannerRolodexIndex === 0}
-                                    variant="outline"
-                                >
-                                    Previous
-                                </Button>
-                                <span className="text-sm font-medium text-muted-foreground">
-                                    {plannerRolodexIndex + 1} of {allPlannerVisits.length}
-                                </span>
-                                <Button
-                                    onClick={() => setPlannerRolodexIndex(prev => Math.min(allPlannerVisits.length - 1, prev + 1))}
-                                    disabled={plannerRolodexIndex === allPlannerVisits.length - 1}
-                                    variant="outline"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="scheduled-visits" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {scheduledVisits.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No meetings with a specific date scheduled.
+                            </p>
+                            <p className="text-muted-foreground">
+                                Edit a visit and set a future meeting date, and it will appear here.
+                            </p>
+                        </div>
                     ) : (
-                        <div className="text-center py-10 bg-card rounded-lg shadow-lg">
-                            <p className="text-xl text-muted-foreground mb-4">Your planner is empty.</p>
-                            <p className="text-muted-foreground">Edit a visit to set a future meeting, or convert a "Hot Lead" from the Debbie tab to add it here.</p>
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {scheduledVisits.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
                         </div>
                     )}
-                </div>
-              ) : (
-                <>
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="scheduled-visits" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                        <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                            <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
-                        </h2>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                        {scheduledVisits.length === 0 ? (
-                            <div className="text-center py-4">
-                                <p className="text-xl text-muted-foreground mb-4">
-                                    No meetings with a specific date scheduled.
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Edit a visit and set a future meeting date, and it will appear here.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {scheduledVisits.map((visit) => (
-                                    <VisitCard
-                                        key={visit.id}
-                                        visit={visit}
-                                        onEdit={handleEditVisit}
-                                        onDelete={handleDeleteVisit}
-                                        onUpdateDealClosed={handleUpdateDealClosed}
-                                        onZoom={setZoomedVisit}
-                                        onLogFollowUp={handleLogFollowUp}
-                                        onDictateNotes={handleDictateNotes}
-                                        variant="planner"
-                                    />
-                                ))}
-                            </div>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                  
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="unscheduled-visits" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                        <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                            <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
-                        </h2>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                        {unscheduledFutureVisits.length === 0 ? (
-                            <div className="text-center py-4">
-                                <p className="text-xl text-muted-foreground mb-4">
-                                    No other unscheduled future visits.
-                                </p>
-                                <p className="text-muted-foreground">
-                                    Convert a "Hot Lead" from the Debbie tab to add it here.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {unscheduledFutureVisits.map((visit) => (
-                                    <VisitCard
-                                        key={visit.id}
-                                        visit={visit}
-                                        onEdit={handleEditVisit}
-                                        onDelete={handleDeleteVisit}
-                                        onUpdateDealClosed={handleUpdateDealClosed}
-                                        onZoom={setZoomedVisit}
-                                        onLogFollowUp={handleLogFollowUp}
-                                        onDictateNotes={handleDictateNotes}
-                                        variant="planner"
-                                    />
-                                ))}
-                            </div>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                  
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="flagged-hotspots" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                          <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                              <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
-                          </h2>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                          {flaggedHotspots.length === 0 ? (
-                              <div className="text-center py-4">
-                                  <p className="text-xl text-muted-foreground mb-4">
-                                      No hotspots flagged yet.
-                                  </p>
-                                  <p className="text-muted-foreground">
-                                      Use the "Flag Hotspot" button to mark locations while driving.
-                                  </p>
-                              </div>
-                          ) : (
-                              <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                  {flaggedHotspots.map((visit) => (
-                                      <VisitCard
-                                          key={visit.id}
-                                          visit={visit}
-                                          onEdit={handleEditVisit}
-                                          onDelete={handleDeleteVisit}
-                                          onUpdateDealClosed={handleUpdateDealClosed}
-                                          onZoom={setZoomedVisit}
-                                          onLogFollowUp={handleLogFollowUp}
-                                          onDictateNotes={handleDictateNotes}
-                                          variant="planner"
-                                      />
-                                  ))}
-                              </div>
-                          )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="unscheduled-visits" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {unscheduledFutureVisits.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No other unscheduled future visits.
+                            </p>
+                            <p className="text-muted-foreground">
+                                Convert a "Hot Lead" from the Debbie tab to add it here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {unscheduledFutureVisits.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
+                        </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="flagged-hotspots" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
+                      </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                      {flaggedHotspots.length === 0 ? (
+                          <div className="text-center py-4">
+                              <p className="text-xl text-muted-foreground mb-4">
+                                  No hotspots flagged yet.
+                              </p>
+                              <p className="text-muted-foreground">
+                                  Use the "Flag Hotspot" button to mark locations while driving.
+                              </p>
+                          </div>
+                      ) : (
+                          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                              {flaggedHotspots.map((visit) => (
+                                  <VisitCard
+                                      key={visit.id}
+                                      visit={visit}
+                                      onEdit={handleEditVisit}
+                                      onDelete={handleDeleteVisit}
+                                      onUpdateDealClosed={handleUpdateDealClosed}
+                                      onZoom={setZoomedVisit}
+                                      onLogFollowUp={handleLogFollowUp}
+                                      onDictateNotes={handleDictateNotes}
+                                      variant="planner"
+                                  />
+                              ))}
+                          </div>
+                      )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="active-free-trials" className="border-none">
-                      <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                        <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                            <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
-                        </h2>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                        {activeFreeTrials.length === 0 ? (
-                            <div className="text-center py-4">
-                                <p className="text-xl text-muted-foreground mb-4">
-                                    No active free trials.
-                                </p>
-                                <p className="text-muted-foreground">
-                                    When you set up a free trial for a visit, it will appear here.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {activeFreeTrials.map((visit) => (
-                                    <VisitCard
-                                        key={visit.id}
-                                        visit={visit}
-                                        onEdit={handleEditVisit}
-                                        onDelete={handleDeleteVisit}
-                                        onUpdateDealClosed={handleUpdateDealClosed}
-                                        onZoom={setZoomedVisit}
-                                        onLogFollowUp={handleLogFollowUp}
-                                        onDictateNotes={handleDictateNotes}
-                                        variant="planner"
-                                    />
-                                ))}
-                            </div>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </>
-              )}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="active-free-trials" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                        <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
+                    </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {activeFreeTrials.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No active free trials.
+                            </p>
+                            <p className="text-muted-foreground">
+                                When you set up a free trial for a visit, it will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {activeFreeTrials.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    onZoom={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                    variant="planner"
+                                />
+                            ))}
+                        </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           )}
 
@@ -2598,195 +2427,193 @@ export default function HomePage() {
                 </UiCardFooter>
               </UiCard>
               )}
-              <div className="w-full max-w-2xl mx-auto space-y-6">
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="news-feed" className="border-none">
-                    <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
-                        <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
-                            <Newspaper className="mr-3 h-7 w-7 text-primary" /> Optimum New England News
-                        </h2>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <UiCard className="bg-card border border-primary/20">
-                        <UiCardContent className="pt-6">
-                          {newsItems.length > 0 ? (
-                              <ul className="space-y-3 text-sm text-foreground list-disc pl-5">
-                                {newsItems.map((item, index) => (
-                                  <li key={index} className="flex justify-between items-start group">
-                                    <span>{item}</span>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 ml-2"
-                                      onClick={() => handleDeleteNewsItem(index)}
-                                      aria-label="Delete news item"
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                  </li>
-                                ))}
-                              </ul>
-                          ) : (
-                              <p className="text-muted-foreground text-sm text-center">No news items. Add one below.</p>
-                          )}
-                        </UiCardContent>
-                        <UiCardFooter className="flex-col items-start gap-2 border-t pt-4">
-                          <Label htmlFor="new-news-item" className="font-semibold text-foreground">Add News Item</Label>
-                          <Textarea 
-                            id="new-news-item"
-                            placeholder="Type a new update for the sales team..."
-                            value={newNewsItem}
-                            onChange={(e) => setNewNewsItem(e.target.value)}
-                            className="min-h-[60px]"
-                          />
-                          <Button onClick={handleAddNewsItem} size="sm" disabled={!newNewsItem.trim()}>
-                            <PlusSquare className="mr-2 h-4 w-4" />
-                            Add to News
-                          </Button>
-                        </UiCardFooter>
-                      </UiCard>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-                <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full" size="sm">
-                    <Search className="mr-2 h-4 w-4" /> Find Company by Name
-                </Button>
-
-                <UiCard className="bg-card border border-primary/20 flex flex-col min-h-[75vh]">
-                    <UiCardHeader>
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <Flame className="h-6 w-6 text-orange-500" />
-                                <UiCardTitle>Hot Leads ({hotLeads.length})</UiCardTitle>
-                            </div>
-                            {hotLeads.length > 0 && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm">
-                                            <Trash2 className="mr-2 h-4 w-4" /> Clear List
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This will permanently delete all {hotLeads.length} hot leads from your local device. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleClearHotLeads}>Clear</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                        </div>
-                        <UiCardDescription>Leads generated from your company searches. Saved locally to your device.</UiCardDescription>
-                    </UiCardHeader>
-                    <UiCardContent className="flex-grow flex flex-col">
-                        {hotLeads.length === 0 ? (
-                            <div className="flex-grow flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
-                            </div>
+              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+                <AccordionItem value="news-feed" className="border-none">
+                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-2">
+                      <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          <Newspaper className="mr-3 h-7 w-7 text-primary" /> Optimum New England News
+                      </h2>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <UiCard className="bg-card border border-primary/20">
+                      <UiCardContent className="pt-6">
+                        {newsItems.length > 0 ? (
+                            <ul className="space-y-3 text-sm text-foreground list-disc pl-5">
+                              {newsItems.map((item, index) => (
+                                <li key={index} className="flex justify-between items-start group">
+                                  <span>{item}</span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 ml-2"
+                                    onClick={() => handleDeleteNewsItem(index)}
+                                    aria-label="Delete news item"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </li>
+                              ))}
+                            </ul>
                         ) : (
-                            <ScrollArea className="h-full">
-                                <div className="space-y-3 pr-4">
-                                    {hotLeads.map((lead, index) => {
-                                      const isConverted = convertedHotLeads.has(lead.id);
-                                      return (
-                                        <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 space-y-2 shadow-lg shadow-orange-500/20 flex flex-col">
-                                            <div className="flex-grow space-y-2">
-                                                <div className="bg-muted/50 p-2 rounded-md">
-                                                    <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                    <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
-                                                    {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
-                                                </div>
-
-                                                <div className="space-y-1 bg-black p-2 rounded-md">
-                                                    <Label htmlFor={`hot-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
-                                                    <div className="relative">
-                                                      <Textarea
-                                                          id={`hot-lead-notes-${lead.id}`}
-                                                          value={lead.notes || ''}
-                                                          onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                          placeholder="e.g., Competitor: Blue Drop. Contract with Quench is up in a few months."
-                                                          className="text-sm h-20 bg-black pr-10"
-                                                          rows={3}
-                                                          disabled={isRecordingHotLeadNotes === lead.id}
-                                                      />
-                                                      <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => handleToggleVoiceForHotLead(lead.id)}
-                                                        className="absolute right-1 top-1 h-8 w-8"
-                                                        aria-label="Dictate hot lead notes"
-                                                      >
-                                                        {isRecordingHotLeadNotes === lead.id ? (
-                                                          <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                                        ) : (
-                                                          <Mic className="h-4 w-4 text-muted-foreground" />
-                                                        )}
-                                                      </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50 shrink-0">
-                                                 <Button 
-                                                    variant={isConverted ? "default" : "outline"}
-                                                    size="sm" 
-                                                    className="h-7 px-2 text-xs"
-                                                    onClick={() => handleAddHotLeadAsVisit(lead)}
-                                                    disabled={isConverted}
-                                                >
-                                                    {isConverted ? (
-                                                        <>
-                                                            <CheckCircle className="mr-1 h-3 w-3" /> Added
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <PlusSquare className="mr-1 h-3 w-3" /> Add Future Visit
-                                                        </>
-                                                    )}
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="icon" className="h-7 w-7">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This will permanently delete the hot lead for "{lead.companyName}". This action cannot be undone.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        </div>
-                                    )})}
-                                </div>
-                            </ScrollArea>
+                            <p className="text-muted-foreground text-sm text-center">No news items. Add one below.</p>
                         )}
-                    </UiCardContent>
-                    {hotLeads.length > 0 && (
-                        <UiCardFooter className="flex-wrap gap-2 shrink-0">
-                            <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" variant="default" />
-                            <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" variant="default" />
-                            <Button onClick={handleEmailHotLeads} variant="default" size="sm">
-                                <Mail className="mr-2 h-4 w-4" /> Email List to Self
-                            </Button>
-                        </UiCardFooter>
-                    )}
-                </UiCard>
-              </div>
+                      </UiCardContent>
+                      <UiCardFooter className="flex-col items-start gap-2 border-t pt-4">
+                        <Label htmlFor="new-news-item" className="font-semibold text-foreground">Add News Item</Label>
+                        <Textarea 
+                          id="new-news-item"
+                          placeholder="Type a new update for the sales team..."
+                          value={newNewsItem}
+                          onChange={(e) => setNewNewsItem(e.target.value)}
+                          className="min-h-[60px]"
+                        />
+                        <Button onClick={handleAddNewsItem} size="sm" disabled={!newNewsItem.trim()}>
+                          <PlusSquare className="mr-2 h-4 w-4" />
+                          Add to News
+                        </Button>
+                      </UiCardFooter>
+                    </UiCard>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full max-w-2xl mx-auto" size="sm">
+                  <Search className="mr-2 h-4 w-4" /> Find Company by Name
+              </Button>
+
+              <UiCard className="w-full max-w-2xl mx-auto bg-card border border-primary/20 flex flex-col min-h-[75vh]">
+                  <UiCardHeader>
+                      <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                              <Flame className="h-6 w-6 text-orange-500" />
+                              <UiCardTitle>Hot Leads ({hotLeads.length})</UiCardTitle>
+                          </div>
+                          {hotLeads.length > 0 && (
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm">
+                                          <Trash2 className="mr-2 h-4 w-4" /> Clear List
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              This will permanently delete all {hotLeads.length} hot leads from your local device. This action cannot be undone.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={handleClearHotLeads}>Clear</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          )}
+                      </div>
+                      <UiCardDescription>Leads generated from your company searches. Saved locally to your device.</UiCardDescription>
+                  </UiCardHeader>
+                  <UiCardContent className="flex-grow flex flex-col">
+                      {hotLeads.length === 0 ? (
+                          <div className="flex-grow flex items-center justify-center">
+                              <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
+                          </div>
+                      ) : (
+                          <ScrollArea className="h-full">
+                              <div className="space-y-3 pr-4">
+                                  {hotLeads.map((lead, index) => {
+                                    const isConverted = convertedHotLeads.has(lead.id);
+                                    return (
+                                      <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 space-y-2 shadow-lg shadow-orange-500/20 flex flex-col">
+                                          <div className="flex-grow space-y-2">
+                                              <div className="bg-muted/50 p-2 rounded-md">
+                                                  <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
+                                                  <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
+                                                  {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
+                                              </div>
+
+                                              <div className="space-y-1 bg-black p-2 rounded-md">
+                                                  <Label htmlFor={`hot-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
+                                                  <div className="relative">
+                                                    <Textarea
+                                                        id={`hot-lead-notes-${lead.id}`}
+                                                        value={lead.notes || ''}
+                                                        onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
+                                                        placeholder="e.g., Competitor: Blue Drop. Contract with Quench is up in a few months."
+                                                        className="text-sm h-20 bg-black pr-10"
+                                                        rows={3}
+                                                        disabled={isRecordingHotLeadNotes === lead.id}
+                                                    />
+                                                    <Button
+                                                      type="button"
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      onClick={() => handleToggleVoiceForHotLead(lead.id)}
+                                                      className="absolute right-1 top-1 h-8 w-8"
+                                                      aria-label="Dictate hot lead notes"
+                                                    >
+                                                      {isRecordingHotLeadNotes === lead.id ? (
+                                                        <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                                      ) : (
+                                                        <Mic className="h-4 w-4 text-muted-foreground" />
+                                                      )}
+                                                    </Button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                          
+                                          <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50 shrink-0">
+                                               <Button 
+                                                  variant={isConverted ? "default" : "outline"}
+                                                  size="sm" 
+                                                  className="h-7 px-2 text-xs"
+                                                  onClick={() => handleAddHotLeadAsVisit(lead)}
+                                                  disabled={isConverted}
+                                              >
+                                                  {isConverted ? (
+                                                      <>
+                                                          <CheckCircle className="mr-1 h-3 w-3" /> Added
+                                                      </>
+                                                  ) : (
+                                                      <>
+                                                          <PlusSquare className="mr-1 h-3 w-3" /> Add Future Visit
+                                                      </>
+                                                  )}
+                                              </Button>
+                                              <AlertDialog>
+                                                  <AlertDialogTrigger asChild>
+                                                      <Button variant="destructive" size="icon" className="h-7 w-7">
+                                                          <Trash2 className="h-4 w-4" />
+                                                      </Button>
+                                                  </AlertDialogTrigger>
+                                                  <AlertDialogContent>
+                                                      <AlertDialogHeader>
+                                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                          <AlertDialogDescription>
+                                                              This will permanently delete the hot lead for "{lead.companyName}". This action cannot be undone.
+                                                          </AlertDialogDescription>
+                                                      </AlertDialogHeader>
+                                                      <AlertDialogFooter>
+                                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                          <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
+                                                      </AlertDialogFooter>
+                                                  </AlertDialogContent>
+                                              </AlertDialog>
+                                          </div>
+                                      </div>
+                                  )})}
+                              </div>
+                          </ScrollArea>
+                      )}
+                  </UiCardContent>
+                  {hotLeads.length > 0 && (
+                      <UiCardFooter className="flex-wrap gap-2 shrink-0">
+                          <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" variant="default" />
+                          <ExportHotLeadsPdfButton hotLeads={hotLeads} size="sm" variant="default" />
+                          <Button onClick={handleEmailHotLeads} variant="default" size="sm">
+                              <Mail className="mr-2 h-4 w-4" /> Email List to Self
+                          </Button>
+                      </UiCardFooter>
+                  )}
+              </UiCard>
             </div>
           )}
           
@@ -2926,6 +2753,7 @@ export default function HomePage() {
                   onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
                   isZoomedView={true}
                   onDictateNotes={handleDictateNotes}
+                  onLogFollowUp={handleLogFollowUp}
                 />
               </>
             )}
