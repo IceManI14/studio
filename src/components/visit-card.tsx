@@ -33,6 +33,7 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
@@ -227,7 +228,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground pt-2">
+        <div className="grid grid-cols-1 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -280,26 +281,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
           
           <div className="absolute top-2 right-2">
-              {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-                  <div className="flex flex-col items-center shrink-0">
-                      <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
-                      <div className="flex">
-                          {[1, 2, 3, 4, 5].map((starValue) => (
-                              <Star
-                                  key={starValue}
-                                  className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
-                              />
-                          ))}
-                      </div>
+              <div className="flex flex-col items-center shrink-0">
+                  <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
+                  <div className="flex">
+                      {[1, 2, 3, 4, 5].map((starValue) => (
+                          <Star
+                              key={starValue}
+                              className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                          />
+                      ))}
                   </div>
-              )}
+              </div>
           </div>
 
           <div className="flex flex-col items-center justify-center w-full pt-8">
-              <CardTitle className="font-headline text-2xl text-accent-foreground text-center break-words">{visit.companyName}</CardTitle>
-              <CardDescription className="text-xs pt-1 text-center">
-                  {(visit.latitude && visit.longitude) && (
-                      <div className="flex items-center justify-center">
+              <CardTitle 
+                className="font-headline text-2xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
+                onClick={(e) => {
+                  if (!isZoomedView) e.stopPropagation();
+                  setShowLocation(!showLocation);
+                }}
+              >
+                {visit.companyName}
+              </CardTitle>
+              <CardDescription className="text-xs pt-1 text-center h-5">
+                  {showLocation && visit.latitude && visit.longitude && (
+                      <div className="flex items-center justify-center animate-in fade-in">
                           <LocateFixed className="mr-2 h-3 w-3" />
                           {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
                       </div>
