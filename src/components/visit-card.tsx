@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -227,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-3">
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground pt-2">
+        <div className="flex flex-col gap-y-2 text-xs text-muted-foreground pt-2">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -271,15 +271,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-4">
-            <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
-            {visit.visitNumber && (
-                <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
-                    <Hash className="mr-1 h-4 w-4" />{visit.visitNumber}
-                </Badge>
+        <CardTitle className="font-headline text-2xl text-accent-foreground flex-1 break-words">{visit.companyName}</CardTitle>
+        <CardDescription className="text-xs pt-1">
+            <div className="flex items-center">
+                <CalendarDays className="mr-2 h-3 w-3" />
+                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'MMM d, yyyy, h:mm a')}
+            </div>
+            {(visit.latitude && visit.longitude) && (
+                <div className="flex items-center">
+                    <LocateFixed className="mr-2 h-3 w-3" />
+                    {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
+                </div>
             )}
-        </div>
-        
+        </CardDescription>
+
         {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
             <div className="flex flex-col items-start mt-2">
             <div className="flex">
