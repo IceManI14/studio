@@ -260,7 +260,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   return (
     <Card 
       className={cn(
-        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card/95 border-2",
+        "flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card border-2",
         variant === 'planner' 
           ? 'border-orange-500 shadow-orange-500/20' 
           : visit.dealClosed 
@@ -287,8 +287,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </CardDescription>
         </div>
 
-        {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
-            <div className="flex flex-col items-center shrink-0">
+        <div className="flex items-start shrink-0 space-x-4">
+          {visit.visitNumber && (
+            <div className="flex flex-col items-center">
+              <div className="text-xs text-muted-foreground mb-0.5">Visit #</div>
+              <Badge variant="secondary" className="text-base font-semibold px-2 py-1 shrink-0">
+                {visit.visitNumber}
+              </Badge>
+            </div>
+          )}
+          {visit.partnershipConfidence && visit.partnershipConfidence > 0 && (
+            <div className="flex flex-col items-center">
                 <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
                 <div className="flex">
                     {[1, 2, 3, 4, 5].map((starValue) => (
@@ -299,7 +308,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     ))}
                 </div>
             </div>
-        )}
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
