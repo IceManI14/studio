@@ -296,7 +296,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
           <div className="flex flex-col items-center justify-center w-full pt-8">
               <CardTitle 
-                className="font-headline text-2xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
+                className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
                   if (!isZoomedView) e.stopPropagation();
                   setShowLocation(!showLocation);
