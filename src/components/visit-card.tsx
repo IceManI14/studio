@@ -280,17 +280,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               )}
           </div>
           
-          <div className="absolute top-2 right-2">
-              <div className="flex flex-col items-center shrink-0">
-                  <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
-                  <div className="flex">
-                      {[1, 2, 3, 4, 5].map((starValue) => (
-                          <Star
-                              key={starValue}
-                              className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
-                          />
-                      ))}
-                  </div>
+          <div className="absolute top-2 right-2 flex flex-col items-center">
+              <div className="text-xs text-muted-foreground">Partnership Confidence</div>
+              <div className="flex">
+                  {[1, 2, 3, 4, 5].map((starValue) => (
+                      <Star
+                          key={starValue}
+                          className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                      />
+                  ))}
               </div>
           </div>
 
