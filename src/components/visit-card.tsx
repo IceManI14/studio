@@ -227,7 +227,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   );
 
   const NormalContent = () => (
-    <div className="space-y-3">
+    <div className="space-y-1">
         <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
             <div className="flex items-center">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -272,7 +272,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3 relative">
-          <div className="absolute top-2 right-2 flex flex-col items-center">
+          <div className="absolute top-2 left-2 flex flex-col items-start">
               <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
               <div className="flex">
                   {[1, 2, 3, 4, 5].map((starValue) => (
@@ -284,7 +284,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center w-full pt-6">
+          <div className="flex flex-col items-center justify-center w-full pt-12">
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
@@ -366,5 +366,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    
