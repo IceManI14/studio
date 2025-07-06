@@ -2694,7 +2694,7 @@ export default function HomePage() {
                     </TabsContent>
 
                      <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into three key sections:</p>
+                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
                         <ul className="list-disc list-inside space-y-3">
                             <li>
                                 <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
@@ -2704,6 +2704,9 @@ export default function HomePage() {
                             </li>
                             <li>
                                 <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
+                            </li>
+                            <li>
+                                <strong>Active Free Trials:</strong> This section tracks all visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
                             </li>
                         </ul>
                     </TabsContent>
@@ -2933,3 +2936,4 @@ export default function HomePage() {
     </div>
   );
 }
+
