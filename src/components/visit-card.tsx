@@ -285,6 +285,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
+              {visit.interestedUnit && (
+                <p className="text-lg font-semibold text-primary mb-1">
+                  {`{${visit.interestedUnit}}`}
+                </p>
+              )}
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
