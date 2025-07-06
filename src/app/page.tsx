@@ -12,7 +12,7 @@ import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
+import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
@@ -72,7 +72,7 @@ const AVAILABLE_AI_MODELS = [
 const salespeople: Salesperson[] = [
     { 
         id: '1', 
-        name: 'Paul L.', 
+        name: 'Lyman', 
         territory: [
             { name: 'NH/ME Seacoast', bounds: { minLat: 42.85, maxLat: 43.40, minLng: -71.00, maxLng: -70.50 }, cities: ['Portsmouth, NH', 'Hampton, NH', 'Rye, NH', 'Kittery, ME', 'York, ME'] },
             { name: 'Southern NH (Rockingham)', bounds: { minLat: 42.85, maxLat: 43.15, minLng: -71.40, maxLng: -71.00 }, cities: ['Salem, NH', 'Derry, NH', 'Londonderry, NH', 'Windham, NH', 'Plaistow, NH'] },
@@ -161,6 +161,7 @@ export default function HomePage() {
   const visitsRef = useRef<Visit[]>([]);
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState<string>('');
+  const [addingFutureVisit, setAddingFutureVisit] = useState(false);
 
   useEffect(() => {
       visitsRef.current = visits;
@@ -208,7 +209,7 @@ export default function HomePage() {
     // This effect runs once on initial mount to load data and run startup sequences.
     try {
       // Set default salesperson
-      const defaultSalesperson = salespeople.find(s => s.name === 'Paul L.') || salespeople[0];
+      const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
       setSelectedSalesperson(defaultSalesperson);
 
       // Load all data from localStorage
@@ -401,6 +402,12 @@ export default function HomePage() {
         !visit.dealClosed
       )
       .map(visit => startOfDay(new Date(visit.futureMeetingDateTime!)));
+  }, [visits]);
+
+  const trialEndDays = useMemo(() => {
+    return visits
+      .filter(v => v.freeTrial && v.freeTrialStartDate)
+      .map(v => addDays(startOfDay(new Date(v.freeTrialStartDate!)), 7));
   }, [visits]);
 
   const loggedVisitDays = useMemo(() => {
@@ -1733,6 +1740,18 @@ export default function HomePage() {
     setNewsItems(prev => prev.filter((_, index) => index !== indexToDelete));
     toast({ title: 'News Item Removed' });
   }, [toast]);
+  
+  const handleAddNewFutureVisit = () => {
+    setAddingFutureVisit(true);
+    setCurrentEditingVisit({
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
+      companyName: '',
+      futureMeetingSet: true,
+      futureMeetingDateTime: undefined,
+    } as Visit);
+    setIsVisitFormOpen(true);
+  };
 
   return (
     <div className="min-h-screen">
@@ -2086,12 +2105,14 @@ export default function HomePage() {
                             logged: loggedVisitDays,
                             scheduled: scheduledFutureVisitDays,
                             dealClosed: dealClosedDays,
+                            trialEnd: trialEndDays,
                           }}
                           modifiersClassNames={{
                             scheduled: 'day-scheduled',
                             logged: 'day-logged',
                             dealClosed: 'day-deal-closed',
                             today: 'day_today',
+                            trialEnd: 'day-trial-end',
                           }}
                         />
                         {selectedDate && (
@@ -2223,6 +2244,11 @@ export default function HomePage() {
                     </h2>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    <div className="flex justify-center mb-4">
+                      <Button onClick={handleAddNewFutureVisit} variant="default" size="sm">
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add New Future Visit
+                      </Button>
+                    </div>
                     {unscheduledFutureVisits.length === 0 ? (
                         <div className="text-center py-4">
                             <p className="text-xl text-muted-foreground mb-4">
@@ -2984,11 +3010,13 @@ export default function HomePage() {
             setIsVisitFormOpen(false); 
             setCurrentEditingVisit(undefined); 
             setStartDictationOnOpen(false);
+            setAddingFutureVisit(false);
           }}
           onSave={handleSaveFromForm}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
           startDictation={startDictationOnOpen}
+          isFutureVisit={addingFutureVisit}
         />
         
         <AlertDialog open={isStartupNavigationConfirmOpen} onOpenChange={setIsStartupNavigationConfirmOpen}>
@@ -3023,6 +3051,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 

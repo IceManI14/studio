@@ -25,7 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -128,6 +128,7 @@ interface VisitFormProps {
   initialData?: Visit;
   salesperson: Salesperson | null;
   startDictation?: boolean;
+  isFutureVisit?: boolean;
 }
 
 const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, currentLatitude?: number, currentLongitude?: number): SaveVisitPayload => {
@@ -165,7 +166,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
   };
 };
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation, isFutureVisit }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
   const [isEditingCompanyName, setIsEditingCompanyName] = useState(true);
@@ -271,8 +272,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   useEffect(() => {
     // This effect ensures the follow-up meeting date is always in sync with the trial start date.
     if (freeTrialValue && freeTrialStartDate) {
-      const followUpDate = new Date(freeTrialStartDate);
-      followUpDate.setDate(followUpDate.getDate() + 7);
+      const followUpDate = addDays(new Date(freeTrialStartDate), 7);
       followUpDate.setHours(10, 0, 0, 0); // Default to 10 AM
 
       const currentMeetingDate = form.getValues('futureMeetingDateTime');
@@ -888,10 +888,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       <DialogContent className="sm:max-w-[480px] bg-card/80 backdrop-blur-md border-primary/30">
         <DialogHeader>
           <DialogTitle className="font-headline text-primary">
-            {initialData?.id ? 'Edit Potential Partner' : 'New Potential Partner'}
+            {initialData?.id && !isFutureVisit ? 'Edit Potential Partner' : 'New Potential Partner'}
           </DialogTitle>
           <DialogDescription className="text-foreground/80">
-            {initialData?.id ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
+            {initialData?.id && !isFutureVisit ? 'Update the details of this potential partner.' : 'Mention the free trial!'}
           </DialogDescription>
         </DialogHeader>
         
@@ -1407,8 +1407,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         field.onChange(boolValue);
 
                         if (boolValue) {
-                          // If checking the box, set a default start date if none exists.
-                          // The useEffect will handle scheduling the follow-up.
                           if (!form.getValues('freeTrialStartDate')) {
                             form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
                           }
@@ -1417,7 +1415,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             description: "A follow-up meeting has been scheduled for one week from the start date.",
                           });
                         } else {
-                          // When unchecking, clear all related fields.
                           form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
                           form.setValue('futureMeetingSet', false, { shouldValidate: true });
                           form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
