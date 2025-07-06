@@ -283,17 +283,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   ))}
               </div>
           </div>
-          
-          {visit.interestedUnit && (
-            <div className={cn(
-              "absolute top-4 right-4 text-primary font-semibold text-sm z-10 shrink-0",
-              isZoomedView && "pr-10"
-            )}>
-              {`{${visit.interestedUnit}}`}
-            </div>
-          )}
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
+              {visit.interestedUnit && (
+                <div className="text-sm text-primary font-medium mb-1">
+                  {`{${visit.interestedUnit}}`}
+                </div>
+              )}
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
