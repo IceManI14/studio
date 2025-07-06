@@ -1618,6 +1618,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <span>Visit Notes</span>
                      <div className="flex items-center gap-1">
                         {isAnalyzingNotes && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => form.setValue('notes', '', { shouldValidate: true })}
+                            className="h-7 w-7"
+                            aria-label="Clear notes"
+                            disabled={!field.value}
+                        >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
                        <Button
                             type="button"
                             variant="ghost"
