@@ -2187,9 +2187,12 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
-                        <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
-                    </h2>
+                    <div className="flex w-full items-center">
+                      <CalendarCheck className="h-7 w-7 text-primary" />
+                      <h2 id="scheduled-visits-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                          Future Meetings
+                      </h2>
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     {scheduledVisits.length === 0 ? (
@@ -2251,9 +2254,12 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
-                        <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
-                    </h2>
+                    <div className="flex w-full items-center">
+                      <CalendarIcon className="h-7 w-7 text-primary" />
+                      <h2 id="unscheduled-visits-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                          Future Visits (Unscheduled)
+                      </h2>
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     <div className="flex justify-center mb-4">
@@ -2318,9 +2324,12 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
-                          <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
-                      </h2>
+                      <div className="flex w-full items-center">
+                        <Flame className="h-7 w-7 text-orange-500" />
+                        <h2 id="hotspots-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                            Flagged Hotspots
+                        </h2>
+                      </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                       {flaggedHotspots.length === 0 ? (
@@ -2374,9 +2383,12 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
-                        <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
-                    </h2>
+                    <div className="flex w-full items-center">
+                      <PackageCheck className="h-7 w-7 text-primary" />
+                      <h2 id="free-trials-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                          Active Free Trials
+                      </h2>
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     {activeFreeTrials.length === 0 ? (
