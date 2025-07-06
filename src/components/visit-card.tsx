@@ -234,7 +234,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 Business Card
             </div>
             <div className="flex items-center">
-                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500 relative -top-px" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Future Meeting
             </div>
             <div className="flex items-center">
@@ -278,18 +278,22 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   {[1, 2, 3, 4, 5].map((starValue) => (
                       <Star
                           key={starValue}
-                          className={cn("h-5 w-5", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                          className={cn("h-5 w-5 cursor-pointer transition-colors relative -top-px", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
                       />
                   ))}
               </div>
           </div>
+          
+          {visit.interestedUnit && (
+            <div className={cn(
+              "absolute top-4 right-4 text-primary font-semibold text-lg z-10",
+              isZoomedView && "pr-10" // Add padding to avoid close button
+            )}>
+              {`{${visit.interestedUnit}}`}
+            </div>
+          )}
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
-              {visit.interestedUnit && (
-                <p className="text-lg font-semibold text-primary mb-1">
-                  {`{${visit.interestedUnit}}`}
-                </p>
-              )}
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
