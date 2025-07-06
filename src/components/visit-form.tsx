@@ -86,14 +86,16 @@ const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
 };
 
 const OUR_COOLERS_LIST = [
-  "Optimum Standard POU",
-  "Optimum Enhanced POU (RO/UV)",
-  "Optimum Countertop POU",
-  "Optimum Floorstanding Ice & Water",
-  "Optimum Countertop Ice & Water",
-  "BEVI Smart Cooler (via Optimum)",
-  "Sparkling Water Add-on",
-  "Other (Specify in notes)",
+  "PW50",
+  "PW70",
+  "PW90CT (1 gallon Tank)",
+  "PW90 (3 gallon tank)",
+  "XL1",
+  "E6 Sparkling",
+  "I14",
+  "I15",
+  "I16",
+  "3i",
 ];
 
 
