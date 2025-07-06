@@ -1936,17 +1936,17 @@ export default function HomePage() {
                     {todaysVisits.map((visit) => (
                       <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                         <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                          <div className="flex justify-between items-center w-full">
-                            <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center justify-between w-full gap-4">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-4">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                               <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                               {visit.partnershipConfidence && (
                                 <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                   {visit.partnershipConfidence}
-                                  <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
+                                  <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                 </Badge>
                               )}
                               {visit.futureMeetingSet && (
@@ -2107,17 +2107,17 @@ export default function HomePage() {
                   {sortedVisitsForCallDay.map((visit) => (
                     <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                        <div className="flex justify-between items-center w-full">
-                          <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-4">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             {visit.partnershipConfidence && (
                               <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                 {visit.partnershipConfidence}
-                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
