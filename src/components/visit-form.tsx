@@ -269,27 +269,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
-  const freeTrialStartDate = form.watch('freeTrialStartDate');
-  
-  useEffect(() => {
-    // This effect ensures the follow-up meeting date is always in sync with the trial start date.
-    if (freeTrialValue && freeTrialStartDate) {
-      const followUpDate = addDays(new Date(freeTrialStartDate), 7);
-      followUpDate.setHours(10, 0, 0, 0); // Default to 10 AM
-
-      const currentMeetingDate = form.getValues('futureMeetingDateTime');
-
-      // Set futureMeetingSet to true if a trial is active.
-      if (!form.getValues('futureMeetingSet')) {
-        form.setValue('futureMeetingSet', true, { shouldValidate: true });
-      }
-
-      // Only update the meeting date if it's different to avoid re-renders.
-      if (!currentMeetingDate || currentMeetingDate.getTime() !== followUpDate.getTime()) {
-        form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-      }
-    }
-  }, [freeTrialValue, freeTrialStartDate, form]);
   
   const handleRemoveImage = useCallback(() => {
     setBusinessCardPreviewUrl(null);
@@ -1254,10 +1233,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
-
+            
             <FormField
               control={form.control}
-              name="futureMeetingSet"
+              name="freeTrial"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
                   <FormControl>
@@ -1266,33 +1245,87 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onCheckedChange={(checked) => {
                         const boolValue = !!checked;
                         field.onChange(boolValue);
+
                         if (boolValue) {
-                          // Default to today at 9:00 AM if no date is set yet
-                          if (!form.getValues('futureMeetingDateTime')) {
-                            const newDateTime = new Date();
-                            newDateTime.setHours(9);
-                            newDateTime.setMinutes(0);
-                            newDateTime.setSeconds(0);
-                            newDateTime.setMilliseconds(0);
-                            form.setValue('futureMeetingDateTime', newDateTime, { shouldValidate: true });
+                          const startDate = form.getValues('freeTrialStartDate') || new Date();
+                          if (!form.getValues('freeTrialStartDate')) {
+                              form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
                           }
+                          
+                          const followUpDate = addDays(new Date(startDate), 7);
+                          followUpDate.setHours(10, 0, 0, 0);
+
+                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+                          
+                          toast({
+                              title: "Free Trial Activated",
+                              description: "A follow-up meeting is now scheduled for one week from the start date.",
+                          });
                         } else {
-                           form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                          // When unchecked, clear all related fields.
+                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
+                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
                         }
                       }}
-                      id="futureMeetingSet"
+                      id="freeTrial"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="futureMeetingSet" className="cursor-pointer font-normal flex items-center">
-                      <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
+                    <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
+                      <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
                     </FormLabel>
                   </div>
                 </FormItem>
               )}
             />
 
-            {futureMeetingSetValue && (
+            <FormField
+              control={form.control}
+              name="futureMeetingSet"
+              render={({ field }) => (
+                <FormItem className="rounded-md border border-accent p-3 shadow-sm">
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          const boolValue = !!checked;
+                          field.onChange(boolValue);
+                          if (boolValue) {
+                            if (!form.getValues('futureMeetingDateTime')) {
+                              const newDateTime = new Date();
+                              newDateTime.setHours(9);
+                              newDateTime.setMinutes(0);
+                              newDateTime.setSeconds(0);
+                              newDateTime.setMilliseconds(0);
+                              form.setValue('futureMeetingDateTime', newDateTime, { shouldValidate: true });
+                            }
+                          } else {
+                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                          }
+                        }}
+                        id="futureMeetingSet"
+                        disabled={freeTrialValue}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="futureMeetingSet" className={cn("font-normal flex items-center", freeTrialValue ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer")}>
+                        <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
+                      </FormLabel>
+                    </div>
+                  </div>
+                  {freeTrialValue && (
+                      <FormDescription className="pt-2">
+                          This is automatically scheduled based on the free trial.
+                      </FormDescription>
+                  )}
+                </FormItem>
+              )}
+            />
+
+            {(futureMeetingSetValue || freeTrialValue) && (
               <FormField
                 control={form.control}
                 name="futureMeetingDateTime"
@@ -1308,6 +1341,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
+                             disabled={freeTrialValue}
                           >
                             {field.value ? (
                               format(new Date(field.value), "PPP 'at' h:mm a")
@@ -1330,7 +1364,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             const newDateTime = new Date(date);
                             const existingTime = field.value ? new Date(field.value) : new Date();
                             
-                            // Preserve existing time, or default to 9 AM if no time was set
                             newDateTime.setHours(field.value ? existingTime.getHours() : 9);
                             newDateTime.setMinutes(field.value ? existingTime.getMinutes() : 0);
                             newDateTime.setSeconds(0);
@@ -1395,44 +1428,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
-
-            <FormField
-              control={form.control}
-              name="freeTrial"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        const boolValue = !!checked;
-                        field.onChange(boolValue);
-
-                        if (boolValue) {
-                          if (!form.getValues('freeTrialStartDate')) {
-                            form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
-                          }
-                          toast({
-                            title: "Free Trial Activated",
-                            description: "A follow-up meeting has been scheduled for one week from the start date.",
-                          });
-                        } else {
-                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
-                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                        }
-                      }}
-                      id="freeTrial"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
-                      <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
 
             {freeTrialValue && (
                <FormField
