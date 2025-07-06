@@ -88,10 +88,10 @@ const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
 const OUR_COOLERS_LIST = [
   "PW50",
   "PW70",
-  "PW90CT (1 gallon Tank)",
-  "PW90 (3 gallon tank)",
+  "PW90CT",
+  "PW90",
   "XL1",
-  "E6 Sparkling",
+  "E6",
   "I14",
   "I15",
   "I16",
