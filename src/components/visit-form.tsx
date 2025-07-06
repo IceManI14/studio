@@ -130,7 +130,7 @@ interface VisitFormProps {
   onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean }) => Promise<Visit>;
   initialData?: Visit;
   salesperson: Salesperson | null;
-  startDictation?: boolean;
+  startDictationOnOpen?: boolean;
   isFutureVisit?: boolean;
 }
 
@@ -170,7 +170,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
   };
 };
 
-const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictation, isFutureVisit }) => {
+const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialData, salesperson, startDictationOnOpen, isFutureVisit }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggestingCompany, setIsSuggestingCompany] = useState(false);
   const [isEditingCompanyName, setIsEditingCompanyName] = useState(true);
@@ -272,6 +272,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const freeTrialStartDateValue = form.watch('freeTrialStartDate');
   
   const handleRemoveImage = useCallback(() => {
     setBusinessCardPreviewUrl(null);
@@ -391,6 +392,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       videoRef.current.srcObject = null;
     }
   };
+
+  useEffect(() => {
+    if (freeTrialValue && freeTrialStartDateValue) {
+      const followUpDate = addDays(new Date(freeTrialStartDateValue), 7);
+      followUpDate.setHours(10, 0, 0, 0);
+      form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+      if (!form.getValues('futureMeetingSet')) {
+        form.setValue('futureMeetingSet', true, { shouldValidate: true });
+      }
+    }
+  }, [freeTrialValue, freeTrialStartDateValue, form]);
 
   useEffect(() => {
     if (watchedCompetitorName) {
@@ -711,14 +723,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
 
   useEffect(() => {
-    if (isOpen && startDictation) {
+    if (isOpen && startDictationOnOpen) {
       const timer = setTimeout(() => {
         handleToggleVoiceNotes();
       }, 500);
       return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, startDictation]);
+  }, [isOpen, startDictationOnOpen]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -1252,23 +1264,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         field.onChange(boolValue);
 
                         if (boolValue) {
-                          const startDate = form.getValues('freeTrialStartDate') || new Date();
                           if (!form.getValues('freeTrialStartDate')) {
-                              form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+                            form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
                           }
-                          
-                          const followUpDate = addDays(new Date(startDate), 7);
-                          followUpDate.setHours(10, 0, 0, 0);
-
                           form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
                           
                           toast({
                               title: "Free Trial Activated",
-                              description: "A follow-up meeting is now scheduled for one week from the start date.",
+                              description: "A follow-up meeting is scheduled for one week from the start date.",
                           });
                         } else {
-                          // When unchecked, clear all related fields.
                           form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
                           form.setValue('futureMeetingSet', false, { shouldValidate: true });
                           form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
