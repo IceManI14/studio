@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay } from 'date-fns';
@@ -952,7 +952,7 @@ export default function HomePage() {
 
     let messageText = chatInput.trim();
     let pdfUrlForAi: string | undefined = undefined;
-    let csvDataForAi: string | undefined = undefined;
+    let csvDataForAi: string | undefined = csvDataForAi;
     
     setIsAiResponding(true); 
 
@@ -2080,23 +2080,43 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <Accordion type="multiple" className="w-full space-y-4">
                   {sortedVisitsForCallDay.map((visit) => (
-                    <div 
-                      key={visit.id}
-                    >
-                      <VisitCard
-                        visit={visit}
-                        onEdit={handleEditVisit}
-                        onDelete={handleDeleteVisit}
-                        onUpdateDealClosed={handleUpdateDealClosed}
-                        onZoom={setZoomedVisit}
-                        onLogFollowUp={handleLogFollowUp}
-                        onDictateNotes={handleDictateNotes}
-                      />
-                    </div>
+                    <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
+                      <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
+                        <div className="flex justify-between items-center w-full">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+                            <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-4">
+                            <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+                            {visit.partnershipConfidence && (
+                              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                {visit.partnershipConfidence}
+                              </Badge>
+                            )}
+                            {visit.futureMeetingSet && (
+                              <CalendarCheck className="h-4 w-4 text-orange-500" />
+                            )}
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="p-4">
+                        <VisitCard
+                          visit={visit}
+                          onEdit={handleEditVisit}
+                          onDelete={handleDeleteVisit}
+                          onUpdateDealClosed={handleUpdateDealClosed}
+                          onZoom={setZoomedVisit}
+                          onLogFollowUp={handleLogFollowUp}
+                          onDictateNotes={handleDictateNotes}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               )}
             </div>
           )}
