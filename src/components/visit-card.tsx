@@ -286,8 +286,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           
           {visit.interestedUnit && (
             <div className={cn(
-              "absolute top-4 right-4 text-primary font-semibold text-lg z-10",
-              isZoomedView && "pr-10" // Add padding to avoid close button
+              "absolute top-4 right-4 text-primary font-semibold text-sm z-10 shrink-0",
+              isZoomedView && "pr-10"
             )}>
               {`{${visit.interestedUnit}}`}
             </div>

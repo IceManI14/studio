@@ -1967,6 +1967,9 @@ export default function HomePage() {
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                {visit.interestedUnit && (
+                                  <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                                )}
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                 <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
@@ -2141,6 +2144,9 @@ export default function HomePage() {
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                            {visit.interestedUnit && (
+                              <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
@@ -2202,6 +2208,9 @@ export default function HomePage() {
                                           <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                              {visit.interestedUnit && (
+                                                <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                                              )}
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.futureMeetingDateTime && (
@@ -2267,6 +2276,9 @@ export default function HomePage() {
                                           <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                              {visit.interestedUnit && (
+                                                <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                                              )}
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
@@ -2325,6 +2337,9 @@ export default function HomePage() {
                                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                                  {visit.interestedUnit && (
+                                                    <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                                                  )}
                                               </div>
                                               <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                                   <span>Flagged: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
@@ -2377,6 +2392,9 @@ export default function HomePage() {
                                           <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                              {visit.interestedUnit && (
+                                                <span className="text-sm text-primary font-medium truncate shrink ml-2">{`{${visit.interestedUnit}}`}</span>
+                                              )}
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.freeTrialStartDate && (
