@@ -107,7 +107,7 @@ export default function HomePage() {
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
-  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet'>('partnershipConfidence');
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -464,9 +464,11 @@ export default function HomePage() {
       );
     }
   
-    // If sorting by future meetings, first filter to only show those.
+    // If sorting by a specific criteria, filter first.
     if (sortCriteria === 'futureMeetingsSet') {
       processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
+    } else if (sortCriteria === 'inTrial') {
+      processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
     }
   
     // Deduplicate visits in case a visit is both logged and scheduled on the same day.
@@ -488,6 +490,12 @@ export default function HomePage() {
         comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
         if (comparison !== 0) return comparison;
         return timeB - timeA;
+      } else if (sortCriteria === 'inTrial') {
+        const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
+        const trialTimeB = b.freeTrialStartDate ? new Date(b.freeTrialStartDate).getTime() : 0;
+        comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
       } else if (sortCriteria === 'dealClosed') {
         comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
         if (comparison !== 0) return comparison;
@@ -1944,7 +1952,7 @@ export default function HomePage() {
                               <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
                                 <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                                 {visit.partnershipConfidence && (
-                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                     {visit.partnershipConfidence}
                                     <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                   </Badge>
@@ -2034,7 +2042,7 @@ export default function HomePage() {
                                 <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                                 <Select
                                   value={sortCriteria}
-                                  onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet')}
+                                  onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial')}
                                 >
                                   <SelectTrigger id="sort-criteria" className="w-full">
                                     <SelectValue placeholder="Select criteria" />
@@ -2044,6 +2052,7 @@ export default function HomePage() {
                                     <SelectItem value="timestamp">Date Visited</SelectItem>
                                     <SelectItem value="dealClosed">Closed Deals</SelectItem>
                                     <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
+                                    <SelectItem value="inTrial">In Trial</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -2057,7 +2066,7 @@ export default function HomePage() {
                                     <SelectValue placeholder="Select order" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
+                                    {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -2115,7 +2124,7 @@ export default function HomePage() {
                           <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             {visit.partnershipConfidence && (
-                              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                              <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                 {visit.partnershipConfidence}
                                 <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                               </Badge>
@@ -2178,7 +2187,7 @@ export default function HomePage() {
                                                   <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
                                               )}
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -2236,7 +2245,7 @@ export default function HomePage() {
                                           <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
                                               <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -2348,7 +2357,7 @@ export default function HomePage() {
                                                   <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
                                               )}
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -3014,5 +3023,6 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
