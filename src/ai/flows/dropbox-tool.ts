@@ -13,12 +13,17 @@ export const readFromDropboxLinkTool = ai.defineTool(
     name: 'readFromDropboxLink',
     description: 'Reads the content of a file from a Dropbox shared link. This works for text-based files (.txt, .csv, .md) and can provide basic information for other file types.',
     inputSchema: z.object({
-      url: z.string().url().describe('The Dropbox shared link to the file.'),
+      url: z.string().describe('The Dropbox shared link to the file.'),
     }),
     outputSchema: z.string().describe('The text content of the file, or a status message if the file is not text-based.'),
   },
   async ({ url }) => {
     try {
+      // Basic check if the input string looks like a URL before attempting to parse it.
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          return 'Error: The provided text does not appear to be a valid URL.';
+      }
+
       const downloadUrl = new URL(url);
       if (downloadUrl.hostname !== 'www.dropbox.com' && downloadUrl.hostname !== 'dropbox.com') {
         return 'Error: The provided URL is not a valid Dropbox link.';
@@ -51,6 +56,10 @@ export const readFromDropboxLinkTool = ai.defineTool(
 
     } catch (error: any) {
       console.error('Error reading from Dropbox link:', error);
+      // The new URL() constructor might throw if the string isn't a valid URL.
+      if (error instanceof TypeError && error.message.includes('Invalid URL')) {
+          return `Error: The provided link "${url}" is not a valid URL format.`
+      }
       return `Error reading file from link: ${error.message}`;
     }
   }
