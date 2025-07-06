@@ -921,9 +921,9 @@ export default function HomePage() {
     body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
     body += `A summary is also included below:\n\n`;
     
-    if (visits.length > 0) {
-      body += `Summary of Visits (${visits.length} total):\n`;
-      visits.forEach((visit, index) => {
+    if (todaysVisits.length > 0) {
+      body += `Summary of Visits (${todaysVisits.length} total):\n`;
+      todaysVisits.forEach((visit, index) => {
         body += `\n${index + 1}. ${visit.companyName}`;
         if (visit.notesSummary) body += `\n   Summary: ${visit.notesSummary}`;
         if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") body += `\n   Contact: ${visit.contactInfo.info}`;
@@ -1976,7 +1976,7 @@ export default function HomePage() {
                     {todaysVisits.map((visit) => (
                       <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                         <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                           <div className="flex items-center justify-between w-full gap-4">
+                           <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                               <div className="flex flex-1 items-center gap-3 min-w-0">
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2155,7 +2155,7 @@ export default function HomePage() {
                   {sortedVisitsForCallDay.map((visit) => (
                     <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                        <div className="flex items-center justify-between w-full gap-4">
+                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                           <div className="flex flex-1 items-center gap-3 min-w-0">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2202,7 +2202,7 @@ export default function HomePage() {
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
-                      <CalendarCheck className="h-7 w-7 text-primary absolute left-0" />
+                      <CalendarCheck className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                           Future Meetings
                       </h2>
@@ -2223,7 +2223,7 @@ export default function HomePage() {
                           {scheduledVisits.map((visit) => (
                               <AccordionItem value={`planner-scheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-center justify-between w-full gap-4">
+                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                                           <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2295,7 +2295,7 @@ export default function HomePage() {
                           {unscheduledFutureVisits.map((visit) => (
                               <AccordionItem value={`planner-unscheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-center justify-between w-full gap-4">
+                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                                           <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2360,7 +2360,7 @@ export default function HomePage() {
                               {flaggedHotspots.map((visit) => (
                                   <AccordionItem value={`planner-hotspot-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                          <div className="flex items-center justify-between w-full gap-4">
+                                          <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                                               <div className="flex flex-1 items-center gap-3 min-w-0">
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2419,7 +2419,7 @@ export default function HomePage() {
                           {activeFreeTrials.map((visit) => (
                               <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-center justify-between w-full gap-4">
+                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                                           <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -3065,7 +3065,7 @@ export default function HomePage() {
           onSave={handleSaveFromForm}
           initialData={currentEditingVisit}
           salesperson={selectedSalesperson}
-          startDictation={startDictationOnOpen}
+          startDictationOnOpen={startDictationOnOpen}
           isFutureVisit={addingFutureVisit}
         />
         
@@ -3101,3 +3101,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
