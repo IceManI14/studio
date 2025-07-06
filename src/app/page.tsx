@@ -1994,7 +1994,7 @@ export default function HomePage() {
                                   </Badge>
                                 )}
                                 {visit.futureMeetingSet && (
-                                  <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-green-500" : "text-orange-500")} />
+                                  <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
                                 )}
                               </div>
                             </div>
@@ -2173,7 +2173,7 @@ export default function HomePage() {
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
-                              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-green-500" : "text-orange-500")} />
+                              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
                             )}
                           </div>
                         </div>
