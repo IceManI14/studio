@@ -266,6 +266,28 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const freeTrialStartDate = form.watch('freeTrialStartDate');
+  
+  useEffect(() => {
+    // This effect ensures the follow-up meeting date is always in sync with the trial start date.
+    if (freeTrialValue && freeTrialStartDate) {
+      const followUpDate = new Date(freeTrialStartDate);
+      followUpDate.setDate(followUpDate.getDate() + 7);
+      followUpDate.setHours(10, 0, 0, 0); // Default to 10 AM
+
+      const currentMeetingDate = form.getValues('futureMeetingDateTime');
+
+      // Set futureMeetingSet to true if a trial is active.
+      if (!form.getValues('futureMeetingSet')) {
+        form.setValue('futureMeetingSet', true, { shouldValidate: true });
+      }
+
+      // Only update the meeting date if it's different to avoid re-renders.
+      if (!currentMeetingDate || currentMeetingDate.getTime() !== followUpDate.getTime()) {
+        form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+      }
+    }
+  }, [freeTrialValue, freeTrialStartDate, form]);
   
   const handleRemoveImage = useCallback(() => {
     setBusinessCardPreviewUrl(null);
@@ -1383,26 +1405,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       onCheckedChange={(checked) => {
                         const boolValue = !!checked;
                         field.onChange(boolValue);
+
                         if (boolValue) {
-                          const startDate = form.getValues('freeTrialStartDate') || new Date();
+                          // If checking the box, set a default start date if none exists.
+                          // The useEffect will handle scheduling the follow-up.
                           if (!form.getValues('freeTrialStartDate')) {
-                            form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+                            form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
                           }
-                    
-                          // Automatically schedule a follow-up meeting for one week later
-                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                          const followUpDate = new Date(startDate);
-                          followUpDate.setDate(followUpDate.getDate() + 7);
-                          followUpDate.setHours(10, 0, 0, 0); // Default to 10 AM
-                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-                          
                           toast({
-                              title: "Follow-up Meeting Scheduled",
-                              description: "A reminder has been automatically added to your planner for one week from now."
+                            title: "Free Trial Activated",
+                            description: "A follow-up meeting has been scheduled for one week from the start date.",
                           });
-                    
                         } else {
-                           form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                          // When unchecking, clear all related fields.
+                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
+                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
                         }
                       }}
                       id="freeTrial"
