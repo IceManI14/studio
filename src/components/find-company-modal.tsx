@@ -120,6 +120,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
         if (place) {
             const visitData: Partial<Visit> = {
                 companyName: place.companyName,
+                city: place.city,
                 latitude: place.latitude,
                 longitude: place.longitude,
                 notes: `Address: ${place.address}`,

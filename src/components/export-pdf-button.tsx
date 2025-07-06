@@ -42,6 +42,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
       const tableColumn = [
         "Date",
         "Company",
+        "City",
         "Visit #",
         "Confidence",
         "Summary",
@@ -61,6 +62,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         return [
           visitDate,
           visit.companyName || 'N/A',
+          visit.city || 'N/A',
           visit.visitNumber?.toString() ?? 'N/A',
           visit.partnershipConfidence ? `${visit.partnershipConfidence} star(s)` : 'N/A',
           visit.notesSummary || 'N/A',
@@ -85,9 +87,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
         columnStyles: {
           0: { cellWidth: 25 }, // Date
-          1: { cellWidth: 25 }, // Company
-          2: { cellWidth: 12 }, // Visit #
-          3: { cellWidth: 18 }, // Confidence
+          1: { cellWidth: 22 }, // Company
+          2: { cellWidth: 18 }, // City
+          3: { cellWidth: 12 }, // Visit #
+          4: { cellWidth: 18 }, // Confidence
           // Remaining columns will auto-adjust or can be specified
         },
         didDrawPage: function (data) {

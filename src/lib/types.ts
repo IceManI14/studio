@@ -22,6 +22,7 @@ export interface Visit {
   latitude?: number;
   longitude?: number;
   companyName: string;
+  city?: string | null;
   notes?: string;
   contactInfo?: ContactInfo;
   notesSummary?: string;

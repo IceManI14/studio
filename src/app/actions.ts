@@ -42,6 +42,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     // This robust approach prevents the server crashes that were causing the "unexpected error".
     const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
       companyName: payload.companyName.trim(),
+      city: payload.city ?? null,
       timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
       notes: payload.notes ?? null,
       latitude: payload.latitude ?? null,
@@ -462,7 +463,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
     
     // CSV Generation Logic
     const headers = [
-      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'Notes', 
+      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'City', 'Notes', 
       'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
       'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
@@ -475,6 +476,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.latitude ?? '',
       visit.longitude ?? '',
       `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.city ?? '').replace(/"/g, '""')}"`,
       `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
       `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
       visit.contactInfo?.confidence ?? '',

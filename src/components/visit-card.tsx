@@ -299,6 +299,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               >
                 {visit.companyName}
               </CardTitle>
+              {visit.city && <CardDescription className="text-sm -mt-1">{visit.city}</CardDescription>}
               <CardDescription className="text-xs pt-1 text-center">
                   {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
               </CardDescription>

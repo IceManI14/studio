@@ -107,7 +107,7 @@ export default function HomePage() {
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
-  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial'>('partnershipConfidence');
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial' | 'city'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -488,10 +488,16 @@ export default function HomePage() {
       const timeB = new Date(b.timestamp).getTime();
       const dealClosedA = a.dealClosed ? 1 : 0;
       const dealClosedB = b.dealClosed ? 1 : 0;
+      const cityA = a.city || '';
+      const cityB = b.city || '';
   
       let comparison = 0;
-  
-      if (sortCriteria === 'futureMeetingsSet') {
+      
+      if (sortCriteria === 'city') {
+        comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'futureMeetingsSet') {
         const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
         const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime).getTime() : Infinity;
         comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
@@ -659,7 +665,7 @@ export default function HomePage() {
     }
     
     setIsFetchingCity(true);
-    let companyName, notes, phone;
+    let companyName, notes, phone, city;
     try {
         const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
         if (result.error) {
@@ -670,6 +676,7 @@ export default function HomePage() {
             companyName = result.suggestedCompanyName;
             notes = result.address ? `Company Address: ${result.address}` : '';
             phone = result.phone;
+            city = result.city;
         }
     } catch (e: any) {
         console.error("Error fetching company name for quicklog:", e);
@@ -688,6 +695,7 @@ export default function HomePage() {
       timestamp: new Date(),
       visitNumber: todaysVisitsCount + 1,
       companyName: companyName || '',
+      city: city,
       notes: notes || '',
       decisionMakerContact: phone || '',
     };
@@ -718,6 +726,7 @@ export default function HomePage() {
       latitude: existingVisit.latitude,
       longitude: existingVisit.longitude,
       contactInfo: existingVisit.contactInfo, 
+      city: existingVisit.city,
       notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
@@ -764,6 +773,7 @@ export default function HomePage() {
                   id: visitId,
                   timestamp: payload.timestamp || new Date(),
                   companyName: payload.companyName || '',
+                  city: payload.city,
                   notes: payload.notes || undefined,
                   latitude: payload.latitude || undefined,
                   longitude: payload.longitude || undefined,
@@ -1237,6 +1247,7 @@ export default function HomePage() {
         id: `temp_${crypto.randomUUID()}`,
         timestamp: new Date(),
         companyName: visitData.companyName || '',
+        city: visitData.city,
         notes: visitData.notes,
         latitude: visitData.latitude,
         longitude: visitData.longitude,
@@ -1372,6 +1383,7 @@ export default function HomePage() {
       id: `temp_${crypto.randomUUID()}`,
       timestamp: new Date(),
       companyName: lead.companyName,
+      city: lead.city,
       latitude: lead.latitude,
       longitude: lead.longitude,
       notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
@@ -1550,6 +1562,7 @@ export default function HomePage() {
                     id: `temp_${crypto.randomUUID()}`,
                     timestamp: new Date(),
                     companyName: companyName,
+                    city: result.city,
                     notes: `Flagged as a hotspot. Address: ${result.address || 'Unknown'}`.trim(),
                     latitude: latitude,
                     longitude: longitude,
@@ -1968,7 +1981,7 @@ export default function HomePage() {
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                                 {visit.interestedUnit ? (
                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
@@ -2065,7 +2078,7 @@ export default function HomePage() {
                                 <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                                 <Select
                                   value={sortCriteria}
-                                  onValueChange={(value) => setSortCriteria(value as 'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial')}
+                                  onValueChange={(value) => setSortCriteria(value as any)}
                                 >
                                   <SelectTrigger id="sort-criteria" className="w-full">
                                     <SelectValue placeholder="Select criteria" />
@@ -2073,6 +2086,7 @@ export default function HomePage() {
                                   <SelectContent>
                                     <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
                                     <SelectItem value="timestamp">Date Visited</SelectItem>
+                                    <SelectItem value="city">Town/City</SelectItem>
                                     <SelectItem value="dealClosed">Closed Deals</SelectItem>
                                     <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
                                     <SelectItem value="inTrial">In Trial</SelectItem>
@@ -2089,7 +2103,7 @@ export default function HomePage() {
                                     <SelectValue placeholder="Select order" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
+                                    {sortCriteria === 'city' ? ( <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </> ) : sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -2146,7 +2160,7 @@ export default function HomePage() {
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                             {visit.interestedUnit ? (
                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
@@ -2214,7 +2228,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2286,7 +2300,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                                               {visit.interestedUnit ? (
                                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2351,7 +2365,7 @@ export default function HomePage() {
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                                                   {visit.interestedUnit ? (
                                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
@@ -2410,7 +2424,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-36 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground h-5 w-[140px] shrink-0">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (

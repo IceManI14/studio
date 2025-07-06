@@ -27,7 +27,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
 
     const headers = [
       'ID', 'Timestamp', 'Latitude', 'Longitude',
-      'Company Name', 'Notes', 'Contact Info',
+      'Company Name', 'City', 'Notes', 'Contact Info',
       'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
       'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 'Competitor Name',
       'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
@@ -42,6 +42,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       visit.latitude ?? '',
       visit.longitude ?? '',
       `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.city ?? '').replace(/"/g, '""')}"`,
       `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
       `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
       visit.contactInfo?.confidence ?? '',

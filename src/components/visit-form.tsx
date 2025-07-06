@@ -101,6 +101,7 @@ const OUR_COOLERS_LIST = [
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
+  city: z.string().optional(),
   notes: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -143,6 +144,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     id: visitState?.id,
     timestamp: visitState?.timestamp,
     companyName: data.companyName,
+    city: data.city,
     notes: data.notes,
     latitude: currentLatitude,
     longitude: currentLongitude,
@@ -208,6 +210,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     resolver: zodResolver(visitFormSchema),
     defaultValues: {
       companyName: '',
+      city: '',
       notes: '',
       latitude: undefined,
       longitude: undefined,
@@ -331,6 +334,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             toast({ variant: "destructive", title: "No Company Found", description: "Could not identify a company at this location." });
         }
         if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
+        if (result.city) form.setValue('city', result.city, { shouldValidate: true });
         if (result.address) {
             const currentNotes = form.getValues('notes') || '';
             const addressNote = `Company Address: ${result.address}`;
@@ -402,6 +406,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const resetFormAndState = useCallback((data?: Visit) => {
     const defaultValues = {
       companyName: data?.companyName || '',
+      city: data?.city || '',
       notes: data?.notes || '',
       latitude: data?.latitude ?? undefined,
       longitude: data?.longitude ?? undefined,
