@@ -229,19 +229,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const NormalContent = () => (
     <div className="space-y-1">
         <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center">
+            <div className="flex items-center h-6">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center h-6">
                 {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Future Meeting
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center h-6">
                 {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 TDS Reading
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center h-6">
                 {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Free Trial
             </div>
@@ -287,7 +287,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="flex flex-col items-center justify-center w-full pt-12">
               {visit.interestedUnit && (
                 <div className="text-sm text-blue-400 font-medium mb-1">
-                  {`{${visit.interestedUnit.split('(')[0].trim()}}`}
+                  {`{${visit.interestedUnit}}`}
                 </div>
               )}
               <CardTitle 
