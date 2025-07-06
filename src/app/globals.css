@@ -84,6 +84,13 @@ body {
     @apply text-green-400;
   }
 
+  .day-trial-end:not([aria-selected]) {
+    @apply text-red-500 font-bold;
+  }
+  .day-trial-end:hover:not([aria-selected]) {
+    @apply text-red-400;
+  }
+
   /* Ensure today's date is highly visible */
   .day_today:not([aria-selected]) {
     @apply bg-cyan-400 text-black;
