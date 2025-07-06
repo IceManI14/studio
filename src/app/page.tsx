@@ -1973,7 +1973,7 @@ export default function HomePage() {
                                 {visit.partnershipConfidence && (
                                   <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                     {visit.partnershipConfidence}
-                                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                                   </Badge>
                                 )}
                                 {visit.futureMeetingSet && (
@@ -2147,7 +2147,7 @@ export default function HomePage() {
                             {visit.partnershipConfidence && (
                               <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                 {visit.partnershipConfidence}
-                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
@@ -2210,7 +2210,7 @@ export default function HomePage() {
                                               {visit.partnershipConfidence && (
                                                   <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                                                   </Badge>
                                               )}
                                           </div>
@@ -2273,7 +2273,7 @@ export default function HomePage() {
                                               {visit.partnershipConfidence && (
                                                   <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                                                   </Badge>
                                               )}
                                           </div>
@@ -2385,7 +2385,7 @@ export default function HomePage() {
                                               {visit.partnershipConfidence && (
                                                   <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                                                   </Badge>
                                               )}
                                           </div>
@@ -3051,6 +3051,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
