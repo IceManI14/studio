@@ -39,7 +39,7 @@ import { Label } from '@/components/ui/label';
 import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeader, CardFooter as UiCardFooter, CardTitle as UiCardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
@@ -1964,11 +1964,11 @@ export default function HomePage() {
                       <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                         <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
                            <div className="flex items-center justify-between w-full gap-4">
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="flex flex-1 items-center gap-3 min-w-0">
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                              <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                 {visit.interestedUnit ? (
                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
@@ -1981,7 +1981,7 @@ export default function HomePage() {
                                   </Badge>
                                 )}
                                 {visit.futureMeetingSet && (
-                                  <CalendarCheck className="h-4 w-4 text-orange-500" />
+                                  <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-green-500" : "text-orange-500")} />
                                 )}
                               </div>
                             </div>
@@ -2142,11 +2142,11 @@ export default function HomePage() {
                     <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
                         <div className="flex items-center justify-between w-full gap-4">
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex flex-1 items-center gap-3 min-w-0">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                             {visit.interestedUnit ? (
                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
@@ -2159,7 +2159,7 @@ export default function HomePage() {
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
-                              <CalendarCheck className="h-4 w-4 text-orange-500" />
+                              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-green-500" : "text-orange-500")} />
                             )}
                           </div>
                         </div>
@@ -2207,11 +2207,11 @@ export default function HomePage() {
                               <AccordionItem value={`planner-scheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
                                       <div className="flex items-center justify-between w-full gap-4">
-                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                          <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2276,11 +2276,11 @@ export default function HomePage() {
                               <AccordionItem value={`planner-unscheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
                                       <div className="flex items-center justify-between w-full gap-4">
-                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                          <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2338,11 +2338,11 @@ export default function HomePage() {
                                   <AccordionItem value={`planner-hotspot-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
                                           <div className="flex items-center justify-between w-full gap-4">
-                                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                              <div className="flex flex-1 items-center gap-3 min-w-0">
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                                              <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                                   {visit.interestedUnit ? (
                                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
@@ -2394,11 +2394,11 @@ export default function HomePage() {
                               <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
                                       <div className="flex items-center justify-between w-full gap-4">
-                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                          <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
