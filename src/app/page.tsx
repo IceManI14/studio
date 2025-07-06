@@ -2093,8 +2093,8 @@ export default function HomePage() {
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             {visit.partnershipConfidence && (
                               <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                 {visit.partnershipConfidence}
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
