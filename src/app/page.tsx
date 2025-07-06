@@ -40,7 +40,7 @@ import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeade
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from '@/components/ui/separator';
+import { Separator } from "@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -2187,7 +2187,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                    <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full">
                         <CalendarCheck className="mr-3 h-7 w-7 text-primary" /> Future Meetings
                     </h2>
                   </AccordionTrigger>
@@ -2251,7 +2251,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                    <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full">
                         <CalendarIcon className="mr-3 h-7 w-7 text-primary" /> Future Visits (Unscheduled)
                     </h2>
                   </AccordionTrigger>
@@ -2318,7 +2318,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                      <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full">
                           <Flame className="mr-3 h-7 w-7 text-orange-500" /> Flagged Hotspots
                       </h2>
                   </AccordionTrigger>
@@ -2374,7 +2374,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                    <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full">
                         <PackageCheck className="mr-3 h-7 w-7 text-primary" /> Active Free Trials
                     </h2>
                   </AccordionTrigger>
