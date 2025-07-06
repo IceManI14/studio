@@ -1968,7 +1968,7 @@ export default function HomePage() {
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                 {visit.interestedUnit ? (
                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
@@ -2146,7 +2146,7 @@ export default function HomePage() {
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                             {visit.interestedUnit ? (
                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
@@ -2187,9 +2187,9 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center">
-                      <CalendarCheck className="h-7 w-7 text-primary" />
-                      <h2 id="scheduled-visits-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                    <div className="flex w-full items-center justify-center relative">
+                      <CalendarCheck className="h-7 w-7 text-primary absolute left-0" />
+                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                           Future Meetings
                       </h2>
                     </div>
@@ -2214,7 +2214,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2254,9 +2254,9 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center">
-                      <CalendarIcon className="h-7 w-7 text-primary" />
-                      <h2 id="unscheduled-visits-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                    <div className="flex w-full items-center justify-center relative">
+                      <CalendarIcon className="h-7 w-7 text-primary absolute left-0" />
+                      <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                           Future Visits (Unscheduled)
                       </h2>
                     </div>
@@ -2286,7 +2286,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2324,9 +2324,9 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                      <div className="flex w-full items-center">
-                        <Flame className="h-7 w-7 text-orange-500" />
-                        <h2 id="hotspots-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                      <div className="flex w-full items-center justify-center relative">
+                        <Flame className="h-7 w-7 text-orange-500 absolute left-0" />
+                        <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground">
                             Flagged Hotspots
                         </h2>
                       </div>
@@ -2351,7 +2351,7 @@ export default function HomePage() {
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                              <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                                   {visit.interestedUnit ? (
                                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
@@ -2383,9 +2383,9 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center">
-                      <PackageCheck className="h-7 w-7 text-primary" />
-                      <h2 id="free-trials-title" className="flex-1 text-center text-2xl font-headline font-semibold text-foreground -ml-7">
+                    <div className="flex w-full items-center justify-center relative">
+                      <PackageCheck className="h-7 w-7 text-primary absolute left-0" />
+                      <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground">
                           Active Free Trials
                       </h2>
                     </div>
@@ -2410,7 +2410,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
