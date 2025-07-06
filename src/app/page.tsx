@@ -1963,15 +1963,15 @@ export default function HomePage() {
                     {todaysVisits.map((visit) => (
                       <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                         <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                           <div className="flex items-baseline justify-between w-full gap-4">
-                              <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                           <div className="flex items-center justify-between w-full gap-4">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                 <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                                 {visit.partnershipConfidence && (
-                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                     {visit.partnershipConfidence}
                                     <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                   </Badge>
@@ -2137,15 +2137,15 @@ export default function HomePage() {
                   {sortedVisitsForCallDay.map((visit) => (
                     <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
-                        <div className="flex items-baseline justify-between w-full gap-4">
-                          <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             {visit.partnershipConfidence && (
-                              <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                 {visit.partnershipConfidence}
                                 <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                               </Badge>
@@ -2176,7 +2176,7 @@ export default function HomePage() {
 
           {activeTab === 'planner' && (
             <div className="space-y-8">
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="scheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2198,17 +2198,17 @@ export default function HomePage() {
                           {scheduledVisits.map((visit) => (
                               <AccordionItem value={`planner-scheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-baseline justify-between w-full gap-4">
-                                          <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                                      <div className="flex items-center justify-between w-full gap-4">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.futureMeetingDateTime && (
                                                   <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
                                               )}
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -2236,7 +2236,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2263,15 +2263,15 @@ export default function HomePage() {
                           {unscheduledFutureVisits.map((visit) => (
                               <AccordionItem value={`planner-unscheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-baseline justify-between w-full gap-4">
-                                          <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                                      <div className="flex items-center justify-between w-full gap-4">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -2299,7 +2299,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <h2 id="hotspots-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2321,12 +2321,12 @@ export default function HomePage() {
                               {flaggedHotspots.map((visit) => (
                                   <AccordionItem value={`planner-hotspot-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                       <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                          <div className="flex items-baseline justify-between w-full gap-4">
-                                              <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                                          <div className="flex items-center justify-between w-full gap-4">
+                                              <div className="flex items-center gap-3 min-w-0 flex-1">
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                                              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                                   <span>Flagged: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                               </div>
                                           </div>
@@ -2351,7 +2351,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <h2 id="free-trials-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
@@ -2373,17 +2373,17 @@ export default function HomePage() {
                           {activeFreeTrials.map((visit) => (
                               <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
                                   <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex items-baseline justify-between w-full gap-4">
-                                          <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                                      <div className="flex items-center justify-between w-full gap-4">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-baseline gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.freeTrialStartDate && (
                                                   <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
                                               )}
                                               {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                       {visit.partnershipConfidence}
                                                       <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                                                   </Badge>
@@ -2839,7 +2839,7 @@ export default function HomePage() {
                                 <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
                             </li>
                             <li>
-                                <strong>Smart Scheduling & Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, and <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field.
+                                <strong>Smart Scheduling & Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
                             </li>
                             <li>
                                 <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
@@ -3051,6 +3051,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
