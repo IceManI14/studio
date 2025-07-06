@@ -1384,9 +1384,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         const boolValue = !!checked;
                         field.onChange(boolValue);
                         if (boolValue) {
-                           if (!form.getValues('freeTrialStartDate')) {
-                            form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
+                          const startDate = form.getValues('freeTrialStartDate') || new Date();
+                          if (!form.getValues('freeTrialStartDate')) {
+                            form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
                           }
+                    
+                          // Automatically schedule a follow-up meeting for one week later
+                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          const followUpDate = new Date(startDate);
+                          followUpDate.setDate(followUpDate.getDate() + 7);
+                          followUpDate.setHours(10, 0, 0, 0); // Default to 10 AM
+                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+                          
+                          toast({
+                              title: "Follow-up Meeting Scheduled",
+                              description: "A reminder has been automatically added to your planner for one week from now."
+                          });
+                    
                         } else {
                            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
                         }
