@@ -234,7 +234,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 Business Card
             </div>
             <div className="flex items-center">
-                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500 relative -top-px" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Future Meeting
             </div>
             <div className="flex items-center">
@@ -278,7 +278,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   {[1, 2, 3, 4, 5].map((starValue) => (
                       <Star
                           key={starValue}
-                          className={cn("h-5 w-5 cursor-pointer transition-colors relative -top-px", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                          className={cn("h-5 w-5 cursor-pointer transition-colors", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
                       />
                   ))}
               </div>
@@ -286,8 +286,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
               {visit.interestedUnit && (
-                <div className="text-sm text-primary font-medium mb-1">
-                  {`{${visit.interestedUnit}}`}
+                <div className="text-sm text-blue-400 font-medium mb-1">
+                  {`{${visit.interestedUnit.split('(')[0].trim()}}`}
                 </div>
               )}
               <CardTitle 

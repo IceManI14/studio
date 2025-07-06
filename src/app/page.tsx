@@ -1970,7 +1970,7 @@ export default function HomePage() {
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                 {visit.interestedUnit ? (
-                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
                                     <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                                 )}
@@ -1981,7 +1981,7 @@ export default function HomePage() {
                                   </Badge>
                                 )}
                                 {visit.futureMeetingSet && (
-                                  <CalendarCheck className="h-4 w-4 text-orange-500 relative -top-px" />
+                                  <CalendarCheck className="h-4 w-4 text-orange-500" />
                                 )}
                               </div>
                             </div>
@@ -2148,7 +2148,7 @@ export default function HomePage() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                             {visit.interestedUnit ? (
-                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
                                 <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             )}
@@ -2159,7 +2159,7 @@ export default function HomePage() {
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
-                              <CalendarCheck className="h-4 w-4 text-orange-500 relative -top-px" />
+                              <CalendarCheck className="h-4 w-4 text-orange-500" />
                             )}
                           </div>
                         </div>
@@ -2213,7 +2213,7 @@ export default function HomePage() {
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.interestedUnit ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
                                                   visit.futureMeetingDateTime && (
                                                       <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
@@ -2282,7 +2282,7 @@ export default function HomePage() {
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.interestedUnit ? (
-                                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
                                                 <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                               )}
@@ -2344,7 +2344,7 @@ export default function HomePage() {
                                               </div>
                                               <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                                   {visit.interestedUnit ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
                                                     <span>Flagged: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                                   )}
@@ -2400,7 +2400,7 @@ export default function HomePage() {
                                           </div>
                                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                                               {visit.interestedUnit ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit}}`}</span>
+                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
                                                   visit.freeTrialStartDate && (
                                                       <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
