@@ -2092,9 +2092,9 @@ export default function HomePage() {
                           <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-4">
                             <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             {visit.partnershipConfidence && (
-                              <Badge variant="outline" className="flex items-baseline gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                 {visit.partnershipConfidence}
-                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 relative -top-px" />
                               </Badge>
                             )}
                             {visit.futureMeetingSet && (
