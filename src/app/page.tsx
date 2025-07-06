@@ -40,7 +40,7 @@ import { Card as UiCard, CardContent as UiCardContent, CardHeader as UiCardHeade
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -1968,7 +1968,7 @@ export default function HomePage() {
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                              <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                 {visit.interestedUnit ? (
                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
@@ -2146,7 +2146,7 @@ export default function HomePage() {
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                          <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                             {visit.interestedUnit ? (
                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
@@ -2214,7 +2214,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2286,7 +2286,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2351,7 +2351,7 @@ export default function HomePage() {
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                              <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                                   {visit.interestedUnit ? (
                                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
@@ -2410,7 +2410,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex w-28 shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
+                                          <div className="flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground h-5">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
