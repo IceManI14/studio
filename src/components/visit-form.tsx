@@ -1705,7 +1705,25 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               <FormItem>
                                 <FormLabel className="text-sm font-normal">Name</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="e.g., Jane Doe" {...field} />
+                                  <div className="relative">
+                                    <Input 
+                                      placeholder="e.g., Jane Doe" 
+                                      {...field}
+                                      className={cn(field.value && 'pr-9')}
+                                    />
+                                    {field.value && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => field.onChange('')}
+                                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                                        aria-label="Clear Name"
+                                      >
+                                        <X className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1718,7 +1736,25 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               <FormItem>
                                 <FormLabel className="text-sm font-normal">Title</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="e.g., Office Manager" {...field} />
+                                  <div className="relative">
+                                    <Input 
+                                      placeholder="e.g., Office Manager" 
+                                      {...field}
+                                      className={cn(field.value && 'pr-9')}
+                                    />
+                                    {field.value && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => field.onChange('')}
+                                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                                        aria-label="Clear Title"
+                                      >
+                                        <X className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1731,7 +1767,25 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               <FormItem>
                                 <FormLabel className="text-sm font-normal">Contact (Email/Phone Ext.)</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="e.g., jane@example.com or x123" {...field} />
+                                  <div className="relative">
+                                    <Input 
+                                      placeholder="e.g., jane@example.com or x123" 
+                                      {...field}
+                                      className={cn(field.value && 'pr-9')}
+                                    />
+                                    {field.value && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => field.onChange('')}
+                                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                                        aria-label="Clear Contact Info"
+                                      >
+                                        <X className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
