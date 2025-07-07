@@ -184,7 +184,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <div>
                     <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Financials</h4>
                     <div className="pl-6 space-y-1">
-                        {visit.pricingDiscussed && <p><strong>Pricing:</strong> Discussed with client.</p>}
+                        {visit.pricingDiscussed && (
+                            <p>
+                                <strong>Pricing:</strong>
+                                {visit.priceQuoted && visit.leaseTerm 
+                                    ? ` Quoted $${visit.priceQuoted.toFixed(2)}/mo for ${visit.leaseTerm} months`
+                                    : " Discussed"
+                                }
+                            </p>
+                        )}
                         {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
                     </div>
                 </div>

@@ -55,8 +55,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "Free Trial",
         "Trial Start",
         "Deal Closed",
-        "Pricing OK",
-        "Credit OK",
+        "Pricing Discussed",
+        "Price Quoted",
+        "Lease Term",
+        "Credit Approved",
       ];
 
       const tableRows = visits.map(visit => {
@@ -78,6 +80,8 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MM/dd/yy') : 'N/A',
           visit.dealClosed ? 'Yes' : 'No',
           visit.pricingDiscussed ? 'Yes' : 'No',
+          visit.priceQuoted ? `$${visit.priceQuoted.toFixed(2)}` : 'N/A',
+          visit.leaseTerm ? `${visit.leaseTerm} mos` : 'N/A',
           visit.creditApproved ? 'Yes' : 'No',
         ];
       });
@@ -88,13 +92,13 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         startY: 35,
         theme: 'striped',
         headStyles: { fillColor: [36, 104, 180] }, // A blue shade for header (approx. HSL primary)
-        styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+        styles: { fontSize: 6, cellPadding: 1.5, overflow: 'linebreak' },
         columnStyles: {
-          0: { cellWidth: 25 }, // Date
-          1: { cellWidth: 22 }, // Company
-          2: { cellWidth: 18 }, // City
-          3: { cellWidth: 12 }, // Visit #
-          4: { cellWidth: 18 }, // Confidence
+          0: { cellWidth: 22 }, // Date
+          1: { cellWidth: 20 }, // Company
+          2: { cellWidth: 16 }, // City
+          3: { cellWidth: 10 }, // Visit #
+          4: { cellWidth: 16 }, // Confidence
           // Remaining columns will auto-adjust or can be specified
         },
         didDrawPage: function (data) {

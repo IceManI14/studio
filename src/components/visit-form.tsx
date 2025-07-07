@@ -121,6 +121,8 @@ const visitFormSchema = z.object({
   freeTrial: z.boolean().optional(),
   freeTrialStartDate: z.coerce.date().optional(),
   pricingDiscussed: z.boolean().optional(),
+  priceQuoted: z.coerce.number().optional(),
+  leaseTerm: z.coerce.number().optional(),
   creditApproved: z.boolean().optional(),
 });
 
@@ -166,6 +168,8 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     freeTrial: data.freeTrial,
     freeTrialStartDate: data.freeTrial ? data.freeTrialStartDate : undefined,
     pricingDiscussed: data.pricingDiscussed,
+    priceQuoted: data.pricingDiscussed ? data.priceQuoted : undefined,
+    leaseTerm: data.pricingDiscussed ? data.leaseTerm : undefined,
     creditApproved: data.creditApproved,
     dealClosed: visitState?.dealClosed,
     visitNumber: visitState?.visitNumber,
@@ -234,6 +238,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       freeTrial: false,
       freeTrialStartDate: undefined,
       pricingDiscussed: false,
+      priceQuoted: undefined,
+      leaseTerm: undefined,
       creditApproved: false,
     },
   });
@@ -857,6 +863,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       freeTrial: data?.freeTrial || false,
       freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
       pricingDiscussed: data?.pricingDiscussed || false,
+      priceQuoted: data?.priceQuoted ?? undefined,
+      leaseTerm: data?.leaseTerm ?? undefined,
       creditApproved: data?.creditApproved || false,
     };
     form.reset(defaultValues);
@@ -870,19 +878,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [form]);
   
   useEffect(() => {
-    if (freeTrialValue) {
-      const startDate = form.getValues('freeTrialStartDate') || new Date();
-      if (!form.getValues('freeTrialStartDate')) {
-        form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-      }
-      const followUpDate = addDays(startDate, 7);
+    if (freeTrialValue && freeTrialStartDateValue) {
+      const followUpDate = addDays(new Date(freeTrialStartDateValue), 7);
       followUpDate.setHours(10, 0, 0, 0);
       form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-      if (!form.getValues('futureMeetingSet')) {
-        form.setValue('futureMeetingSet', true, { shouldValidate: true });
-      }
     }
   }, [freeTrialValue, freeTrialStartDateValue, form]);
+
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -1255,47 +1257,103 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             )}
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
-              <Label className="font-medium text-base">Financials</Label>
-              <FormField
-                  control={form.control}
-                  name="pricingDiscussed"
-                  render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                      <FormControl>
-                      <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="pricingDiscussed"
-                      />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
-                          <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing Discussed?
-                      </FormLabel>
-                      </div>
-                  </FormItem>
-                  )}
-              />
-              <FormField
-                  control={form.control}
-                  name="creditApproved"
-                  render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                      <FormControl>
-                      <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="creditApproved"
-                      />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="creditApproved" className="cursor-pointer font-normal flex items-center">
-                          <CheckCircle2 className="mr-2 h-4 w-4 text-primary" /> Credit Approved?
-                      </FormLabel>
-                      </div>
-                  </FormItem>
-                  )}
-              />
+                <Label className="font-medium text-base">Financials</Label>
+                <FormField
+                    control={form.control}
+                    name="pricingDiscussed"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3 rounded-md border border-accent p-3 shadow-inner">
+                            <div className="flex flex-row items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={(checked) => {
+                                            field.onChange(checked);
+                                            if (!checked) {
+                                                form.setValue('priceQuoted', undefined);
+                                                form.setValue('leaseTerm', undefined);
+                                            }
+                                        }}
+                                        id="pricingDiscussed"
+                                    />
+                                </FormControl>
+                                <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
+                                    <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing Discussed?
+                                </FormLabel>
+                            </div>
+                            {form.watch('pricingDiscussed') && (
+                                <div className="pl-8 pt-3 space-y-4 animate-in fade-in-0 zoom-in-95 border-t border-border">
+                                    <FormField
+                                        control={form.control}
+                                        name="priceQuoted"
+                                        render={({ field: priceField }) => (
+                                            <FormItem>
+                                                <FormLabel>Price Quoted ($/mo)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g., 49.99"
+                                                        step="0.01"
+                                                        {...priceField}
+                                                        value={priceField.value ?? ''}
+                                                        onChange={(e) => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="leaseTerm"
+                                        render={({ field: leaseField }) => (
+                                            <FormItem>
+                                                <FormLabel>Lease Term (months)</FormLabel>
+                                                <Select
+                                                    onValueChange={leaseField.onChange}
+                                                    defaultValue={leaseField.value ? String(leaseField.value) : ""}
+                                                    value={leaseField.value ? String(leaseField.value) : ""}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a lease term" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="36">36 Months</SelectItem>
+                                                        <SelectItem value="48">48 Months</SelectItem>
+                                                        <SelectItem value="60">60 Months</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="creditApproved"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                            <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    id="creditApproved"
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel htmlFor="creditApproved" className="cursor-pointer font-normal flex items-center">
+                                    <CheckCircle2 className="mr-2 h-4 w-4 text-primary" /> Credit Approved?
+                                </FormLabel>
+                            </div>
+                        </FormItem>
+                    )}
+                />
             </div>
             
             <FormField
@@ -1314,7 +1372,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           if (!form.getValues('freeTrialStartDate')) {
                             form.setValue('freeTrialStartDate', new Date(), { shouldValidate: true });
                           }
-                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          if (!form.getValues('futureMeetingSet')) {
+                            form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          }
                           
                           toast({
                               title: "Free Trial Activated",

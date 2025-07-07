@@ -65,6 +65,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       freeTrial: payload.freeTrial || false,
       freeTrialStartDate: (payload.freeTrial || false) && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
       pricingDiscussed: payload.pricingDiscussed || false,
+      priceQuoted: (payload.pricingDiscussed || false) && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
+      leaseTerm: (payload.pricingDiscussed || false) && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
       creditApproved: payload.creditApproved || false,
       notesSummary: payload.notesSummary ?? null,
       contactInfo: payload.contactInfo ?? null,
@@ -471,7 +473,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
       'Decision Maker Contact', 'Visit Number', 'Interested Unit', 'Has TDS Reading', 
       'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Credit Approved'
+      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Credit Approved'
     ];
     const rows = visits.map(visit => [
       visit.id,
@@ -503,6 +505,8 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
       visit.dealClosed ? 'Yes' : 'No',
       visit.pricingDiscussed ? 'Yes' : 'No',
+      visit.priceQuoted ?? '',
+      visit.leaseTerm ?? '',
       visit.creditApproved ? 'Yes' : 'No',
     ].join(','));
     const csvContent = [headers.join(','), ...rows].join('\n');
