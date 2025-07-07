@@ -483,6 +483,8 @@ export default function HomePage() {
       processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
     } else if (sortCriteria === 'inTrial') {
       processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
+    } else if (sortCriteria === 'dealClosed') {
+      processedVisits = processedVisits.filter(visit => visit.dealClosed);
     }
   
     // Deduplicate visits in case a visit is both logged and scheduled on the same day.
@@ -493,8 +495,6 @@ export default function HomePage() {
       const confidenceB = b.partnershipConfidence ?? 0;
       const timeA = new Date(a.timestamp).getTime();
       const timeB = new Date(b.timestamp).getTime();
-      const dealClosedA = a.dealClosed ? 1 : 0;
-      const dealClosedB = b.dealClosed ? 1 : 0;
       const cityA = a.city || '';
       const cityB = b.city || '';
   
@@ -517,9 +517,10 @@ export default function HomePage() {
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'dealClosed') {
-        comparison = sortOrder === 'desc' ? dealClosedB - dealClosedA : dealClosedA - dealClosedB;
+        // Since we are now filtering, sort by a different metric like timestamp
+        comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA;
+        return confidenceB - confidenceA; // Secondary sort by confidence
       } else if (sortCriteria === 'partnershipConfidence') {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
@@ -2242,7 +2243,19 @@ export default function HomePage() {
                                       <SelectValue placeholder="Select order" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {sortCriteria === 'city' ? ( <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </> ) : sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
+                                      {sortCriteria === 'city' ? (
+                                        <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </>
+                                      ) : sortCriteria === 'futureMeetingsSet' ? (
+                                        <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </>
+                                      ) : sortCriteria === 'inTrial' ? (
+                                        <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </>
+                                      ) : sortCriteria === 'dealClosed' ? (
+                                        <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
+                                      ) : sortCriteria === 'timestamp' ? (
+                                        <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
+                                      ) : ( // Default is partnershipConfidence
+                                        <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 </div>
