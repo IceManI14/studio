@@ -416,22 +416,20 @@ export default function HomePage() {
   const loggedVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
     const timestamps = new Set<number>();
-    
+  
     visits.forEach(v => {
-      // A day is logged if a visit was created...
-      if (!v.dealClosed) {
-        timestamps.add(startOfDay(new Date(v.timestamp)).getTime());
-      }
-      
-      // ...or if a past meeting occurred, and it wasn't a closed deal.
-      if (v.futureMeetingSet && v.futureMeetingDateTime && !v.dealClosed) {
-          const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
-          if (meetingDay < today) {
-              timestamps.add(meetingDay.getTime());
-          }
+      // A day is logged if a visit was created on that day.
+      timestamps.add(startOfDay(new Date(v.timestamp)).getTime());
+  
+      // A day is also logged if a meeting was scheduled and the day has passed.
+      if (v.futureMeetingSet && v.futureMeetingDateTime) {
+        const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
+        if (meetingDay < today) {
+          timestamps.add(meetingDay.getTime());
+        }
       }
     });
-
+  
     return Array.from(timestamps).map(time => new Date(time));
   }, [visits]);
 
