@@ -1257,7 +1257,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             )}
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
-                <Label className="font-medium text-base">Financials</Label>
+                <Label className="font-medium text-base">Pricing</Label>
                 <FormField
                     control={form.control}
                     name="pricingDiscussed"
@@ -1410,16 +1410,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         onCheckedChange={(checked) => {
                           const boolValue = !!checked;
                           field.onChange(boolValue);
-                          if (boolValue) {
-                            if (!form.getValues('futureMeetingDateTime')) {
-                              const newDateTime = new Date();
-                              newDateTime.setHours(9);
-                              newDateTime.setMinutes(0);
-                              newDateTime.setSeconds(0);
-                              newDateTime.setMilliseconds(0);
-                              form.setValue('futureMeetingDateTime', newDateTime, { shouldValidate: true });
-                            }
-                          } else {
+                          if (!boolValue) {
                             form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
                           }
                         }}
@@ -1463,7 +1454,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             {field.value ? (
                               format(new Date(field.value), "PPP 'at' h:mm a")
                             ) : (
-                              <span>Pick a date and time</span>
+                              <span>Pick a date (or leave blank)</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -1537,6 +1528,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                               </SelectContent>
                             </Select>
                           </div>
+                        </div>
+                        <div className="p-2 border-t border-border flex justify-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => field.onChange(undefined)}
+                                className="text-sm h-8"
+                            >
+                                Clear Date
+                            </Button>
                         </div>
                       </PopoverContent>
                     </Popover>
