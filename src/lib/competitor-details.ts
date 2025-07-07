@@ -95,6 +95,9 @@ export const COMPETITOR_DETAILS: Record<string, { title?: string; details: strin
       "Service and maintenance can vary widely."
     ]
   },
+  "Monadnock": {
+    details: ["Details for this competitor are not pre-defined. Add specific notes if available."]
+  },
   "Other": {
     details: ["Details for this competitor are not pre-defined. Add specific notes if available."]
   }

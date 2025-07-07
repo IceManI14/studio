@@ -43,6 +43,7 @@ const COMPETITORS_LIST = [
   "Crown Coffee",
   "Culligan-Quench",
   "ELKAY wall uni!",
+  "Monadnock",
   "Ready Refresh/Primo",
   "WB Mason",
   "Other",
@@ -1325,8 +1326,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                                 <FormLabel>Lease Term (months)</FormLabel>
                                                 <Select
                                                     onValueChange={(value) => leaseField.onChange(Number(value))}
-                                                    defaultValue={leaseField.value ? String(leaseField.value) : ""}
-                                                    value={leaseField.value ? String(leaseField.value) : ""}
+                                                    defaultValue={leaseField.value ? String(leaseField.value) : "60"}
+                                                    value={leaseField.value ? String(leaseField.value) : "60"}
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
