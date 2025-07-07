@@ -123,6 +123,7 @@ const visitFormSchema = z.object({
   pricingDiscussed: z.boolean().optional(),
   priceQuoted: z.coerce.number().optional(),
   leaseTerm: z.coerce.number().optional(),
+  installationFee: z.coerce.number().optional(),
   creditApproved: z.boolean().optional(),
 });
 
@@ -170,6 +171,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     pricingDiscussed: data.pricingDiscussed,
     priceQuoted: data.pricingDiscussed ? data.priceQuoted : undefined,
     leaseTerm: data.pricingDiscussed ? data.leaseTerm : undefined,
+    installationFee: data.pricingDiscussed ? data.installationFee : undefined,
     creditApproved: data.creditApproved,
     dealClosed: visitState?.dealClosed,
     visitNumber: visitState?.visitNumber,
@@ -240,6 +242,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       pricingDiscussed: false,
       priceQuoted: undefined,
       leaseTerm: undefined,
+      installationFee: undefined,
       creditApproved: false,
     },
   });
@@ -865,6 +868,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       pricingDiscussed: data?.pricingDiscussed || false,
       priceQuoted: data?.priceQuoted ?? undefined,
       leaseTerm: data?.leaseTerm ?? undefined,
+      installationFee: data?.installationFee ?? undefined,
       creditApproved: data?.creditApproved || false,
     };
     form.reset(defaultValues);
@@ -1273,9 +1277,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                             if (!isChecked) {
                                                 form.setValue('priceQuoted', undefined);
                                                 form.setValue('leaseTerm', undefined);
+                                                form.setValue('installationFee', undefined);
                                             } else {
                                                 if (!form.getValues('leaseTerm')) {
                                                     form.setValue('leaseTerm', 60, { shouldValidate: true });
+                                                }
+                                                if (!form.getValues('installationFee')) {
+                                                    form.setValue('installationFee', 199, { shouldValidate: true });
                                                 }
                                             }
                                         }}
@@ -1330,6 +1338,26 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                                         <SelectItem value="60">60 Months</SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="installationFee"
+                                        render={({ field: feeField }) => (
+                                            <FormItem>
+                                                <FormLabel>Installation Fee ($)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g., 199"
+                                                        step="1"
+                                                        {...feeField}
+                                                        value={feeField.value ?? ''}
+                                                        onChange={(e) => feeField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                    />
+                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

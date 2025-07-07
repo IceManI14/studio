@@ -571,9 +571,10 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-      if (visit.pricingDiscussed && visit.priceQuoted && visit.leaseTerm) {
-        const commission = visit.priceQuoted * (visit.leaseTerm / 12);
-        return total + commission;
+      if (visit.pricingDiscussed) {
+        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+        return total + leaseCommission + installCommission;
       }
       return total;
     }, 0);
@@ -818,6 +819,7 @@ export default function HomePage() {
                   pricingDiscussed: payload.pricingDiscussed || false,
                   priceQuoted: payload.priceQuoted,
                   leaseTerm: payload.leaseTerm,
+                  installationFee: payload.installationFee,
                   creditApproved: payload.creditApproved || false,
                 };
                 
@@ -1378,6 +1380,7 @@ export default function HomePage() {
         pricingDiscussed: false,
         priceQuoted: undefined,
         leaseTerm: undefined,
+        installationFee: undefined,
         creditApproved: false,
     };
     
@@ -1518,6 +1521,7 @@ export default function HomePage() {
       pricingDiscussed: false,
       priceQuoted: undefined,
       leaseTerm: undefined,
+      installationFee: undefined,
       creditApproved: false,
     };
     
@@ -1701,6 +1705,7 @@ export default function HomePage() {
                     pricingDiscussed: false,
                     priceQuoted: undefined,
                     leaseTerm: undefined,
+                    installationFee: undefined,
                     creditApproved: false,
                 };
                 

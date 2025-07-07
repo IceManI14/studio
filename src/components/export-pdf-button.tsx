@@ -55,9 +55,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "Free Trial",
         "Trial Start",
         "Deal Closed",
-        "Pricing Discussed",
+        "Pricing",
         "Price Quoted",
         "Lease Term",
+        "Install Fee",
         "Credit Approved",
       ];
 
@@ -82,6 +83,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.pricingDiscussed ? 'Yes' : 'No',
           visit.priceQuoted ? `$${visit.priceQuoted.toFixed(2)}` : 'N/A',
           visit.leaseTerm ? `${visit.leaseTerm} mos` : 'N/A',
+          visit.installationFee ? `$${visit.installationFee.toFixed(2)}` : 'N/A',
           visit.creditApproved ? 'Yes' : 'No',
         ];
       });

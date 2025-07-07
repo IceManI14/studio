@@ -67,6 +67,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       pricingDiscussed: payload.pricingDiscussed || false,
       priceQuoted: (payload.pricingDiscussed || false) && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
       leaseTerm: (payload.pricingDiscussed || false) && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
+      installationFee: (payload.pricingDiscussed || false) && typeof payload.installationFee === 'number' && !isNaN(payload.installationFee) ? payload.installationFee : null,
       creditApproved: payload.creditApproved || false,
       notesSummary: payload.notesSummary ?? null,
       contactInfo: payload.contactInfo ?? null,
@@ -473,7 +474,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
       'Decision Maker Contact', 'Visit Number', 'Interested Unit', 'Has TDS Reading', 
       'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Credit Approved'
+      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved'
     ];
     const rows = visits.map(visit => [
       visit.id,
@@ -507,6 +508,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.pricingDiscussed ? 'Yes' : 'No',
       visit.priceQuoted ?? '',
       visit.leaseTerm ?? '',
+      visit.installationFee ?? '',
       visit.creditApproved ? 'Yes' : 'No',
     ].join(','));
     const csvContent = [headers.join(','), ...rows].join('\n');

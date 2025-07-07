@@ -47,6 +47,7 @@ export interface Visit {
   pricingDiscussed?: boolean;
   priceQuoted?: number;
   leaseTerm?: number;
+  installationFee?: number;
   creditApproved?: boolean;
 }
 

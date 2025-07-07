@@ -34,7 +34,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       'Decision Maker Contact', 'Visit Number', 'Interested Unit',
       'Has TDS Reading', 'TDS Value', 'Future Meeting Set',
       'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Credit Approved'
+      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved'
     ];
 
     const rows = visits.map(visit => [
@@ -69,6 +69,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       visit.pricingDiscussed ? 'Yes' : 'No',
       visit.priceQuoted ?? '',
       visit.leaseTerm ?? '',
+      visit.installationFee ?? '',
       visit.creditApproved ? 'Yes' : 'No',
     ].join(','));
 

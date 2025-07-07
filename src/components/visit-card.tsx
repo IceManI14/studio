@@ -90,9 +90,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
-  const potentialCommission = (visit.pricingDiscussed && visit.priceQuoted && visit.leaseTerm)
-    ? (visit.priceQuoted * (visit.leaseTerm / 12))
-    : null;
+  const potentialCommission = (() => {
+    if (!visit.pricingDiscussed) return null;
+    const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+    const total = leaseCommission + installCommission;
+    return total > 0 ? total : null;
+  })();
 
   const ZoomedContent = () => (
     <ScrollArea className="h-96 pr-4">
@@ -196,6 +200,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                                 }
                             </p>
                         )}
+                        {visit.installationFee && <p><strong>Installation Fee:</strong> ${visit.installationFee.toFixed(2)}</p>}
                         {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
                     </div>
                 </div>
