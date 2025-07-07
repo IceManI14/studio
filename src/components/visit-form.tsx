@@ -120,6 +120,8 @@ const visitFormSchema = z.object({
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
   freeTrialStartDate: z.coerce.date().optional(),
+  pricingDiscussed: z.boolean().optional(),
+  creditApproved: z.boolean().optional(),
 });
 
 export type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -163,6 +165,8 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
     freeTrial: data.freeTrial,
     freeTrialStartDate: data.freeTrial ? data.freeTrialStartDate : undefined,
+    pricingDiscussed: data.pricingDiscussed,
+    creditApproved: data.creditApproved,
     dealClosed: visitState?.dealClosed,
     visitNumber: visitState?.visitNumber,
     contactInfo: visitState?.contactInfo,
@@ -229,6 +233,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingDateTime: undefined,
       freeTrial: false,
       freeTrialStartDate: undefined,
+      pricingDiscussed: false,
+      creditApproved: false,
     },
   });
 
@@ -394,68 +400,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   };
 
   useEffect(() => {
-    if (freeTrialValue && freeTrialStartDateValue) {
-      const followUpDate = addDays(new Date(freeTrialStartDateValue), 7);
-      followUpDate.setHours(10, 0, 0, 0);
-      form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-      if (!form.getValues('futureMeetingSet')) {
-        form.setValue('futureMeetingSet', true, { shouldValidate: true });
-      }
-    }
-  }, [freeTrialValue, freeTrialStartDateValue, form]);
-
-  useEffect(() => {
-    if (watchedCompetitorName) {
-      setOpenAccordion(['cooler-type']);
-      const timer = setTimeout(() => setIsCoolerSelectOpen(true), 250);
-      return () => clearTimeout(timer);
-    } else {
-      setOpenAccordion([]);
-      setIsCoolerSelectOpen(false);
-    }
-  }, [watchedCompetitorName]);
-
-  const resetFormAndState = useCallback((data?: Visit) => {
-    const defaultValues = {
-      companyName: data?.companyName || '',
-      city: data?.city || '',
-      notes: data?.notes || '',
-      latitude: data?.latitude ?? undefined,
-      longitude: data?.longitude ?? undefined,
-      partnershipConfidence: data?.partnershipConfidence ?? undefined,
-      hasBusinessCard: data?.hasBusinessCard || false,
-      businessCardImageUrl: data?.businessCardImageUrl || null,
-      competitorName: data?.competitorName || undefined,
-      coolerType: data?.coolerType || undefined,
-      decisionMakerName: data?.decisionMakerName || '',
-      decisionMakerTitle: data?.decisionMakerTitle || '',
-      decisionMakerContact: data?.decisionMakerContact || '',
-      interestedUnit: data?.interestedUnit || undefined,
-      hasTDSReading: data?.hasTDSReading || false,
-      tdsValue: data?.tdsValue ?? undefined,
-      futureMeetingSet: data?.futureMeetingSet || false,
-      futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
-      freeTrial: data?.freeTrial || false,
-      freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
-    };
-    form.reset(defaultValues);
-    setCurrentLatitude(data?.latitude ?? undefined);
-    setCurrentLongitude(data?.longitude ?? undefined);
-    setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
-    setCustomCoolerNameInput('');
-    setIsCameraViewVisible(false);
-    setHasCameraPermission(null);
-    setCurrentCity(null);
-  }, [form]);
-
-  useEffect(() => {
     if (isOpen) {
-      setFormInitialData(initialData);
       resetFormAndState(initialData);
       setLastAnalyzedNotes(initialData?.notes);
       setIsEditingCompanyName(!initialData?.id || !initialData.companyName);
+      setFormInitialData(initialData);
     }
-  }, [initialData, isOpen, resetFormAndState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, isOpen]);
+
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -880,6 +833,56 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     return () => stopAudioAndCamera();
   }, [isOpen]);
+
+  const resetFormAndState = useCallback((data?: Visit) => {
+    const defaultValues = {
+      companyName: data?.companyName || '',
+      city: data?.city || '',
+      notes: data?.notes || '',
+      latitude: data?.latitude ?? undefined,
+      longitude: data?.longitude ?? undefined,
+      partnershipConfidence: data?.partnershipConfidence ?? undefined,
+      hasBusinessCard: data?.hasBusinessCard || false,
+      businessCardImageUrl: data?.businessCardImageUrl || null,
+      competitorName: data?.competitorName || undefined,
+      coolerType: data?.coolerType || undefined,
+      decisionMakerName: data?.decisionMakerName || '',
+      decisionMakerTitle: data?.decisionMakerTitle || '',
+      decisionMakerContact: data?.decisionMakerContact || '',
+      interestedUnit: data?.interestedUnit || undefined,
+      hasTDSReading: data?.hasTDSReading || false,
+      tdsValue: data?.tdsValue ?? undefined,
+      futureMeetingSet: data?.futureMeetingSet || false,
+      futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
+      freeTrial: data?.freeTrial || false,
+      freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
+      pricingDiscussed: data?.pricingDiscussed || false,
+      creditApproved: data?.creditApproved || false,
+    };
+    form.reset(defaultValues);
+    setCurrentLatitude(data?.latitude ?? undefined);
+    setCurrentLongitude(data?.longitude ?? undefined);
+    setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
+    setCustomCoolerNameInput('');
+    setIsCameraViewVisible(false);
+    setHasCameraPermission(null);
+    setCurrentCity(null);
+  }, [form]);
+  
+  useEffect(() => {
+    if (freeTrialValue) {
+      const startDate = form.getValues('freeTrialStartDate') || new Date();
+      if (!form.getValues('freeTrialStartDate')) {
+        form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+      }
+      const followUpDate = addDays(startDate, 7);
+      followUpDate.setHours(10, 0, 0, 0);
+      form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+      if (!form.getValues('futureMeetingSet')) {
+        form.setValue('futureMeetingSet', true, { shouldValidate: true });
+      }
+    }
+  }, [freeTrialValue, freeTrialStartDateValue, form]);
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -1250,6 +1253,50 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
+
+            <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
+              <Label className="font-medium text-base">Financials</Label>
+              <FormField
+                  control={form.control}
+                  name="pricingDiscussed"
+                  render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                      <FormControl>
+                      <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          id="pricingDiscussed"
+                      />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
+                          <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing Discussed?
+                      </FormLabel>
+                      </div>
+                  </FormItem>
+                  )}
+              />
+              <FormField
+                  control={form.control}
+                  name="creditApproved"
+                  render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                      <FormControl>
+                      <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          id="creditApproved"
+                      />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="creditApproved" className="cursor-pointer font-normal flex items-center">
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-primary" /> Credit Approved?
+                      </FormLabel>
+                      </div>
+                  </FormItem>
+                  )}
+              />
+            </div>
             
             <FormField
               control={form.control}

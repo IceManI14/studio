@@ -55,6 +55,8 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "Free Trial",
         "Trial Start",
         "Deal Closed",
+        "Pricing OK",
+        "Credit OK",
       ];
 
       const tableRows = visits.map(visit => {
@@ -75,6 +77,8 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.freeTrial ? 'Yes' : 'No',
           visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MM/dd/yy') : 'N/A',
           visit.dealClosed ? 'Yes' : 'No',
+          visit.pricingDiscussed ? 'Yes' : 'No',
+          visit.creditApproved ? 'Yes' : 'No',
         ];
       });
 

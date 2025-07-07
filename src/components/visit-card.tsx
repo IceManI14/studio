@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -160,7 +160,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
-            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet) && <Separator />}
+            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved) && <Separator />}
 
             {visit.discussedCompetitors && (
                 <div>
@@ -180,6 +180,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
+            {(visit.pricingDiscussed || visit.creditApproved) && (
+                <div>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Financials</h4>
+                    <div className="pl-6 space-y-1">
+                        {visit.pricingDiscussed && <p><strong>Pricing:</strong> Discussed with client.</p>}
+                        {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
+                    </div>
+                </div>
+            )}
+            
             {tdsInfo && (
                 <div>
                     <h4 className="font-semibold text-primary flex items-center mb-1"><Droplets className="mr-2 h-4 w-4" />TDS Reading</h4>
@@ -244,6 +254,14 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             <div className="flex items-center h-6">
                 {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Free Trial
+            </div>
+            <div className="flex items-center h-6">
+                {visit.pricingDiscussed ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Pricing Discussed
+            </div>
+            <div className="flex items-center h-6">
+                {visit.creditApproved ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+                Credit Approved
             </div>
         </div>
         {visit.notesSummary && (

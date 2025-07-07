@@ -44,6 +44,8 @@ export interface Visit {
   freeTrial?: boolean;
   freeTrialStartDate?: Date;
   dealClosed?: boolean;
+  pricingDiscussed?: boolean;
+  creditApproved?: boolean;
 }
 
 export interface ChatMessage {

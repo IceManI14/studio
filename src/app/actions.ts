@@ -64,6 +64,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       futureMeetingDateTime: (payload.futureMeetingSet || false) && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
       freeTrial: payload.freeTrial || false,
       freeTrialStartDate: (payload.freeTrial || false) && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
+      pricingDiscussed: payload.pricingDiscussed || false,
+      creditApproved: payload.creditApproved || false,
       notesSummary: payload.notesSummary ?? null,
       contactInfo: payload.contactInfo ?? null,
     };
@@ -468,7 +470,8 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
       'Decision Maker Contact', 'Visit Number', 'Interested Unit', 'Has TDS Reading', 
-      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed'
+      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
+      'Pricing Discussed', 'Credit Approved'
     ];
     const rows = visits.map(visit => [
       visit.id,
@@ -499,6 +502,8 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.freeTrial ? 'Yes' : 'No',
       visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
       visit.dealClosed ? 'Yes' : 'No',
+      visit.pricingDiscussed ? 'Yes' : 'No',
+      visit.creditApproved ? 'Yes' : 'No',
     ].join(','));
     const csvContent = [headers.join(','), ...rows].join('\n');
 

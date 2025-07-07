@@ -33,7 +33,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
       'Decision Maker Contact', 'Visit Number', 'Interested Unit',
       'Has TDS Reading', 'TDS Value', 'Future Meeting Set',
-      'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed'
+      'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
+      'Pricing Discussed', 'Credit Approved'
     ];
 
     const rows = visits.map(visit => [
@@ -65,6 +66,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       visit.freeTrial ? 'Yes' : 'No',
       visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
       visit.dealClosed ? 'Yes' : 'No',
+      visit.pricingDiscussed ? 'Yes' : 'No',
+      visit.creditApproved ? 'Yes' : 'No',
     ].join(','));
 
     const csvContent = [headers.join(','), ...rows].join('\n');
