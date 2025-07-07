@@ -42,6 +42,7 @@ const COMPETITORS_LIST = [
   "Cleartide",
   "Crown Coffee",
   "Culligan-Quench",
+  "ELKAY wall uni!",
   "Ready Refresh/Primo",
   "WB Mason",
   "Other",

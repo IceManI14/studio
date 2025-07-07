@@ -86,6 +86,15 @@ export const COMPETITOR_DETAILS: Record<string, { title?: string; details: strin
   "Crown Coffee": {
     details: ["Coolers: Ion 200, Ion 400"]
   },
+  "ELKAY wall uni!": {
+    title: "Wall Mounted Units",
+    details: [
+      "Often found in schools, gyms, and public facilities.",
+      "Typically provides only chilled water.",
+      "May have bottle filler functionality.",
+      "Service and maintenance can vary widely."
+    ]
+  },
   "Other": {
     details: ["Details for this competitor are not pre-defined. Add specific notes if available."]
   }
