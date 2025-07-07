@@ -185,7 +185,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
             {(visit.pricingDiscussed || visit.creditApproved) && (
                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Financials</h4>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Pricing</h4>
                     <div className="pl-6 space-y-1">
                         {visit.pricingDiscussed && (
                             <p>
@@ -322,7 +322,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
                 {potentialCommission !== null && (
                     <div className="flex items-center text-green-400" title={`Potential Commission: $${potentialCommission.toFixed(2)}`}>
-                        <DollarSign className="h-4 w-4 mr-1" />
+                        <DollarSign className="h-4 w-4" />
                         {potentialCommission.toFixed(2)}
                     </div>
                 )}
