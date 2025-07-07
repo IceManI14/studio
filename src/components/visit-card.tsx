@@ -90,6 +90,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
+  const potentialCommission = (visit.pricingDiscussed && visit.priceQuoted && visit.leaseTerm)
+    ? (visit.priceQuoted * (visit.leaseTerm / 12))
+    : null;
 
   const ZoomedContent = () => (
     <ScrollArea className="h-96 pr-4">
@@ -265,7 +268,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             </div>
             <div className="flex items-center h-6">
                 {visit.pricingDiscussed ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Pricing Discussed
+                Pricing
             </div>
             <div className="flex items-center h-6">
                 {visit.creditApproved ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
@@ -311,11 +314,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
-              {visit.interestedUnit && (
-                <div className="text-sm text-blue-400 font-medium mb-1">
-                  {`{${visit.interestedUnit.split('(')[0].trim()}}`}
-                </div>
-              )}
+              <div className="flex items-center gap-4 text-sm font-medium mb-1">
+                {visit.interestedUnit && (
+                  <div className="text-blue-400">
+                    {`{${visit.interestedUnit.split('(')[0].trim()}}`}
+                  </div>
+                )}
+                {potentialCommission !== null && (
+                    <div className="flex items-center text-green-400" title={`Potential Commission: $${potentialCommission.toFixed(2)}`}>
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        {potentialCommission.toFixed(2)}
+                    </div>
+                )}
+              </div>
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
