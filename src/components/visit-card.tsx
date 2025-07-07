@@ -313,7 +313,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <div className="flex flex-col items-center justify-center w-full pt-12">
               {visit.interestedUnit && (
                 <div className="text-sm text-blue-400 font-medium mb-1">
-                  {`{${visit.interestedUnit}}`}
+                  {`{${visit.interestedUnit.split('(')[0].trim()}}`}
                 </div>
               )}
               <CardTitle 
