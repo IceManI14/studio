@@ -113,6 +113,9 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isRecordingSearch, setIsRecordingSearch] = useState(false);
   const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const [citySearchTerm, setCitySearchTerm] = useState('');
+  const [isRecordingCitySearch, setIsRecordingCitySearch] = useState(false);
+  const citySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
@@ -470,6 +473,12 @@ export default function HomePage() {
         visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
+
+    if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
+        processedVisits = processedVisits.filter(visit =>
+            visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
+        );
+    }
   
     // If sorting by a specific criteria, filter first.
     if (sortCriteria === 'futureMeetingsSet') {
@@ -524,7 +533,7 @@ export default function HomePage() {
       }
     });
     return sorted;
-  }, [visits, sortCriteria, sortOrder, selectedDate, searchTerm]);
+  }, [visits, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visits
@@ -1213,6 +1222,88 @@ export default function HomePage() {
       toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
   }, [isRecordingSearch, toast]);
+
+  const handleToggleVoiceCitySearch = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
+      return;
+    }
+
+    if (isRecordingCitySearch && citySearchRecognitionRef.current) {
+      citySearchRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    citySearchRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecordingCitySearch(true);
+      toast({ title: 'Listening...' });
+    };
+
+    recognition.onend = () => {
+      setIsRecordingCitySearch(false);
+      citySearchRecognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      let errorMessage = `An unknown error occurred (code: ${event.error}).`;
+       switch (event.error) {
+        case 'no-speech':
+          errorMessage = "No speech was detected. Please make sure your microphone is working and try again.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access denied. Please check your browser's site permissions and ensure no other application is using the microphone.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Could not capture audio. Please check your microphone connection and system settings.";
+          break;
+        case 'network':
+          errorMessage = "A network error occurred. Speech recognition may require an internet connection.";
+          break;
+        case 'aborted':
+          console.log("Speech recognition aborted.");
+          setIsRecordingCitySearch(false);
+          citySearchRecognitionRef.current = null;
+          return;
+        case 'language-not-supported':
+          errorMessage = "The language for dictation is not supported by your browser.";
+          break;
+        case 'bad-grammar':
+           errorMessage = "There was a grammar recognition error. This is usually an issue with the recognition service.";
+           break;
+      }
+      
+      toast({ variant: 'destructive', title: 'Voice Recognition Error', description: errorMessage, duration: 9000 });
+      setIsRecordingCitySearch(false);
+      citySearchRecognitionRef.current = null;
+    };
+
+    recognition.onresult = (event) => {
+      if (event.results && event.results.length > 0 && event.results[0].length > 0) {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setCitySearchTerm(transcript);
+          toast({ title: 'City Search Term Transcribed' });
+        }
+      } else {
+        console.warn("Speech recognition returned a result with no transcript.");
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
+    }
+  }, [isRecordingCitySearch, toast]);
 
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
@@ -1981,7 +2072,7 @@ export default function HomePage() {
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
-                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                 {visit.interestedUnit ? (
                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                 ) : (
@@ -2078,7 +2169,12 @@ export default function HomePage() {
                                 <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                                 <Select
                                   value={sortCriteria}
-                                  onValueChange={(value) => setSortCriteria(value as any)}
+                                  onValueChange={(value) => {
+                                    setSortCriteria(value as any);
+                                    if (value !== 'city') {
+                                        setCitySearchTerm('');
+                                    }
+                                  }}
                                 >
                                   <SelectTrigger id="sort-criteria" className="w-full">
                                     <SelectValue placeholder="Select criteria" />
@@ -2093,20 +2189,66 @@ export default function HomePage() {
                                   </SelectContent>
                                 </Select>
                               </div>
-                              <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
-                                <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
-                                <Select
-                                  value={sortOrder}
-                                  onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-                                >
-                                  <SelectTrigger id="sort-order" className="w-full">
-                                    <SelectValue placeholder="Select order" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {sortCriteria === 'city' ? ( <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </> ) : sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                              {sortCriteria === 'city' ? (
+                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                    <Label htmlFor="city-search" className="text-sm text-center">Search by City</Label>
+                                    <div className="relative w-full">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                        id="city-search"
+                                        type="text"
+                                        placeholder={isRecordingCitySearch ? "Listening..." : "Type a city..."}
+                                        className="pl-10 pr-20"
+                                        value={citySearchTerm}
+                                        onChange={(e) => setCitySearchTerm(e.target.value)}
+                                        disabled={isRecordingCitySearch}
+                                        />
+                                        {citySearchTerm && !isRecordingCitySearch && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setCitySearchTerm('')}
+                                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                                            aria-label="Clear city search"
+                                            title="Clear city search"
+                                        >
+                                            <X className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={handleToggleVoiceCitySearch}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                            aria-label="Search city with voice"
+                                            title="Search city with voice"
+                                        >
+                                        {isRecordingCitySearch ? (
+                                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                        ) : (
+                                            <Mic className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                        </Button>
+                                    </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                  <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
+                                  <Select
+                                    value={sortOrder}
+                                    onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                                  >
+                                    <SelectTrigger id="sort-order" className="w-full">
+                                      <SelectValue placeholder="Select order" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sortCriteria === 'city' ? ( <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </> ) : sortCriteria === 'futureMeetingsSet' ? ( <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </> ) : sortCriteria === 'inTrial' ? ( <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </> ) : sortCriteria === 'partnershipConfidence' ? ( <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </> ) : sortCriteria === 'timestamp' ? ( <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </> ) : ( <> <SelectItem value="desc">Closed Deals First</SelectItem> <SelectItem value="asc">Open Deals First</SelectItem> </> )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -2160,7 +2302,7 @@ export default function HomePage() {
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
-                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                             {visit.interestedUnit ? (
                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                             ) : (
@@ -2228,7 +2370,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2269,7 +2411,7 @@ export default function HomePage() {
                 <AccordionItem value="unscheduled-visits" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
-                      <CalendarIcon className="h-7 w-7 text-primary absolute left-0" />
+                      <CalendarIcon className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                           Future Visits (Unscheduled)
                       </h2>
@@ -2300,7 +2442,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                 <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
@@ -2339,7 +2481,7 @@ export default function HomePage() {
                 <AccordionItem value="flagged-hotspots" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <div className="flex w-full items-center justify-center relative">
-                        <Flame className="h-7 w-7 text-orange-500 absolute left-0" />
+                        <Flame className="h-7 w-7 text-orange-500 absolute left-0 -ml-1" />
                         <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground">
                             Flagged Hotspots
                         </h2>
@@ -2365,7 +2507,7 @@ export default function HomePage() {
                                                   <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
-                                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                                   {visit.interestedUnit ? (
                                                     <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                                   ) : (
@@ -2398,7 +2540,7 @@ export default function HomePage() {
                 <AccordionItem value="active-free-trials" className="border-none">
                   <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
-                      <PackageCheck className="h-7 w-7 text-primary absolute left-0" />
+                      <PackageCheck className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground">
                           Active Free Trials
                       </h2>
@@ -2424,7 +2566,7 @@ export default function HomePage() {
                                               <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground shrink-0">
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                               {visit.interestedUnit ? (
                                                   <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
                                               ) : (
