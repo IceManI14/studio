@@ -805,6 +805,10 @@ export default function HomePage() {
                   notesSummary: payload.notesSummary || undefined,
                   contactInfo: payload.contactInfo || undefined,
                   dealClosed: payload.dealClosed || false,
+                  pricingDiscussed: payload.pricingDiscussed || false,
+                  priceQuoted: payload.priceQuoted,
+                  leaseTerm: payload.leaseTerm,
+                  creditApproved: payload.creditApproved || false,
                 };
                 
                 const updatedVisits = [newVisit, ...currentVisits];
@@ -1361,6 +1365,10 @@ export default function HomePage() {
         freeTrial: false,
         freeTrialStartDate: undefined,
         dealClosed: false,
+        pricingDiscussed: false,
+        priceQuoted: undefined,
+        leaseTerm: undefined,
+        creditApproved: false,
     };
     
     setVisits(prevVisits => {
@@ -1497,6 +1505,10 @@ export default function HomePage() {
       dealClosed: false,
       contactInfo: undefined,
       notesSummary: undefined,
+      pricingDiscussed: false,
+      priceQuoted: undefined,
+      leaseTerm: undefined,
+      creditApproved: false,
     };
     
     setVisits(prevVisits => {
@@ -1676,6 +1688,10 @@ export default function HomePage() {
                     freeTrial: false,
                     freeTrialStartDate: undefined,
                     dealClosed: false,
+                    pricingDiscussed: false,
+                    priceQuoted: undefined,
+                    leaseTerm: undefined,
+                    creditApproved: false,
                 };
                 
                 setVisits(prevVisits => {
@@ -2514,7 +2530,7 @@ export default function HomePage() {
                                   No hotspots flagged yet.
                               </p>
                               <p className="text-muted-foreground">
-                                  Use the "Flag Hotspot" button to mark locations while driving.
+                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
                               </p>
                           </div>
                       ) : (
@@ -2573,7 +2589,7 @@ export default function HomePage() {
                                 No active free trials.
                             </p>
                             <p className="text-muted-foreground">
-                                When you set up a free trial for a visit, it will appear here.
+                                This section will list all of your free trials in session!
                             </p>
                         </div>
                     ) : (
@@ -3007,7 +3023,7 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> While driving, see a promising area? Tap <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Flag Hotspot</span>. It instantly saves your GPS location as a "Flagged Hotspot" in your Planner for later review.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle -mt-1"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
                                 <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
