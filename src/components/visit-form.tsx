@@ -1268,17 +1268,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                     <Checkbox
                                         checked={field.value}
                                         onCheckedChange={(checked) => {
-                                            field.onChange(checked);
-                                            if (!checked) {
+                                            const isChecked = !!checked;
+                                            field.onChange(isChecked);
+                                            if (!isChecked) {
                                                 form.setValue('priceQuoted', undefined);
                                                 form.setValue('leaseTerm', undefined);
+                                            } else {
+                                                if (!form.getValues('leaseTerm')) {
+                                                    form.setValue('leaseTerm', 60, { shouldValidate: true });
+                                                }
                                             }
                                         }}
                                         id="pricingDiscussed"
                                     />
                                 </FormControl>
                                 <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
-                                    <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing Discussed?
+                                    <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing
                                 </FormLabel>
                             </div>
                             {form.watch('pricingDiscussed') && (
@@ -1310,7 +1315,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                             <FormItem>
                                                 <FormLabel>Lease Term (months)</FormLabel>
                                                 <Select
-                                                    onValueChange={leaseField.onChange}
+                                                    onValueChange={(value) => leaseField.onChange(Number(value))}
                                                     defaultValue={leaseField.value ? String(leaseField.value) : ""}
                                                     value={leaseField.value ? String(leaseField.value) : ""}
                                                 >
