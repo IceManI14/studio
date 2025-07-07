@@ -165,6 +165,26 @@ export default function HomePage() {
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState<string>('');
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
+  
+  // Accordion scroll refs
+  const dailyPlanRef = useRef<HTMLDivElement>(null);
+  const scheduledVisitsRef = useRef<HTMLDivElement>(null);
+  const unscheduledVisitsRef = useRef<HTMLDivElement>(null);
+  const flaggedHotspotsRef = useRef<HTMLDivElement>(null);
+  const activeFreeTrialsRef = useRef<HTMLDivElement>(null);
+  const callDayFilterRef = useRef<HTMLDivElement>(null);
+  const newsFeedRef = useRef<HTMLDivElement>(null);
+  const hotLeadsRef = useRef<HTMLDivElement>(null);
+
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
+    // We check the state on click. If it's closed, it's about to open.
+    if (e.currentTarget.getAttribute('data-state') === 'closed') {
+      // A short delay helps ensure the layout has updated before scrolling.
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200); // The accordion animation is 200ms
+    }
+  };
 
   useEffect(() => {
       visitsRef.current = visits;
@@ -1919,8 +1939,8 @@ export default function HomePage() {
               </div>
 
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="daily-plan" className="border-none">
-                  <AccordionTrigger className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
+                <AccordionItem ref={dailyPlanRef} value="daily-plan" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className="p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none">
                     <div className="flex items-center justify-between w-full gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <User className="h-5 w-5 text-primary flex-shrink-0" />
@@ -2181,8 +2201,8 @@ export default function HomePage() {
               </div>
 
               <Accordion type="single" collapsible className="w-full max-w-sm mx-auto">
-                <AccordionItem value="item-1" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
+                <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
                     <h3 className="text-lg font-medium text-foreground text-center w-full flex items-center justify-center gap-2">
                       <ListFilter className="h-5 w-5 text-primary" />
                       Filter & Sort
@@ -2392,8 +2412,8 @@ export default function HomePage() {
           {activeTab === 'planner' && (
             <div className="space-y-8">
               <Accordion type="multiple" className="w-full space-y-4">
-                <AccordionItem value="scheduled-visits" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
                       <CalendarCheck className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2459,8 +2479,8 @@ export default function HomePage() {
               </Accordion>
               
               <Accordion type="multiple" className="w-full space-y-4">
-                <AccordionItem value="unscheduled-visits" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
                       <CalendarIcon className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2529,8 +2549,8 @@ export default function HomePage() {
               </Accordion>
               
               <Accordion type="multiple" className="w-full space-y-4">
-                <AccordionItem value="flagged-hotspots" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <div className="flex w-full items-center justify-center relative">
                         <Flame className="h-7 w-7 text-orange-500 absolute left-0 -ml-1" />
                         <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2588,8 +2608,8 @@ export default function HomePage() {
               </Accordion>
 
               <Accordion type="multiple" className="w-full space-y-4">
-                <AccordionItem value="active-free-trials" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center justify-center relative">
                       <PackageCheck className="h-7 w-7 text-primary absolute left-0 -ml-1" />
                       <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2820,8 +2840,8 @@ export default function HomePage() {
               </UiCard>
               )}
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
-                <AccordionItem value="news-feed" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                           <Newspaper className="mr-3 h-7 w-7 text-primary" /> Optimum New England News
                       </h2>
@@ -2873,8 +2893,8 @@ export default function HomePage() {
               </Button>
 
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
-                <AccordionItem value="hot-leads" className="border-none">
-                  <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <h2 id="hot-leads-title" className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
                           <Flame className="mr-3 h-7 w-7 text-orange-500" /> Hot Leads ({hotLeads.length})
                       </h2>
