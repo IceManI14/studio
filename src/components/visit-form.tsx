@@ -1454,7 +1454,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             {field.value ? (
                               format(new Date(field.value), "PPP 'at' h:mm a")
                             ) : (
-                              <span>Pick a date (or leave blank)</span>
+                              <span>Not yet scheduled</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>

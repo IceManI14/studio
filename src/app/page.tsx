@@ -2393,7 +2393,7 @@ export default function HomePage() {
                                 No meetings with a specific date scheduled.
                             </p>
                             <p className="text-muted-foreground">
-                                Edit a visit and set a future meeting date, and it will appear here.
+                                When you set a future meeting date on a visit card, it will appear here.
                             </p>
                         </div>
                     ) : (
@@ -3023,7 +3023,7 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle -mt-1"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
                                 <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
