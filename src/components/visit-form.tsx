@@ -1590,13 +1590,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             )}
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
-              <Label className="font-medium text-base">Competitor Info (Optional)</Label>
+              <Label className="font-medium text-base">Competitor Name (If Noted)</Label>
               <FormField
                 control={form.control}
                 name="competitorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Competitor Name</FormLabel>
                     <Select
                       onValueChange={(value) => {
                         if (value === '_none_') {
