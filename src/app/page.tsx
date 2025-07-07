@@ -569,6 +569,16 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
   }, [visits]);
 
+  const totalTrialCommission = useMemo(() => {
+    return activeFreeTrials.reduce((total, visit) => {
+      if (visit.pricingDiscussed && visit.priceQuoted && visit.leaseTerm) {
+        const commission = visit.priceQuoted * (visit.leaseTerm / 12);
+        return total + commission;
+      }
+      return total;
+    }, 0);
+  }, [activeFreeTrials]);
+
   const todaysVisits = useMemo(() => {
     return visits.filter(visit => isToday(new Date(visit.timestamp)));
   }, [visits]);
@@ -2593,47 +2603,62 @@ export default function HomePage() {
                             </p>
                         </div>
                     ) : (
-                      <Accordion type="multiple" className="w-full space-y-4">
-                          {activeFreeTrials.map((visit) => (
-                              <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
-                                  <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                          <div className="flex flex-1 items-center gap-3 min-w-0">
-                                              <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
-                                              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                          </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              {visit.interestedUnit ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
-                                              ) : (
-                                                  visit.freeTrialStartDate && (
-                                                      <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
-                                                  )
-                                              )}
-                                              {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                      <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                  </Badge>
-                                              )}
-                                          </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="p-0">
-                                      <VisitCard
-                                          visit={visit}
-                                          onEdit={handleEditVisit}
-                                          onDelete={handleDeleteVisit}
-                                          onUpdateDealClosed={handleUpdateDealClosed}
-                                          onZoom={setZoomedVisit}
-                                          onLogFollowUp={handleLogFollowUp}
-                                          onDictateNotes={handleDictateNotes}
-                                          variant="planner"
-                                      />
-                                  </AccordionContent>
-                              </AccordionItem>
-                          ))}
-                      </Accordion>
+                      <>
+                        <Accordion type="multiple" className="w-full space-y-4">
+                            {activeFreeTrials.map((visit) => (
+                                <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
+                                    <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
+                                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                            <div className="flex flex-1 items-center gap-3 min-w-0">
+                                                <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
+                                                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                                {visit.interestedUnit ? (
+                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                                ) : (
+                                                    visit.freeTrialStartDate && (
+                                                        <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
+                                                    )
+                                                )}
+                                                {visit.partnershipConfidence && (
+                                                    <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                        <span className="leading-none">{visit.partnershipConfidence}</span>
+                                                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-0">
+                                        <VisitCard
+                                            visit={visit}
+                                            onEdit={handleEditVisit}
+                                            onDelete={handleDeleteVisit}
+                                            onUpdateDealClosed={handleUpdateDealClosed}
+                                            onZoom={setZoomedVisit}
+                                            onLogFollowUp={handleLogFollowUp}
+                                            onDictateNotes={handleDictateNotes}
+                                            variant="planner"
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                        {totalTrialCommission > 0 && (
+                          <div className="mt-6 pt-4 border-t border-primary/20 text-right">
+                            <p className="text-lg font-semibold text-foreground">
+                              Total Potential Commission:
+                              <span className="ml-2 font-bold text-green-400">
+                                ${totalTrialCommission.toFixed(2)}
+                              </span>
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              From all active trials with pricing details.
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </AccordionContent>
                 </AccordionItem>
