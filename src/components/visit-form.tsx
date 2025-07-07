@@ -134,7 +134,7 @@ export type VisitFormData = z.infer<typeof visitFormSchema>;
 interface VisitFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean }) => Promise<Visit>;
+  onSave: (payload: SaveVisitPayload, options?: { andClose?: boolean; expandOnClose?: boolean; }) => Promise<Visit>;
   initialData?: Visit;
   salesperson: Salesperson | null;
   startDictationOnOpen?: boolean;
@@ -261,11 +261,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleQuickSave = useCallback(async (): Promise<Visit | undefined> => {
+  const handleQuickSave = useCallback(async (): Promise<void> => {
     const isValid = await form.trigger("companyName");
     if (!isValid) {
       toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name before saving.' });
-      return undefined;
+      return;
     }
     
     setIsSaving(true);
@@ -273,12 +273,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     const payload = buildVisitPayload(data, formInitialData, currentLatitude, currentLongitude);
 
     try {
-      const savedVisit = await onSave(payload, { andClose: false });
-      setFormInitialData(savedVisit);
-      return savedVisit;
+      await onSave(payload, { andClose: true, expandOnClose: true });
     } catch (error) {
       toast({ variant: "destructive", title: "Error Saving", description: "An unexpected error occurred during the save." });
-      return undefined;
     } finally {
       setIsSaving(false);
     }
@@ -993,7 +990,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
                   >
                       <Save className="mr-2 h-4 w-4" />
-                      Save and Continue Editing
+                      Save & View
                   </Button>
                   <FormMessage />
                 </FormItem>

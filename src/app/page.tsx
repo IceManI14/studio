@@ -165,6 +165,7 @@ export default function HomePage() {
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState<string>('');
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
+  const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string | undefined>();
   
   // Accordion scroll refs
   const dailyPlanRef = useRef<HTMLDivElement>(null);
@@ -777,9 +778,9 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean } = {}): Promise<Visit> => {
+  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean, expandOnClose?: boolean } = {}): Promise<Visit> => {
     return new Promise((resolve) => {
-        const { andClose = true } = options;
+        const { andClose = true, expandOnClose = false } = options;
         if (andClose) {
             setIsVisitFormOpen(false);
         }
@@ -859,9 +860,14 @@ export default function HomePage() {
             description: `${finalVisit.companyName} data saved to device.`,
         });
 
+        if (expandOnClose && finalVisit.id) {
+          setActiveTab('field-day');
+          setFieldDayAccordionValue(finalVisit.id);
+        }
+
         resolve(finalVisit);
     });
-  }, [setIsVisitFormOpen, toast]);
+  }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue]);
 
 
   const handleDeleteVisit = async (visitId: string) => {
@@ -2113,7 +2119,13 @@ export default function HomePage() {
                         </Alert>
                     </div>
                 ) : (
-                  <Accordion type="multiple" className="w-full space-y-4">
+                  <Accordion 
+                    type="single" 
+                    collapsible
+                    className="w-full space-y-4"
+                    value={fieldDayAccordionValue}
+                    onValueChange={setFieldDayAccordionValue}
+                  >
                     {todaysVisits.map((visit) => (
                       <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
                         <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
