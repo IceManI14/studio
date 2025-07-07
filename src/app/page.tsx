@@ -2300,7 +2300,16 @@ export default function HomePage() {
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
-                    {selectedDate ? `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.` : 'No visits to display. Log visits in "Field Day" first.'}
+                    {(() => {
+                      if (!selectedDate) {
+                        return 'Select a date to see visits.';
+                      }
+                      const today = startOfDay(new Date());
+                      if (new Date(selectedDate) < today) {
+                        return `No visits logged on ${format(selectedDate, 'PPP')}.`;
+                      }
+                      return `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.`;
+                    })()}
                   </p>
                 </div>
               ) : (
