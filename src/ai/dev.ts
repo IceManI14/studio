@@ -19,4 +19,6 @@ import '@/ai/flows/extract-cities-from-pdf-flow.ts';
 import '@/ai/flows/extract-visit-details-flow.ts';
 import '@/ai/flows/get-company-intel-flow.ts';
 import '@/ai/flows/dropbox-tool.ts';
+import '@/ai/flows/analyze-document-flow.ts';
+
 

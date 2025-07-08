@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, FoundPlace } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, FoundPlace, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -42,7 +42,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -173,6 +173,10 @@ export default function HomePage() {
   const [newNewsItem, setNewNewsItem] = useState<string>('');
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
   const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string | undefined>();
+  const [companyDocs, setCompanyDocs] = useState<CompanyDoc[]>([]);
+  const [newDocName, setNewDocName] = useState('');
+  const [newDocUrl, setNewDocUrl] = useState('');
+  const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
   
   const { toast } = useToast();
   const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -192,6 +196,7 @@ export default function HomePage() {
   const callDayFilterRef = useRef<HTMLDivElement>(null);
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
+  const companyDocsRef = useRef<HTMLDivElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -992,6 +997,68 @@ export default function HomePage() {
     toast({ title: 'News Item Removed' });
   }, [toast]);
   
+  const handleAddCompanyDoc = useCallback(() => {
+    if (newDocName.trim() && newDocUrl.trim()) {
+      try {
+        // Validate URL format on client side before adding
+        new URL(newDocUrl.trim());
+        const newDoc: CompanyDoc = {
+          id: crypto.randomUUID(),
+          name: newDocName.trim(),
+          url: newDocUrl.trim(),
+        };
+        setCompanyDocs(prev => [...prev, newDoc]);
+        setNewDocName('');
+        setNewDocUrl('');
+        toast({ title: "Document Added", description: `${newDoc.name} has been added to your list.`});
+      } catch (e) {
+        toast({ variant: 'destructive', title: 'Invalid URL', description: 'Please enter a valid document URL.'});
+      }
+    } else {
+      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide both a name and a URL.' });
+    }
+  }, [newDocName, newDocUrl, toast]);
+
+  const handleDeleteCompanyDoc = useCallback((docId: string) => {
+    setCompanyDocs(prev => prev.filter(doc => doc.id !== docId));
+    toast({ title: "Document Removed" });
+  }, [toast]);
+
+  const handleAnalyzeCompanyDoc = useCallback(async (doc: CompanyDoc) => {
+    if (isAiResponding || analyzingDocId) return;
+  
+    setAnalyzingDocId(doc.id);
+  
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: `Please analyze the document: "${doc.name}"`,
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, userMessage]);
+  
+    const result = await analyzeDocumentAction({ documentUrl: doc.url });
+    let aiTextResponse = '';
+  
+    if (result.error) {
+      aiTextResponse = `I'm sorry, I couldn't analyze the document. Error: ${result.error}`;
+      toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error, duration: 7000 });
+    } else {
+      aiTextResponse = result.summary || "I was able to access the document, but couldn't generate a summary.";
+      toast({ title: 'Analysis Complete' });
+    }
+  
+    const aiMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'ai',
+      text: aiTextResponse,
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, aiMessage]);
+    
+    setAnalyzingDocId(null);
+  }, [isAiResponding, analyzingDocId, toast]);
+
   // Effects
   useEffect(() => {
       visitsRef.current = visits;
@@ -1018,6 +1085,9 @@ export default function HomePage() {
 
       const storedFiles = localStorage.getItem('managedFiles');
       if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
+      
+      const storedCompanyDocs = localStorage.getItem('companyDocs');
+      if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
 
       const storedHotLeads = localStorage.getItem('hotLeads');
       if (storedHotLeads) {
@@ -1144,6 +1214,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
   }, [submittedSuggestions]);
+
+  useEffect(() => {
+    localStorage.setItem('companyDocs', JSON.stringify(companyDocs));
+  }, [companyDocs]);
 
   useEffect(() => {
     localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
@@ -1273,7 +1347,6 @@ export default function HomePage() {
   };
 
   const handleQuickLog = async () => {
-    // Branch for when GPS is not available.
     if (!userCurrentLatitude || !userCurrentLongitude) {
         toast({
             title: 'Location Not Available',
@@ -1295,7 +1368,6 @@ export default function HomePage() {
         return;
     }
 
-    // Branch for when GPS is available.
     let companyName = '';
     let notes = '';
     let phone = '';
@@ -1321,7 +1393,6 @@ export default function HomePage() {
         setIsFetchingCity(false);
     }
 
-    // Finally, create the visit template with whatever data we gathered and open the form.
     const todaysVisitsCount = visits.filter((v) => isToday(new Date(v.timestamp))).length;
     const newVisitTemplate: Partial<Visit> = {
         latitude: latitude,
@@ -2874,6 +2945,68 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+                <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <h2 className="text-2xl font-headline font-semibold flex items-center justify-center text-foreground w-full">
+                          <FileText className="mr-3 h-7 w-7 text-primary" /> Company Documents
+                      </h2>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-0">
+                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                      <UiCardHeader>
+                        <UiCardTitle>Analyze Company Files</UiCardTitle>
+                        <UiCardDescription>Add direct links to important documents (e.g., from Dropbox) for Debbie to analyze.</UiCardDescription>
+                      </UiCardHeader>
+                      <UiCardContent className="space-y-4">
+                        <div className="flex flex-col sm:flex-row items-start gap-2 p-3 border rounded-lg bg-background/50">
+                          <div className="flex-grow space-y-1 w-full">
+                              <Label htmlFor="doc-name" className="text-xs">Document Name</Label>
+                              <Input id="doc-name" placeholder="e.g., Price List 2024" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                          </div>
+                          <div className="flex-grow space-y-1 w-full">
+                              <Label htmlFor="doc-url" className="text-xs">Document URL</Label>
+                              <Input id="doc-url" placeholder="Paste direct file link here" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} />
+                          </div>
+                           <Button onClick={handleAddCompanyDoc} className="w-full sm:w-auto mt-auto" size="sm" disabled={!newDocName.trim() || !newDocUrl.trim()}>
+                              <PlusCircle className="mr-2 h-4 w-4" /> Add
+                          </Button>
+                        </div>
+                        {companyDocs.length > 0 ? (
+                            <ScrollArea className="h-48">
+                                <ul className="space-y-2 pr-4">
+                                {companyDocs.map((doc) => (
+                                    <li key={doc.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <FileText className="h-4 w-4 shrink-0 text-primary" />
+                                            <span className="truncate text-sm" title={doc.name}>{doc.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <Button variant="default" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAnalyzeCompanyDoc(doc)} disabled={!!analyzingDocId}>
+                                              {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                                              <span className="ml-1">Analyze</span>
+                                          </Button>
+                                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
+                                              <Trash2 className="h-4 w-4 text-destructive" />
+                                              <span className="sr-only">Delete {doc.name}</span>
+                                          </Button>
+                                        </div>
+                                    </li>
+                                ))}
+                                </ul>
+                            </ScrollArea>
+                        ) : (
+                            <div className="text-center text-sm text-muted-foreground p-4 rounded-md border border-dashed">
+                                No company documents added yet.
+                            </div>
+                        )}
+                      </UiCardContent>
+                    </UiCard>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
               <Button onClick={() => setIsFindCompanyModalOpen(true)} className="w-full max-w-2xl mx-auto" size="sm">
                   <Search className="mr-2 h-4 w-4" /> Find Company by Name
               </Button>

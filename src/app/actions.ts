@@ -9,6 +9,7 @@ import { findOptimalParking } from '@/ai/flows/find-optimal-parking-flow.ts';
 import { extractCitiesFromPdf } from '@/ai/flows/extract-cities-from-pdf-flow';
 import { extractVisitDetails } from '@/ai/flows/extract-visit-details-flow';
 import { getCompanyIntel } from '@/ai/flows/get-company-intel-flow.ts';
+import { analyzeDocument } from '@/ai/flows/analyze-document-flow.ts';
 import { findPlacesFromText, type PlaceDetails, type SearchBounds } from '@/services/google-places';
 import type { Visit, ContactInfo, ManagedFile, Territory } from '@/lib/types';
 import { z } from 'zod';
@@ -588,5 +589,29 @@ export async function getCompanyIntelAction(
         return { error: "The AI service API key is invalid or has expired." };
     }
     return { error: error.message || 'Failed to get company intelligence. An unexpected error occurred.' };
+  }
+}
+
+const analyzeDocumentSchema = z.object({
+  documentUrl: z.string().url("A valid document URL is required."),
+});
+
+export async function analyzeDocumentAction(
+  payload: z.infer<typeof analyzeDocumentSchema>
+): Promise<{ summary?: string; error?: string }> {
+  try {
+    const validatedPayload = analyzeDocumentSchema.parse(payload);
+    const result = await analyzeDocument(validatedPayload);
+    return { summary: result.summary };
+  } catch (error: any) {
+    console.error("Error in analyzeDocumentAction:", error);
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
+    }
+    const errorMessage = error?.message?.toLowerCase() || '';
+    if (errorMessage.includes('api key not valid')) {
+        return { error: "The AI service API key is invalid or has expired." };
+    }
+    return { error: error.message || 'Failed to analyze document. An unexpected error occurred.' };
   }
 }

@@ -92,3 +92,9 @@ export interface HotLead {
   addedAt: Date;
   notes?: string;
 }
+
+export interface CompanyDoc {
+  id: string;
+  name: string;
+  url: string;
+}
