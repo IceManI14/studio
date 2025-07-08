@@ -2172,8 +2172,8 @@ export default function HomePage() {
                     onValueChange={setFieldDayAccordionValue}
                   >
                     {todaysVisits.map((visit) => (
-                      <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
-                        <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
+                      <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+                        <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
                            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                               <div className="flex flex-1 items-center gap-3 min-w-0">
                                 <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
@@ -2423,8 +2423,8 @@ export default function HomePage() {
               ) : (
                 <Accordion type="multiple" className="w-full space-y-4">
                   {sortedVisitsForCallDay.map((visit) => (
-                    <AccordionItem value={visit.id} key={visit.id} className="border border-primary/20 bg-card rounded-lg overflow-hidden">
-                      <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-primary/20">
+                    <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+                      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
                         <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                           <div className="flex flex-1 items-center gap-3 min-w-0">
                             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
