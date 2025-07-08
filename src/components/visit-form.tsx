@@ -693,7 +693,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     
       if (newTranscript) {
         const currentNotes = form.getValues('notes') || '';
-        const newNotes = currentNotes ? `${currentNotes} ${newTranscript.trim()}` : newTranscript.trim();
+        const newNotes = currentNotes.trim() ? `${currentNotes}\n${newTranscript.trim()}` : newTranscript.trim();
         form.setValue('notes', newNotes, { shouldValidate: true });
         toast({ title: 'Notes Updated' });
       }
