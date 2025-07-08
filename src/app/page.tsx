@@ -475,11 +475,12 @@ export default function HomePage() {
       return [];
     }
   
-    // Start with all visits
     let processedVisits = [...visits];
   
-    // Filter by selected date (if any)
-    if (selectedDate) {
+    const isSpecialFilter = ['inTrial', 'dealClosed', 'futureMeetingsSet'].includes(sortCriteria);
+  
+    // Filter by selected date (if any), but only if a special filter is not active
+    if (selectedDate && !isSpecialFilter) {
       processedVisits = processedVisits.filter(visit =>
         isSameDay(new Date(visit.timestamp), selectedDate) ||
         (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
@@ -492,11 +493,11 @@ export default function HomePage() {
         visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
+  
     if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
-        processedVisits = processedVisits.filter(visit =>
-            visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
-        );
+      processedVisits = processedVisits.filter(visit =>
+        visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
+      );
     }
   
     // If sorting by a specific criteria, filter first.
