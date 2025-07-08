@@ -696,49 +696,51 @@ export default function HomePage() {
 
 
   const handleQuickLog = async () => {
-    if (!userCurrentLatitude || !userCurrentLongitude) {
-      toast({
-        variant: "destructive",
-        title: "Could Not Get Location",
-        description: "Current user location is not available. Please enable location services.",
-      });
-      return;
-    }
-    
-    setIsFetchingCity(true);
-    let companyName, notes, phone, city;
-    try {
-        const result = await getCompanyNameFromCoordsAction({ latitude: userCurrentLatitude, longitude: userCurrentLongitude });
-        if (result.error) {
-            toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
-            setIsFetchingCity(false);
-            return;
-        } else {
-            companyName = result.suggestedCompanyName;
-            notes = result.address ? `Company Address: ${result.address}` : '';
-            phone = result.phone;
-            city = result.city;
-        }
-    } catch (e: any) {
-        console.error("Error fetching company name for quicklog:", e);
-        toast({ variant: "destructive", title: "Location Lookup Error", description: e.message });
+    let companyName = '';
+    let notes = '';
+    let phone = '';
+    let city: string | undefined = undefined;
+    let latitude = userCurrentLatitude;
+    let longitude = userCurrentLongitude;
+
+    if (latitude && longitude) {
+      setIsFetchingCity(true);
+      try {
+          const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+          if (result.error) {
+              // Show a non-blocking toast, but proceed anyway
+              toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
+          } else {
+              companyName = result.suggestedCompanyName || '';
+              notes = result.address ? `Company Address: ${result.address}` : '';
+              phone = result.phone || '';
+              city = result.city;
+          }
+      } catch (e: any) {
+          console.error("Error fetching company name for quicklog:", e);
+          toast({ variant: "destructive", title: "Location Lookup Error", description: e.message });
+      } finally {
         setIsFetchingCity(false);
-        return;
+      }
+    } else {
+      toast({
+        title: "Location Not Available",
+        description: "Please enter company details manually.",
+        duration: 5000,
+      });
     }
 
-    setIsFetchingCity(false);
-    
     const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
 
     const newVisitTemplate: Partial<Visit> = {
-      latitude: userCurrentLatitude,
-      longitude: userCurrentLongitude,
+      latitude: latitude,
+      longitude: longitude,
       timestamp: new Date(),
       visitNumber: todaysVisitsCount + 1,
-      companyName: companyName || '',
+      companyName: companyName,
       city: city,
-      notes: notes || '',
-      decisionMakerContact: phone || '',
+      notes: notes,
+      decisionMakerContact: phone,
     };
 
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -779,7 +781,7 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean, expandOnClose?: boolean } = {}): Promise<Visit> => {
+  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     return new Promise((resolve) => {
         const { andClose = true, expandOnClose = false } = options;
         if (andClose) {
@@ -3323,7 +3325,7 @@ export default function HomePage() {
               <AlertDialogAction onClick={handleConfirmStartupNavigation}>Yes, Navigate</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+        </Dialog>
         
       </div>
       <button
@@ -3342,5 +3344,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
