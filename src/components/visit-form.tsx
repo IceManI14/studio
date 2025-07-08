@@ -130,6 +130,7 @@ const visitFormSchema = z.object({
   leaseTerm: z.coerce.number().optional(),
   installationFee: z.coerce.number().optional(),
   creditApproved: z.boolean().optional(),
+  manualCommission: z.coerce.number().optional().nullable(),
 });
 
 export type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -178,6 +179,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     leaseTerm: data.pricingDiscussed ? data.leaseTerm : undefined,
     installationFee: data.pricingDiscussed ? data.installationFee : undefined,
     creditApproved: data.creditApproved,
+    manualCommission: data.manualCommission,
     dealClosed: visitState?.dealClosed,
     visitNumber: visitState?.visitNumber,
     contactInfo: visitState?.contactInfo,
@@ -249,6 +251,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       leaseTerm: undefined,
       installationFee: undefined,
       creditApproved: false,
+      manualCommission: undefined,
     },
   });
 
@@ -895,6 +898,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       leaseTerm: data?.leaseTerm ?? undefined,
       installationFee: data?.installationFee ?? undefined,
       creditApproved: data?.creditApproved || false,
+      manualCommission: data?.manualCommission ?? undefined,
     };
     form.reset(defaultValues);
     setCurrentLatitude(data?.latitude ?? undefined);
@@ -1276,42 +1280,230 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
             )}
             
+             <FormField
+                control={form.control}
+                name="freeTrial"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          const boolValue = !!checked;
+                          field.onChange(boolValue);
+                          if (boolValue) {
+                            const startDate = form.getValues('freeTrialStartDate') || new Date();
+                            form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+                            form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                            const followUpDate = addDays(new Date(startDate), 7);
+                            followUpDate.setHours(10, 0, 0, 0);
+                            form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+                            toast({
+                                title: "Free Trial Activated",
+                                description: "A follow-up meeting is scheduled for one week from the start date.",
+                            });
+                          } else {
+                            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                            form.setValue('futureMeetingSet', false, { shouldValidate: true });
+                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                          }
+                        }}
+                        id="freeTrial"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
+                        <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
+                      </FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            
+            <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
+                <Label className="font-medium text-base">Pricing</Label>
+                <FormField
+                    control={form.control}
+                    name="pricingDiscussed"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3 rounded-md border border-accent p-3 shadow-inner">
+                            <div className="flex flex-row items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={(checked) => {
+                                            const isChecked = !!checked;
+                                            field.onChange(isChecked);
+                                            if (!isChecked) {
+                                                form.setValue('priceQuoted', undefined);
+                                                form.setValue('leaseTerm', undefined);
+                                                form.setValue('installationFee', undefined);
+                                                form.setValue('manualCommission', undefined);
+                                            } else {
+                                                if (!form.getValues('leaseTerm')) {
+                                                    form.setValue('leaseTerm', 60, { shouldValidate: true });
+                                                }
+                                                if (!form.getValues('installationFee')) {
+                                                    form.setValue('installationFee', 199, { shouldValidate: true });
+                                                }
+                                            }
+                                        }}
+                                        id="pricingDiscussed"
+                                    />
+                                </FormControl>
+                                <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
+                                    <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing
+                                </FormLabel>
+                            </div>
+                            {form.watch('pricingDiscussed') && (
+                                <div className="pl-8 pt-3 space-y-4 animate-in fade-in-0 zoom-in-95 border-t border-border">
+                                    <FormField
+                                        control={form.control}
+                                        name="priceQuoted"
+                                        render={({ field: priceField }) => (
+                                            <FormItem>
+                                                <FormLabel>Price Quoted ($/mo)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g., 49.99"
+                                                        step="0.01"
+                                                        {...priceField}
+                                                        value={priceField.value ?? ''}
+                                                        onChange={(e) => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="leaseTerm"
+                                        render={({ field: leaseField }) => (
+                                            <FormItem>
+                                                <FormLabel>Lease Term (months)</FormLabel>
+                                                <Select
+                                                    onValueChange={(value) => leaseField.onChange(Number(value))}
+                                                    defaultValue={leaseField.value ? String(leaseField.value) : "60"}
+                                                    value={leaseField.value ? String(leaseField.value) : "60"}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a lease term" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="36">36 Months</SelectItem>
+                                                        <SelectItem value="48">48 Months</SelectItem>
+                                                        <SelectItem value="60">60 Months</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="installationFee"
+                                        render={({ field: feeField }) => (
+                                            <FormItem>
+                                                <FormLabel>Installation Fee ($)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g., 199"
+                                                        step="1"
+                                                        {...feeField}
+                                                        value={feeField.value ?? ''}
+                                                        onChange={(e) => feeField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="manualCommission"
+                                        render={({ field: commissionField }) => (
+                                            <FormItem>
+                                                <FormLabel>Manual Commission Override ($)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g., 129"
+                                                        step="1"
+                                                        {...commissionField}
+                                                        value={commissionField.value ?? ''}
+                                                        onChange={(e) => commissionField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                  If a customer is not credit approved, enter one month's commission here. This will override the standard calculation.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="creditApproved"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                            <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    id="creditApproved"
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel htmlFor="creditApproved" className="cursor-pointer font-normal flex items-center">
+                                    <CheckCircle2 className="mr-2 h-4 w-4 text-primary" /> Credit Approved?
+                                </FormLabel>
+                            </div>
+                        </FormItem>
+                    )}
+                />
+            </div>
+
             <FormField
               control={form.control}
-              name="freeTrial"
+              name="futureMeetingSet"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        const boolValue = !!checked;
-                        field.onChange(boolValue);
-                        if (boolValue) {
-                          const startDate = form.getValues('freeTrialStartDate') || new Date();
-                          form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                          const followUpDate = addDays(new Date(startDate), 7);
-                          followUpDate.setHours(10, 0, 0, 0);
-                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-                          toast({
-                              title: "Free Trial Activated",
-                              description: "A follow-up meeting is scheduled for one week from the start date.",
-                          });
-                        } else {
-                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
-                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                        }
-                      }}
-                      id="freeTrial"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
-                      <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
-                    </FormLabel>
+                <FormItem className="rounded-md border border-accent p-3 shadow-sm">
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          const boolValue = !!checked;
+                          field.onChange(boolValue);
+                          if (!boolValue) {
+                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                          }
+                        }}
+                        id="futureMeetingSet"
+                        disabled={freeTrialValue}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="futureMeetingSet" className={cn("font-normal flex items-center", freeTrialValue ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer")}>
+                        <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
+                      </FormLabel>
+                    </div>
                   </div>
+                  {freeTrialValue && (
+                      <FormDescription className="pt-2">
+                          This is automatically scheduled based on the free trial.
+                      </FormDescription>
+                  )}
                 </FormItem>
               )}
             />
@@ -1471,170 +1663,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
-
-            <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
-                <Label className="font-medium text-base">Pricing</Label>
-                <FormField
-                    control={form.control}
-                    name="pricingDiscussed"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3 rounded-md border border-accent p-3 shadow-inner">
-                            <div className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl>
-                                    <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={(checked) => {
-                                            const isChecked = !!checked;
-                                            field.onChange(isChecked);
-                                            if (!isChecked) {
-                                                form.setValue('priceQuoted', undefined);
-                                                form.setValue('leaseTerm', undefined);
-                                                form.setValue('installationFee', undefined);
-                                            } else {
-                                                if (!form.getValues('leaseTerm')) {
-                                                    form.setValue('leaseTerm', 60, { shouldValidate: true });
-                                                }
-                                                if (!form.getValues('installationFee')) {
-                                                    form.setValue('installationFee', 199, { shouldValidate: true });
-                                                }
-                                            }
-                                        }}
-                                        id="pricingDiscussed"
-                                    />
-                                </FormControl>
-                                <FormLabel htmlFor="pricingDiscussed" className="cursor-pointer font-normal flex items-center">
-                                    <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing
-                                </FormLabel>
-                            </div>
-                            {form.watch('pricingDiscussed') && (
-                                <div className="pl-8 pt-3 space-y-4 animate-in fade-in-0 zoom-in-95 border-t border-border">
-                                    <FormField
-                                        control={form.control}
-                                        name="priceQuoted"
-                                        render={({ field: priceField }) => (
-                                            <FormItem>
-                                                <FormLabel>Price Quoted ($/mo)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g., 49.99"
-                                                        step="0.01"
-                                                        {...priceField}
-                                                        value={priceField.value ?? ''}
-                                                        onChange={(e) => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="leaseTerm"
-                                        render={({ field: leaseField }) => (
-                                            <FormItem>
-                                                <FormLabel>Lease Term (months)</FormLabel>
-                                                <Select
-                                                    onValueChange={(value) => leaseField.onChange(Number(value))}
-                                                    defaultValue={leaseField.value ? String(leaseField.value) : "60"}
-                                                    value={leaseField.value ? String(leaseField.value) : "60"}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a lease term" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="36">36 Months</SelectItem>
-                                                        <SelectItem value="48">48 Months</SelectItem>
-                                                        <SelectItem value="60">60 Months</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="installationFee"
-                                        render={({ field: feeField }) => (
-                                            <FormItem>
-                                                <FormLabel>Installation Fee ($)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g., 199"
-                                                        step="1"
-                                                        {...feeField}
-                                                        value={feeField.value ?? ''}
-                                                        onChange={(e) => feeField.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="creditApproved"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                            <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    id="creditApproved"
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel htmlFor="creditApproved" className="cursor-pointer font-normal flex items-center">
-                                    <CheckCircle2 className="mr-2 h-4 w-4 text-primary" /> Credit Approved?
-                                </FormLabel>
-                            </div>
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="futureMeetingSet"
-              render={({ field }) => (
-                <FormItem className="rounded-md border border-accent p-3 shadow-sm">
-                  <div className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          const boolValue = !!checked;
-                          field.onChange(boolValue);
-                          if (!boolValue) {
-                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                          }
-                        }}
-                        id="futureMeetingSet"
-                        disabled={freeTrialValue}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="futureMeetingSet" className={cn("font-normal flex items-center", freeTrialValue ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer")}>
-                        <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
-                      </FormLabel>
-                    </div>
-                  </div>
-                  {freeTrialValue && (
-                      <FormDescription className="pt-2">
-                          This is automatically scheduled based on the free trial.
-                      </FormDescription>
-                  )}
-                </FormItem>
-              )}
-            />
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Name (If Noted)</Label>

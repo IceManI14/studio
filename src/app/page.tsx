@@ -364,7 +364,13 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
+      if (typeof visit.manualCommission === 'number') {
+        return total + visit.manualCommission;
+      }
       if (visit.pricingDiscussed) {
+        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+          return total + visit.priceQuoted;
+        }
         const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
         const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
         return total + leaseCommission + installCommission;
@@ -446,6 +452,7 @@ export default function HomePage() {
                   leaseTerm: payload.leaseTerm,
                   installationFee: payload.installationFee,
                   creditApproved: payload.creditApproved || false,
+                  manualCommission: payload.manualCommission,
                 };
                 
                 const updatedVisits = [newVisit, ...currentVisits];
@@ -1730,6 +1737,7 @@ export default function HomePage() {
         leaseTerm: undefined,
         installationFee: undefined,
         creditApproved: false,
+        manualCommission: undefined,
     };
     
     setVisits(prevVisits => {
@@ -1813,6 +1821,7 @@ export default function HomePage() {
       leaseTerm: undefined,
       installationFee: undefined,
       creditApproved: false,
+      manualCommission: undefined,
     };
     
     setVisits(prevVisits => {
@@ -1903,6 +1912,7 @@ export default function HomePage() {
                     leaseTerm: undefined,
                     installationFee: undefined,
                     creditApproved: false,
+                    manualCommission: undefined,
                 };
                 
                 setVisits(prevVisits => {

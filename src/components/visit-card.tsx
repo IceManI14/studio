@@ -91,11 +91,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   const potentialCommission = (() => {
+    if (typeof visit.manualCommission === 'number') {
+        return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
+    }
     if (!visit.pricingDiscussed) return null;
+
+    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+        return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
+    }
+
     const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
     const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
     const total = leaseCommission + installCommission;
-    return total > 0 ? total : null;
+    return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
   })();
 
   const ZoomedContent = () => (
@@ -167,7 +175,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
-            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved) && <Separator />}
+            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number') && <Separator />}
 
             {visit.discussedCompetitors && (
                 <div>
@@ -187,9 +195,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
-            {(visit.pricingDiscussed || visit.creditApproved) && (
+            {(visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number') && (
                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Pricing</h4>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Pricing & Commission</h4>
                     <div className="pl-6 space-y-1">
                         {visit.pricingDiscussed && (
                             <p>
@@ -202,6 +210,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                         )}
                         {visit.installationFee && <p><strong>Installation Fee:</strong> ${visit.installationFee.toFixed(2)}</p>}
                         {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
+                        {typeof visit.manualCommission === 'number' && (
+                           <p className="font-semibold text-primary"><strong>Manual Commission:</strong> ${visit.manualCommission.toFixed(2)}</p>
+                        )}
                     </div>
                 </div>
             )}
@@ -326,9 +337,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   </div>
                 )}
                 {potentialCommission !== null && (
-                    <div className="flex items-center text-green-400" title={`Potential Commission: $${potentialCommission.toFixed(2)}`}>
+                    <div className="flex items-center text-green-400" title={`Potential Commission: $${potentialCommission.value.toFixed(2)}${potentialCommission.reason ? ` (${potentialCommission.reason})` : ''}`}>
+                        {potentialCommission.isOverride && <Edit className="h-3 w-3 mr-1" />}
                         <DollarSign className="h-4 w-4" />
-                        {potentialCommission.toFixed(2)}
+                        {potentialCommission.value.toFixed(2)}
                     </div>
                 )}
               </div>

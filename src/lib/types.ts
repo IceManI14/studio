@@ -49,6 +49,7 @@ export interface Visit {
   leaseTerm?: number;
   installationFee?: number;
   creditApproved?: boolean;
+  manualCommission?: number;
 }
 
 export interface ChatMessage {
