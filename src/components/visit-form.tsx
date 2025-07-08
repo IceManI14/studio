@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
@@ -1274,7 +1275,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
             )}
-
+            
             <FormField
               control={form.control}
               name="freeTrial"
@@ -1284,27 +1285,24 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={(checked) => {
-                          const boolValue = !!checked;
-                          field.onChange(boolValue);
-
-                          if (boolValue) {
-                              const startDate = form.getValues('freeTrialStartDate') || new Date();
-                              form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-                              form.setValue('futureMeetingSet', true, { shouldValidate: true });
-
-                              const followUpDate = addDays(new Date(startDate), 7);
-                              followUpDate.setHours(10, 0, 0, 0);
-                              form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-
-                              toast({
-                                  title: "Free Trial Activated",
-                                  description: "A follow-up meeting is scheduled for one week from the start date.",
-                              });
-                          } else {
-                              form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-                              form.setValue('futureMeetingSet', false, { shouldValidate: true });
-                              form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                          }
+                        const boolValue = !!checked;
+                        field.onChange(boolValue);
+                        if (boolValue) {
+                          const startDate = form.getValues('freeTrialStartDate') || new Date();
+                          form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          const followUpDate = addDays(new Date(startDate), 7);
+                          followUpDate.setHours(10, 0, 0, 0);
+                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+                          toast({
+                              title: "Free Trial Activated",
+                              description: "A follow-up meeting is scheduled for one week from the start date.",
+                          });
+                        } else {
+                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
+                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                        }
                       }}
                       id="freeTrial"
                     />
@@ -1317,6 +1315,162 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
+
+            {(futureMeetingSetValue || freeTrialValue) && (
+              <FormField
+                control={form.control}
+                name="futureMeetingDateTime"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
+                    <FormLabel>Meeting Date & Time</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                             disabled={freeTrialValue}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP 'at' h:mm a")
+                            ) : (
+                              <span>Not yet scheduled</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={(date) => {
+                            if (!date) {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const newDateTime = new Date(date);
+                            const existingTime = field.value ? new Date(field.value) : new Date();
+                            
+                            newDateTime.setHours(field.value ? existingTime.getHours() : 9);
+                            newDateTime.setMinutes(field.value ? existingTime.getMinutes() : 0);
+                            newDateTime.setSeconds(0);
+                            newDateTime.setMilliseconds(0);
+                            
+                            field.onChange(newDateTime);
+                          }}
+                          disabled={(date) =>
+                            date < new Date(new Date().setDate(new Date().getDate() - 1))
+                          }
+                          initialFocus
+                        />
+                        <div className="p-3 border-t border-border">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="hours">Time</Label>
+                            <Select
+                              disabled={!field.value}
+                              value={field.value ? String(new Date(field.value).getHours()) : '9'}
+                              onValueChange={(value) => {
+                                if (!field.value) return;
+                                const newDate = new Date(field.value);
+                                newDate.setHours(parseInt(value));
+                                field.onChange(newDate);
+                              }}
+                            >
+                              <SelectTrigger id="hours" className="w-[80px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from({ length: 12 }, (_, i) => i + 8).map(hour => (
+                                   <SelectItem key={hour} value={String(hour)}>{String(hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour)).padStart(2, '0')} {hour < 12 || hour === 24 ? 'AM' : 'PM'}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            :
+                            <Select
+                              disabled={!field.value}
+                              value={field.value ? String(new Date(field.value).getMinutes()).padStart(2, '0') : '00'}
+                               onValueChange={(value) => {
+                                if (!field.value) return;
+                                const newDate = new Date(field.value);
+                                newDate.setMinutes(parseInt(value));
+                                field.onChange(newDate);
+                              }}
+                            >
+                              <SelectTrigger className="w-[80px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="00">00</SelectItem>
+                                <SelectItem value="15">15</SelectItem>
+                                <SelectItem value="30">30</SelectItem>
+                                <SelectItem value="45">45</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="p-2 border-t border-border flex justify-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => field.onChange(undefined)}
+                                className="text-sm h-8"
+                            >
+                                Clear Date
+                            </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {freeTrialValue && (
+               <FormField
+                control={form.control}
+                name="freeTrialStartDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
+                    <FormLabel>Free Trial Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>A notification will be created to follow up one week after this date.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
                 <Label className="font-medium text-base">Pricing</Label>
@@ -1481,162 +1635,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 </FormItem>
               )}
             />
-
-            {(futureMeetingSetValue || freeTrialValue) && (
-              <FormField
-                control={form.control}
-                name="futureMeetingDateTime"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
-                    <FormLabel>Meeting Date & Time</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                             disabled={freeTrialValue}
-                          >
-                            {field.value ? (
-                              format(new Date(field.value), "PPP 'at' h:mm a")
-                            ) : (
-                              <span>Not yet scheduled</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={(date) => {
-                            if (!date) {
-                              field.onChange(undefined);
-                              return;
-                            }
-                            const newDateTime = new Date(date);
-                            const existingTime = field.value ? new Date(field.value) : new Date();
-                            
-                            newDateTime.setHours(field.value ? existingTime.getHours() : 9);
-                            newDateTime.setMinutes(field.value ? existingTime.getMinutes() : 0);
-                            newDateTime.setSeconds(0);
-                            newDateTime.setMilliseconds(0);
-                            
-                            field.onChange(newDateTime);
-                          }}
-                          disabled={(date) =>
-                            date < new Date(new Date().setDate(new Date().getDate() - 1))
-                          }
-                          initialFocus
-                        />
-                        <div className="p-3 border-t border-border">
-                          <div className="flex items-center gap-2">
-                            <Label htmlFor="hours">Time</Label>
-                            <Select
-                              disabled={!field.value}
-                              value={field.value ? String(new Date(field.value).getHours()) : '9'}
-                              onValueChange={(value) => {
-                                if (!field.value) return;
-                                const newDate = new Date(field.value);
-                                newDate.setHours(parseInt(value));
-                                field.onChange(newDate);
-                              }}
-                            >
-                              <SelectTrigger id="hours" className="w-[80px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Array.from({ length: 12 }, (_, i) => i + 8).map(hour => (
-                                   <SelectItem key={hour} value={String(hour)}>{String(hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour)).padStart(2, '0')} {hour < 12 || hour === 24 ? 'AM' : 'PM'}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            :
-                            <Select
-                              disabled={!field.value}
-                              value={field.value ? String(new Date(field.value).getMinutes()).padStart(2, '0') : '00'}
-                               onValueChange={(value) => {
-                                if (!field.value) return;
-                                const newDate = new Date(field.value);
-                                newDate.setMinutes(parseInt(value));
-                                field.onChange(newDate);
-                              }}
-                            >
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="00">00</SelectItem>
-                                <SelectItem value="15">15</SelectItem>
-                                <SelectItem value="30">30</SelectItem>
-                                <SelectItem value="45">45</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="p-2 border-t border-border flex justify-end">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => field.onChange(undefined)}
-                                className="text-sm h-8"
-                            >
-                                Clear Date
-                            </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {freeTrialValue && (
-               <FormField
-                control={form.control}
-                name="freeTrialStartDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
-                    <FormLabel>Free Trial Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(new Date(field.value), "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>A notification will be created to follow up one week after this date.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
               <Label className="font-medium text-base">Competitor Name (If Noted)</Label>
