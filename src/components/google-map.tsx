@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
@@ -44,6 +44,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
     libraries: ['marker'],
   });
 
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoomLevel, setZoomLevel] = useState(4);
@@ -55,7 +56,18 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
     [visits]
   );
 
+  const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
+  }, []);
+
+  const onMapUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
+
   useEffect(() => {
+    // Only set the initial map center. Do not re-center if user has interacted with the map.
+    if (map) return; 
+
     if (validVisits.length > 0) {
       const latestVisit = validVisits.reduce((latest, current) => {
         return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
@@ -72,7 +84,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
       setMapCenter(defaultCenter);
       setZoomLevel(4);
     }
-  }, [validVisits, userLatitude, userLongitude]);
+  }, [validVisits, userLatitude, userLongitude, map]);
 
   const handleMarkerClick = useCallback((visitId: string) => {
     setActiveMarker(visitId);
@@ -81,6 +93,35 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const handleInfoWindowClose = useCallback(() => {
     setActiveMarker(null);
   }, []);
+
+  const handleShowAllVisits = useCallback(() => {
+    if (map && validVisits.length > 0) {
+      if (typeof window !== 'undefined' && window.google) {
+        const bounds = new window.google.maps.LatLngBounds();
+        validVisits.forEach(visit => {
+          bounds.extend({ lat: visit.latitude!, lng: visit.longitude! });
+        });
+        
+        if (userLatitude && userLongitude) {
+          bounds.extend({ lat: userLatitude, lng: userLongitude });
+        }
+        
+        // The second argument for fitBounds is padding.
+        map.fitBounds(bounds, 50); 
+
+        // In case of a single point, the zoom can be too high.
+        // We add a listener to adjust it if necessary.
+        const listener = window.google.maps.event.addListenerOnce(map, 'idle', () => {
+          if (map.getZoom()! > 16) {
+            map.setZoom(16);
+          }
+        });
+      }
+    } else if (map && userLatitude && userLongitude) {
+      map.panTo({ lat: userLatitude, lng: userLongitude });
+      map.setZoom(16);
+    }
+  }, [map, validVisits, userLatitude, userLongitude]);
 
   const handleGetIntel = useCallback(async (visit: Visit) => {
     if (!visit.latitude || !visit.longitude) return;
@@ -190,96 +231,99 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   }
 
   return (
-    <GoogleMap
-      mapContainerStyle={mapContainerStyle}
-      center={mapCenter}
-      zoom={zoomLevel}
-      options={{
-        streetViewControl: false,
-        mapTypeControl: false,
-        fullscreenControl: false,
-      }}
-    >
-      {isLoaded && userLatitude && userLongitude && (
-          <MarkerF
-            position={{ lat: userLatitude, lng: userLongitude }}
-            title="Your Location"
-            icon={{
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: "#4285F4",
-              fillOpacity: 1,
-              strokeColor: "white",
-              strokeWeight: 2,
-            }}
-          />
-      )}
-      {validVisits.map((visit) => {
-        const isDealClosed = visit.dealClosed;
-        const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
+    <div className="relative">
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={mapCenter}
+        zoom={zoomLevel}
+        onLoad={onMapLoad}
+        onUnmount={onMapUnmount}
+        options={{
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        }}
+      >
+        {isLoaded && userLatitude && userLongitude && (
+            <MarkerF
+              position={{ lat: userLatitude, lng: userLongitude }}
+              title="Your Location"
+              icon={{
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#4285F4",
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2,
+              }}
+            />
+        )}
+        {validVisits.map((visit) => {
+          const isDealClosed = visit.dealClosed;
+          const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
 
-        let iconUrl;
-        if (isHotspot) {
-          iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
-        } else if (isDealClosed) {
-          iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
-        } else {
-          iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue.png';
-        }
-        
-        return (
-          <MarkerF
-            key={visit.id}
-            position={{ lat: visit.latitude!, lng: visit.longitude! }}
-            onClick={() => handleMarkerClick(visit.id)}
-            title={visit.companyName}
-            icon={iconUrl}
-          >
-            {activeMarker === visit.id && (
-              <InfoWindowF
-                position={{ lat: visit.latitude!, lng: visit.longitude! }}
-                onCloseClick={handleInfoWindowClose}
-                options={{
-                  pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
-                }}
-              >
-                <div className="p-1 max-w-xs">
-                  <h4 className="font-semibold text-sm text-primary">{visit.companyName}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Confidence: {visit.partnershipConfidence ? `${visit.partnershipConfidence}/5` : 'N/A'}
-                  </p>
+          let iconUrl;
+          if (isHotspot) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
+          } else if (isDealClosed) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
+          } else {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue.png';
+          }
+          
+          return (
+            <MarkerF
+              key={visit.id}
+              position={{ lat: visit.latitude!, lng: visit.longitude! }}
+              onClick={() => handleMarkerClick(visit.id)}
+              title={visit.companyName}
+              icon={iconUrl}
+            >
+              {activeMarker === visit.id && (
+                <InfoWindowF
+                  position={{ lat: visit.latitude!, lng: visit.longitude! }}
+                  onCloseClick={handleInfoWindowClose}
+                  options={{
+                    pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
+                  }}
+                >
+                  <div className="p-1 max-w-xs">
+                    <h4 className="font-semibold text-sm text-primary">{visit.companyName}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Confidence: {visit.partnershipConfidence ? `${visit.partnershipConfidence}/5` : 'N/A'}
+                    </p>
 
-                  {intel[visit.id] === 'loading' && (
-                      <div className="mt-2 flex items-center justify-center">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                          <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
-                      </div>
-                  )}
-                  
-                  {intel[visit.id] && intel[visit.id] !== 'loading' && intel[visit.id] !== 'error' && (() => {
-                      const companyIntel = intel[visit.id] as GetCompanyIntelOutput;
-                      return (
-                          <div className="mt-2 text-xs space-y-1 border-t pt-2">
-                              {companyIntel.phone && (
-                                  <div className="flex items-center">
-                                      <Phone className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
-                                      <span>{companyIntel.phone}</span>
-                                  </div>
-                              )}
-                              {companyIntel.hours && companyIntel.hours.length > 0 && (
-                                  <div className="flex items-start">
-                                      <Clock className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                      <div>
-                                          {companyIntel.hours.map(h => <div key={h}>{h}</div>)}
-                                      </div>
-                                  </div>
-                              )}
-                              {companyIntel.decisionMakerName && (
+                    {intel[visit.id] === 'loading' && (
+                        <div className="mt-2 flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
+                        </div>
+                    )}
+                    
+                    {intel[visit.id] && intel[visit.id] !== 'loading' && intel[visit.id] !== 'error' && (() => {
+                        const companyIntel = intel[visit.id] as GetCompanyIntelOutput;
+                        return (
+                            <div className="mt-2 text-xs space-y-1 border-t pt-2">
+                                {companyIntel.phone && (
+                                    <div className="flex items-center">
+                                        <Phone className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
+                                        <span>{companyIntel.phone}</span>
+                                    </div>
+                                )}
+                                {companyIntel.hours && companyIntel.hours.length > 0 && (
+                                    <div className="flex items-start">
+                                        <Clock className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                        <div>
+                                            {companyIntel.hours.map(h => <div key={h}>{h}</div>)}
+                                        </div>
+                                    </div>
+                                )}
+                                {companyIntel.decisionMakerName && (
                                    <div className="flex items-start">
                                       <UserSearch className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
                                       <span>{companyIntel.decisionMakerName}{companyIntel.decisionMakerTitle && ` (${companyIntel.decisionMakerTitle})`}</span>
                                   </div>
-                              )}
+                                )}
                                {(!companyIntel.phone && !companyIntel.hours && !companyIntel.decisionMakerName) && (
                                   <p className="text-muted-foreground">No additional details found.</p>
                                )}
@@ -320,6 +364,19 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         );
       })}
     </GoogleMap>
+    <div className="absolute top-2 right-2 z-10">
+      <Button
+          onClick={handleShowAllVisits}
+          disabled={!map || validVisits.length < 1}
+          size="icon"
+          variant="outline"
+          className="bg-background hover:bg-background/90"
+          title="Fit map to show all visits"
+      >
+          <Expand className="h-5 w-5" />
+      </Button>
+    </div>
+  </div>
   );
 };
 
