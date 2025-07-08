@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -97,7 +97,26 @@ const salespeople: Salesperson[] = [
     { id: '5', name: 'John Doe (No Territory)', territory: [] },
 ];
 
+function getDistanceFromLatLonInM(lat1:number, lon1:number, lat2:number, lon2:number) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);
+    var dLon = deg2rad(lon2-lon1); 
+    var a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+      ; 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c; // Distance in km
+    return d * 1000; // Distance in m
+}
+
+function deg2rad(deg:number) {
+  return deg * (Math.PI/180)
+}
+
 export default function HomePage() {
+  // State and Refs
   const [visits, setVisits] = useState<Visit[]>([]);
   const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
@@ -112,11 +131,8 @@ export default function HomePage() {
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isRecordingSearch, setIsRecordingSearch] = useState(false);
-  const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [isRecordingCitySearch, setIsRecordingCitySearch] = useState(false);
-  const citySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
-
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
         id: 'ai_welcome_init', 
@@ -126,14 +142,10 @@ export default function HomePage() {
     }
   ]);
   const [chatInput, setChatInput] = useState('');
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isRecordingChat, setIsRecordingChat] = useState(false);
-  const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
-
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
@@ -150,24 +162,28 @@ export default function HomePage() {
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('field-day');
   const [isSyncing, setIsSyncing] = useState(false);
-  const { toast } = useToast();
   const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
-  const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
   const [isStartupNavigationConfirmOpen, setIsStartupNavigationConfirmOpen] = useState(false);
   const [startupNavigationTarget, setStartupNavigationTarget] = useState<{ companyName: string; latitude: number; longitude: number; } | null>(null);
-  const locationWatchId = useRef<number | null>(null);
   const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
   const [isRecordingDestinationSearch, setIsRecordingDestinationSearch] = useState(false);
-  const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
-  const visitsRef = useRef<Visit[]>([]);
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState<string>('');
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
   const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string | undefined>();
   
-  // Accordion scroll refs
+  const { toast } = useToast();
+  const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const citySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const locationWatchId = useRef<number | null>(null);
+  const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const visitsRef = useRef<Visit[]>([]);
   const dailyPlanRef = useRef<HTMLDivElement>(null);
   const scheduledVisitsRef = useRef<HTMLDivElement>(null);
   const unscheduledVisitsRef = useRef<HTMLDivElement>(null);
@@ -177,245 +193,9 @@ export default function HomePage() {
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
 
-  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
-    // We check the state on click. If it's closed, it's about to open.
-    if (e.currentTarget.getAttribute('data-state') === 'closed') {
-      // A short delay helps ensure the layout has updated before scrolling.
-      setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 200); // The accordion animation is 200ms
-    }
-  };
-
-  useEffect(() => {
-      visitsRef.current = visits;
-  }, [visits]);
-
-
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
-  const handleChangeDestination = async (salespersonToUse?: Salesperson) => {
-    setNavigationUrl(null);
-    const activeSalesperson = salespersonToUse || selectedSalesperson;
-    if (!activeSalesperson) return;
-
-    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl');
-    let cities: string[] = [];
-    
-    setIsDestinationModalOpen(true);
-    
-    if (territoryPdfUrl && activeSalesperson.name !== 'Corporate') {
-      setIsExtractingCities(true);
-      try {
-        const result = await extractCitiesFromPdfAction({ pdfDataUri: territoryPdfUrl });
-        if (result.error) throw new Error(result.error);
-        
-        if (result.cities && result.cities.length > 0) {
-          cities = result.cities;
-        } else {
-          toast({ variant: "destructive", title: "No Cities Found", description: "The AI could not find any cities in the provided document. Falling back to the default list from your profile." });
-          cities = activeSalesperson.territory.flatMap(t => t.cities || []);
-        }
-      } catch (e: any) {
-        toast({ variant: "destructive", title: "Could Not Read PDF", description: `Could not read cities from PDF: ${e.message}. Using default list.` });
-        cities = activeSalesperson.territory.flatMap(t => t.cities || []);
-      } finally {
-        setIsExtractingCities(false);
-      }
-    } else if (activeSalesperson.territory.length > 0 && activeSalesperson.name !== 'Corporate') {
-      cities = activeSalesperson.territory.flatMap(t => t.cities || []);
-    }
-    
-    setDestinationCities(cities);
-  };
-
-  useEffect(() => {
-    // This effect runs once on initial mount to load data and run startup sequences.
-    try {
-      // Set default salesperson
-      const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
-      setSelectedSalesperson(defaultSalesperson);
-
-      // Load all data from localStorage
-      const localVisits = localStorage.getItem('visits');
-      const parsedVisits = localVisits ? JSON.parse(localVisits).map((v: any) => ({
-          ...v,
-          timestamp: new Date(v.timestamp),
-          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
-      })) : [];
-      setVisits(parsedVisits);
-      
-      const storedSuggestions = localStorage.getItem('submittedSuggestions');
-      if (storedSuggestions) {
-        setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
-      }
-
-      const storedFiles = localStorage.getItem('managedFiles');
-      if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
-
-      const storedHotLeads = localStorage.getItem('hotLeads');
-      if (storedHotLeads) {
-        setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
-      }
-      
-      const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
-      if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
-      
-      const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
-      if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
-      
-      const defaultNewsItems = [
-          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
-          "To compensate, Friday and Tuesday are now fully open for new installations.",
-          "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
-          "The annual sales competition begins next month! More details to follow."
-      ];
-      const storedNews = localStorage.getItem('companyNews');
-      if (storedNews) {
-          setNewsItems(JSON.parse(storedNews));
-      } else {
-          setNewsItems(defaultNewsItems);
-      }
-
-      // --- One-Time Startup Sequence ---
-      const startupSequenceDone = sessionStorage.getItem('startupSequenceDone');
-      if (!startupSequenceDone) {
-          sessionStorage.setItem('startupSequenceDone', 'true');
-
-          const scheduledToday = parsedVisits.filter(visit =>
-              visit.futureMeetingSet &&
-              visit.futureMeetingDateTime &&
-              isToday(new Date(visit.futureMeetingDateTime))
-          );
-          
-          if (scheduledToday.length > 0) {
-              const firstMeeting = scheduledToday[0];
-              if (firstMeeting.latitude && firstMeeting.longitude) {
-                  setStartupNavigationTarget({ 
-                      companyName: firstMeeting.companyName, 
-                      latitude: firstMeeting.latitude, 
-                      longitude: firstMeeting.longitude 
-                  });
-                  setIsStartupNavigationConfirmOpen(true);
-              }
-          }
-      }
-
-    } catch (error) {
-      console.error("Failed to load data from localStorage:", error);
-      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
-    }
-  }, []); // Empty dependency array ensures this runs only once.
-  
-  useEffect(() => {
-    // This effect handles ongoing location tracking.
-    const handlePositionUpdate = async (position: GeolocationPosition) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        let shouldUpdateCity = false;
-        
-        // This check prevents fetching city on every minor movement.
-        if (userCurrentLatitude === undefined || userCurrentLongitude === undefined) {
-            shouldUpdateCity = true;
-        } else {
-            const distance = getDistanceFromLatLonInM(lat, lon, userCurrentLatitude, userCurrentLongitude);
-            if (distance > 500) { // Update if moved more than 500 meters
-                shouldUpdateCity = true;
-            }
-        }
-        
-        setUserCurrentLatitude(lat);
-        setUserCurrentLongitude(lon);
-
-        if (shouldUpdateCity) {
-          setIsFetchingCity(true);
-          try {
-            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-            if (result.error) {
-              // Non-blocking toast for background failures
-              toast({ title: "Location Update Failed", description: result.error, duration: 3000 });
-              setCurrentCity(prev => prev || "Location lookup failed");
-            } else if (result.city) {
-              setCurrentCity(result.city);
-            } else {
-              setCurrentCity(prev => prev || "Location Unknown");
-            }
-          } catch (e: any) {
-            console.error("Error fetching city:", e);
-            setCurrentCity(prev => prev || "Error fetching city.");
-          } finally {
-            setIsFetchingCity(false);
-          }
-        } else {
-           setIsFetchingCity(false);
-        }
-    };
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(handlePositionUpdate, (error) => {
-        let errorMessage = "Could not retrieve location.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location access denied. Please enable it in your browser settings.";
-        }
-        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-        setCurrentCity("Location access denied.");
-        setIsFetchingCity(false);
-      }, { enableHighAccuracy: true });
-
-      locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
-          console.warn("Geolocation watch error:", error.message);
-      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
-
-    } else {
-      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
-      setCurrentCity("Geolocation not supported.");
-      setIsFetchingCity(false);
-    }
-    
-    return () => {
-        if (locationWatchId.current && navigator.geolocation) {
-            navigator.geolocation.clearWatch(locationWatchId.current);
-        }
-    };
-  }, [toast, userCurrentLatitude, userCurrentLongitude]);
-
-  function getDistanceFromLatLonInM(lat1:number, lon1:number, lat2:number, lon2:number) {
-      var R = 6371; // Radius of the earth in km
-      var dLat = deg2rad(lat2-lat1);
-      var dLon = deg2rad(lon2-lon1); 
-      var a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2)
-        ; 
-      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-      var d = R * c; // Distance in km
-      return d * 1000; // Distance in m
-  }
-
-  function deg2rad(deg:number) {
-    return deg * (Math.PI/180)
-  }
-
-  // Save suggestions whenever they change
-  useEffect(() => {
-    localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
-  }, [submittedSuggestions]);
-
-  // Save hot leads whenever they change
-  useEffect(() => {
-    localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
-  }, [hotLeads]);
-  
-  useEffect(() => {
-    localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
-  }, [convertedHotLeads]);
-
-  useEffect(() => {
-    localStorage.setItem('companyNews', JSON.stringify(newsItems));
-  }, [newsItems]);
-
+  // Memos
   const scheduledFutureVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
     return visits
@@ -439,10 +219,7 @@ export default function HomePage() {
     const timestamps = new Set<number>();
   
     visits.forEach(v => {
-      // A day is logged if a visit was created on that day.
       timestamps.add(startOfDay(new Date(v.timestamp)).getTime());
-  
-      // A day is also logged if a meeting was scheduled and the day has passed.
       if (v.futureMeetingSet && v.futureMeetingDateTime) {
         const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
         if (meetingDay < today) {
@@ -458,10 +235,7 @@ export default function HomePage() {
     const closedDays = new Set<number>();
     visits.forEach(visit => {
         if (visit.dealClosed) {
-            // Mark the creation day as closed
             closedDays.add(startOfDay(new Date(visit.timestamp)).getTime());
-            
-            // If there was an associated meeting, mark that day as closed too
             if (visit.futureMeetingDateTime) {
                 closedDays.add(startOfDay(new Date(visit.futureMeetingDateTime)).getTime());
             }
@@ -471,15 +245,11 @@ export default function HomePage() {
   }, [visits]);
 
   const sortedVisitsForCallDay = useMemo(() => {
-    if (visits.length === 0) {
-      return [];
-    }
+    if (visits.length === 0) return [];
   
     let processedVisits = [...visits];
-  
     const isSpecialFilter = ['inTrial', 'dealClosed', 'futureMeetingsSet'].includes(sortCriteria);
   
-    // Filter by selected date (if any), but only if a special filter is not active
     if (selectedDate && !isSpecialFilter) {
       processedVisits = processedVisits.filter(visit =>
         isSameDay(new Date(visit.timestamp), selectedDate) ||
@@ -487,7 +257,6 @@ export default function HomePage() {
       );
     }
   
-    // Then filter by search term
     if (searchTerm.trim() !== '') {
       processedVisits = processedVisits.filter(visit =>
         visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -500,7 +269,6 @@ export default function HomePage() {
       );
     }
   
-    // If sorting by a specific criteria, filter first.
     if (sortCriteria === 'futureMeetingsSet') {
       processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
     } else if (sortCriteria === 'inTrial') {
@@ -509,7 +277,6 @@ export default function HomePage() {
       processedVisits = processedVisits.filter(visit => visit.dealClosed);
     }
   
-    // Deduplicate visits in case a visit is both logged and scheduled on the same day.
     const uniqueVisits = Array.from(new Map(processedVisits.map(visit => [visit.id, visit])).values());
   
     const sorted = uniqueVisits.sort((a, b) => {
@@ -539,10 +306,9 @@ export default function HomePage() {
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'dealClosed') {
-        // Since we are now filtering, sort by a different metric like timestamp
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA; // Secondary sort by confidence
+        return confidenceB - confidenceA;
       } else if (sortCriteria === 'partnershipConfidence') {
         comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
         if (comparison !== 0) return comparison;
@@ -610,177 +376,7 @@ export default function HomePage() {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
   }, [scheduledVisits]);
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages]);
-
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isVisitFormOpen) {
-        event.preventDefault();
-        event.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isVisitFormOpen]);
-
-  useEffect(() => {
-    // This effect handles the Android back button behavior to prevent exiting the app.
-    // It creates a hierarchical back navigation: Modals -> Tabs -> Home Screen.
-
-    const handlePopState = (event: PopStateEvent) => {
-      // Re-push a state to the history stack to "capture" the next back press.
-      // This prevents the app from closing.
-      history.pushState(null, '', location.href);
-
-      // Priority 1: Close any open modals or dialogs.
-      if (isVisitFormOpen) {
-        setIsVisitFormOpen(false);
-        setCurrentEditingVisit(undefined);
-        return;
-      }
-      if (zoomedVisit) {
-        setZoomedVisit(null);
-        return;
-      }
-      if (isDestinationModalOpen) {
-        setIsDestinationModalOpen(false);
-        return;
-      }
-      if (isFindCompanyModalOpen) {
-        setIsFindCompanyModalOpen(false);
-        return;
-      }
-      if (isManageFilesModalOpen) {
-        setIsManageFilesModalOpen(false);
-        return;
-      }
-      if (isEndDayConfirmOpen) {
-        setIsEndDayConfirmOpen(false);
-        return;
-      }
-
-      // Priority 2: If no modals are open, reset to the main tab.
-      if (activeTab !== 'field-day') {
-        setActiveTab('field-day');
-        return;
-      }
-
-      // If already on the main screen, the pushState call has already prevented exit.
-    };
-
-    // On component mount, we push a state. This is the initial "trap" for the back button.
-    // Without this, the first back press would exit if there's no history.
-    history.pushState(null, '', location.href);
-    
-    window.addEventListener('popstate', handlePopState);
-
-    // Clean up the event listener when the component unmounts.
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [
-    activeTab,
-    isVisitFormOpen,
-    zoomedVisit,
-    isDestinationModalOpen,
-    isFindCompanyModalOpen,
-    isManageFilesModalOpen,
-    isEndDayConfirmOpen,
-  ]);
-
-
-  const handleQuickLog = async () => {
-    let companyName = '';
-    let notes = '';
-    let phone = '';
-    let city: string | undefined = undefined;
-    let latitude = userCurrentLatitude;
-    let longitude = userCurrentLongitude;
-
-    if (latitude && longitude) {
-      setIsFetchingCity(true);
-      try {
-          const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-          if (result.error) {
-              // Show a non-blocking toast, but proceed anyway
-              toast({ variant: "destructive", title: "Location Lookup Failed", description: result.error });
-          } else {
-              companyName = result.suggestedCompanyName || '';
-              notes = result.address ? `Company Address: ${result.address}` : '';
-              phone = result.phone || '';
-              city = result.city;
-          }
-      } catch (e: any) {
-          console.error("Error fetching company name for quicklog:", e);
-          toast({ variant: "destructive", title: "Location Lookup Error", description: e.message });
-      } finally {
-        setIsFetchingCity(false);
-      }
-    } else {
-      toast({
-        title: "Location Not Available",
-        description: "Please enter company details manually.",
-        duration: 5000,
-      });
-    }
-
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
-
-    const newVisitTemplate: Partial<Visit> = {
-      latitude: latitude,
-      longitude: longitude,
-      timestamp: new Date(),
-      visitNumber: todaysVisitsCount + 1,
-      companyName: companyName,
-      city: city,
-      notes: notes,
-      decisionMakerContact: phone,
-    };
-
-    setCurrentEditingVisit(newVisitTemplate as Visit);
-    setIsVisitFormOpen(true);
-  };
-
-
-  const handleEditVisit = (visit: Visit) => {
-    setCurrentEditingVisit(visit);
-    setIsVisitFormOpen(true);
-  };
-
-  const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    const updatedVisits = visits.map(v => v.id === visitId ? { ...v, dealClosed } : v);
-    setVisits(updatedVisits);
-    localStorage.setItem('visits', JSON.stringify(updatedVisits));
-    toast({ title: 'Deal Status Updated Locally' });
-  };
-
-  const handleLogFollowUp = (existingVisit: Visit) => {
-    toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
-  
-    const newVisitTemplate: Partial<Visit> = {
-      companyName: existingVisit.companyName,
-      latitude: existingVisit.latitude,
-      longitude: existingVisit.longitude,
-      contactInfo: existingVisit.contactInfo, 
-      city: existingVisit.city,
-      notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
-      decisionMakerName: existingVisit.decisionMakerName,
-      decisionMakerTitle: existingVisit.decisionMakerTitle,
-      decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: todaysVisitsCount + 1,
-    };
-    
-    setCurrentEditingVisit(newVisitTemplate as Visit);
-    setIsVisitFormOpen(true);
-  };
-
+  // Callbacks
   const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     return new Promise((resolve) => {
         const { andClose = true, expandOnClose = false } = options;
@@ -871,236 +467,6 @@ export default function HomePage() {
         resolve(finalVisit);
     });
   }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue]);
-
-
-  const handleDeleteVisit = async (visitId: string) => {
-    const updatedVisits = visits.filter(v => v.id !== visitId);
-    setVisits(updatedVisits);
-    localStorage.setItem('visits', JSON.stringify(updatedVisits));
-
-    toast({
-      title: 'Visit Deleted Locally',
-      description: 'The visit log has been removed from this device.',
-    });
-  };
-
-  const confirmEndDay = async () => {
-    const todaysVisitsForReport = visits.filter(v => isToday(new Date(v.timestamp)));
-    const numberOfVisits = todaysVisitsForReport.length;
-
-    if (numberOfVisits === 0) {
-        toast({ title: "No visits to create a report for today." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-
-    if (!firebaseConfigured) {
-        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report. Please check your app's configuration." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-
-    setIsSyncing(true);
-    toast({ title: "Generating Daily Report...", description: `Processing ${numberOfVisits} visit(s) and uploading to cloud storage.` });
-
-    try {
-      const result = await saveDailyReportAction(todaysVisitsForReport);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      toast({
-        title: "Daily Report Saved!",
-        description: `Your daily visit report has been successfully saved to the cloud storage bucket.`,
-        duration: 10000,
-      });
-      localStorage.removeItem('milestoneAchievedDate');
-    } catch (e: any) {
-      toast({
-          variant: "destructive",
-          title: "Report Save Failed",
-          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
-          duration: 10000,
-      });
-    } finally {
-      setIsSyncing(false);
-      setIsEndDayConfirmOpen(false);
-    }
-  };
-
-  const handleSubmitSuggestion = async () => {
-    if (suggestionText.trim() === '') {
-      toast({ variant: "destructive", title: 'Empty Suggestion', description: 'Please type your suggestion before submitting.' });
-      return;
-    }
-
-    const newSuggestionObject: SubmittedSuggestion = {
-      text: suggestionText.trim(),
-      timestamp: new Date(),
-    };
-    
-    setSubmittedSuggestions(prev => [...prev, newSuggestionObject]);
-    toast({ title: 'Suggestion Submitted!', description: 'Thank you for your feedback.' });
-    setSuggestionText('');
-  };
-
-  const handleEmailSuggestions = () => {
-    if (submittedSuggestions.length === 0) {
-      toast({ title: 'No Suggestions to Email', description: 'There are no submitted suggestions to send.' });
-      return;
-    }
-
-    const subject = `App Improvement Suggestion`;
-    let body = `Suggestions for the Optimum Trailblazer App:\n\n`;
-    submittedSuggestions.forEach((suggestion, index) => {
-      body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
-      body += `   Date: ${format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}\n\n`;
-    });
-    body += `\n\n---\nEmail generated by Optimum Trailblazer App`;
-
-    const mailtoLink = `mailto:paull@drinkoptimum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    if (typeof window !== 'undefined') {
-        window.location.href = mailtoLink;
-    }
-    toast({ title: "Opening email client...", description: "Please send the composed email with your suggestions." });
-  };
-
-  const handleEmailManager = () => {
-    const chrisEmail = "chrisc@drinkoptimum.com";
-    const subject = `Salesperson for the current day visits`;
-    
-    let body = `Hello Chris,\n\nPlease find the visit data for the current day.\n\n`;
-    body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
-    body += `A summary is also included below:\n\n`;
-    
-    if (todaysVisits.length > 0) {
-      body += `Summary of Visits (${todaysVisits.length} total):\n`;
-      todaysVisits.forEach((visit, index) => {
-        body += `\n${index + 1}. ${visit.companyName}`;
-        if (visit.notesSummary) body += `\n   Summary: ${visit.notesSummary}`;
-        if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") body += `\n   Contact: ${visit.contactInfo.info}`;
-        if (visit.partnershipConfidence) body += `\n   Confidence: ${visit.partnershipConfidence}/5`;
-        body += `\n   Visited: ${format(new Date(visit.timestamp), 'MMM d, h:mm a')}\n`;
-      });
-    } else {
-      body += "No visits were logged today.\n";
-    }
-    body += `\n\nBest regards,\nOptimum Trailblazer App`;
-
-    const mailtoLink = `mailto:${chrisEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    if (typeof window !== 'undefined') {
-        window.location.href = mailtoLink;
-    }
-    toast({ title: "Opening email client...", description: "Please manually attach the exported PDF to the email before sending." });
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const allowedTypes = ["application/pdf", "text/csv"];
-      if (!allowedTypes.includes(file.type)) {
-        toast({ variant: "destructive", title: "Invalid File Type", description: "Please select a PDF or CSV file." });
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({ variant: "destructive", title: "File Too Large", description: "Please select a file smaller than 5MB." });
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      setSelectedFile(file);
-    } else {
-      setSelectedFile(null);
-    }
-  };
-
-  const handleClearFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleSendChatMessage = async () => {
-    if (chatInput.trim() === '' || isAiResponding) return;
-
-    let messageText = chatInput.trim();
-    let pdfUrlForAi: string | undefined = undefined;
-    let csvDataForAi: string | undefined = csvDataForAi;
-    
-    setIsAiResponding(true); 
-
-    if (selectedFile) {
-      try {
-        if (selectedFile.type === 'application/pdf') {
-          pdfUrlForAi = await fileToDataUri(selectedFile);
-        } else if (selectedFile.type === 'text/csv') {
-          csvDataForAi = await selectedFile.text();
-        }
-        toast({ title: 'File Attached', description: `${selectedFile.name} attached and will be sent to AI.` });
-        messageText += ` (Attached File: ${selectedFile.name})`;
-      } catch (processingError: any) {
-        toast({ variant: "destructive", title: 'File Processing Failed', description: processingError.message });
-        setIsAiResponding(false);
-        return;
-      } finally {
-        setSelectedFile(null); 
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    }
-
-    const newUserMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      sender: 'user',
-      text: messageText,
-      timestamp: new Date(),
-    };
-    setChatMessages(prev => [...prev, newUserMessage]);
-    setChatInput('');
-
-    const oneWeekAgo = subDays(new Date(), 7);
-    const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
-    
-    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl') || undefined;
-
-    try {
-      const result = await getAiChatResponseAction({
-        currentMessages: [...chatMessages, newUserMessage], 
-        model: selectedAiModel,
-        visits: recentVisits.map(v => ({
-            id: v.id,
-            timestamp: v.timestamp,
-            companyName: v.companyName,
-            notesSummary: v.notesSummary || undefined,
-            partnershipConfidence: v.partnershipConfidence || undefined,
-        })),
-        pdfUrl: pdfUrlForAi,
-        csvData: csvDataForAi,
-        territoryPdfUrl: territoryPdfUrl,
-        managedFiles: managedFiles,
-        newsItems: newsItems,
-      });
-
-      if (result.error) {
-        toast({ variant: "destructive", title: "AI Chat Error", description: `Error: ${result.error}` });
-        const aiErrorResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: `Sorry, I encountered an error: ${result.error}`, timestamp: new Date() };
-        setChatMessages(prev => [...prev, aiErrorResponse]);
-      } else if (result.aiResponse) {
-        const aiResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: result.aiResponse, timestamp: new Date() };
-        setChatMessages(prev => [...prev, aiResponse]);
-      }
-    } catch (e: any) {
-       toast({ variant: "destructive", title: "AI Chat Failed", description: "Could not get response from AI." });
-       const aiFailureResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: "I'm having trouble connecting right now. Please try again later.", timestamp: new Date() };
-        setChatMessages(prev => [...prev, aiFailureResponse]);
-    } finally {
-      setIsAiResponding(false);
-    }
-  };
 
   const handleToggleChatVoice = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1349,87 +715,6 @@ export default function HomePage() {
     }
   }, [isRecordingCitySearch, toast]);
 
-
-  const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
-    const existingVisitForCompany = visits.find((visit) => {
-        if (visit.companyName !== visitData.companyName) return false;
-        if (!visit.latitude || !visit.longitude || !visitData.latitude || !visitData.longitude) return false;
-        
-        // Use a small radius to check for proximity
-        return getDistanceFromLatLonInM(
-            visitData.latitude,
-            visitData.longitude,
-            visit.latitude,
-            visit.longitude
-        ) < 50; // 50 meters
-    });
-
-    if (existingVisitForCompany) {
-      toast({
-        title: 'Visit Already Exists',
-        description: `A visit for ${visitData.companyName} is already in your planner or history.`,
-      });
-      return;
-    }
-
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
-    
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 1);
-    futureDate.setHours(10, 0, 0, 0);
-
-    const newVisit: Visit = {
-        id: `temp_${crypto.randomUUID()}`,
-        timestamp: new Date(),
-        companyName: visitData.companyName || '',
-        city: visitData.city,
-        notes: visitData.notes,
-        latitude: visitData.latitude,
-        longitude: visitData.longitude,
-        contactInfo: undefined,
-        notesSummary: undefined,
-        partnershipConfidence: undefined,
-        hasBusinessCard: false,
-        businessCardImageUrl: undefined,
-        discussedCompetitors: false,
-        competitorName: undefined,
-        coolerType: undefined,
-        decisionMakerName: '',
-        decisionMakerTitle: '',
-        decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: todaysVisitsCount + 1,
-        interestedUnit: undefined,
-        hasTDSReading: false,
-        tdsValue: undefined,
-        futureMeetingSet: true,
-        futureMeetingDateTime: futureDate,
-        freeTrial: false,
-        freeTrialStartDate: undefined,
-        dealClosed: false,
-        pricingDiscussed: false,
-        priceQuoted: undefined,
-        leaseTerm: undefined,
-        installationFee: undefined,
-        creditApproved: false,
-    };
-    
-    setVisits(prevVisits => {
-        const newVisits = [newVisit, ...prevVisits];
-        localStorage.setItem('visits', JSON.stringify(newVisits));
-        return newVisits;
-    });
-
-    toast({
-        title: "Added to Planner",
-        description: `${newVisit.companyName} has been scheduled for a future visit.`,
-    });
-  };
-
-  const handleManagedFilesChange = (files: ManagedFile[]) => {
-      setManagedFiles(files);
-      localStorage.setItem('managedFiles', JSON.stringify(files));
-  };
-
   const handleAddHotLeads = useCallback((places: FoundPlace[]) => {
     setHotLeads(prevHotLeads => {
         const newLeads: HotLead[] = places.map(place => ({
@@ -1457,12 +742,6 @@ export default function HomePage() {
         return [...prevHotLeads, ...uniqueNewLeads];
     });
   }, [toast]);
-
-  const handleDictateNotes = (visit: Visit) => {
-    setCurrentEditingVisit(visit);
-    setStartDictationOnOpen(true);
-    setIsVisitFormOpen(true);
-  };
 
   const handleUpdateVisit = useCallback((visitId: string, updatedData: Partial<Visit>) => {
     setVisits(prevVisits => {
@@ -1493,80 +772,6 @@ export default function HomePage() {
     });
     toast({ title: "Hot Lead Removed" });
   }, [toast]);
-  
-  const handleAddHotLeadAsVisit = (lead: HotLead) => {
-    if (convertedHotLeads.has(lead.id)) return;
-    
-    const existingVisitForCompany = visits.find((visit) => {
-        if (visit.companyName !== lead.companyName) return false;
-        if (!visit.latitude || !visit.longitude || !lead.latitude || !lead.longitude) return false;
-        return getDistanceFromLatLonInM(
-            lead.latitude,
-            lead.longitude,
-            visit.latitude,
-            visit.longitude
-          ) < 50;
-    });
-
-    if (existingVisitForCompany) {
-      toast({
-        title: 'Visit Already Exists',
-        description: `A visit for ${lead.companyName} is already in your planner or history.`,
-      });
-      setConvertedHotLeads((prev) => new Set(prev).add(lead.id));
-      return;
-    }
-
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
-  
-    const newVisit: Visit = {
-      id: `temp_${crypto.randomUUID()}`,
-      timestamp: new Date(),
-      companyName: lead.companyName,
-      city: lead.city,
-      latitude: lead.latitude,
-      longitude: lead.longitude,
-      notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
-      decisionMakerContact: lead.phone,
-      visitNumber: todaysVisitsCount + 1,
-      futureMeetingSet: true,
-      futureMeetingDateTime: undefined,
-      partnershipConfidence: undefined,
-      hasBusinessCard: false,
-      businessCardImageUrl: undefined,
-      discussedCompetitors: false,
-      competitorName: undefined,
-      coolerType: undefined,
-      decisionMakerName: '',
-      decisionMakerTitle: '',
-      interestedUnit: undefined,
-      hasTDSReading: false,
-      tdsValue: undefined,
-      freeTrial: false,
-      freeTrialStartDate: undefined,
-      dealClosed: false,
-      contactInfo: undefined,
-      notesSummary: undefined,
-      pricingDiscussed: false,
-      priceQuoted: undefined,
-      leaseTerm: undefined,
-      installationFee: undefined,
-      creditApproved: false,
-    };
-    
-    setVisits(prevVisits => {
-        const newVisits = [newVisit, ...prevVisits];
-        localStorage.setItem('visits', JSON.stringify(newVisits));
-        return newVisits;
-    });
-    
-    setConvertedHotLeads(prev => new Set(prev).add(lead.id));
-
-    toast({
-        title: "Added to Planner",
-        description: `${lead.companyName} has been added to future visits to be scheduled.`,
-    });
-  };
 
   const handleEmailHotLeads = useCallback(() => {
     if (hotLeads.length === 0) {
@@ -1662,106 +867,6 @@ export default function HomePage() {
     }
   }, [isRecordingHotLeadNotes, toast]);
 
-  const handleHotspotCreation = useCallback(async () => {
-    toast({ title: "Flagging Hotspot...", description: "Getting your current location." });
-
-    if (!navigator.geolocation) {
-        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Could not access location services." });
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-            const flagToast = toast({ title: "Location Captured!", description: `Identifying nearby business...` });
-
-            try {
-                const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                const companyName = result.suggestedCompanyName || 'Flagged Hotspot';
-                
-                const existingVisitForCompany = visits.find((visit) => {
-                    if (visit.companyName !== companyName) return false;
-                    if (!visit.latitude || !visit.longitude) return false;
-                    return getDistanceFromLatLonInM(
-                        latitude,
-                        longitude,
-                        visit.latitude,
-                        visit.longitude
-                      ) < 50;
-                });
-
-                if (existingVisitForCompany) {
-                  flagToast.dismiss();
-                  toast({
-                    title: 'Visit Already Exists',
-                    description: `A visit for ${companyName} is already in your planner or history.`,
-                  });
-                  return;
-                }
-
-                const newVisit: Visit = {
-                    id: `temp_${crypto.randomUUID()}`,
-                    timestamp: new Date(),
-                    companyName: companyName,
-                    city: result.city,
-                    notes: `Flagged as a hotspot. Address: ${result.address || 'Unknown'}`.trim(),
-                    latitude: latitude,
-                    longitude: longitude,
-                    contactInfo: undefined,
-                    notesSummary: undefined,
-                    partnershipConfidence: undefined,
-                    hasBusinessCard: false,
-                    businessCardImageUrl: undefined,
-                    discussedCompetitors: false,
-                    competitorName: undefined,
-                    coolerType: undefined,
-                    decisionMakerName: '',
-                    decisionMakerTitle: '',
-                    decisionMakerContact: result.phone || '',
-                    visitNumber: undefined,
-                    interestedUnit: undefined,
-                    hasTDSReading: false,
-                    tdsValue: undefined,
-                    futureMeetingSet: true, // This makes it a future visit
-                    futureMeetingDateTime: undefined, // This makes it an UNSCHEDULED future visit
-                    freeTrial: false,
-                    freeTrialStartDate: undefined,
-                    dealClosed: false,
-                    pricingDiscussed: false,
-                    priceQuoted: undefined,
-                    leaseTerm: undefined,
-                    installationFee: undefined,
-                    creditApproved: false,
-                };
-                
-                setVisits(prevVisits => {
-                    const newVisits = [newVisit, ...prevVisits];
-                    localStorage.setItem('visits', JSON.stringify(newVisits));
-                    return newVisits;
-                });
-
-                flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner for a future visit.` });
-
-            } catch (e: any) {
-                 flagToast.dismiss();
-                 toast({ variant: "destructive", title: "Could Not Flag Hotspot", description: e.message });
-            }
-        },
-        (error) => {
-            let errorMessage = "Could not get your current location.";
-            if (error.code === error.PERMISSION_DENIED) {
-              errorMessage = "Location access has been denied.";
-            }
-            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, [visits, toast]);
-  
   const handleSelectDestination = useCallback(async (city: string) => {
     setIsDestinationModalOpen(false);
     setIsFindingParking(true);
@@ -1788,23 +893,6 @@ export default function HomePage() {
     }
   }, [toast]);
 
-  const handleConfirmStartupNavigation = async () => {
-    if (!startupNavigationTarget) return;
-  
-    const { latitude, longitude, companyName } = startupNavigationTarget;
-  
-    const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-    const city = result.city || "Destination";
-    
-    setTargetDestination({ city: city, description: `Navigating directly to ${companyName}.` });
-    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    setNavigationUrl(googleMapsUrl);
-    toast({ title: "Destination Set!", description: `Check the navigator to get directions to ${companyName}.` });
-  
-    setStartupNavigationTarget(null);
-    setIsStartupNavigationConfirmOpen(false);
-  };
-  
   const handleDestinationSearch = useCallback(() => {
     if (destinationSearchTerm.trim()) {
         handleSelectDestination(destinationSearchTerm.trim());
@@ -1903,6 +991,889 @@ export default function HomePage() {
     setNewsItems(prev => prev.filter((_, index) => index !== indexToDelete));
     toast({ title: 'News Item Removed' });
   }, [toast]);
+  
+  // Effects
+  useEffect(() => {
+      visitsRef.current = visits;
+  }, [visits]);
+  
+  useEffect(() => {
+    try {
+      const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
+      setSelectedSalesperson(defaultSalesperson);
+
+      const localVisits = localStorage.getItem('visits');
+      const parsedVisits = localVisits ? JSON.parse(localVisits).map((v: any) => ({
+          ...v,
+          timestamp: new Date(v.timestamp),
+          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
+      })) : [];
+      setVisits(parsedVisits);
+      
+      const storedSuggestions = localStorage.getItem('submittedSuggestions');
+      if (storedSuggestions) {
+        setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
+      }
+
+      const storedFiles = localStorage.getItem('managedFiles');
+      if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
+
+      const storedHotLeads = localStorage.getItem('hotLeads');
+      if (storedHotLeads) {
+        setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
+      }
+      
+      const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
+      if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+      
+      const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
+      if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
+      
+      const defaultNewsItems = [
+          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
+          "To compensate, Friday and Tuesday are now fully open for new installations.",
+          "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
+          "The annual sales competition begins next month! More details to follow."
+      ];
+      const storedNews = localStorage.getItem('companyNews');
+      if (storedNews) {
+          setNewsItems(JSON.parse(storedNews));
+      } else {
+          setNewsItems(defaultNewsItems);
+      }
+
+      const startupSequenceDone = sessionStorage.getItem('startupSequenceDone');
+      if (!startupSequenceDone) {
+          sessionStorage.setItem('startupSequenceDone', 'true');
+
+          const scheduledToday = parsedVisits.filter((visit: Visit) =>
+              visit.futureMeetingSet &&
+              visit.futureMeetingDateTime &&
+              isToday(new Date(visit.futureMeetingDateTime))
+          );
+          
+          if (scheduledToday.length > 0) {
+              const firstMeeting = scheduledToday[0];
+              if (firstMeeting.latitude && firstMeeting.longitude) {
+                  setStartupNavigationTarget({ 
+                      companyName: firstMeeting.companyName, 
+                      latitude: firstMeeting.latitude, 
+                      longitude: firstMeeting.longitude 
+                  });
+                  setIsStartupNavigationConfirmOpen(true);
+              }
+          }
+      }
+
+    } catch (error) {
+      console.error("Failed to load data from localStorage:", error);
+      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
+    }
+  }, [toast]);
+  
+  useEffect(() => {
+    const handlePositionUpdate = async (position: GeolocationPosition) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        let shouldUpdateCity = false;
+        
+        if (userCurrentLatitude === undefined || userCurrentLongitude === undefined) {
+            shouldUpdateCity = true;
+        } else {
+            const distance = getDistanceFromLatLonInM(lat, lon, userCurrentLatitude, userCurrentLongitude);
+            if (distance > 500) {
+                shouldUpdateCity = true;
+            }
+        }
+        
+        setUserCurrentLatitude(lat);
+        setUserCurrentLongitude(lon);
+
+        if (shouldUpdateCity) {
+          setIsFetchingCity(true);
+          try {
+            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
+            if (result.error) {
+              toast({ title: "Location Update Failed", description: result.error, duration: 3000 });
+              setCurrentCity(prev => prev || "Location lookup failed");
+            } else if (result.city) {
+              setCurrentCity(result.city);
+            } else {
+              setCurrentCity(prev => prev || "Location Unknown");
+            }
+          } catch (e: any) {
+            console.error("Error fetching city:", e);
+            setCurrentCity(prev => prev || "Error fetching city.");
+          } finally {
+            setIsFetchingCity(false);
+          }
+        } else {
+           setIsFetchingCity(false);
+        }
+    };
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(handlePositionUpdate, (error) => {
+        let errorMessage = "Could not retrieve location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Location access denied. Please enable it in your browser settings.";
+        }
+        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+        setCurrentCity("Location access denied.");
+        setIsFetchingCity(false);
+      }, { enableHighAccuracy: true });
+
+      locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
+          console.warn("Geolocation watch error:", error.message);
+      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+
+    } else {
+      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
+      setCurrentCity("Geolocation not supported.");
+      setIsFetchingCity(false);
+    }
+    
+    return () => {
+        if (locationWatchId.current && navigator.geolocation) {
+            navigator.geolocation.clearWatch(locationWatchId.current);
+        }
+    };
+  }, [toast, userCurrentLatitude, userCurrentLongitude]);
+
+  useEffect(() => {
+    localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
+  }, [submittedSuggestions]);
+
+  useEffect(() => {
+    localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
+  }, [hotLeads]);
+  
+  useEffect(() => {
+    localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
+  }, [convertedHotLeads]);
+
+  useEffect(() => {
+    localStorage.setItem('companyNews', JSON.stringify(newsItems));
+  }, [newsItems]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isVisitFormOpen) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isVisitFormOpen]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      history.pushState(null, '', location.href);
+
+      if (isVisitFormOpen) {
+        setIsVisitFormOpen(false);
+        setCurrentEditingVisit(undefined);
+        return;
+      }
+      if (zoomedVisit) {
+        setZoomedVisit(null);
+        return;
+      }
+      if (isDestinationModalOpen) {
+        setIsDestinationModalOpen(false);
+        return;
+      }
+      if (isFindCompanyModalOpen) {
+        setIsFindCompanyModalOpen(false);
+        return;
+      }
+      if (isManageFilesModalOpen) {
+        setIsManageFilesModalOpen(false);
+        return;
+      }
+      if (isEndDayConfirmOpen) {
+        setIsEndDayConfirmOpen(false);
+        return;
+      }
+
+      if (activeTab !== 'field-day') {
+        setActiveTab('field-day');
+        return;
+      }
+    };
+
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [
+    activeTab,
+    isVisitFormOpen,
+    zoomedVisit,
+    isDestinationModalOpen,
+    isFindCompanyModalOpen,
+    isManageFilesModalOpen,
+    isEndDayConfirmOpen,
+  ]);
+
+  // Handlers
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
+    if (e.currentTarget.getAttribute('data-state') === 'closed') {
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
+    }
+  };
+
+  const handleChangeDestination = async (salespersonToUse?: Salesperson) => {
+    setNavigationUrl(null);
+    const activeSalesperson = salespersonToUse || selectedSalesperson;
+    if (!activeSalesperson) return;
+
+    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl');
+    let cities: string[] = [];
+    
+    setIsDestinationModalOpen(true);
+    
+    if (territoryPdfUrl && activeSalesperson.name !== 'Corporate') {
+      setIsExtractingCities(true);
+      try {
+        const result = await extractCitiesFromPdfAction({ pdfDataUri: territoryPdfUrl });
+        if (result.error) throw new Error(result.error);
+        
+        if (result.cities && result.cities.length > 0) {
+          cities = result.cities;
+        } else {
+          toast({ variant: "destructive", title: "No Cities Found", description: "The AI could not find any cities in the provided document. Falling back to the default list from your profile." });
+          cities = activeSalesperson.territory.flatMap(t => t.cities || []);
+        }
+      } catch (e: any) {
+        toast({ variant: "destructive", title: "Could Not Read PDF", description: `Could not read cities from PDF: ${e.message}. Using default list.` });
+        cities = activeSalesperson.territory.flatMap(t => t.cities || []);
+      } finally {
+        setIsExtractingCities(false);
+      }
+    } else if (activeSalesperson.territory.length > 0 && activeSalesperson.name !== 'Corporate') {
+      cities = activeSalesperson.territory.flatMap(t => t.cities || []);
+    }
+    
+    setDestinationCities(cities);
+  };
+
+  const handleQuickLog = async () => {
+    // Branch for when GPS is not available.
+    if (!userCurrentLatitude || !userCurrentLongitude) {
+        toast({
+            title: 'Location Not Available',
+            description: 'Opening form for manual entry.',
+            duration: 3000,
+        });
+        const todaysVisitsCount = visits.filter((v) => isToday(new Date(v.timestamp))).length;
+        const newVisitTemplate: Partial<Visit> = {
+            latitude: undefined,
+            longitude: undefined,
+            timestamp: new Date(),
+            visitNumber: todaysVisitsCount + 1,
+            companyName: '',
+            notes: '',
+            decisionMakerContact: '',
+        };
+        setCurrentEditingVisit(newVisitTemplate as Visit);
+        setIsVisitFormOpen(true);
+        return;
+    }
+
+    // Branch for when GPS is available.
+    let companyName = '';
+    let notes = '';
+    let phone = '';
+    let city: string | undefined = undefined;
+    const latitude = userCurrentLatitude;
+    const longitude = userCurrentLongitude;
+
+    setIsFetchingCity(true);
+    try {
+        const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+        if (result.error) {
+            toast({ variant: 'destructive', title: 'Location Lookup Failed', description: result.error });
+        } else {
+            companyName = result.suggestedCompanyName || '';
+            notes = result.address ? `Company Address: ${result.address}` : '';
+            phone = result.phone || '';
+            city = result.city;
+        }
+    } catch (e: any) {
+        console.error('Error fetching company name for quicklog:', e);
+        toast({ variant: 'destructive', title: 'Location Lookup Error', description: e.message });
+    } finally {
+        setIsFetchingCity(false);
+    }
+
+    // Finally, create the visit template with whatever data we gathered and open the form.
+    const todaysVisitsCount = visits.filter((v) => isToday(new Date(v.timestamp))).length;
+    const newVisitTemplate: Partial<Visit> = {
+        latitude: latitude,
+        longitude: longitude,
+        timestamp: new Date(),
+        visitNumber: todaysVisitsCount + 1,
+        companyName: companyName,
+        city: city,
+        notes: notes,
+        decisionMakerContact: phone,
+    };
+    setCurrentEditingVisit(newVisitTemplate as Visit);
+    setIsVisitFormOpen(true);
+  };
+
+  const handleEditVisit = (visit: Visit) => {
+    setCurrentEditingVisit(visit);
+    setIsVisitFormOpen(true);
+  };
+
+  const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
+    const updatedVisits = visits.map(v => v.id === visitId ? { ...v, dealClosed } : v);
+    setVisits(updatedVisits);
+    localStorage.setItem('visits', JSON.stringify(updatedVisits));
+    toast({ title: 'Deal Status Updated Locally' });
+  };
+
+  const handleLogFollowUp = (existingVisit: Visit) => {
+    toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
+  
+    const newVisitTemplate: Partial<Visit> = {
+      companyName: existingVisit.companyName,
+      latitude: existingVisit.latitude,
+      longitude: existingVisit.longitude,
+      contactInfo: existingVisit.contactInfo, 
+      city: existingVisit.city,
+      notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
+      decisionMakerName: existingVisit.decisionMakerName,
+      decisionMakerTitle: existingVisit.decisionMakerTitle,
+      decisionMakerContact: existingVisit.decisionMakerContact,
+      visitNumber: todaysVisitsCount + 1,
+    };
+    
+    setCurrentEditingVisit(newVisitTemplate as Visit);
+    setIsVisitFormOpen(true);
+  };
+
+  const handleDeleteVisit = async (visitId: string) => {
+    const updatedVisits = visits.filter(v => v.id !== visitId);
+    setVisits(updatedVisits);
+    localStorage.setItem('visits', JSON.stringify(updatedVisits));
+
+    toast({
+      title: 'Visit Deleted Locally',
+      description: 'The visit log has been removed from this device.',
+    });
+  };
+
+  const confirmEndDay = async () => {
+    const todaysVisitsForReport = visits.filter(v => isToday(new Date(v.timestamp)));
+    const numberOfVisits = todaysVisitsForReport.length;
+
+    if (numberOfVisits === 0) {
+        toast({ title: "No visits to create a report for today." });
+        setIsEndDayConfirmOpen(false);
+        return;
+    }
+
+    if (!firebaseConfigured) {
+        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report. Please check your app's configuration." });
+        setIsEndDayConfirmOpen(false);
+        return;
+    }
+
+    setIsSyncing(true);
+    toast({ title: "Generating Daily Report...", description: `Processing ${numberOfVisits} visit(s) and uploading to cloud storage.` });
+
+    try {
+      const result = await saveDailyReportAction(todaysVisitsForReport);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: "Daily Report Saved!",
+        description: `Your daily visit report has been successfully saved to the cloud storage bucket.`,
+        duration: 10000,
+      });
+      localStorage.removeItem('milestoneAchievedDate');
+    } catch (e: any) {
+      toast({
+          variant: "destructive",
+          title: "Report Save Failed",
+          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
+          duration: 10000,
+      });
+    } finally {
+      setIsSyncing(false);
+      setIsEndDayConfirmOpen(false);
+    }
+  };
+
+  const handleSubmitSuggestion = async () => {
+    if (suggestionText.trim() === '') {
+      toast({ variant: "destructive", title: 'Empty Suggestion', description: 'Please type your suggestion before submitting.' });
+      return;
+    }
+
+    const newSuggestionObject: SubmittedSuggestion = {
+      text: suggestionText.trim(),
+      timestamp: new Date(),
+    };
+    
+    setSubmittedSuggestions(prev => [...prev, newSuggestionObject]);
+    toast({ title: 'Suggestion Submitted!', description: 'Thank you for your feedback.' });
+    setSuggestionText('');
+  };
+
+  const handleEmailSuggestions = () => {
+    if (submittedSuggestions.length === 0) {
+      toast({ title: 'No Suggestions to Email', description: 'There are no submitted suggestions to send.' });
+      return;
+    }
+
+    const subject = `App Improvement Suggestion`;
+    let body = `Suggestions for the Optimum Trailblazer App:\n\n`;
+    submittedSuggestions.forEach((suggestion, index) => {
+      body += `${index + 1}. Suggestion: ${suggestion.text}\n`;
+      body += `   Date: ${format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}\n\n`;
+    });
+    body += `\n\n---\nEmail generated by Optimum Trailblazer App`;
+
+    const mailtoLink = `mailto:paull@drinkoptimum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (typeof window !== 'undefined') {
+        window.location.href = mailtoLink;
+    }
+    toast({ title: "Opening email client...", description: "Please send the composed email with your suggestions." });
+  };
+
+  const handleEmailManager = () => {
+    const chrisEmail = "chrisc@drinkoptimum.com";
+    const subject = `Salesperson for the current day visits`;
+    
+    let body = `Hello Chris,\n\nPlease find the visit data for the current day.\n\n`;
+    body += `The detailed visit data can be found in the PDF report, which can be downloaded using the 'Export PDF' button and then manually attached to this email.\n\n`;
+    body += `A summary is also included below:\n\n`;
+    
+    if (todaysVisits.length > 0) {
+      body += `Summary of Visits (${todaysVisits.length} total):\n`;
+      todaysVisits.forEach((visit, index) => {
+        body += `\n${index + 1}. ${visit.companyName}`;
+        if (visit.notesSummary) body += `\n   Summary: ${visit.notesSummary}`;
+        if (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!") body += `\n   Contact: ${visit.contactInfo.info}`;
+        if (visit.partnershipConfidence) body += `\n   Confidence: ${visit.partnershipConfidence}/5`;
+        body += `\n   Visited: ${format(new Date(visit.timestamp), 'MMM d, h:mm a')}\n`;
+      });
+    } else {
+      body += "No visits were logged today.\n";
+    }
+    body += `\n\nBest regards,\nOptimum Trailblazer App`;
+
+    const mailtoLink = `mailto:${chrisEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    if (typeof window !== 'undefined') {
+        window.location.href = mailtoLink;
+    }
+    toast({ title: "Opening email client...", description: "Please manually attach the exported PDF to the email before sending." });
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = ["application/pdf", "text/csv"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ variant: "destructive", title: "Invalid File Type", description: "Please select a PDF or CSV file." });
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ variant: "destructive", title: "File Too Large", description: "Please select a file smaller than 5MB." });
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      setSelectedFile(file);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSendChatMessage = async () => {
+    if (chatInput.trim() === '' || isAiResponding) return;
+
+    let messageText = chatInput.trim();
+    let pdfUrlForAi: string | undefined = undefined;
+    let csvDataForAi: string | undefined = csvDataForAi;
+    
+    setIsAiResponding(true); 
+
+    if (selectedFile) {
+      try {
+        if (selectedFile.type === 'application/pdf') {
+          pdfUrlForAi = await fileToDataUri(selectedFile);
+        } else if (selectedFile.type === 'text/csv') {
+          csvDataForAi = await selectedFile.text();
+        }
+        toast({ title: 'File Attached', description: `${selectedFile.name} attached and will be sent to AI.` });
+        messageText += ` (Attached File: ${selectedFile.name})`;
+      } catch (processingError: any) {
+        toast({ variant: "destructive", title: 'File Processing Failed', description: processingError.message });
+        setIsAiResponding(false);
+        return;
+      } finally {
+        setSelectedFile(null); 
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    }
+
+    const newUserMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: messageText,
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, newUserMessage]);
+    setChatInput('');
+
+    const oneWeekAgo = subDays(new Date(), 7);
+    const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
+    
+    const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl') || undefined;
+
+    try {
+      const result = await getAiChatResponseAction({
+        currentMessages: [...chatMessages, newUserMessage], 
+        model: selectedAiModel,
+        visits: recentVisits.map(v => ({
+            id: v.id,
+            timestamp: v.timestamp,
+            companyName: v.companyName,
+            notesSummary: v.notesSummary || undefined,
+            partnershipConfidence: v.partnershipConfidence || undefined,
+        })),
+        pdfUrl: pdfUrlForAi,
+        csvData: csvDataForAi,
+        territoryPdfUrl: territoryPdfUrl,
+        managedFiles: managedFiles,
+        newsItems: newsItems,
+      });
+
+      if (result.error) {
+        toast({ variant: "destructive", title: "AI Chat Error", description: `Error: ${result.error}` });
+        const aiErrorResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: `Sorry, I encountered an error: ${result.error}`, timestamp: new Date() };
+        setChatMessages(prev => [...prev, aiErrorResponse]);
+      } else if (result.aiResponse) {
+        const aiResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: result.aiResponse, timestamp: new Date() };
+        setChatMessages(prev => [...prev, aiResponse]);
+      }
+    } catch (e: any) {
+       toast({ variant: "destructive", title: "AI Chat Failed", description: "Could not get response from AI." });
+       const aiFailureResponse: ChatMessage = { id: crypto.randomUUID(), sender: 'ai', text: "I'm having trouble connecting right now. Please try again later.", timestamp: new Date() };
+        setChatMessages(prev => [...prev, aiFailureResponse]);
+    } finally {
+      setIsAiResponding(false);
+    }
+  };
+
+  const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
+    const existingVisitForCompany = visits.find((visit) => {
+        if (visit.companyName !== visitData.companyName) return false;
+        if (!visit.latitude || !visit.longitude || !visitData.latitude || !visitData.longitude) return false;
+        
+        return getDistanceFromLatLonInM(
+            visitData.latitude,
+            visitData.longitude,
+            visit.latitude,
+            visit.longitude
+        ) < 50;
+    });
+
+    if (existingVisitForCompany) {
+      toast({
+        title: 'Visit Already Exists',
+        description: `A visit for ${visitData.companyName} is already in your planner or history.`,
+      });
+      return;
+    }
+
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
+    
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    futureDate.setHours(10, 0, 0, 0);
+
+    const newVisit: Visit = {
+        id: `temp_${crypto.randomUUID()}`,
+        timestamp: new Date(),
+        companyName: visitData.companyName || '',
+        city: visitData.city,
+        notes: visitData.notes,
+        latitude: visitData.latitude,
+        longitude: visitData.longitude,
+        contactInfo: undefined,
+        notesSummary: undefined,
+        partnershipConfidence: undefined,
+        hasBusinessCard: false,
+        businessCardImageUrl: undefined,
+        discussedCompetitors: false,
+        competitorName: undefined,
+        coolerType: undefined,
+        decisionMakerName: '',
+        decisionMakerTitle: '',
+        decisionMakerContact: visitData.decisionMakerContact || '',
+        visitNumber: todaysVisitsCount + 1,
+        interestedUnit: undefined,
+        hasTDSReading: false,
+        tdsValue: undefined,
+        futureMeetingSet: true,
+        futureMeetingDateTime: futureDate,
+        freeTrial: false,
+        freeTrialStartDate: undefined,
+        dealClosed: false,
+        pricingDiscussed: false,
+        priceQuoted: undefined,
+        leaseTerm: undefined,
+        installationFee: undefined,
+        creditApproved: false,
+    };
+    
+    setVisits(prevVisits => {
+        const newVisits = [newVisit, ...prevVisits];
+        localStorage.setItem('visits', JSON.stringify(newVisits));
+        return newVisits;
+    });
+
+    toast({
+        title: "Added to Planner",
+        description: `${newVisit.companyName} has been scheduled for a future visit.`,
+    });
+  };
+
+  const handleManagedFilesChange = (files: ManagedFile[]) => {
+      setManagedFiles(files);
+      localStorage.setItem('managedFiles', JSON.stringify(files));
+  };
+
+  const handleDictateNotes = (visit: Visit) => {
+    setCurrentEditingVisit(visit);
+    setStartDictationOnOpen(true);
+    setIsVisitFormOpen(true);
+  };
+
+  const handleAddHotLeadAsVisit = (lead: HotLead) => {
+    if (convertedHotLeads.has(lead.id)) return;
+    
+    const existingVisitForCompany = visits.find((visit) => {
+        if (visit.companyName !== lead.companyName) return false;
+        if (!visit.latitude || !visit.longitude || !lead.latitude || !lead.longitude) return false;
+        return getDistanceFromLatLonInM(
+            lead.latitude,
+            lead.longitude,
+            visit.latitude,
+            visit.longitude
+          ) < 50;
+    });
+
+    if (existingVisitForCompany) {
+      toast({
+        title: 'Visit Already Exists',
+        description: `A visit for ${lead.companyName} is already in your planner or history.`,
+      });
+      setConvertedHotLeads((prev) => new Set(prev).add(lead.id));
+      return;
+    }
+
+    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
+  
+    const newVisit: Visit = {
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
+      companyName: lead.companyName,
+      city: lead.city,
+      latitude: lead.latitude,
+      longitude: lead.longitude,
+      notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
+      decisionMakerContact: lead.phone,
+      visitNumber: todaysVisitsCount + 1,
+      futureMeetingSet: true,
+      futureMeetingDateTime: undefined,
+      partnershipConfidence: undefined,
+      hasBusinessCard: false,
+      businessCardImageUrl: undefined,
+      discussedCompetitors: false,
+      competitorName: undefined,
+      coolerType: undefined,
+      decisionMakerName: '',
+      decisionMakerTitle: '',
+      interestedUnit: undefined,
+      hasTDSReading: false,
+      tdsValue: undefined,
+      freeTrial: false,
+      freeTrialStartDate: undefined,
+      dealClosed: false,
+      contactInfo: undefined,
+      notesSummary: undefined,
+      pricingDiscussed: false,
+      priceQuoted: undefined,
+      leaseTerm: undefined,
+      installationFee: undefined,
+      creditApproved: false,
+    };
+    
+    setVisits(prevVisits => {
+        const newVisits = [newVisit, ...prevVisits];
+        localStorage.setItem('visits', JSON.stringify(newVisits));
+        return newVisits;
+    });
+    
+    setConvertedHotLeads(prev => new Set(prev).add(lead.id));
+
+    toast({
+        title: "Added to Planner",
+        description: `${lead.companyName} has been added to future visits to be scheduled.`,
+    });
+  };
+
+  const handleHotspotCreation = useCallback(async () => {
+    toast({ title: "Flagging Hotspot...", description: "Getting your current location." });
+
+    if (!navigator.geolocation) {
+        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Could not access location services." });
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const { latitude, longitude } = position.coords;
+            const flagToast = toast({ title: "Location Captured!", description: `Identifying nearby business...` });
+
+            try {
+                const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                const companyName = result.suggestedCompanyName || 'Flagged Hotspot';
+                
+                const existingVisitForCompany = visits.find((visit) => {
+                    if (visit.companyName !== companyName) return false;
+                    if (!visit.latitude || !visit.longitude) return false;
+                    return getDistanceFromLatLonInM(
+                        latitude,
+                        longitude,
+                        visit.latitude,
+                        visit.longitude
+                      ) < 50;
+                });
+
+                if (existingVisitForCompany) {
+                  flagToast.dismiss();
+                  toast({
+                    title: 'Visit Already Exists',
+                    description: `A visit for ${companyName} is already in your planner or history.`,
+                  });
+                  return;
+                }
+
+                const newVisit: Visit = {
+                    id: `temp_${crypto.randomUUID()}`,
+                    timestamp: new Date(),
+                    companyName: companyName,
+                    city: result.city,
+                    notes: `Flagged as a hotspot. Address: ${result.address || 'Unknown'}`.trim(),
+                    latitude: latitude,
+                    longitude: longitude,
+                    contactInfo: undefined,
+                    notesSummary: undefined,
+                    partnershipConfidence: undefined,
+                    hasBusinessCard: false,
+                    businessCardImageUrl: undefined,
+                    discussedCompetitors: false,
+                    competitorName: undefined,
+                    coolerType: undefined,
+                    decisionMakerName: '',
+                    decisionMakerTitle: '',
+                    decisionMakerContact: result.phone || '',
+                    visitNumber: undefined,
+                    interestedUnit: undefined,
+                    hasTDSReading: false,
+                    tdsValue: undefined,
+                    futureMeetingSet: true,
+                    futureMeetingDateTime: undefined,
+                    freeTrial: false,
+                    freeTrialStartDate: undefined,
+                    dealClosed: false,
+                    pricingDiscussed: false,
+                    priceQuoted: undefined,
+                    leaseTerm: undefined,
+                    installationFee: undefined,
+                    creditApproved: false,
+                };
+                
+                setVisits(prevVisits => {
+                    const newVisits = [newVisit, ...prevVisits];
+                    localStorage.setItem('visits', JSON.stringify(newVisits));
+                    return newVisits;
+                });
+
+                flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner for a future visit.` });
+
+            } catch (e: any) {
+                 flagToast.dismiss();
+                 toast({ variant: "destructive", title: "Could Not Flag Hotspot", description: e.message });
+            }
+        },
+        (error) => {
+            let errorMessage = "Could not get your current location.";
+            if (error.code === error.PERMISSION_DENIED) {
+              errorMessage = "Location access has been denied.";
+            }
+            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [visits, toast]);
+
+  const handleConfirmStartupNavigation = async () => {
+    if (!startupNavigationTarget) return;
+  
+    const { latitude, longitude, companyName } = startupNavigationTarget;
+  
+    const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+    const city = result.city || "Destination";
+    
+    setTargetDestination({ city: city, description: `Navigating directly to ${companyName}.` });
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+    setNavigationUrl(googleMapsUrl);
+    toast({ title: "Destination Set!", description: `Check the navigator to get directions to ${companyName}.` });
+  
+    setStartupNavigationTarget(null);
+    setIsStartupNavigationConfirmOpen(false);
+  };
   
   const handleAddNewFutureVisit = () => {
     setAddingFutureVisit(true);
