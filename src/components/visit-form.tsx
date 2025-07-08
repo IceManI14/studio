@@ -261,7 +261,31 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   };
 
-  const handleQuickSave = useCallback(async (): Promise<void> => {
+  const saveProgress = useCallback(async (): Promise<Visit | undefined> => {
+    const isValid = await form.trigger("companyName");
+    if (!isValid) {
+        toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name to save progress.' });
+        return undefined;
+    }
+
+    setIsSaving(true);
+    const data = form.getValues();
+    const payload = buildVisitPayload(data, formInitialData, currentLatitude, currentLongitude);
+    
+    try {
+        const savedVisit = await onSave(payload, { andClose: false });
+        setFormInitialData(savedVisit);
+        toast({ title: "Progress Saved", description: "Your changes have been saved to the device." });
+        return savedVisit;
+    } catch (error) {
+        toast({ variant: "destructive", title: "Error Saving Progress", description: "Could not save changes." });
+        return undefined;
+    } finally {
+        setIsSaving(false);
+    }
+  }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
+
+  const handleSaveAndView = useCallback(async (): Promise<void> => {
     const isValid = await form.trigger("companyName");
     if (!isValid) {
       toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name before saving.' });
@@ -455,7 +479,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     });
 
     try {
-        const result = await extractVisitDetailsAction({ notes, currentDate: format(new Date(), 'yyyy-MM-dd') });
+        const result = await extractVisitDetailsAction({ notes });
         if (result.error) throw new Error(result.error);
         if (!result.details) {
             toast({ title: "AI Analysis Complete", description: "No new details found in notes." });
@@ -605,7 +629,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           if (transcript) {
             form.setValue('companyName', transcript, { shouldValidate: true });
             toast({ title: 'Company Name Updated' });
-            handleQuickSave();
+            saveProgress();
           }
       } else {
         console.warn("Speech recognition returned a result with no transcript.");
@@ -617,7 +641,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingCompanyName, toast, handleQuickSave]);
+  }, [form, isRecordingCompanyName, toast, saveProgress]);
 
   const handleToggleVoiceNotes = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -648,7 +672,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       recognitionRef.current = null;
       
       setTimeout(() => {
-        handleQuickSave().then((savedVisit) => {
+        saveProgress().then((savedVisit) => {
           if (savedVisit) {
             const finalNotes = form.getValues('notes');
             if (finalNotes && finalNotes.trim() && finalNotes !== lastAnalyzedNotes) {
@@ -680,7 +704,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } catch(e: any) {
         toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
-  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes, handleQuickSave]);
+  }, [form, isRecordingNotes, toast, analyzeNotesAndPopulateForm, lastAnalyzedNotes, saveProgress]);
 
 
   useEffect(() => {
@@ -986,7 +1010,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       type="button"
                       variant="secondary"
                       className="w-full mt-2"
-                      onClick={handleQuickSave}
+                      onClick={handleSaveAndView}
                       disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
                   >
                       <Save className="mr-2 h-4 w-4" />
@@ -1848,7 +1872,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={handleQuickSave}
+                            onClick={() => saveProgress()}
                             className="h-7 w-7"
                             aria-label="Save and continue editing"
                         >
@@ -1879,7 +1903,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         field.onBlur(e);
                         const currentNotes = form.getValues('notes');
                         if (currentNotes && currentNotes.trim() && currentNotes !== lastAnalyzedNotes) {
-                           handleQuickSave().then((savedVisit) => {
+                           saveProgress().then((savedVisit) => {
                               if (savedVisit) {
                                   analyzeNotesAndPopulateForm(currentNotes, savedVisit);
                               }
