@@ -3083,7 +3083,7 @@ export default function HomePage() {
                                 <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
                             </li>
                             <li>
-                                <strong>Active Free Trials:</strong> This section tracks all visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
+                                <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
                             </li>
                         </ul>
                     </TabsContent>
@@ -3296,7 +3296,7 @@ export default function HomePage() {
               <AlertDialogAction onClick={handleConfirmStartupNavigation}>Yes, Navigate</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </Dialog>
+        </AlertDialog>
         
       </div>
       <button
