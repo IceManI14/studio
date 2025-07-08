@@ -1968,6 +1968,23 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
+  const handleScheduleFromCalendar = () => {
+    if (!selectedDate) return;
+
+    const meetingDateTime = new Date(selectedDate);
+    meetingDateTime.setHours(9, 0, 0, 0); // Default to 9 AM
+
+    setAddingFutureVisit(true);
+    setCurrentEditingVisit({
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
+      companyName: '',
+      futureMeetingSet: true,
+      futureMeetingDateTime: meetingDateTime,
+    } as Visit);
+    setIsVisitFormOpen(true);
+  };
+
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
@@ -2405,9 +2422,19 @@ export default function HomePage() {
                           }}
                         />
                         {selectedDate && (
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="mt-2 w-full">
-                            Clear Date Filter
-                          </Button>
+                          <div className="w-full mt-2 space-y-2">
+                              <Button
+                                  onClick={handleScheduleFromCalendar}
+                                  className="w-full"
+                                  size="sm"
+                              >
+                                  <PlusSquare className="mr-2 h-4 w-4" />
+                                  Schedule on {format(selectedDate, 'MMM d')}
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="w-full">
+                                  Clear Date Filter
+                              </Button>
+                          </div>
                         )}
                       </div>
                     </div>
