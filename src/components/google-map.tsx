@@ -261,12 +261,15 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         {validVisits.map((visit) => {
           const isDealClosed = visit.dealClosed;
           const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
+          const inTrial = visit.freeTrial;
 
           let iconUrl;
           if (isHotspot) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
           } else if (isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
+          } else if (inTrial) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
           } else {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue.png';
           }
