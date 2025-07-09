@@ -437,7 +437,7 @@ export default function HomePage() {
                   decisionMakerTitle: payload.decisionMakerTitle || undefined,
                   decisionMakerContact: payload.decisionMakerContact || undefined,
                   visitNumber: payload.visitNumber || undefined,
-                  interestedUnit: payload.interestedUnit || undefined,
+                  interestedUnits: payload.interestedUnits || undefined,
                   hasTDSReading: payload.hasTDSReading || false,
                   tdsValue: payload.tdsValue ?? undefined,
                   futureMeetingSet: payload.futureMeetingSet || false,
@@ -1724,7 +1724,7 @@ export default function HomePage() {
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
         visitNumber: todaysVisitsCount + 1,
-        interestedUnit: undefined,
+        interestedUnits: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
         futureMeetingSet: true,
@@ -1808,7 +1808,7 @@ export default function HomePage() {
       coolerType: undefined,
       decisionMakerName: '',
       decisionMakerTitle: '',
-      interestedUnit: undefined,
+      interestedUnits: undefined,
       hasTDSReading: false,
       tdsValue: undefined,
       freeTrial: false,
@@ -1899,7 +1899,7 @@ export default function HomePage() {
                     decisionMakerTitle: '',
                     decisionMakerContact: result.phone || '',
                     visitNumber: undefined,
-                    interestedUnit: undefined,
+                    interestedUnits: undefined,
                     hasTDSReading: false,
                     tdsValue: undefined,
                     futureMeetingSet: true,
@@ -2207,8 +2207,8 @@ export default function HomePage() {
                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                               </div>
                               <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                {visit.interestedUnit ? (
-                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}` : ''}}`}</span>
                                 ) : (
                                     <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                                 )}
@@ -2468,8 +2468,8 @@ export default function HomePage() {
                             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                           </div>
                           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                            {visit.interestedUnit ? (
-                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                            {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
                             ) : (
                                 <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                             )}
@@ -2541,8 +2541,8 @@ export default function HomePage() {
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
                                           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              {visit.interestedUnit ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                              {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}`: ''}}`}</span>
                                               ) : (
                                                   visit.futureMeetingDateTime && (
                                                       <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
@@ -2613,8 +2613,8 @@ export default function HomePage() {
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
                                           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              {visit.interestedUnit ? (
-                                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                              {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
                                               ) : (
                                                 <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                               )}
@@ -2678,8 +2678,8 @@ export default function HomePage() {
                                                   <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                               </div>
                                               <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                  {visit.interestedUnit ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                                  {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
                                                   ) : (
                                                     <span>Flagged: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
                                                   )}
@@ -2738,8 +2738,8 @@ export default function HomePage() {
                                                 <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                             </div>
                                             <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                {visit.interestedUnit ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnit.split('(')[0].trim()}}`}</span>
+                                                {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
                                                 ) : (
                                                     visit.freeTrialStartDate && (
                                                         <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>

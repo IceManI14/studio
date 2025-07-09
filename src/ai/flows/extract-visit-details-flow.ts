@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to extract structured details from unstructured visit notes.
@@ -22,7 +23,7 @@ const ExtractVisitDetailsOutputSchema = z.object({
   decisionMakerName: z.string().optional().describe("The name of the decision-maker or contact person mentioned."),
   decisionMakerTitle: z.string().optional().describe("The job title of the decision-maker (e.g., Office Manager, CEO)."),
   tdsValue: z.number().optional().describe("The numerical TDS (Total Dissolved Solids) value if mentioned in the notes (e.g., 'TDS was 150')."),
-  interestedUnit: z.string().optional().describe("The specific water cooler model or type the client is interested in."),
+  interestedUnits: z.array(z.string()).optional().describe("A list of specific water cooler models or types the client is interested in."),
   futureMeetingSet: z.boolean().optional().describe("Set to true if the notes mention that a future meeting or follow-up was scheduled or booked."),
   futureMeetingDateTime: z.string().optional().describe("If a future meeting is set, extract the specific date and time. Return in a machine-readable format like 'YYYY-MM-DDTHH:mm:ss'. If only a date is mentioned, assume 9:00 AM local time."),
   freeTrial: z.boolean().optional().describe("Set to true if a free trial was discussed, agreed upon, or set up."),
@@ -47,7 +48,7 @@ Analyze the following notes. Based ONLY on the text provided, extract the specif
 - If a competitor is mentioned by name, extract it.
 - If a person's name and/or title is mentioned as a contact or decision-maker, extract them.
 - If a specific TDS parts-per-million (PPM) value is mentioned, extract the number.
-- If they are interested in a specific unit, extract its name.
+- If they are interested in specific units, extract all their names into the interestedUnits array.
 - If a future meeting was booked, scheduled, or agreed upon (e.g., phrases like "set a meeting", "follow-up scheduled", "booked a demo"), set futureMeetingSet to true. Also, extract the specific date and time into futureMeetingDateTime.
 - **IMPORTANT DATE LOGIC:** If a meeting is confirmed but no specific date is mentioned, you MUST infer the date as the next business day (Monday-Friday) relative to the provided 'currentDate'. If no time is mentioned, you MUST default to 9:00 AM.
 - If a free trial was set up, set freeTrial to true.

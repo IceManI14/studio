@@ -175,7 +175,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
-            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number') && <Separator />}
+            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number' || (visit.interestedUnits && visit.interestedUnits.length > 0)) && <Separator />}
+
+            {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
+                 <div>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />Interested Units</h4>
+                    <div className="pl-6 space-y-1">
+                        <ul className="list-disc list-inside">
+                            {visit.interestedUnits.map((unit, index) => (
+                                <li key={index}>{unit}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
 
             {visit.discussedCompetitors && (
                 <div>
@@ -331,9 +344,9 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
               <div className="flex items-center gap-4 text-sm font-medium mb-1">
-                {visit.interestedUnit && (
+                {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
                   <div className="text-blue-400">
-                    {`{${visit.interestedUnit.split('(')[0].trim()}}`}
+                    {`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}
                   </div>
                 )}
                 {potentialCommission !== null && (

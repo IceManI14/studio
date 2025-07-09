@@ -1,5 +1,4 @@
 
-
 export interface ContactInfo {
   info: string;
   confidence: number;
@@ -36,7 +35,7 @@ export interface Visit {
   decisionMakerTitle?: string;
   decisionMakerContact?: string;
   visitNumber?: number; // Sequential number of the visit for the day
-  interestedUnit?: string; // Unit the company is potentially interested in
+  interestedUnits?: string[]; // Unit the company is potentially interested in
   hasTDSReading?: boolean;
   tdsValue?: number;
   futureMeetingSet?: boolean;

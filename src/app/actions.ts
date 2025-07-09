@@ -58,7 +58,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       decisionMakerTitle: payload.decisionMakerTitle ?? null,
       decisionMakerContact: payload.decisionMakerContact ?? null,
       visitNumber: payload.visitNumber ?? null,
-      interestedUnit: payload.interestedUnit ?? null,
+      interestedUnits: payload.interestedUnits ?? [],
       hasTDSReading: payload.hasTDSReading || false,
       tdsValue: (payload.hasTDSReading || false) && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
       futureMeetingSet: payload.futureMeetingSet || false,
@@ -474,7 +474,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
       'Has Business Card', 'Business Card Image URL', 'Discussed Competitors', 
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
-      'Decision Maker Contact', 'Visit Number', 'Interested Unit', 'Has TDS Reading', 
+      'Decision Maker Contact', 'Visit Number', 'Interested Units', 'Has TDS Reading', 
       'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
       'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission Override'
     ];
@@ -499,7 +499,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
       `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
       visit.visitNumber ?? '',
-      `"${(visit.interestedUnit ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.interestedUnits?.join('; ') ?? '').replace(/"/g, '""')}"`,
       visit.hasTDSReading ? 'Yes' : 'No',
       visit.tdsValue ?? '',
       visit.futureMeetingSet ? 'Yes' : 'No',

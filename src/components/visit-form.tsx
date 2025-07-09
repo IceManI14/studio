@@ -24,13 +24,13 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from './ui/badge';
 
 
 const COMPETITORS_LIST = [
@@ -118,7 +118,7 @@ const visitFormSchema = z.object({
   decisionMakerName: z.string().optional(),
   decisionMakerTitle: z.string().optional(),
   decisionMakerContact: z.string().optional(),
-  interestedUnit: z.string().optional(),
+  interestedUnits: z.array(z.string()).optional(),
   hasTDSReading: z.boolean().optional(),
   tdsValue: z.coerce.number().min(0, "TDS value must be 0 or greater.").max(1500, "TDS value must be 1500 or less.").optional(),
   futureMeetingSet: z.boolean().optional(),
@@ -167,7 +167,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     decisionMakerName: data.decisionMakerName,
     decisionMakerTitle: data.decisionMakerTitle,
     decisionMakerContact: data.decisionMakerContact,
-    interestedUnit: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnit : undefined,
+    interestedUnits: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnits : [],
     hasTDSReading: data.hasTDSReading,
     tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
     futureMeetingSet: data.futureMeetingSet,
@@ -239,7 +239,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerName: '',
       decisionMakerTitle: '',
       decisionMakerContact: '',
-      interestedUnit: undefined,
+      interestedUnits: [],
       hasTDSReading: false,
       tdsValue: undefined,
       futureMeetingSet: false,
@@ -469,7 +469,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     if (partnershipConfidenceValue && partnershipConfidenceValue < 4) {
-      form.setValue('interestedUnit', undefined);
+      form.setValue('interestedUnits', []);
     }
   }, [partnershipConfidenceValue, form]);
 
@@ -502,9 +502,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         const updateField = <T extends keyof VisitFormData>(field: T, value: VisitFormData[T] | undefined) => {
             if (value === undefined || value === null) return;
             const currentValue = updatedData[field];
-            // A simple !== check is sufficient for most types here
-            if (currentValue !== value) {
-                // @ts-ignore
+            if (JSON.stringify(currentValue) !== JSON.stringify(value)) {
+                 // @ts-ignore
                 updatedData[field] = value;
                 form.setValue(field, value as any, { shouldValidate: true });
                 fieldsUpdatedCount++;
@@ -529,7 +528,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         updateField('competitorName', details.competitorName);
         updateField('decisionMakerName', details.decisionMakerName);
         updateField('decisionMakerTitle', details.decisionMakerTitle);
-        updateField('interestedUnit', details.interestedUnit);
+        if (details.interestedUnits && details.interestedUnits.length > 0) {
+            updateField('interestedUnits', details.interestedUnits);
+        }
         updateField('freeTrial', details.freeTrial);
 
         if (fieldsUpdatedCount > 0) {
@@ -886,7 +887,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       decisionMakerName: data?.decisionMakerName || '',
       decisionMakerTitle: data?.decisionMakerTitle || '',
       decisionMakerContact: data?.decisionMakerContact || '',
-      interestedUnit: data?.interestedUnit || undefined,
+      interestedUnits: data?.interestedUnits || [],
       hasTDSReading: data?.hasTDSReading || false,
       tdsValue: data?.tdsValue ?? undefined,
       futureMeetingSet: data?.futureMeetingSet || false,
@@ -1048,39 +1049,47 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             />
 
             {partnershipConfidenceValue && partnershipConfidenceValue >= 4 && (
-              <div className="space-y-2">
-                <Label>Data Gathered:</Label>
-                <FormField
-                  control={form.control}
-                  name="interestedUnit"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
-                      <FormLabel className="flex items-center">
-                        <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Unit of Interest
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a cooler they are interested in" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {OUR_COOLERS_LIST.map((cooler) => (
-                            <SelectItem key={cooler} value={cooler}>
-                              {cooler}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="interestedUnits"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
+                    <FormLabel className="flex items-center">
+                      <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Units of Interest
+                    </FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                        {field.value?.map((unit, index) => (
+                            <Badge key={index} variant="secondary" className="text-sm">
+                                {unit}
+                                <button type="button" onClick={() => field.onChange(field.value?.filter(u => u !== unit))} className="ml-2 rounded-full p-0.5 hover:bg-destructive/20"><X className="h-3 w-3"/></button>
+                            </Badge>
+                        ))}
+                    </div>
+                    <Select
+                      onValueChange={(value) => {
+                        if (value && !field.value?.includes(value)) {
+                            field.onChange([...(field.value || []), value]);
+                        }
+                      }}
+                      value={''}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Add a cooler..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {OUR_COOLERS_LIST.filter(c => !field.value?.includes(c)).map((cooler) => (
+                          <SelectItem key={cooler} value={cooler}>
+                            {cooler}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
 
@@ -1280,45 +1289,87 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
             )}
             
-             <FormField
+            <FormField
+              control={form.control}
+              name="freeTrial"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        const boolValue = !!checked;
+                        field.onChange(boolValue);
+                        if (boolValue) {
+                          const startDate = form.getValues('freeTrialStartDate') || new Date();
+                          form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', true, { shouldValidate: true });
+                          const followUpDate = addDays(new Date(startDate), 7);
+                          followUpDate.setHours(10, 0, 0, 0);
+                          form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+                          toast({
+                              title: "Free Trial Activated",
+                              description: "A follow-up meeting is scheduled for one week from the start date.",
+                          });
+                        } else {
+                          form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+                          form.setValue('futureMeetingSet', false, { shouldValidate: true });
+                          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                        }
+                      }}
+                      id="freeTrial"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
+                      <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {freeTrialValue && (
+               <FormField
                 control={form.control}
-                name="freeTrial"
+                name="freeTrialStartDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border border-accent p-3 shadow-sm">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          const boolValue = !!checked;
-                          field.onChange(boolValue);
-                          if (boolValue) {
-                            const startDate = form.getValues('freeTrialStartDate') || new Date();
-                            form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-                            form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                            const followUpDate = addDays(new Date(startDate), 7);
-                            followUpDate.setHours(10, 0, 0, 0);
-                            form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-                            toast({
-                                title: "Free Trial Activated",
-                                description: "A follow-up meeting is scheduled for one week from the start date.",
-                            });
-                          } else {
-                            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-                            form.setValue('futureMeetingSet', false, { shouldValidate: true });
-                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                          }
-                        }}
-                        id="freeTrial"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="freeTrial" className="cursor-pointer font-normal flex items-center">
-                        <PackageCheck className="mr-2 h-4 w-4 text-primary" /> Free Trial?
-                      </FormLabel>
-                    </div>
+                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
+                    <FormLabel>Free Trial Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>A notification will be created to follow up one week after this date.</FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+            )}
             
             <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
                 <Label className="font-medium text-base">Pricing</Label>
@@ -1616,48 +1667,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {freeTrialValue && (
-               <FormField
-                control={form.control}
-                name="freeTrialStartDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
-                    <FormLabel>Free Trial Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(new Date(field.value), "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>A notification will be created to follow up one week after this date.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
