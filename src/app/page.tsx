@@ -2516,6 +2516,11 @@ export default function HomePage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    <div className="flex justify-center mb-4">
+                        <Button onClick={handleAddNewFutureVisit} variant="default" size="sm">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Meeting
+                        </Button>
+                    </div>
                     {scheduledVisits.length === 0 ? (
                         <div className="text-center py-4">
                             <p className="text-xl text-muted-foreground mb-4">
