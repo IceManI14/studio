@@ -87,6 +87,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return { message: "TDS Level Undefined.", icon: <ShieldQuestion className="mr-1 h-3 w-3" />, className: "text-gray-700 border-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50" };
   };
 
+  const extractAddressFromNotes = (notes: string | undefined): string | null => {
+      if (!notes) return null;
+      const match = notes.match(/Company Address:\s*(.*)/);
+      return match ? match[1].split('\n')[0].trim() : null;
+  };
+  const address = extractAddressFromNotes(visit.notes);
+
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
@@ -113,6 +120,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarDays className="mr-2 h-4 w-4" />Timestamp</h4>
                 <p className="pl-6 text-muted-foreground">{formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}</p>
             </div>
+            
+            {address && (
+                 <div>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><MapPin className="mr-2 h-4 w-4" />Address</h4>
+                    <p className="pl-6 text-muted-foreground">{address}</p>
+                </div>
+            )}
 
             {visit.notes && (
                 <div>
@@ -358,11 +372,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
               </div>
               <CardTitle 
-                className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
-                onClick={(e) => {
-                  if (!isZoomedView) e.stopPropagation();
-                  setShowLocation(!showLocation);
-                }}
+                className="font-headline text-3xl text-accent-foreground text-center break-words"
               >
                 {visit.companyName}
               </CardTitle>
@@ -370,13 +380,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               <CardDescription className="text-xs pt-1 text-center">
                   {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
               </CardDescription>
-              <div className="text-xs pt-1 text-center h-5">
-                  {showLocation && visit.latitude && visit.longitude && (
+              <div 
+                className="text-xs pt-1 text-center h-5 cursor-pointer hover:text-primary transition-colors"
+                onClick={(e) => {
+                  if (!isZoomedView) e.stopPropagation();
+                  setShowLocation(!showLocation);
+                }}
+              >
+                  {showLocation && (visit.latitude || address) ? (
                       <div className="flex items-center justify-center animate-in fade-in">
                           <LocateFixed className="mr-2 h-3 w-3" />
-                          {visit.latitude.toFixed(4)}, {visit.longitude.toFixed(4)}
+                          {address ? address : `${visit.latitude?.toFixed(4)}, ${visit.longitude?.toFixed(4)}`}
                       </div>
-                  )}
+                  ) : null}
               </div>
           </div>
       </CardHeader>
@@ -401,7 +417,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </Label>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-1">
             {onLogFollowUp && isZoomedView && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onLogFollowUp(visit); }} aria-label={`Log follow-up for ${visit.companyName}`}>
                 <PlusSquare className="h-4 w-4" />
@@ -412,6 +428,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Mic className="h-4 w-4" />
               </Button>
             )}
+            <Button asChild variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
+                  <Navigation className="h-4 w-4" />
+              </a>
+            </Button>
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
               <Edit className="h-4 w-4" />
             </Button>
