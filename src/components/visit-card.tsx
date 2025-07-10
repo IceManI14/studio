@@ -37,8 +37,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
-  const handleDealClosedChange = (checked: boolean) => {
-    onUpdateDealClosed(visit.id, !!checked);
+  const handleDealClosedChange = (checked: boolean | 'indeterminate') => {
+    if (typeof checked === 'boolean') {
+      onUpdateDealClosed(visit.id, checked);
+    }
   };
 
   const handleSummarizeAgain = async () => {
@@ -366,7 +368,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
-              <div className="flex items-center gap-4 text-sm font-medium mb-1">
+              <div className="flex items-center justify-center gap-2 text-sm font-medium mb-1">
                 {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
                   <div className="text-blue-400">
                     {`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}
@@ -380,7 +382,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center justify-center gap-2">
                 <CardTitle 
                   className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                   onClick={(e) => {
@@ -428,7 +431,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <Checkbox 
             id={`deal-closed-${visit.id}`} 
             checked={!!visit.dealClosed}
-            onCheckedChange={(checked) => handleDealClosedChange(Boolean(checked))}
+            onCheckedChange={handleDealClosedChange}
             aria-label="Mark deal as closed"
           />
           <Label htmlFor={`deal-closed-${visit.id}`} className="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400">
