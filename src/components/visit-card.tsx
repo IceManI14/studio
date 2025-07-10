@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,7 @@ interface VisitCardProps {
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
@@ -100,7 +101,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const address = extractAddressFromNotes(visit.notes);
 
   const tdsInfo = getTDSInfo();
-  const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
+  const isHtmlCardFront = visit.businessCardImageFrontUrl?.trim().startsWith('<!DOCTYPE html>');
+  const isHtmlCardBack = visit.businessCardImageBackUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   
   const potentialCommission = (() => {
@@ -157,7 +159,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
 
-            {(hasDecisionMakerDetails || visit.businessCardImageUrl) && <Separator />}
+            {(hasDecisionMakerDetails || visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && <Separator />}
 
             {hasDecisionMakerDetails && (
                 <div>
@@ -176,29 +178,66 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </div>
             )}
             
-            {visit.businessCardImageUrl && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><FileType className="mr-2 h-4 w-4" />Business Card</h4>
-                    <div className="pl-6">
-                        {isHtmlCard ? (
-                             <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md">
-                                <p>Cannot display business card. The saved data is invalid. Please try re-uploading the image.</p>
-                            </div>
-                        ) : (
-                            <div className="relative w-full aspect-[1.77] max-w-sm mx-auto">
-                            <NextImage
-                                src={visit.businessCardImageUrl}
-                                alt="Business card"
-                                data-ai-hint="business card professional"
-                                fill
-                                style={{ objectFit: 'contain' }}
-                                className="rounded-md border bg-background"
-                            />
-                            </div>
-                        )}
-                    </div>
+            {(visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && (
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <h4 className="font-semibold text-primary flex items-center"><FileType className="mr-2 h-4 w-4" />Business Card</h4>
+                  {visit.businessCardImageBackUrl && (
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setIsCardFlipped(!isCardFlipped)}>
+                      <RefreshCw className="mr-1 h-3 w-3" />
+                      Flip
+                    </Button>
+                  )}
                 </div>
+                <div className="pl-6 perspective-1000">
+                  <div className={cn("w-full aspect-[1.77] max-w-sm mx-auto relative rolodex-preserve-3d transition-transform duration-700", isCardFlipped ? "[transform:rotateY(180deg)]" : "")}>
+                    {/* Front of Card */}
+                    <div className="absolute w-full h-full [backface-visibility:hidden]">
+                      {visit.businessCardImageFrontUrl ? (
+                        isHtmlCardFront ? (
+                          <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
+                            <p>Cannot display card front. The saved data is invalid. Please re-upload.</p>
+                          </div>
+                        ) : (
+                          <NextImage
+                            src={visit.businessCardImageFrontUrl}
+                            alt="Business card front"
+                            data-ai-hint="business card professional"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                            className="rounded-md border bg-background"
+                          />
+                        )
+                      ) : (
+                         <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Front not available</div>
+                      )}
+                    </div>
+                    {/* Back of Card */}
+                    <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                      {visit.businessCardImageBackUrl ? (
+                        isHtmlCardBack ? (
+                           <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
+                            <p>Cannot display card back. The saved data is invalid. Please re-upload.</p>
+                          </div>
+                        ) : (
+                          <NextImage
+                            src={visit.businessCardImageBackUrl}
+                            alt="Business card back"
+                            data-ai-hint="business card professional"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                            className="rounded-md border bg-background"
+                          />
+                        )
+                      ) : (
+                         <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Back not available</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
+
 
             {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number' || (visit.interestedUnits && visit.interestedUnits.length > 0)) && <Separator />}
 

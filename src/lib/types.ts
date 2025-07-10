@@ -27,7 +27,8 @@ export interface Visit {
   notesSummary?: string;
   partnershipConfidence?: number; // 1-5 stars
   hasBusinessCard?: boolean;
-  businessCardImageUrl?: string | null; // URL of the uploaded business card image
+  businessCardImageFrontUrl?: string | null;
+  businessCardImageBackUrl?: string | null;
   discussedCompetitors?: boolean;
   competitorName?: string;
   coolerType?: string; // Added for selected cooler type
