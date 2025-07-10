@@ -281,11 +281,18 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         onLoad={onMapLoad}
         onUnmount={onMapUnmount}
         options={{
-          streetViewControl: true,
-          mapTypeControl: true,
-          fullscreenControl: false,
+          disableDefaultUI: true, // Disable all default controls
+          zoomControl: true, // Re-enable zoom control
+          mapTypeControl: true, // Re-enable map type control
+          streetViewControl: true, // Re-enable street view
           mapTypeControlOptions: {
             position: window.google.maps.ControlPosition.TOP_CENTER,
+          },
+          streetViewControlOptions: {
+            position: window.google.maps.ControlPosition.RIGHT_BOTTOM,
+          },
+          zoomControlOptions: {
+            position: window.google.maps.ControlPosition.RIGHT_BOTTOM,
           },
         }}
       >
