@@ -2528,19 +2528,19 @@ export default function HomePage() {
             <div className="space-y-8">
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
-                  <AccordionTrigger asChild className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0 cursor-pointer">
-                    <div onClick={(e) => handleAccordionScroll(e.currentTarget, scheduledVisitsRef)} className="flex w-full items-center justify-between relative">
-                      <div className="flex items-center gap-2">
-                        <CalendarCheck className="h-7 w-7 text-primary" />
-                        <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
-                            Future Meetings
-                        </h2>
-                      </div>
+                    <div className="relative p-4 bg-card rounded-lg shadow-lg data-[state=open]:rounded-b-none data-[state=open]:mb-0 flex w-full items-center justify-between">
+                      <AccordionTrigger asChild>
+                        <div className="flex-grow flex items-center gap-2 cursor-pointer">
+                            <CalendarCheck className="h-7 w-7 text-primary" />
+                            <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
+                                Future Meetings
+                            </h2>
+                        </div>
+                      </AccordionTrigger>
                       <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
                           <PlusCircle className="mr-2 h-4 w-4" /> Add New
                       </Button>
                     </div>
-                  </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     {scheduledVisits.length === 0 ? (
                         <div className="text-center py-4">
