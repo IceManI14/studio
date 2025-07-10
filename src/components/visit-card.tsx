@@ -33,7 +33,7 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [showLocation, setShowLocation] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
@@ -301,32 +301,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-2">
-        <div className="flex flex-col gap-y-1.5 text-sm text-muted-foreground">
-            <div className="flex items-center h-6">
-                {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Business Card
-            </div>
-            <div className="flex items-center h-6">
-                {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Future Meeting
-            </div>
-            <div className="flex items-center h-6">
-                {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                TDS Reading
-            </div>
-            <div className="flex items-center h-6">
-                {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Free Trial
-            </div>
-            <div className="flex items-center h-6">
-                {visit.pricingDiscussed ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Pricing
-            </div>
-            <div className="flex items-center h-6">
-                {visit.creditApproved ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
-                Credit Approved
-            </div>
-        </div>
+      <div className="flex flex-col gap-y-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center h-6">
+              {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              Business Card
+          </div>
+          <div className="flex items-center h-6">
+              {visit.futureMeetingSet ? <CalendarCheck className="mr-2 h-4 w-4 text-green-500" /> : <CalendarX className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              Future Meeting
+          </div>
+          <div className="flex items-center h-6">
+              {visit.hasTDSReading ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              TDS Reading
+          </div>
+          <div className="flex items-center h-6">
+              {visit.freeTrial ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              Free Trial
+          </div>
+          <div className="flex items-center h-6">
+              {visit.pricingDiscussed ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              Pricing
+          </div>
+          <div className="flex items-center h-6">
+              {visit.creditApproved ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
+              Credit Approved
+          </div>
+      </div>
         {visit.notesSummary && (
             <div className="pt-2">
                 <h4 className="font-semibold text-xs mb-1 flex items-center text-primary">
@@ -382,7 +382,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               </div>
               <div className="flex items-center gap-2">
                 <CardTitle 
-                  className="font-headline text-3xl text-accent-foreground text-center break-words"
+                  className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
+                  onClick={(e) => {
+                      if (address) {
+                        e.stopPropagation();
+                        setShowAddress(!showAddress);
+                      }
+                  }}
                 >
                   {visit.companyName}
                 </CardTitle>
@@ -392,23 +398,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   </a>
                 </Button>
               </div>
-              {visit.city && <CardDescription className="text-sm -mt-1 text-center">{visit.city}</CardDescription>}
-              <CardDescription className="text-xs pt-1 text-center">
-                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
-              </CardDescription>
-              <div 
-                className="text-xs pt-1 text-center h-5 cursor-pointer hover:text-primary transition-colors"
-                onClick={(e) => {
-                  if (!isZoomedView) e.stopPropagation();
-                  setShowLocation(!showLocation);
-                }}
-              >
-                  {showLocation && (visit.latitude || address) ? (
-                      <div className="flex items-center justify-center animate-in fade-in">
-                          <LocateFixed className="mr-2 h-3 w-3" />
-                          {address ? address : `${visit.latitude?.toFixed(4)}, ${visit.longitude?.toFixed(4)}`}
-                      </div>
-                  ) : null}
+
+              {showAddress && address && (
+                <div 
+                  className="text-center text-sm text-muted-foreground mt-1 animate-in fade-in-0 flex items-center gap-1"
+                >
+                   <MapPin className="h-3 w-3" /> {address}
+                </div>
+              )}
+              
+              <div className="text-center">
+                  {visit.city && <CardDescription className="text-sm -mt-1">{visit.city}</CardDescription>}
+                  <CardDescription className="text-xs pt-1">
+                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
+                  </CardDescription>
               </div>
           </div>
       </CardHeader>
