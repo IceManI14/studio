@@ -371,7 +371,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                     pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
                   }}
                 >
-                  <div className="p-1 max-w-xs text-sm space-y-1">
+                  <div className="p-1 max-w-xs text-sm space-y-1 text-black">
                     {editingVisitId === visit.id ? (
                       <div className="flex items-center gap-1">
                         <Input
@@ -388,28 +388,28 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                       </div>
                     ) : (
                       <h4 
-                        className="font-semibold text-primary flex items-center gap-2 cursor-pointer group"
+                        className="font-semibold text-blue-600 flex items-center gap-2 cursor-pointer group"
                         onClick={() => handleStartEditingName(visit)}
                         title="Click to edit name"
                       >
                         <span>{visit.companyName}</span>
-                        <Edit className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                        <Edit className="h-3 w-3 text-gray-500 opacity-0 group-hover:opacity-100" />
                       </h4>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-600">
                       Visited: {format(new Date(visit.timestamp), 'MMM d, yyyy')}
                     </p>
 
                     {visit.notesSummary && (
-                       <p className="text-xs text-foreground line-clamp-2">
+                       <p className="text-xs text-black line-clamp-2">
                         <span className="font-semibold">AI Summary:</span> {visit.notesSummary}
                        </p>
                     )}
 
                     {intel[visit.id] === 'loading' && (
                         <div className="flex items-center justify-center">
-                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                            <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            <p className="ml-2 text-xs text-gray-600">Getting intel...</p>
                         </div>
                     )}
                     
@@ -419,13 +419,13 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                             <div className="text-xs space-y-1 border-t pt-1">
                                 {companyIntel.phone && (
                                     <div className="flex items-center">
-                                        <Phone className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
+                                        <Phone className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
                                         <span>{companyIntel.phone}</span>
                                     </div>
                                 )}
                                 {companyIntel.hours && companyIntel.hours.length > 0 && (
                                     <div className="flex items-start">
-                                        <Clock className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                        <Clock className="w-3 h-3 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
                                         <div>
                                             {companyIntel.hours.map(h => <div key={h}>{h}</div>)}
                                         </div>
@@ -433,26 +433,26 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                                 )}
                                 {companyIntel.decisionMakerName && (
                                    <div className="flex items-start">
-                                      <UserSearch className="w-3 h-3 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                      <UserSearch className="w-3 h-3 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
                                       <span>{companyIntel.decisionMakerName}{companyIntel.decisionMakerTitle && ` (${companyIntel.decisionMakerTitle})`}</span>
                                   </div>
                                 )}
                                {(!companyIntel.phone && !companyIntel.hours && !companyIntel.decisionMakerName) && (
-                                  <p className="text-muted-foreground">No additional details found.</p>
+                                  <p className="text-gray-500">No additional details found.</p>
                                )}
                           </div>
                       );
                   })()}
 
                   {intel[visit.id] === 'error' && (
-                      <p className="text-xs text-destructive">Could not retrieve details.</p>
+                      <p className="text-xs text-red-600">Could not retrieve details.</p>
                   )}
 
                   <div className="flex items-center justify-between border-t pt-1 gap-2">
                       <Button
                           size="sm"
                           variant="ghost"
-                          className="p-0 h-auto text-xs"
+                          className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
                           onClick={() => onZoomRequest(visit)}
                       >
                           <FileText className="w-3 h-3 mr-1" />
@@ -461,7 +461,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                       <Button
                           size="sm"
                           variant="ghost"
-                          className="p-0 h-auto text-xs"
+                          className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
                           onClick={() => handleGetIntel(visit)}
                           disabled={intel[visit.id] === 'loading'}
                       >
@@ -471,7 +471,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                           asChild
                           size="sm"
                           variant="ghost"
-                          className="p-0 h-auto text-xs"
+                          className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
                       >
                           <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer">
                               <Navigation className="w-3 h-3 mr-1" />
