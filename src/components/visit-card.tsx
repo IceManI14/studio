@@ -39,9 +39,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const { toast } = useToast();
 
   const handleDealClosedChange = (checked: boolean | 'indeterminate') => {
-    if (typeof checked === 'boolean') {
-      onUpdateDealClosed(visit.id, checked);
-    }
+    onUpdateDealClosed(visit.id, !!checked);
   };
 
   const handleSummarizeAgain = async () => {

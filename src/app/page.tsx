@@ -247,6 +247,7 @@ export default function HomePage() {
   const unscheduledVisitsRef = useRef<HTMLDivElement>(null);
   const flaggedHotspotsRef = useRef<HTMLDivElement>(null);
   const activeFreeTrialsRef = useRef<HTMLDivElement>(null);
+  const dealsClosedRef = useRef<HTMLDivElement>(null);
   const callDayFilterRef = useRef<HTMLDivElement>(null);
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
@@ -289,8 +290,6 @@ export default function HomePage() {
       }
       if (v.futureMeetingSet && v.futureMeetingDateTime) {
         const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
-        // Only count as a "past logged day" if the meeting was in the past.
-        // The dealClosedDays will override this for color if the deal is closed.
         if (meetingDay < today && !v.dealClosed) {
           pastTimestamps.add(meetingDay.getTime());
         }
@@ -426,6 +425,12 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
   }, [visits]);
 
+  const closedDeals = useMemo(() => {
+    return visits
+      .filter(visit => visit.dealClosed)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [visits]);
+
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
       if (typeof visit.manualCommission === 'number') {
@@ -493,7 +498,8 @@ export default function HomePage() {
                   longitude: payload.longitude || undefined,
                   partnershipConfidence: payload.partnershipConfidence || undefined,
                   hasBusinessCard: payload.hasBusinessCard || false,
-                  businessCardImageUrl: payload.businessCardImageUrl || undefined,
+                  businessCardImageFrontUrl: payload.businessCardImageFrontUrl || undefined,
+                  businessCardImageBackUrl: payload.businessCardImageBackUrl || undefined,
                   discussedCompetitors: !!payload.competitorName,
                   competitorName: payload.competitorName || undefined,
                   coolerType: payload.coolerType || undefined,
@@ -1782,7 +1788,8 @@ export default function HomePage() {
         notesSummary: undefined,
         partnershipConfidence: undefined,
         hasBusinessCard: false,
-        businessCardImageUrl: undefined,
+        businessCardImageFrontUrl: undefined,
+        businessCardImageBackUrl: undefined,
         discussedCompetitors: false,
         competitorName: undefined,
         coolerType: undefined,
@@ -1868,7 +1875,8 @@ export default function HomePage() {
       futureMeetingDateTime: undefined,
       partnershipConfidence: undefined,
       hasBusinessCard: false,
-      businessCardImageUrl: undefined,
+      businessCardImageFrontUrl: undefined,
+      businessCardImageBackUrl: undefined,
       discussedCompetitors: false,
       competitorName: undefined,
       coolerType: undefined,
@@ -1957,7 +1965,8 @@ export default function HomePage() {
                     notesSummary: undefined,
                     partnershipConfidence: undefined,
                     hasBusinessCard: false,
-                    businessCardImageUrl: undefined,
+                    businessCardImageFrontUrl: undefined,
+                    businessCardImageBackUrl: undefined,
                     discussedCompetitors: false,
                     competitorName: undefined,
                     coolerType: undefined,
@@ -2821,6 +2830,67 @@ export default function HomePage() {
                           </div>
                         )}
                       </>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                    <div className="flex w-full items-center">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <DollarSign className="h-7 w-7 text-green-500" />
+                      </div>
+                      <h2 id="deals-closed-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                            Deals Closed
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                    {closedDeals.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-xl text-muted-foreground mb-4">
+                                No deals closed yet.
+                            </p>
+                            <p className="text-muted-foreground">
+                                When you mark a deal as closed on a visit card, it will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                      <Accordion type="multiple" className="w-full space-y-4">
+                          {closedDeals.map((visit) => (
+                              <AccordionItem value={`planner-closed-${visit.id}`} key={visit.id} className="border border-green-500/50 bg-card rounded-lg overflow-hidden">
+                                  <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-green-500/50">
+                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                          <div className="flex flex-1 items-center gap-3 min-w-0">
+                                              <span className="h-3 w-3 rounded-full shrink-0 bg-green-500"></span>
+                                              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                          </div>
+                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                            <span>Closed: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+                                            {visit.partnershipConfidence && (
+                                                <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                    <span className="leading-none">{visit.partnershipConfidence}</span>
+                                                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                </Badge>
+                                            )}
+                                          </div>
+                                      </div>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="p-0">
+                                      <VisitCard
+                                          visit={visit}
+                                          onEdit={handleEditVisit}
+                                          onDelete={handleDeleteVisit}
+                                          onUpdateDealClosed={handleUpdateDealClosed}
+                                          onZoom={setZoomedVisit}
+                                          onLogFollowUp={handleLogFollowUp}
+                                          onDictateNotes={handleDictateNotes}
+                                          variant="planner"
+                                      />
+                                  </AccordionContent>
+                              </AccordionItem>
+                          ))}
+                      </Accordion>
                     )}
                   </AccordionContent>
                 </AccordionItem>
