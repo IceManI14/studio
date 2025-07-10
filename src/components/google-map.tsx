@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter, FileText, X } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter, FileText, X, Check, Edit } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
@@ -20,6 +20,7 @@ import {
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Input } from './ui/input';
 
 
 interface GoogleMapComponentProps {
@@ -60,6 +61,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const [intel, setIntel] = useState<Record<string, GetCompanyIntelOutput | 'loading' | 'error'>>({});
   const { toast } = useToast();
   const [filter, setFilter] = useState('all');
+  const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const validVisits = useMemo(() =>
     visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
@@ -124,6 +127,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 
   const handleInfoWindowClose = useCallback(() => {
     setActiveMarker(null);
+    setEditingVisitId(null);
+    setEditingName('');
   }, []);
 
   const handleShowAllVisits = useCallback(() => {
@@ -192,6 +197,20 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
       onIntelRequest(visit);
     }
   }, [onUpdateVisit, toast, onIntelRequest]);
+
+  const handleStartEditingName = (visit: Visit) => {
+    setEditingVisitId(visit.id);
+    setEditingName(visit.companyName);
+  };
+  
+  const handleSaveName = () => {
+    if (editingVisitId && editingName.trim()) {
+      onUpdateVisit(editingVisitId, { companyName: editingName.trim() });
+      toast({ title: 'Company Name Updated' });
+    }
+    setEditingVisitId(null);
+    setEditingName('');
+  };
 
   if (loadError) {
     const isApiTargetBlockedError = loadError.message?.includes('ApiTargetBlockedMapError') || loadError.message?.includes('API target is not authorized');
@@ -352,20 +371,43 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                     pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
                   }}
                 >
-                  <div className="p-1 max-w-xs text-sm">
-                    <h4 className="font-semibold text-primary">{visit.companyName}</h4>
-                    <p className="text-xs text-muted-foreground mb-1">
+                  <div className="p-1 max-w-xs text-sm space-y-1">
+                    {editingVisitId === visit.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          autoFocus
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveName();
+                            if (e.key === 'Escape') setEditingVisitId(null);
+                          }}
+                          className="h-7 text-sm"
+                        />
+                        <Button size="icon" className="h-7 w-7" onClick={handleSaveName}><Check className="h-4 w-4" /></Button>
+                      </div>
+                    ) : (
+                      <h4 
+                        className="font-semibold text-primary flex items-center gap-2 cursor-pointer group"
+                        onClick={() => handleStartEditingName(visit)}
+                        title="Click to edit name"
+                      >
+                        <span>{visit.companyName}</span>
+                        <Edit className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                      </h4>
+                    )}
+                    <p className="text-xs text-muted-foreground">
                       Visited: {format(new Date(visit.timestamp), 'MMM d, yyyy')}
                     </p>
 
                     {visit.notesSummary && (
-                       <p className="text-xs text-foreground my-1 line-clamp-2">
+                       <p className="text-xs text-foreground line-clamp-2">
                         <span className="font-semibold">AI Summary:</span> {visit.notesSummary}
                        </p>
                     )}
 
                     {intel[visit.id] === 'loading' && (
-                        <div className="my-2 flex items-center justify-center">
+                        <div className="flex items-center justify-center">
                             <Loader2 className="w-4 h-4 animate-spin text-primary" />
                             <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
                         </div>
@@ -374,7 +416,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                     {intel[visit.id] && intel[visit.id] !== 'loading' && intel[visit.id] !== 'error' && (() => {
                         const companyIntel = intel[visit.id] as GetCompanyIntelOutput;
                         return (
-                            <div className="mt-2 text-xs space-y-1 border-t pt-2">
+                            <div className="text-xs space-y-1 border-t pt-1">
                                 {companyIntel.phone && (
                                     <div className="flex items-center">
                                         <Phone className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
@@ -403,10 +445,10 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                   })()}
 
                   {intel[visit.id] === 'error' && (
-                      <p className="text-xs text-destructive mt-2">Could not retrieve details.</p>
+                      <p className="text-xs text-destructive">Could not retrieve details.</p>
                   )}
 
-                  <div className="mt-2 flex items-center justify-between border-t pt-2 gap-2">
+                  <div className="flex items-center justify-between border-t pt-1 gap-2">
                       <Button
                           size="sm"
                           variant="ghost"
