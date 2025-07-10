@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 
 interface GoogleMapComponentProps {
@@ -324,14 +325,20 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                     pixelOffset: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(0, -30) : undefined
                   }}
                 >
-                  <div className="p-1 max-w-xs">
-                    <h4 className="font-semibold text-sm text-primary">{visit.companyName}</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Confidence: {visit.partnershipConfidence ? `${visit.partnershipConfidence}/5` : 'N/A'}
+                  <div className="p-1 max-w-xs text-sm">
+                    <h4 className="font-semibold text-primary">{visit.companyName}</h4>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Visited: {format(new Date(visit.timestamp), 'MMM d, yyyy')}
                     </p>
 
+                    {visit.notesSummary && (
+                       <p className="text-xs text-foreground my-1 line-clamp-2">
+                        <span className="font-semibold">AI Summary:</span> {visit.notesSummary}
+                       </p>
+                    )}
+
                     {intel[visit.id] === 'loading' && (
-                        <div className="mt-2 flex items-center justify-center">
+                        <div className="my-2 flex items-center justify-center">
                             <Loader2 className="w-4 h-4 animate-spin text-primary" />
                             <p className="ml-2 text-xs text-muted-foreground">Getting intel...</p>
                         </div>
@@ -372,20 +379,29 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                       <p className="text-xs text-destructive mt-2">Could not retrieve details.</p>
                   )}
 
-                  <div className="mt-2 flex items-center justify-between border-t pt-2">
+                  <div className="mt-2 flex items-center justify-between border-t pt-2 gap-2">
                       <Button
                           size="sm"
-                          variant="link"
+                          variant="ghost"
+                          className="p-0 h-auto text-xs"
+                          onClick={() => onZoomRequest(visit)}
+                      >
+                          <FileText className="w-3 h-3 mr-1" />
+                          View Details
+                      </Button>
+                      <Button
+                          size="sm"
+                          variant="ghost"
                           className="p-0 h-auto text-xs"
                           onClick={() => handleGetIntel(visit)}
                           disabled={intel[visit.id] === 'loading'}
                       >
-                          {intel[visit.id] && intel[visit.id] !== 'loading' ? 'Refresh Intel' : 'Get More Info'}
+                          {intel[visit.id] && intel[visit.id] !== 'loading' ? 'Refresh Intel' : 'Get Intel'}
                       </Button>
                       <Button
                           asChild
                           size="sm"
-                          variant="link"
+                          variant="ghost"
                           className="p-0 h-auto text-xs"
                       >
                           <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer">
