@@ -3190,7 +3190,7 @@ export default function HomePage() {
 
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0 shadow-orange-500/20">
                     <div className="flex items-center justify-center w-full">
                       <div className="flex items-center gap-2 text-foreground">
                         <Flame className="mr-1 h-7 w-7 text-orange-500" />
