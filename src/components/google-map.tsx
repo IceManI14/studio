@@ -296,7 +296,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
             position: window.google.maps.ControlPosition.RIGHT_BOTTOM,
           },
           fullscreenControlOptions: {
-            position: window.google.maps.ControlPosition.LEFT_BOTTOM,
+            position: window.google.maps.ControlPosition.RIGHT_BOTTOM,
           },
         }}
         streetViewOptions={{
