@@ -65,7 +65,12 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const [editingName, setEditingName] = useState('');
 
   const validVisits = useMemo(() =>
-    visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
+    visits.filter(visit => 
+      typeof visit.latitude === 'number' && 
+      typeof visit.longitude === 'number' &&
+      visit.companyName &&
+      !visit.notes?.includes('28 Stevens Street') // Exclude designer's address
+    ),
     [visits]
   );
   
@@ -392,7 +397,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                         onClick={() => handleStartEditingName(visit)}
                         title="Click to edit name"
                       >
-                        <span>{visit.companyName}</span>
+                        <span className="text-black">{visit.companyName}</span>
                         <Edit className="h-3 w-3 text-gray-500 opacity-0 group-hover:opacity-100" />
                       </h4>
                     )}
@@ -402,7 +407,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 
                     {visit.notesSummary && (
                        <p className="text-xs text-black line-clamp-2">
-                        <span className="font-semibold">AI Summary:</span> {visit.notesSummary}
+                        <span className="font-semibold text-black">AI Summary:</span> {visit.notesSummary}
                        </p>
                     )}
 
@@ -558,3 +563,5 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLat
 
 
 export default GoogleMapComponent;
+
+    
