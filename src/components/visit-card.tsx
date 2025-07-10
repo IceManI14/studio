@@ -89,8 +89,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const extractAddressFromNotes = (notes: string | undefined): string | null => {
       if (!notes) return null;
-      const match = notes.match(/Company Address:\s*(.*)/);
-      return match ? match[1].split('\n')[0].trim() : null;
+      const match = notes.match(/Address: (.*)/);
+      if (match) return match[1].split('\n')[0].trim();
+      
+      const match2 = notes.match(/Company Address:\s*(.*)/);
+      return match2 ? match2[1].split('\n')[0].trim() : null;
   };
   const address = extractAddressFromNotes(visit.notes);
 
@@ -377,11 +380,18 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </div>
                 )}
               </div>
-              <CardTitle 
-                className="font-headline text-3xl text-accent-foreground text-center break-words"
-              >
-                {visit.companyName}
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle 
+                  className="font-headline text-3xl text-accent-foreground text-center break-words"
+                >
+                  {visit.companyName}
+                </CardTitle>
+                <Button asChild variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
+                      <Navigation className="h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
               {visit.city && <CardDescription className="text-sm -mt-1">{visit.city}</CardDescription>}
               <CardDescription className="text-xs pt-1 text-center">
                   {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
@@ -434,11 +444,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <Mic className="h-4 w-4" />
               </Button>
             )}
-            <Button asChild variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
-                  <Navigation className="h-4 w-4" />
-              </a>
-            </Button>
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
               <Edit className="h-4 w-4" />
             </Button>
