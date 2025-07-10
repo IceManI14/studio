@@ -2305,8 +2305,8 @@ export default function HomePage() {
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
                     <div className="flex items-center justify-center w-full">
                       <div className="flex items-center justify-center gap-2">
-                        <h3 className="text-lg font-medium text-foreground text-center flex items-center justify-center gap-2">
-                            <ListFilter className="h-5 w-5 text-primary" />
+                        <ListFilter className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-medium text-foreground text-center">
                             Filter & Sort
                         </h3>
                       </div>
@@ -2830,17 +2830,19 @@ export default function HomePage() {
                   </h2>
                   <div className="flex flex-col items-center gap-4">
                       {visits.length > 0 && (
-                          <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent mb-2">
-                              Your Visits: {visits.length}
-                          </Badge>
+                           <div className="flex flex-col items-center gap-2">
+                                <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
+                                    Your Visits: {visits.length}
+                                </Badge>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    <ExportPdfButton visits={visits} className="h-8 px-2 text-xs" />
+                                    <ExportButton visits={visits} className="h-8 px-2 text-xs" />
+                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs">
+                                    Email Manager
+                                    </Button>
+                                </div>
+                            </div>
                       )}
-                      <div className="flex flex-wrap gap-2 justify-center">
-                         <ExportPdfButton visits={visits} className="h-8 px-2 text-xs" />
-                         <ExportButton visits={visits} className="h-8 px-2 text-xs" />
-                         <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs">
-                           Email Manager
-                         </Button>
-                      </div>
                   </div>
               </div>
               <GoogleMapComponent 
@@ -2848,8 +2850,8 @@ export default function HomePage() {
                 userLatitude={userCurrentLatitude}
                 userLongitude={userCurrentLongitude}
                 onUpdateVisit={handleUpdateVisit}
-                onZoomRequest={setZoomedVisit}
                 onIntelRequest={setZoomedVisit}
+                onZoomRequest={setZoomedVisit}
               />
             </section>
           )}
