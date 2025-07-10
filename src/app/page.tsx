@@ -289,7 +289,9 @@ export default function HomePage() {
       }
       if (v.futureMeetingSet && v.futureMeetingDateTime) {
         const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
-        if (meetingDay < today) {
+        // Only count as a "past logged day" if the meeting was in the past.
+        // The dealClosedDays will override this for color if the deal is closed.
+        if (meetingDay < today && !v.dealClosed) {
           pastTimestamps.add(meetingDay.getTime());
         }
       }
@@ -2544,17 +2546,17 @@ export default function HomePage() {
             <div className="space-y-8">
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-center w-10 shrink-0">
-                          <CalendarCheck className="h-7 w-7 text-primary" />
+                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                      <div className="flex w-full items-center">
+                        <div className="flex items-center justify-start w-10 shrink-0">
+                            <CalendarCheck className="h-7 w-7 text-primary" />
+                        </div>
+                        <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                            Future Meetings
+                        </h2>
+                        <div className="w-10 shrink-0"></div>
                       </div>
-                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                          Future Meetings
-                      </h2>
-                      <div className="w-10 shrink-0"></div>
-                    </div>
-                  </AccordionTrigger>
+                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     <div className="flex justify-center mb-4">
                       <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
@@ -2619,7 +2621,7 @@ export default function HomePage() {
                 <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center">
-                        <div className="flex items-center justify-center w-10 shrink-0">
+                        <div className="flex items-center justify-start w-10 shrink-0">
                           <CalendarIcon className="h-7 w-7 text-primary" />
                         </div>
                         <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
@@ -2684,7 +2686,7 @@ export default function HomePage() {
                 <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                       <div className="flex w-full items-center">
-                        <div className="flex items-center justify-center w-10 shrink-0">
+                        <div className="flex items-center justify-start w-10 shrink-0">
                           <Flame className="h-7 w-7 text-orange-500" />
                         </div>
                         <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
@@ -2743,7 +2745,7 @@ export default function HomePage() {
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center">
-                      <div className="flex items-center justify-center w-10 shrink-0">
+                      <div className="flex items-center justify-start w-10 shrink-0">
                         <PackageCheck className="h-7 w-7 text-primary" />
                       </div>
                       <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
@@ -2827,12 +2829,21 @@ export default function HomePage() {
           )}
 
           {activeTab === 'visits' && (
-            <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
-              <div className="flex flex-col items-center gap-4">
-                  <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
-                      <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
-                  </h2>
-                  <div className="flex flex-col items-center gap-4">
+            <Accordion type="single" collapsible defaultValue="company-map" className="w-full">
+              <AccordionItem value="company-map" className="border-none">
+                <AccordionTrigger className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <MapPin className="h-7 w-7 text-primary" />
+                    </div>
+                    <h2 id="map-section-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                      Company Map
+                    </h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
+                  <div className="flex flex-col items-center gap-4 mb-6">
                       {visits.length > 0 && (
                            <div className="flex flex-col items-center gap-2">
                                 <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
@@ -2848,16 +2859,17 @@ export default function HomePage() {
                             </div>
                       )}
                   </div>
-              </div>
-              <GoogleMapComponent 
-                visits={visits} 
-                userLatitude={userCurrentLatitude}
-                userLongitude={userCurrentLongitude}
-                onUpdateVisit={handleUpdateVisit}
-                onIntelRequest={setZoomedVisit}
-                onZoomRequest={setZoomedVisit}
-              />
-            </section>
+                  <GoogleMapComponent 
+                    visits={visits} 
+                    userLatitude={userCurrentLatitude}
+                    userLongitude={userCurrentLongitude}
+                    onUpdateVisit={handleUpdateVisit}
+                    onIntelRequest={setZoomedVisit}
+                    onZoomRequest={setZoomedVisit}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
 
           {activeTab === 'ai-chat' && (
