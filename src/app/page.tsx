@@ -421,7 +421,7 @@ export default function HomePage() {
 
   const activeFreeTrials = useMemo(() => {
     return visits
-      .filter(visit => visit.freeTrial && visit.freeTrialStartDate)
+      .filter(visit => visit.freeTrial && visit.freeTrialStartDate && !visit.dealClosed)
       .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
   }, [visits]);
 
