@@ -24,7 +24,7 @@ interface VisitCardProps {
   onEdit: (visit: Visit) => void;
   onDelete: (visitId: string) => void;
   onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
-  onZoom?: (visit: Visit) => void;
+  onZoom?: (visit: Visit | null) => void;
   isZoomedView?: boolean;
   onLogFollowUp?: (visit: Visit) => void;
   onDictateNotes?: (visit: Visit) => void;
@@ -301,7 +301,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
   const NormalContent = () => (
     <div className="space-y-1">
-        <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-y-1 text-sm text-muted-foreground">
             <div className="flex items-center h-6">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
