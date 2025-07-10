@@ -26,14 +26,12 @@ interface GoogleMapComponentProps {
   userLatitude?: number;
   userLongitude?: number;
   onUpdateVisit: (visitId: string, updatedData: Partial<Visit>) => void;
+  onIntelRequest: (visit: Visit) => void;
+  onZoomRequest: (visit: Visit) => void;
 }
 
-interface GoogleMapLoaderProps {
-  visits: Visit[];
+interface GoogleMapLoaderProps extends GoogleMapComponentProps {
   apiKey: string;
-  userLatitude?: number;
-  userLongitude?: number;
-  onUpdateVisit: (visitId: string, updatedData: Partial<Visit>) => void;
 }
 
 const mapContainerStyle = {
@@ -48,7 +46,7 @@ const defaultCenter = {
   lng: -98.5795,
 };
 
-const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userLatitude, userLongitude, onUpdateVisit }) => {
+const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userLatitude, userLongitude, onUpdateVisit, onIntelRequest, onZoomRequest }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: ['marker'],
@@ -74,8 +72,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
         const inTrial = visit.freeTrial;
 
-        if (filter === 'red') return inTrial && !isDealClosed;
-        if (filter === 'orange') return isHotspot && !isDealClosed;
+        if (filter === 'red') return isHotspot && !isDealClosed;
+        if (filter === 'orange') return inTrial && !isDealClosed;
         if (filter === 'green') return isDealClosed;
         if (filter === 'blue') return !inTrial && !isDealClosed && !isHotspot;
         return true;
@@ -159,6 +157,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
     if (result.error || !result.details) {
       console.error("Failed to get company intel:", result.error);
       setIntel(prev => ({ ...prev, [visit.id]: 'error' }));
+      onIntelRequest(visit);
     } else {
       setIntel(prev => ({ ...prev, [visit.id]: result.details! }));
       
@@ -181,8 +180,10 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
       } else {
         toast({ title: 'Intel Up-to-date', description: `No new details were found for ${visit.companyName}.` });
       }
+      
+      onIntelRequest(visit);
     }
-  }, [onUpdateVisit, toast]);
+  }, [onUpdateVisit, toast, onIntelRequest]);
 
   if (loadError) {
     const isApiTargetBlockedError = loadError.message?.includes('ApiTargetBlockedMapError') || loadError.message?.includes('API target is not authorized');
@@ -297,9 +298,9 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
           const inTrial = visit.freeTrial;
 
           let iconUrl;
-          if (isHotspot && !isDealClosed) {
+          if (inTrial && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
-          } else if (inTrial && !isDealClosed) {
+          } else if (isHotspot && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
           } else if (isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
@@ -414,11 +415,11 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                         <span className="mr-2">All Visits</span>
                     </DropdownMenuRadioItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuRadioItem value="red">
-                        <FilterBadge color="bg-red-500" /> <span className="ml-2">Active Trials</span>
-                    </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="orange">
-                        <FilterBadge color="bg-orange-500" /> <span className="ml-2">Flagged Hotspots</span>
+                        <FilterBadge color="bg-orange-500" /> <span className="ml-2">Active Trials</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="red">
+                        <FilterBadge color="bg-red-500" /> <span className="ml-2">Flagged Hotspots</span>
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="green">
                         <FilterBadge color="bg-green-500" /> <span className="ml-2">Closed Deals</span>
@@ -447,7 +448,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 };
 
 
-const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLatitude, userLongitude, onUpdateVisit }) => {
+const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLatitude, userLongitude, onUpdateVisit, onIntelRequest, onZoomRequest }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey || apiKey.trim() === '' || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
@@ -467,8 +468,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLat
     );
   }
 
-  return <GoogleMapLoader visits={visits} apiKey={apiKey} userLatitude={userLatitude} userLongitude={userLongitude} onUpdateVisit={onUpdateVisit} />;
+  return <GoogleMapLoader visits={visits} apiKey={apiKey} userLatitude={userLatitude} userLongitude={userLongitude} onUpdateVisit={onUpdateVisit} onIntelRequest={onIntelRequest} onZoomRequest={onZoomRequest}/>;
 };
 
 
 export default GoogleMapComponent;
+ 
