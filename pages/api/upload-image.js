@@ -42,24 +42,6 @@ export default async (req, res) => {
   const storage = new Storage({ projectId });
   const bucket = storage.bucket(bucketName);
 
-  try {
-    const [exists] = await bucket.exists();
-    if (!exists) {
-        console.error(`[api/upload-image] - FATAL: The bucket "${bucketName}" does not exist in the project "${projectId}".`);
-        return res.status(500).json({ 
-            message: 'Storage bucket not found.',
-            details: `The specified storage bucket "${bucketName}" does not exist. Please check your .env file and Firebase/Google Cloud project to ensure the bucket name is correct.`
-        });
-    }
-    console.log(`[api/upload-image] - INFO: Bucket "${bucketName}" exists and is accessible.`);
-  } catch (error) {
-     console.error('[api/upload-image] - FATAL: Error when checking for bucket existence.', error);
-     return res.status(500).json({
-         message: 'Could not verify storage bucket.',
-         details: 'An error occurred while trying to access the storage bucket. This could be a network or permissions issue. The service account may need the "Storage Legacy Bucket Reader" role to check for existence, in addition to the "Storage Object Creator" role to upload.'
-     });
-  }
-
   const form = formidable({ multiples: false });
 
   try {
@@ -98,6 +80,14 @@ export default async (req, res) => {
   } catch (error) {
     console.error('[api/upload-image] - ERROR: An error occurred during the upload process.', error);
     const errorMessage = (error.message || '').toLowerCase();
+
+    if (error.code === 404 || errorMessage.includes('not found')) {
+      console.error(`[api/upload-image] - BUCKET_NOT_FOUND: The bucket "${bucketName}" does not exist in the project "${projectId}".`);
+      return res.status(500).json({ 
+          message: 'Storage bucket not found.',
+          details: `The specified storage bucket "${bucketName}" does not exist. Please check your .env file and Firebase/Google Cloud project to ensure the bucket name is correct.`
+      });
+    }
 
     if (error.code === 403 || errorMessage.includes('forbidden')) {
          console.error('[api/upload-image] - PERMISSION_ERROR: The service account likely lacks the "Storage Object Creator" role.');

@@ -27,13 +27,15 @@ export default async (req, res) => {
     return res.status(405).json({ message: 'Method Not Allowed. Only POST requests are accepted.' });
   }
 
-  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || !process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+  if (!projectId || !bucketName) {
     console.error('CRITICAL SERVER CONFIG ERROR: Firebase environment variables for Storage are not set.');
     return res.status(500).json({ message: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name.' });
   }
 
-  const storage = new Storage({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const storage = new Storage({ projectId });
   const bucket = storage.bucket(bucketName);
   
   const form = formidable({ multiples: false });
@@ -74,6 +76,14 @@ export default async (req, res) => {
   } catch (error) {
     console.error('An error occurred during PDF upload:', error);
     const errorMessage = (error.message || '').toLowerCase();
+
+    if (error.code === 404 || errorMessage.includes('not found')) {
+      console.error(`[api/upload-pdf] - BUCKET_NOT_FOUND: The bucket "${bucketName}" does not exist in the project "${projectId}".`);
+      return res.status(500).json({ 
+          message: 'Storage bucket not found.',
+          details: `The specified storage bucket "${bucketName}" does not exist. Please check your .env file and Firebase/Google Cloud project to ensure the bucket name is correct.`
+      });
+    }
 
     if (error.code === 403 || errorMessage.includes('forbidden')) {
          console.error('GCS PERMISSION ERROR: The service account likely lacks the "Storage Object Creator" role.');
