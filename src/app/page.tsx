@@ -2537,7 +2537,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-center">
+                    <div className="flex w-full items-center justify-start">
                         <div className="flex items-center gap-2">
                           <CalendarCheck className="h-7 w-7 text-primary" />
                           <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2611,7 +2611,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-center">
+                    <div className="flex w-full items-center justify-start">
                         <div className="flex items-center gap-2">
                           <CalendarIcon className="h-7 w-7 text-primary" />
                           <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2678,7 +2678,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                      <div className="flex w-full items-center justify-center">
+                      <div className="flex w-full items-center justify-start">
                         <div className="flex items-center gap-2">
                           <Flame className="h-7 w-7 text-orange-500" />
                           <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -2739,7 +2739,7 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-center">
+                    <div className="flex w-full items-center justify-start">
                       <div className="flex items-center gap-2">
                         <PackageCheck className="h-7 w-7 text-primary" />
                         <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground">
@@ -3215,11 +3215,8 @@ export default function HomePage() {
                                                                   This will permanently delete the hot lead for "{lead.companyName}". This action cannot be undone.
                                                               </AlertDialogDescription>
                                                           </AlertDialogHeader>
-                                                          <AlertDialogFooter>
-                                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                              <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
                                                           </AlertDialogFooter>
-                                                      </AlertDialogContent>
+                                      </AlertDialogContent>
                                                   </AlertDialog>
                                               </div>
                                           </div>
@@ -3537,3 +3534,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
