@@ -2529,12 +2529,14 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-center relative">
-                      <CalendarCheck className="h-7 w-7 text-primary absolute left-0 -ml-1" />
-                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
-                          Future Meetings
-                      </h2>
-                       <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm" className="absolute right-0">
+                    <div className="flex w-full items-center justify-between relative">
+                      <div className="flex items-center gap-2">
+                        <CalendarCheck className="h-7 w-7 text-primary" />
+                        <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
+                            Future Meetings
+                        </h2>
+                      </div>
+                      <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
                           <PlusCircle className="mr-2 h-4 w-4" /> Add New
                       </Button>
                     </div>
