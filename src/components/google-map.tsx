@@ -281,8 +281,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         onLoad={onMapLoad}
         onUnmount={onMapUnmount}
         options={{
-          streetViewControl: false,
-          mapTypeControl: false,
+          streetViewControl: true,
+          mapTypeControl: true,
           fullscreenControl: false,
         }}
       >
