@@ -59,11 +59,11 @@
   }
   
   /* Custom Calendar Day Modifiers - Order defines priority (last one wins) */
-  .day-logged:not([aria-selected]) {
-    @apply text-cyan-400 font-bold;
+  .day-logged-past:not([aria-selected]) {
+    @apply text-blue-400 font-bold;
   }
-  .day-logged:hover:not([aria-selected]) {
-    @apply text-cyan-300;
+  .day-logged-past:hover:not([aria-selected]) {
+    @apply text-blue-300;
   }
 
   .day-scheduled:not([aria-selected]) {

@@ -268,26 +268,34 @@ export default function HomePage() {
   }, [visits]);
 
   const trialEndDays = useMemo(() => {
+    const today = startOfDay(new Date());
     return visits
-      .filter(v => v.freeTrial && v.freeTrialStartDate)
+      .filter(v => {
+        if (!v.freeTrial || !v.freeTrialStartDate) return false;
+        const trialEndDate = addDays(startOfDay(new Date(v.freeTrialStartDate!)), 7);
+        return trialEndDate >= today;
+      })
       .map(v => addDays(startOfDay(new Date(v.freeTrialStartDate!)), 7));
   }, [visits]);
 
-  const loggedVisitDays = useMemo(() => {
+  const loggedPastVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
-    const timestamps = new Set<number>();
+    const pastTimestamps = new Set<number>();
   
     visits.forEach(v => {
-      timestamps.add(startOfDay(new Date(v.timestamp)).getTime());
+      const visitDay = startOfDay(new Date(v.timestamp));
+      if (visitDay < today) {
+        pastTimestamps.add(visitDay.getTime());
+      }
       if (v.futureMeetingSet && v.futureMeetingDateTime) {
         const meetingDay = startOfDay(new Date(v.futureMeetingDateTime));
         if (meetingDay < today) {
-          timestamps.add(meetingDay.getTime());
+          pastTimestamps.add(meetingDay.getTime());
         }
       }
     });
   
-    return Array.from(timestamps).map(time => new Date(time));
+    return Array.from(pastTimestamps).map(time => new Date(time));
   }, [visits]);
 
   const dealClosedDays = useMemo(() => {
@@ -2321,14 +2329,14 @@ export default function HomePage() {
                           onSelect={setSelectedDate}
                           className="rounded-md border self-center"
                           modifiers={{
-                            logged: loggedVisitDays,
+                            logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
                             dealClosed: dealClosedDays,
                             trialEnd: trialEndDays,
                           }}
                           modifiersClassNames={{
                             scheduled: 'day-scheduled',
-                            logged: 'day-logged',
+                            logged: 'day-logged-past',
                             dealClosed: 'day-deal-closed',
                             today: 'day_today',
                             trialEnd: 'day-trial-end',
