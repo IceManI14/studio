@@ -33,7 +33,7 @@ interface VisitCardProps {
 
 const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [showAddress, setShowAddress] = useState(false);
+  const [showExtraInfo, setShowExtraInfo] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const timeZone = 'America/New_York';
   const { toast } = useToast();
@@ -456,23 +456,26 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </div>
                 )}
               </div>
+              
+              {showExtraInfo && (
+                <CardDescription className="text-xs pb-1 animate-in fade-in-0">
+                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
+                </CardDescription>
+              )}
+
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
-                    if (address) {
+                    if (address || visit.timestamp) {
                       e.stopPropagation();
-                      setShowAddress(!showAddress);
+                      setShowExtraInfo(!showExtraInfo);
                     }
                 }}
               >
                 {visit.companyName}
               </CardTitle>
-
-              <CardDescription className="text-xs pt-1">
-                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
-              </CardDescription>
               
-              {showAddress && address && (
+              {showExtraInfo && address && (
                 <div 
                   className="text-center text-sm text-muted-foreground mt-1 animate-in fade-in-0 flex items-center gap-1"
                 >
