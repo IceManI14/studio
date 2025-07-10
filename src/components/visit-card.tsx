@@ -405,7 +405,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
-              <div className="flex items-center justify-center gap-2 text-sm font-medium mb-1">
+            <div className="flex items-center justify-center gap-2 text-sm font-medium mb-1">
                 {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
                   <div className="text-blue-400">
                     {`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}
@@ -419,7 +419,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </div>
                 )}
               </div>
-
               <div className="flex items-center justify-center gap-2">
                 <CardTitle 
                   className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
@@ -432,13 +431,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 >
                   {visit.companyName}
                 </CardTitle>
-                <Button asChild variant="default" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
-                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
-                      <Navigation className="h-4 w-4" />
-                  </a>
+                 <Button asChild variant="default" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
+                        <Navigation className="h-4 w-4" />
+                    </a>
                 </Button>
               </div>
 
+              <CardDescription className="text-xs pt-1">
+                {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
+              </CardDescription>
+              
               {showAddress && address && (
                 <div 
                   className="text-center text-sm text-muted-foreground mt-1 animate-in fade-in-0 flex items-center gap-1"
@@ -448,10 +451,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               )}
               
               <div className="text-center">
-                  {visit.city && <CardDescription className="text-sm -mt-1">{visit.city}</CardDescription>}
-                  <CardDescription className="text-xs pt-1">
-                      {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
-                  </CardDescription>
+                  {visit.city && <CardDescription className="text-sm mt-1">{visit.city}</CardDescription>}
               </div>
           </div>
       </CardHeader>
