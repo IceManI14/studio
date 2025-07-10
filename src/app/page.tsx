@@ -2786,7 +2786,7 @@ export default function HomePage() {
                                             </div>
                                             <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                                 {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
+                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
                                                 ) : (
                                                     visit.freeTrialStartDate && (
                                                         <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
