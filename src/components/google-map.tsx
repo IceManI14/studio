@@ -4,11 +4,21 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 
 interface GoogleMapComponentProps {
@@ -50,11 +60,27 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   const [zoomLevel, setZoomLevel] = useState(4);
   const [intel, setIntel] = useState<Record<string, GetCompanyIntelOutput | 'loading' | 'error'>>({});
   const { toast } = useToast();
+  const [filter, setFilter] = useState('all');
 
   const validVisits = useMemo(() =>
     visits.filter(visit => typeof visit.latitude === 'number' && typeof visit.longitude === 'number'),
     [visits]
   );
+  
+  const filteredVisits = useMemo(() => {
+    if (filter === 'all') return validVisits;
+    return validVisits.filter(visit => {
+        const isDealClosed = visit.dealClosed;
+        const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
+        const inTrial = visit.freeTrial;
+
+        if (filter === 'red') return inTrial && !isDealClosed;
+        if (filter === 'orange') return isHotspot && !isDealClosed;
+        if (filter === 'green') return isDealClosed;
+        if (filter === 'blue') return !inTrial && !isDealClosed && !isHotspot;
+        return true;
+    })
+  }, [validVisits, filter]);
 
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
@@ -95,10 +121,10 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
   }, []);
 
   const handleShowAllVisits = useCallback(() => {
-    if (map && validVisits.length > 0) {
+    if (map && filteredVisits.length > 0) {
       if (typeof window !== 'undefined' && window.google) {
         const bounds = new window.google.maps.LatLngBounds();
-        validVisits.forEach(visit => {
+        filteredVisits.forEach(visit => {
           bounds.extend({ lat: visit.latitude!, lng: visit.longitude! });
         });
         
@@ -106,11 +132,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
           bounds.extend({ lat: userLatitude, lng: userLongitude });
         }
         
-        // The second argument for fitBounds is padding.
         map.fitBounds(bounds, 50); 
 
-        // In case of a single point, the zoom can be too high.
-        // We add a listener to adjust it if necessary.
         const listener = window.google.maps.event.addListenerOnce(map, 'idle', () => {
           if (map.getZoom()! > 16) {
             map.setZoom(16);
@@ -121,7 +144,7 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
       map.panTo({ lat: userLatitude, lng: userLongitude });
       map.setZoom(16);
     }
-  }, [map, validVisits, userLatitude, userLongitude]);
+  }, [map, filteredVisits, userLatitude, userLongitude]);
 
   const handleGetIntel = useCallback(async (visit: Visit) => {
     if (!visit.latitude || !visit.longitude) return;
@@ -230,6 +253,16 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
     );
   }
 
+  const FilterBadge = ({ color, children }: { color: string, children: React.ReactNode }) => (
+    <Badge
+      variant="outline"
+      className={cn("border-transparent h-2 w-2 p-0 rounded-full", color)}
+      aria-hidden="true"
+    >
+      <span className="sr-only">{children}</span>
+    </Badge>
+  );
+
   return (
     <div className="relative">
       <GoogleMap
@@ -258,18 +291,18 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
               }}
             />
         )}
-        {validVisits.map((visit) => {
+        {filteredVisits.map((visit) => {
           const isDealClosed = visit.dealClosed;
           const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
           const inTrial = visit.freeTrial;
 
           let iconUrl;
-          if (isHotspot) {
+          if (isHotspot && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
+          } else if (inTrial && !isDealClosed) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
           } else if (isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
-          } else if (inTrial) {
-            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
           } else {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue.png';
           }
@@ -367,10 +400,40 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         );
       })}
     </GoogleMap>
+    <div className="absolute top-2 left-2 z-10">
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="outline" className="bg-background hover:bg-background/90" title="Filter map markers">
+                    <Filter className="h-5 w-5" />
+                    <span className="sr-only">Filter map markers by color</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+                <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
+                    <DropdownMenuRadioItem value="all">
+                        <span className="mr-2">All Visits</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioItem value="red">
+                        <FilterBadge color="bg-red-500" /> <span className="ml-2">Active Trials</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="orange">
+                        <FilterBadge color="bg-orange-500" /> <span className="ml-2">Flagged Hotspots</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="green">
+                        <FilterBadge color="bg-green-500" /> <span className="ml-2">Closed Deals</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="blue">
+                        <FilterBadge color="bg-blue-500" /> <span className="ml-2">Standard Visits</span>
+                    </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </div>
     <div className="absolute top-2 right-2 z-10">
       <Button
           onClick={handleShowAllVisits}
-          disabled={!map || validVisits.length < 1}
+          disabled={!map || filteredVisits.length < 1}
           size="icon"
           variant="outline"
           className="bg-background hover:bg-background/90"
