@@ -97,6 +97,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const tdsInfo = getTDSInfo();
   const isHtmlCard = visit.businessCardImageUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
+  
   const potentialCommission = (() => {
     if (typeof visit.manualCommission === 'number') {
         return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
@@ -106,8 +107,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
         return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
     }
+    
+    const numberOfUnits = visit.interestedUnits && visit.interestedUnits.length > 0 ? visit.interestedUnits.length : 1;
 
-    const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+    const leaseCommission = (visit.priceQuoted && visit.leaseTerm) 
+      ? (visit.priceQuoted * numberOfUnits * (visit.leaseTerm / 12)) 
+      : 0;
+      
     const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
     const total = leaseCommission + installCommission;
     return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
