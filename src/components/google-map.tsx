@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter, FileText } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Phone, UserSearch, Navigation, Expand, Filter, FileText, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { getCompanyIntelAction } from '@/app/actions';
 import type { GetCompanyIntelOutput } from '@/ai/flows/get-company-intel-flow';
@@ -282,9 +282,10 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         onUnmount={onMapUnmount}
         options={{
           disableDefaultUI: true, // Disable all default controls
-          zoomControl: true, // Re-enable zoom control
-          mapTypeControl: true, // Re-enable map type control
-          streetViewControl: true, // Re-enable street view
+          zoomControl: true,
+          mapTypeControl: true,
+          streetViewControl: true,
+          fullscreenControl: true, // This ensures the exit button is available in Street View
           mapTypeControlOptions: {
             position: window.google.maps.ControlPosition.TOP_CENTER,
           },
@@ -294,6 +295,12 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
           zoomControlOptions: {
             position: window.google.maps.ControlPosition.RIGHT_BOTTOM,
           },
+          fullscreenControlOptions: {
+            position: window.google.maps.ControlPosition.LEFT_BOTTOM,
+          },
+        }}
+        streetViewOptions={{
+            addressControl: false, // Disables the address overlay in Street View
         }}
       >
         {isLoaded && userLatitude && userLongitude && (
