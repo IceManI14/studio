@@ -113,7 +113,14 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 
   const handleMarkerClick = useCallback((visitId: string) => {
     setActiveMarker(visitId);
-  }, []);
+    if (map) {
+      const visit = filteredVisits.find(v => v.id === visitId);
+      if (visit && visit.latitude && visit.longitude) {
+        map.panTo({ lat: visit.latitude, lng: visit.longitude });
+        map.setZoom(18); // Zoom level 18 is approximately street level, good for 300ft view
+      }
+    }
+  }, [map, filteredVisits]);
 
   const handleInfoWindowClose = useCallback(() => {
     setActiveMarker(null);
