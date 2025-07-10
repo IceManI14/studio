@@ -2537,13 +2537,14 @@ export default function HomePage() {
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-start">
-                        <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center">
+                      <div className="flex items-center justify-center w-10 shrink-0">
                           <CalendarCheck className="h-7 w-7 text-primary" />
-                          <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
-                              Future Meetings
-                          </h2>
-                        </div>
+                      </div>
+                      <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                          Future Meetings
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
@@ -2574,7 +2575,7 @@ export default function HomePage() {
                                           </div>
                                           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                               {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}`: ''}}`}</span>
+                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
                                               ) : (
                                                   visit.futureMeetingDateTime && (
                                                       <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
@@ -2607,18 +2608,16 @@ export default function HomePage() {
                     )}
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-              
-              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-start">
-                        <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center">
+                        <div className="flex items-center justify-center w-10 shrink-0">
                           <CalendarIcon className="h-7 w-7 text-primary" />
-                          <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
-                              Future Visits (Unscheduled)
-                          </h2>
                         </div>
+                        <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                              Future Visits (Unscheduled)
+                        </h2>
+                        <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
@@ -2674,18 +2673,16 @@ export default function HomePage() {
                     )}
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-              
-              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                      <div className="flex w-full items-center justify-start">
-                        <div className="flex items-center gap-2">
+                      <div className="flex w-full items-center">
+                        <div className="flex items-center justify-center w-10 shrink-0">
                           <Flame className="h-7 w-7 text-orange-500" />
-                          <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground">
-                              Flagged Hotspots
-                          </h2>
                         </div>
+                        <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                              Flagged Hotspots
+                        </h2>
+                        <div className="w-10 shrink-0"></div>
                       </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
@@ -2735,18 +2732,16 @@ export default function HomePage() {
                       )}
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-
-              <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-start">
-                      <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center">
+                      <div className="flex items-center justify-center w-10 shrink-0">
                         <PackageCheck className="h-7 w-7 text-primary" />
-                        <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground">
-                            Active Free Trials
-                        </h2>
                       </div>
+                      <h2 id="free-trials-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                            Active Free Trials
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
