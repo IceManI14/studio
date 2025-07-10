@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload, extractVisitDetailsAction } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -1386,18 +1386,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                         onCheckedChange={(checked) => {
                                             const isChecked = !!checked;
                                             field.onChange(isChecked);
-                                            if (!isChecked) {
+                                            if (isChecked) {
+                                                // Only set defaults if the fields are currently empty.
+                                                // This prevents overriding manual entries.
+                                                if (form.getValues('leaseTerm') === undefined) {
+                                                    form.setValue('leaseTerm', 60, { shouldValidate: true });
+                                                }
+                                                if (form.getValues('installationFee') === undefined) {
+                                                    form.setValue('installationFee', 199, { shouldValidate: true });
+                                                }
+                                            } else {
                                                 form.setValue('priceQuoted', undefined);
                                                 form.setValue('leaseTerm', undefined);
                                                 form.setValue('installationFee', undefined);
                                                 form.setValue('manualCommission', undefined);
-                                            } else {
-                                                if (!form.getValues('leaseTerm')) {
-                                                    form.setValue('leaseTerm', 60, { shouldValidate: true });
-                                                }
-                                                if (!form.getValues('installationFee')) {
-                                                    form.setValue('installationFee', 199, { shouldValidate: true });
-                                                }
                                             }
                                         }}
                                         id="pricingDiscussed"
@@ -1415,16 +1417,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                         render={({ field: priceField }) => (
                                             <FormItem>
                                                 <FormLabel>Price Quoted ($/mo)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g., 49.99"
-                                                        step="0.01"
-                                                        {...priceField}
-                                                        value={priceField.value ?? ''}
-                                                        onChange={(e) => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                    />
-                                                </FormControl>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g., 49.99"
+                                                            step="0.01"
+                                                            {...priceField}
+                                                            value={priceField.value ?? ''}
+                                                            onChange={(e) => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                            className={cn(priceField.value !== undefined && 'pr-9')}
+                                                        />
+                                                    </FormControl>
+                                                    {priceField.value !== undefined && (
+                                                        <Button type="button" variant="ghost" size="icon" onClick={() => priceField.onChange(undefined)} className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"><X className="h-4 w-4 text-muted-foreground" /></Button>
+                                                    )}
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -1437,8 +1445,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                                 <FormLabel>Lease Term (months)</FormLabel>
                                                 <Select
                                                     onValueChange={(value) => leaseField.onChange(Number(value))}
-                                                    defaultValue={leaseField.value ? String(leaseField.value) : "60"}
-                                                    value={leaseField.value ? String(leaseField.value) : "60"}
+                                                    value={leaseField.value ? String(leaseField.value) : undefined}
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -1461,16 +1468,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                         render={({ field: feeField }) => (
                                             <FormItem>
                                                 <FormLabel>Installation Fee ($)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g., 199"
-                                                        step="1"
-                                                        {...feeField}
-                                                        value={feeField.value ?? ''}
-                                                        onChange={(e) => feeField.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                    />
-                                                </FormControl>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g., 199"
+                                                            step="1"
+                                                            {...feeField}
+                                                            value={feeField.value ?? ''}
+                                                            onChange={(e) => feeField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                            className={cn(feeField.value !== undefined && 'pr-9')}
+                                                        />
+                                                    </FormControl>
+                                                    {feeField.value !== undefined && (
+                                                        <Button type="button" variant="ghost" size="icon" onClick={() => feeField.onChange(undefined)} className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"><X className="h-4 w-4 text-muted-foreground" /></Button>
+                                                    )}
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -1481,16 +1494,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                         render={({ field: commissionField }) => (
                                             <FormItem>
                                                 <FormLabel>Manual Commission Override ($)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="e.g., 129"
-                                                        step="1"
-                                                        {...commissionField}
-                                                        value={commissionField.value ?? ''}
-                                                        onChange={(e) => commissionField.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                    />
-                                                </FormControl>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="e.g., 129"
+                                                            step="1"
+                                                            {...commissionField}
+                                                            value={commissionField.value ?? ''}
+                                                            onChange={(e) => commissionField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                                            className={cn(commissionField.value !== undefined && 'pr-9')}
+                                                        />
+                                                    </FormControl>
+                                                    {commissionField.value !== undefined && (
+                                                        <Button type="button" variant="ghost" size="icon" onClick={() => commissionField.onChange(undefined)} className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"><X className="h-4 w-4 text-muted-foreground" /></Button>
+                                                    )}
+                                                </div>
                                                 <FormDescription>
                                                   If a customer is not credit approved, enter one month's commission here. This will override the standard calculation.
                                                 </FormDescription>
