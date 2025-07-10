@@ -2264,7 +2264,7 @@ export default function HomePage() {
                               </div>
                               <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                                 {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}` : ''}}`}</span>
+                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
                                 ) : (
                                     <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
                                 )}
@@ -2548,8 +2548,9 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     <div className="flex justify-center mb-4">
-                      <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="icon" className='h-8 w-8'>
-                          <PlusCircle className="h-4 w-4" />
+                      <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add New Future Visit
                       </Button>
                     </div>
                     {scheduledVisits.length === 0 ? (
@@ -3215,8 +3216,11 @@ export default function HomePage() {
                                                                   This will permanently delete the hot lead for "{lead.companyName}". This action cannot be undone.
                                                               </AlertDialogDescription>
                                                           </AlertDialogHeader>
+                                                          <AlertDialogFooter>
+                                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                              <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
                                                           </AlertDialogFooter>
-                                      </AlertDialogContent>
+                                                      </AlertDialogContent>
                                                   </AlertDialog>
                                               </div>
                                           </div>
@@ -3534,5 +3538,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
