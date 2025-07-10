@@ -2549,7 +2549,7 @@ export default function HomePage() {
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                     <div className="flex justify-center mb-4">
                       <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="icon" className='h-8 w-8'>
-                          <PlusCircle className="h-4 w-4 -mr-0" />
+                          <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
                     {scheduledVisits.length === 0 ? (
@@ -2621,11 +2621,6 @@ export default function HomePage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    <div className="flex justify-center mb-4">
-                      <Button onClick={handleAddNewFutureVisit} variant="default" size="sm">
-                          <PlusCircle className="mr-2 h-4 w-4" /> Add New Future Visit
-                      </Button>
-                    </div>
                     {unscheduledFutureVisits.length === 0 ? (
                         <div className="text-center py-4">
                             <p className="text-xl text-muted-foreground mb-4">
@@ -2830,11 +2825,9 @@ export default function HomePage() {
           {activeTab === 'visits' && (
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
               <div className="flex flex-col items-center gap-4">
-                  <div className="flex items-center justify-center">
-                    <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full">
-                        <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
-                    </h2>
-                  </div>
+                  <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground w-full justify-center">
+                      <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
+                  </h2>
                   <div className="flex flex-col items-center gap-4">
                       {visits.length > 0 && (
                           <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent mb-2">
