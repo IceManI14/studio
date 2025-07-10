@@ -72,8 +72,8 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
         const isHotspot = visit.notes?.startsWith('Flagged as a hotspot.');
         const inTrial = visit.freeTrial;
 
-        if (filter === 'red') return isHotspot && !isDealClosed;
-        if (filter === 'orange') return inTrial && !isDealClosed;
+        if (filter === 'red') return inTrial && !isDealClosed;
+        if (filter === 'orange') return isHotspot && !isDealClosed;
         if (filter === 'green') return isDealClosed;
         if (filter === 'blue') return !inTrial && !isDealClosed && !isHotspot;
         return true;
@@ -299,9 +299,9 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
 
           let iconUrl;
           if (inTrial && !isDealClosed) {
-            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
-          } else if (isHotspot && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
+          } else if (isHotspot && !isDealClosed) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
           } else if (isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
           } else {
@@ -415,11 +415,11 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
                         <span className="mr-2">All Visits</span>
                     </DropdownMenuRadioItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuRadioItem value="orange">
-                        <FilterBadge color="bg-orange-500" /> <span className="ml-2">Active Trials</span>
-                    </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="red">
-                        <FilterBadge color="bg-red-500" /> <span className="ml-2">Flagged Hotspots</span>
+                        <FilterBadge color="bg-red-500" /> <span className="ml-2">Active Trials</span>
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="orange">
+                        <FilterBadge color="bg-orange-500" /> <span className="ml-2">Flagged Hotspots</span>
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="green">
                         <FilterBadge color="bg-green-500" /> <span className="ml-2">Closed Deals</span>
