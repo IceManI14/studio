@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -392,6 +392,43 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       onClick={!isZoomedView ? () => onZoom?.(visit) : undefined}
     >
       <CardHeader className="pb-3 relative">
+          <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+              <Button asChild variant="default" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
+                      <Navigation className="h-4 w-4" />
+                  </a>
+              </Button>
+              {isZoomedView && (
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>This action will permanently delete the visit log for {visit.companyName}.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+              )}
+               {isZoomedView && (
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+              )}
+              {isZoomedView && onZoom && (
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onZoom(null); }} aria-label={`Close detail view`}>
+                    <X className="h-4 w-4" />
+                  </Button>
+              )}
+          </div>
+          
           <div className="absolute top-2 left-2 flex flex-col items-start">
               <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
               <div className="flex">
@@ -419,24 +456,17 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </div>
                 )}
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <CardTitle 
-                  className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
-                  onClick={(e) => {
-                      if (address) {
-                        e.stopPropagation();
-                        setShowAddress(!showAddress);
-                      }
-                  }}
-                >
-                  {visit.companyName}
-                </CardTitle>
-                 <Button asChild variant="default" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
-                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
-                        <Navigation className="h-4 w-4" />
-                    </a>
-                </Button>
-              </div>
+              <CardTitle 
+                className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
+                onClick={(e) => {
+                    if (address) {
+                      e.stopPropagation();
+                      setShowAddress(!showAddress);
+                    }
+                }}
+              >
+                {visit.companyName}
+              </CardTitle>
 
               <CardDescription className="text-xs pt-1">
                 {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
@@ -477,36 +507,40 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-end gap-1">
-            {onLogFollowUp && isZoomedView && (
+            {onLogFollowUp && !isZoomedView && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onLogFollowUp(visit); }} aria-label={`Log follow-up for ${visit.companyName}`}>
                 <PlusSquare className="h-4 w-4" />
               </Button>
             )}
-            {onDictateNotes && (
+            {onDictateNotes && !isZoomedView && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onDictateNotes(visit); }} aria-label={`Dictate notes for ${visit.companyName}`}>
                 <Mic className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>This action will permanently delete the visit log for {visit.companyName}.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {!isZoomedView && (
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Edit visit to ${visit.companyName}`}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {!isZoomedView && (
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()} aria-label={`Delete visit to ${visit.companyName}`}>
+                          <Trash2 className="h-4 w-4" />
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>This action will permanently delete the visit log for {visit.companyName}.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(visit.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            )}
         </div>
       </CardFooter>
     </Card>
