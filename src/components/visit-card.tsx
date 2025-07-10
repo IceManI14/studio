@@ -300,8 +300,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   );
 
   const NormalContent = () => (
-    <div className="space-y-1">
-        <div className="flex flex-col gap-y-1 text-sm text-muted-foreground">
+    <div className="space-y-2">
+        <div className="flex flex-col gap-y-1.5 text-sm text-muted-foreground">
             <div className="flex items-center h-6">
                 {visit.hasBusinessCard ? <CheckSquare className="mr-2 h-4 w-4 text-green-500" /> : <Square className="mr-2 h-4 w-4 text-muted-foreground/50" />}
                 Business Card
@@ -386,13 +386,13 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 >
                   {visit.companyName}
                 </CardTitle>
-                <Button asChild variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
+                <Button asChild variant="default" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()} disabled={!visit.latitude || !visit.longitude}>
                   <a href={`https://www.google.com/maps/dir/?api=1&destination=${visit.latitude},${visit.longitude}`} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${visit.companyName}`}>
                       <Navigation className="h-4 w-4" />
                   </a>
                 </Button>
               </div>
-              {visit.city && <CardDescription className="text-sm -mt-1">{visit.city}</CardDescription>}
+              {visit.city && <CardDescription className="text-sm -mt-1 text-center">{visit.city}</CardDescription>}
               <CardDescription className="text-xs pt-1 text-center">
                   {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
               </CardDescription>
