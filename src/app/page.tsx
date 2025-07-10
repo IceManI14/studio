@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, FoundPlace, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
@@ -114,6 +114,60 @@ function getDistanceFromLatLonInM(lat1:number, lon1:number, lat2:number, lon2:nu
 function deg2rad(deg:number) {
   return deg * (Math.PI/180)
 }
+
+const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
+  visits: Visit[],
+  onEdit: (visit: Visit) => void,
+  onDelete: (visitId: string) => void,
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void,
+  onZoom: (visit: Visit | null) => void,
+  onLogFollowUp: (visit: Visit) => void,
+  onDictateNotes: (visit: Visit) => void,
+}) {
+  return (
+    <Accordion type="multiple" className="w-full space-y-4">
+      {visits.map((visit) => (
+        <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+          <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
+            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+              <div className="flex flex-1 items-center gap-3 min-w-0">
+                <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+              </div>
+              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
+                ) : (
+                    <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+                )}
+                {visit.partnershipConfidence && (
+                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                    <span className="leading-none">{visit.partnershipConfidence}</span>
+                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                  </Badge>
+                )}
+                {visit.futureMeetingSet && (
+                  <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
+                )}
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-4">
+            <VisitCard
+              visit={visit}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onUpdateDealClosed={onUpdateDealClosed}
+              onZoom={onZoom}
+              onLogFollowUp={onLogFollowUp}
+              onDictateNotes={onDictateNotes}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  )
+});
 
 export default function HomePage() {
   // State and Refs
@@ -2294,6 +2348,43 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
+                      <div className="flex flex-col items-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          className="rounded-md border self-center"
+                          modifiers={{
+                            logged: loggedVisitDays,
+                            scheduled: scheduledFutureVisitDays,
+                            dealClosed: dealClosedDays,
+                            trialEnd: trialEndDays,
+                          }}
+                          modifiersClassNames={{
+                            scheduled: 'day-scheduled',
+                            logged: 'day-logged',
+                            dealClosed: 'day-deal-closed',
+                            today: 'day_today',
+                            trialEnd: 'day-trial-end',
+                          }}
+                        />
+                        {selectedDate && (
+                          <div className="w-full mt-2 space-y-2">
+                              <Button
+                                  onClick={handleScheduleFromCalendar}
+                                  className="w-full"
+                                  size="sm"
+                              >
+                                  <PlusSquare className="mr-2 h-4 w-4" />
+                                  Schedule on {format(selectedDate, 'MMM d')}
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="w-full">
+                                  Clear Date Filter
+                              </Button>
+                          </div>
+                        )}
+                      </div>
+
                       <Accordion type="single" collapsible className="w-full max-w-sm">
                         <AccordionItem value="sorters" className="border-b-0">
                           <AccordionTrigger className="text-sm">Sort Options</AccordionTrigger>
@@ -2399,44 +2490,6 @@ export default function HomePage() {
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
-                      
-
-                      <div className="flex flex-col items-center">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          className="rounded-md border self-center"
-                          modifiers={{
-                            logged: loggedVisitDays,
-                            scheduled: scheduledFutureVisitDays,
-                            dealClosed: dealClosedDays,
-                            trialEnd: trialEndDays,
-                          }}
-                          modifiersClassNames={{
-                            scheduled: 'day-scheduled',
-                            logged: 'day-logged',
-                            dealClosed: 'day-deal-closed',
-                            today: 'day_today',
-                            trialEnd: 'day-trial-end',
-                          }}
-                        />
-                        {selectedDate && (
-                          <div className="w-full mt-2 space-y-2">
-                              <Button
-                                  onClick={handleScheduleFromCalendar}
-                                  className="w-full"
-                                  size="sm"
-                              >
-                                  <PlusSquare className="mr-2 h-4 w-4" />
-                                  Schedule on {format(selectedDate, 'MMM d')}
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="w-full">
-                                  Clear Date Filter
-                              </Button>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -2458,47 +2511,15 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <Accordion type="multiple" className="w-full space-y-4">
-                  {sortedVisitsForCallDay.map((visit) => (
-                    <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-                      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
-                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                          <div className="flex flex-1 items-center gap-3 min-w-0">
-                            <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-                            <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                          </div>
-                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                            {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
-                            ) : (
-                                <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-                            )}
-                            {visit.partnershipConfidence && (
-                              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                <span className="leading-none">{visit.partnershipConfidence}</span>
-                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                              </Badge>
-                            )}
-                            {visit.futureMeetingSet && (
-                              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
-                            )}
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="p-4">
-                        <VisitCard
-                          visit={visit}
-                          onEdit={handleEditVisit}
-                          onDelete={handleDeleteVisit}
-                          onUpdateDealClosed={handleUpdateDealClosed}
-                          onZoom={setZoomedVisit}
-                          onLogFollowUp={handleLogFollowUp}
-                          onDictateNotes={handleDictateNotes}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+                <CallDayVisitList 
+                  visits={sortedVisitsForCallDay}
+                  onEdit={handleEditVisit}
+                  onDelete={handleDeleteVisit}
+                  onUpdateDealClosed={handleUpdateDealClosed}
+                  onZoom={setZoomedVisit}
+                  onLogFollowUp={handleLogFollowUp}
+                  onDictateNotes={handleDictateNotes}
+                />
               )}
             </div>
           )}
@@ -2513,14 +2534,12 @@ export default function HomePage() {
                       <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                           Future Meetings
                       </h2>
+                       <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm" className="absolute right-0">
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add New
+                      </Button>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    <div className="flex justify-center mb-4">
-                        <Button onClick={handleAddNewFutureVisit} variant="default" size="sm">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Meeting
-                        </Button>
-                    </div>
                     {scheduledVisits.length === 0 ? (
                         <div className="text-center py-4">
                             <p className="text-xl text-muted-foreground mb-4">
