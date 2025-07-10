@@ -2298,47 +2298,7 @@ export default function HomePage() {
           
           {activeTab === 'call-day' && (
             <div className="space-y-6">
-              <div className="relative w-full max-w-sm mx-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                  className="pl-10 pr-20"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  disabled={isRecordingSearch}
-                />
-                {searchTerm && !isRecordingSearch && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                    aria-label="Clear search"
-                    title="Clear search"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleVoiceSearch}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                  aria-label="Search with voice"
-                  title="Search with voice"
-                >
-                  {isRecordingSearch ? (
-                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                  ) : (
-                    <Mic className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </div>
-
-              <Accordion type="single" collapsible className="w-full max-w-sm mx-auto">
+              <Accordion type="single" collapsible className="w-full max-w-sm mx-auto" defaultValue="item-1">
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none">
                     <h3 className="text-lg font-medium text-foreground text-center w-full flex items-center justify-center gap-2">
@@ -2348,7 +2308,7 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center w-full">
                         <Calendar
                           mode="single"
                           selected={selectedDate}
@@ -2494,6 +2454,46 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              <div className="relative w-full max-w-sm mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                  className="pl-10 pr-20"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={isRecordingSearch}
+                />
+                {searchTerm && !isRecordingSearch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleVoiceSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  aria-label="Search with voice"
+                  title="Search with voice"
+                >
+                  {isRecordingSearch ? (
+                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
               
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
@@ -2528,19 +2528,17 @@ export default function HomePage() {
             <div className="space-y-8">
               <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
-                    <div className="flex w-full items-center justify-between relative">
+                  <AccordionTrigger asChild className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0 cursor-pointer">
+                    <div onClick={(e) => handleAccordionScroll(e.currentTarget, scheduledVisitsRef)} className="flex w-full items-center justify-between relative">
                       <div className="flex items-center gap-2">
                         <CalendarCheck className="h-7 w-7 text-primary" />
                         <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground">
                             Future Meetings
                         </h2>
                       </div>
-                      <AccordionTrigger asChild>
-                         <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add New
-                         </Button>
-                      </AccordionTrigger>
+                      <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add New
+                      </Button>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
@@ -2816,9 +2814,10 @@ export default function HomePage() {
           {activeTab === 'visits' && (
             <section aria-labelledby="map-section-title" className="p-6 bg-card rounded-xl shadow-xl space-y-6">
                 <div className="flex flex-col items-center gap-4">
-                    <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
-                        <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
-                    </h2>
+                  <h2 id="visits-section-title" className="text-2xl font-headline font-semibold flex items-center text-foreground">
+                      <MapPin className="mr-3 h-7 w-7 text-primary" /> Company Map
+                  </h2>
+                  <div className="flex flex-col items-center gap-4">
                     {visits.length > 0 && (
                         <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
                             Your Visits: {visits.length}
@@ -2831,6 +2830,7 @@ export default function HomePage() {
                          Email Manager
                        </Button>
                     </div>
+                  </div>
                 </div>
               
                 <GoogleMapComponent 
@@ -2838,6 +2838,9 @@ export default function HomePage() {
                   userLatitude={userCurrentLatitude}
                   userLongitude={userCurrentLongitude}
                   onUpdateVisit={handleUpdateVisit}
+                  onZoomRequest={(visit) => {
+                    setZoomedVisit(visit);
+                  }}
                 />
             </section>
           )}
@@ -3512,3 +3515,4 @@ export default function HomePage() {
     </div>
   );
 }
+
