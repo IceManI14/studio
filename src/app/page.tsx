@@ -2788,7 +2788,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
-                        <div className="flex-1 flex justify-center items-center gap-2">
+                        <div className="flex-1 flex justify-center items-center gap-3">
                             <h2 className="text-2xl font-headline font-semibold text-foreground">
                                 Active Free Trials
                             </h2>
@@ -3130,10 +3130,10 @@ export default function HomePage() {
                     <UiCard className="bg-card border border-primary/20 rounded-t-none border-t-0">
                       <UiCardContent className="pt-6">
                         {newsItems.length > 0 ? (
-                            <ul className="space-y-3 text-sm text-foreground list-disc pl-5">
+                            <ul className="space-y-3 text-sm text-foreground">
                               {newsItems.map((item, index) => (
                                 <li key={index} className="flex justify-between items-start group">
-                                  <span>{item}</span>
+                                  <span className="flex-grow"><span className="text-primary font-bold mr-2">→</span>{item}</span>
                                   <Button 
                                     variant="ghost" 
                                     size="icon" 
@@ -3141,7 +3141,7 @@ export default function HomePage() {
                                     onClick={() => handleDeleteNewsItem(index)}
                                     aria-label="Delete news item"
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                    <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
                                 </li>
                               ))}
