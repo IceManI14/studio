@@ -2754,17 +2754,20 @@ export default function HomePage() {
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0">
                     <div className="flex w-full items-center">
-                        <div className="flex items-center justify-center gap-1">
-                            <PackageCheck className="h-7 w-7 text-primary" />
+                        <div className="flex items-center justify-start w-10 shrink-0">
+                           <PackageCheck className="h-7 w-7 text-primary" />
+                        </div>
+                        <div className="flex items-center justify-center gap-2 flex-1">
                             <h2 className="text-2xl font-headline font-semibold text-foreground">
                                 Active Free Trials
                             </h2>
                             {activeFreeTrials.length > 0 && (
-                                <Badge variant="secondary" className="text-base ml-2">
+                                <Badge variant="secondary" className="text-base">
                                     {activeFreeTrials.length}
                                 </Badge>
                             )}
                         </div>
+                        <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
