@@ -1194,7 +1194,7 @@ export default function HomePage() {
       if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
       
       const defaultNewsItems = [
-          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
+          "No new installs are to be scheduled on Thursdays until further notice.",
           "To compensate, Friday and Tuesday are now fully open for new installations.",
           "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
           "The annual sales competition begins next month! More details to follow."
@@ -2097,22 +2097,6 @@ export default function HomePage() {
           </h1>
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto mt-2">
-              <div className="flex justify-center items-center text-md font-medium text-foreground mb-2">
-                {isFetchingCity ? (
-                  <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Determining current city...</span>
-                  </div>
-                ) : (
-                  currentCity && (
-                    <>
-                      <MapPin className="mr-2 h-4 w-4 text-primary" />
-                      <span>Currently Located: {currentCity}</span>
-                    </>
-                  )
-                )}
-              </div>
-
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem ref={dailyPlanRef} value="daily-plan" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -2123,10 +2107,6 @@ export default function HomePage() {
                           <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
-                        <CalendarIcon className="h-3 w-3" />
-                        {format(new Date(), 'MMM d, yyyy')}
-                      </span>
                       <div className="flex justify-end min-w-[80px]">
                         {targetDestination && (
                             <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
@@ -2136,6 +2116,19 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
+                      {isFetchingCity ? (
+                        <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <span>Determining current city...</span>
+                        </div>
+                      ) : (
+                        currentCity && (
+                          <div className="flex justify-center items-center text-md font-medium text-foreground">
+                            <MapPin className="mr-2 h-4 w-4 text-primary" />
+                            <span>{currentCity}</span>
+                          </div>
+                        )
+                      )}
                       {todaysScheduledVisits.length > 0 && (
                           <Alert
                             variant="default"
@@ -2749,7 +2742,7 @@ export default function HomePage() {
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                       <div className="flex w-full items-center">
                         <div className="flex items-center justify-start w-10 shrink-0">
-                          <Flame className="h-7 w-7 text-red-500" />
+                          <Flame className="h-7 w-7 text-orange-500" />
                         </div>
                         <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
                               Flagged Hotspots
@@ -2764,7 +2757,7 @@ export default function HomePage() {
                                   No hotspots flagged yet.
                               </p>
                               <p className="text-muted-foreground">
-                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
+                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
                               </p>
                           </div>
                       ) : (
@@ -3149,7 +3142,7 @@ export default function HomePage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
-                    <UiCard className="bg-card border border-primary/20 rounded-t-none border-t-0">
+                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
                       <UiCardContent className="pt-6">
                         {newsItems.length > 0 ? (
                             <ul className="space-y-3 text-sm text-foreground">
@@ -3261,7 +3254,7 @@ export default function HomePage() {
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
-                        <Flame className="h-7 w-7 text-red-500" />
+                        <Flame className="h-7 w-7 text-orange-500" />
                       </div>
                       <h2 id="hot-leads-title" className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
                         Hot Leads ({hotLeads.length})
@@ -3390,7 +3383,7 @@ export default function HomePage() {
                                                   </AlertDialog>
                                               </div>
                                           </div>
-                                      )})}
+                                      })}
                                   </div>
                               </ScrollArea>
                           )}
@@ -3448,7 +3441,7 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
                                 <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
@@ -3690,10 +3683,10 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-muted text-foreground shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
-        <Flame className="h-8 w-8" />
+        <Flame className="h-8 w-8 text-black" />
       </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
@@ -3704,8 +3697,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
-
-
