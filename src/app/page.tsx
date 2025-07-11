@@ -253,6 +253,7 @@ export default function HomePage() {
   const hotLeadsRef = useRef<HTMLDivElement>(null);
   const companyDocsRef = useRef<HTMLDivElement>(null);
   const debbieRef = useRef<HTMLDivElement>(null);
+  const visitCardsRef = useRef<HTMLDivElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -2269,7 +2270,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          Click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location, pre-filled with company details when possible.
+                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location, pre-filled with company details when possible.
                       </p>
                        <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
@@ -2552,15 +2553,31 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <CallDayVisitList 
-                  visits={sortedVisitsForCallDay}
-                  onEdit={handleEditVisit}
-                  onDelete={handleDeleteVisit}
-                  onUpdateDealClosed={handleUpdateDealClosed}
-                  onZoom={setZoomedVisit}
-                  onLogFollowUp={handleLogFollowUp}
-                  onDictateNotes={handleDictateNotes}
-                />
+                <Accordion type="single" collapsible defaultValue="visit-cards" className="w-full">
+                  <AccordionItem ref={visitCardsRef} value="visit-cards" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, visitCardsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                      <div className="flex items-center justify-center w-full">
+                        <div className="flex items-center justify-center gap-2">
+                          <ListChecks className="h-5 w-5 text-primary" />
+                          <h3 className="text-lg font-medium text-foreground text-center">
+                            Visit Cards ({sortedVisitsForCallDay.length})
+                          </h3>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
+                      <CallDayVisitList 
+                        visits={sortedVisitsForCallDay}
+                        onEdit={handleEditVisit}
+                        onDelete={handleDeleteVisit}
+                        onUpdateDealClosed={handleUpdateDealClosed}
+                        onZoom={setZoomedVisit}
+                        onLogFollowUp={handleLogFollowUp}
+                        onDictateNotes={handleDictateNotes}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
             </div>
           )}
@@ -2725,7 +2742,7 @@ export default function HomePage() {
                                   No hotspots flagged yet.
                               </p>
                               <p className="text-muted-foreground">
-                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
+                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-accent text-black shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
                               </p>
                           </div>
                       ) : (
@@ -3197,8 +3214,8 @@ export default function HomePage() {
                                               {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
                                               <span className="ml-1">Analyze</span>
                                           </Button>
-                                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
-                                              <Trash2 className="h-4 w-4 text-red-500" />
+                                          <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
+                                              <Trash2 className="h-4 w-4 text-destructive-foreground" />
                                               <span className="sr-only">Delete {doc.name}</span>
                                           </Button>
                                         </div>
@@ -3409,13 +3426,13 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-accent text-black shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
-                                <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
+                                <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
                             </li>
                             <li>
-                                <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
+                                <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
                             </li>
                         </ul>
                     </TabsContent>
@@ -3651,7 +3668,7 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-accent text-black shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
         <Flame className="h-8 w-8" />
