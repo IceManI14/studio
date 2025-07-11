@@ -352,8 +352,21 @@ export async function findCompanyAction(
 }> {
   try {
     const validatedPayload = findCompanySchema.parse(payload);
-    const { companyName, city, territoryCities, territory } = validatedPayload;
+    let { companyName, city, territoryCities, territory } = validatedPayload;
 
+    // Intelligent Search Logic: If the companyName matches a territory city,
+    // change the search mode to find businesses IN that city.
+    const potentialCityMatch = (territoryCities || []).find(
+      (tc) => tc.toLowerCase().startsWith(companyName.toLowerCase())
+    );
+
+    if (potentialCityMatch && !city) {
+      // User searched for a city name, not a company.
+      // Set the city for the search and clear the company name to find all establishments.
+      city = potentialCityMatch;
+      companyName = 'business'; // Generic term to find establishments
+    }
+    
     const citiesToSearch = city && city.trim() ? [city.trim()] : (territoryCities || []);
     const allPlaces: PlaceDetails[] = [];
     const foundPlaceIds = new Set<string>();
@@ -406,7 +419,7 @@ export async function findCompanyAction(
     }
     
     if (allPlaces.length === 0) {
-      return { error: `No branches of '${companyName}' found in the specified territory.` };
+      return { error: `No branches of '${validatedPayload.companyName}' found in the specified territory.` };
     }
 
     const places = allPlaces.map(result => ({
