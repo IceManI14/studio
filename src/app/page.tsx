@@ -2454,7 +2454,7 @@ export default function HomePage() {
                                         {isRecordingCitySearch ? (
                                             <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                         ) : (
-                                            <Mic className="h-4 w-4 text-muted-foreground" />
+                                            <Mic className="h-4 w-4 text-foreground" />
                                         )}
                                         </Button>
                                     </div>
@@ -2531,7 +2531,7 @@ export default function HomePage() {
                   {isRecordingSearch ? (
                     <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                   ) : (
-                    <Mic className="h-4 w-4 text-muted-foreground" />
+                    <Mic className="h-4 w-4 text-foreground" />
                   )}
                 </Button>
               </div>
@@ -2977,7 +2977,7 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="debbie-chat">
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center w-full">
+                    <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <Bot className="h-7 w-7 text-primary" />
                       </div>
@@ -3101,7 +3101,7 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
                 <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center w-full">
+                    <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <Newspaper className="h-7 w-7 text-primary" />
                       </div>
@@ -3155,7 +3155,7 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
                 <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center w-full">
+                    <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <FileText className="h-7 w-7 text-primary" />
                       </div>
@@ -3226,7 +3226,7 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center w-full">
+                    <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <Flame className="h-7 w-7 text-orange-500" />
                       </div>
@@ -3306,7 +3306,7 @@ export default function HomePage() {
                                                           {isRecordingHotLeadNotes === lead.id ? (
                                                             <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                                           ) : (
-                                                            <Mic className="h-4 w-4 text-muted-foreground" />
+                                                            <Mic className="h-4 w-4 text-foreground" />
                                                           )}
                                                         </Button>
                                                       </div>
@@ -3567,7 +3567,7 @@ export default function HomePage() {
                                     {isRecordingDestinationSearch ? (
                                         <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                     ) : (
-                                        <Mic className="h-4 w-4 text-muted-foreground" />
+                                        <Mic className="h-4 w-4 text-foreground" />
                                     )}
                                 </Button>
                             </div>

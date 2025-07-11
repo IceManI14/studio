@@ -173,7 +173,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                                 {recordingField === 'company' ? (
                                     <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                 ) : (
-                                    <Mic className="h-4 w-4 text-muted-foreground" />
+                                    <Mic className="h-4 w-4 text-foreground" />
                                 )}
                             </Button>
                         </div>
@@ -200,7 +200,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                                 {recordingField === 'city' ? (
                                     <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                 ) : (
-                                    <Mic className="h-4 w-4 text-muted-foreground" />
+                                    <Mic className="h-4 w-4 text-foreground" />
                                 )}
                             </Button>
                         </div>
