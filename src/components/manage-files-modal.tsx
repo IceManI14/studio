@@ -121,7 +121,7 @@ export default function ManageFilesModal({ isOpen, onClose, managedFiles, onFile
                                             <span className="truncate text-sm" title={file.name}>{file.name}</span>
                                         </div>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDeleteFile(file.url)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                            <Trash2 className="h-4 w-4 text-red-500" />
                                             <span className="sr-only">Delete {file.name}</span>
                                         </Button>
                                     </li>

@@ -3120,7 +3120,7 @@ export default function HomePage() {
                                     onClick={() => handleDeleteNewsItem(index)}
                                     aria-label="Delete news item"
                                   >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    <Trash2 className="h-4 w-4 text-red-500" />
                                   </Button>
                                 </li>
                               ))}
@@ -3193,7 +3193,7 @@ export default function HomePage() {
                                               <span className="ml-1">Analyze</span>
                                           </Button>
                                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
-                                              <Trash2 className="h-4 w-4 text-destructive" />
+                                              <Trash2 className="h-4 w-4 text-red-500" />
                                               <span className="sr-only">Delete {doc.name}</span>
                                           </Button>
                                         </div>
