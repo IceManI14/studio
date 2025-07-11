@@ -2757,7 +2757,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <PackageCheck className="h-7 w-7 text-primary" />
                       </div>
-                      <div className="text-2xl font-headline font-semibold text-foreground text-center flex-1 flex items-center justify-center gap-3">
+                      <div className="text-2xl font-headline font-semibold text-foreground text-center flex-1 flex items-center justify-center gap-4">
                         <h2>Active Free Trials</h2>
                         {activeFreeTrials.length > 0 && (
                           <Badge variant="secondary" className="text-base">
