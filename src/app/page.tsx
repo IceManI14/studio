@@ -2352,7 +2352,7 @@ export default function HomePage() {
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                          className={cn("rounded-md border self-center", "bluish-glow")}
+                          className={cn("rounded-md border", "bluish-glow")}
                           modifiers={{
                             logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
@@ -3085,7 +3085,7 @@ export default function HomePage() {
                             aria-label="Speak message"
                             title="Speak message"
                           >
-                            {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                            {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4 text-foreground" />}
                           </Button>
                           <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
                             {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -3217,12 +3217,6 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <div className="flex justify-center">
-                <Button onClick={() => setIsFindCompanyModalOpen(true)} size="sm">
-                    <Search className="mr-2 h-4 w-4" /> Find Company
-                </Button>
-              </div>
-
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
@@ -3265,6 +3259,11 @@ export default function HomePage() {
                           </div>
                       </UiCardHeader>
                       <UiCardContent className="flex-grow flex flex-col">
+                          <div className="mb-4 flex justify-center">
+                              <Button onClick={() => setIsFindCompanyModalOpen(true)} size="sm">
+                                  <Search className="mr-2 h-4 w-4" /> Find Company
+                              </Button>
+                          </div>
                           {hotLeads.length === 0 ? (
                               <div className="flex-grow flex items-center justify-center">
                                   <p className="text-sm text-muted-foreground text-center py-4">No hot leads yet. Use the "Find Company" feature to start building your list.</p>
@@ -3334,7 +3333,7 @@ export default function HomePage() {
                                                   <AlertDialog>
                                                       <AlertDialogTrigger asChild>
                                                           <Button variant="destructive" size="icon" className="h-7 w-7">
-                                                              <Trash2 className="h-4 w-4 text-red-500" />
+                                                              <Trash2 className="h-4 w-4" />
                                                           </Button>
                                                       </AlertDialogTrigger>
                                                       <AlertDialogContent>
