@@ -226,7 +226,7 @@ export default function HomePage() {
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState('');
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
-  const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string | undefined>();
+  const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string[]>([]);
   const [companyDocs, setCompanyDocs] = useState<CompanyDoc[]>([]);
   const [newDocName, setNewDocName] = useState('');
   const [newDocUrl, setNewDocUrl] = useState('');
@@ -545,12 +545,14 @@ export default function HomePage() {
 
         if (expandOnClose && finalVisit.id) {
           setActiveTab('field-day');
-          setFieldDayAccordionValue(finalVisit.id);
+          if (!fieldDayAccordionValue.includes(finalVisit.id)) {
+            setFieldDayAccordionValue(prev => [...prev, finalVisit.id!]);
+          }
         }
 
         resolve(finalVisit);
     });
-  }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue]);
+  }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue, fieldDayAccordionValue]);
 
   const handleToggleChatVoice = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -2282,8 +2284,7 @@ export default function HomePage() {
                     </div>
                 ) : (
                   <Accordion 
-                    type="single" 
-                    collapsible
+                    type="multiple"
                     className="w-full space-y-4"
                     value={fieldDayAccordionValue}
                     onValueChange={setFieldDayAccordionValue}
@@ -2727,7 +2728,7 @@ export default function HomePage() {
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                       <div className="flex w-full items-center">
                         <div className="flex items-center justify-start w-10 shrink-0">
-                          <Flame className="h-7 w-7 text-orange-500" />
+                          <Flame className="h-7 w-7 text-red-500" />
                         </div>
                         <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
                               Flagged Hotspots
@@ -2742,7 +2743,7 @@ export default function HomePage() {
                                   No hotspots flagged yet.
                               </p>
                               <p className="text-muted-foreground">
-                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
+                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
                               </p>
                           </div>
                       ) : (
@@ -3239,7 +3240,7 @@ export default function HomePage() {
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
                       <div className="flex items-center justify-start w-10 shrink-0">
-                        <Flame className="h-7 w-7 text-orange-500" />
+                        <Flame className="h-7 w-7 text-red-500" />
                       </div>
                       <h2 id="hot-leads-title" className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
                         Hot Leads ({hotLeads.length})
@@ -3426,7 +3427,7 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
                                 <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
@@ -3668,7 +3669,7 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
         <Flame className="h-8 w-8" />
@@ -3682,4 +3683,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 
