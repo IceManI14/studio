@@ -1147,13 +1147,25 @@ export default function HomePage() {
       setSelectedSalesperson(defaultSalesperson);
 
       const localVisits = localStorage.getItem('visits');
-      const parsedVisits = localVisits ? JSON.parse(localVisits).map((v: any) => ({
-          ...v,
-          timestamp: new Date(v.timestamp),
-          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
-      })) : [];
-      setVisits(parsedVisits);
+      if (localVisits) {
+          const parsedVisits = JSON.parse(localVisits).map((v: any) => {
+              // Helper to safely create a Date object
+              const toSafeDate = (dateString: any): Date | undefined => {
+                  if (!dateString) return undefined;
+                  const date = new Date(dateString);
+                  // Check if the date is valid. getTime() on an invalid date returns NaN.
+                  return isNaN(date.getTime()) ? undefined : date;
+              };
+              
+              return {
+                  ...v,
+                  timestamp: toSafeDate(v.timestamp) || new Date(), // Fallback to now if timestamp is invalid
+                  futureMeetingDateTime: toSafeDate(v.futureMeetingDateTime),
+                  freeTrialStartDate: toSafeDate(v.freeTrialStartDate),
+              };
+          });
+          setVisits(parsedVisits);
+      }
       
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
@@ -1194,7 +1206,7 @@ export default function HomePage() {
       if (!startupSequenceDone) {
           sessionStorage.setItem('startupSequenceDone', 'true');
 
-          const scheduledToday = parsedVisits.filter((visit: Visit) =>
+          const scheduledToday = (localVisits ? JSON.parse(localVisits) : []).filter((visit: Visit) =>
               visit.futureMeetingSet &&
               visit.futureMeetingDateTime &&
               isToday(new Date(visit.futureMeetingDateTime))
@@ -1215,7 +1227,8 @@ export default function HomePage() {
 
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
-      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device."});
+      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device. Some data may be missing."});
+      localStorage.removeItem('visits'); // Clear corrupted data to prevent future errors
     }
   }, [toast]);
   
