@@ -254,6 +254,7 @@ export default function HomePage() {
   const companyDocsRef = useRef<HTMLDivElement>(null);
   const debbieRef = useRef<HTMLDivElement>(null);
   const visitCardsRef = useRef<HTMLDivElement>(null);
+  const todaysVisitsRef = useRef<HTMLDivElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -2283,51 +2284,67 @@ export default function HomePage() {
                         </Alert>
                     </div>
                 ) : (
-                  <Accordion 
-                    type="multiple"
-                    className="w-full space-y-4"
-                    value={fieldDayAccordionValue}
-                    onValueChange={setFieldDayAccordionValue}
-                  >
-                    {todaysVisits.map((visit) => (
-                      <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-                        <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
-                           <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                              <div className="flex flex-1 items-center gap-3 min-w-0">
-                                <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-                                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                              </div>
-                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-                                ) : (
-                                    <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
-                                )}
-                                {visit.partnershipConfidence && (
-                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                    <span className="leading-none">{visit.partnershipConfidence}</span>
-                                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                  </Badge>
-                                )}
-                                {visit.futureMeetingSet && (
-                                  <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
-                                )}
-                              </div>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4">
-                          <VisitCard
-                            visit={visit}
-                            onEdit={handleEditVisit}
-                            onDelete={handleDeleteVisit}
-                            onUpdateDealClosed={handleUpdateDealClosed}
-                            onZoom={setZoomedVisit}
-                            onLogFollowUp={handleLogFollowUp}
-                            onDictateNotes={handleDictateNotes}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
+                  <Accordion type="single" collapsible defaultValue="todays-visits" className="w-full">
+                    <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
+                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                        <div className="flex items-center justify-center w-full">
+                          <div className="flex items-center justify-center gap-2">
+                            <PlusCircle className="h-5 w-5 text-primary" />
+                            <h3 className="text-lg font-medium text-foreground text-center">
+                              Today's Visits ({todaysVisits.length})
+                            </h3>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
+                        <Accordion 
+                          type="multiple"
+                          className="w-full space-y-4"
+                          value={fieldDayAccordionValue}
+                          onValueChange={setFieldDayAccordionValue}
+                        >
+                          {todaysVisits.map((visit) => (
+                            <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+                              <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
+                                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                    <div className="flex flex-1 items-center gap-3 min-w-0">
+                                      <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+                                      <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                      {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                          <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
+                                      ) : (
+                                          <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
+                                      )}
+                                      {visit.partnershipConfidence && (
+                                        <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                          <span className="leading-none">{visit.partnershipConfidence}</span>
+                                          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                        </Badge>
+                                      )}
+                                      {visit.futureMeetingSet && (
+                                        <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
+                                      )}
+                                    </div>
+                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="p-4">
+                                <VisitCard
+                                  visit={visit}
+                                  onEdit={handleEditVisit}
+                                  onDelete={handleDeleteVisit}
+                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                  onZoom={setZoomedVisit}
+                                  onLogFollowUp={handleLogFollowUp}
+                                  onDictateNotes={handleDictateNotes}
+                                />
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
                   </Accordion>
                 )}
             </div>
@@ -3683,5 +3700,6 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
