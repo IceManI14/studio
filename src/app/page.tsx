@@ -2352,7 +2352,7 @@ export default function HomePage() {
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                          className="rounded-md border self-center"
+                          className={cn("rounded-md border self-center", "bluish-glow")}
                           modifiers={{
                             logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
@@ -2771,7 +2771,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
-                        <div className="flex items-center justify-center gap-3 flex-1">
+                        <div className="flex-1 flex justify-center items-center gap-2">
                             <h2 className="text-2xl font-headline font-semibold text-foreground">
                                 Active Free Trials
                             </h2>
@@ -3220,7 +3220,7 @@ export default function HomePage() {
 
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className="p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0 shadow-orange-500/20">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
                       <div className="flex items-center gap-2 text-foreground">
                         <Flame className="mr-1 h-7 w-7 text-orange-500" />
