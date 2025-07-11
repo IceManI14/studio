@@ -119,7 +119,7 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   visits: Visit[],
   onEdit: (visit: Visit) => void,
   onDelete: (visitId: string) => void,
-  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void,
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => void,
   onZoom: (visit: Visit | null) => void,
   onLogFollowUp: (visit: Visit) => void,
   onDictateNotes: (visit: Visit) => void,
@@ -305,11 +305,8 @@ export default function HomePage() {
   const dealClosedDays = useMemo(() => {
     const closedDays = new Set<number>();
     visits.forEach(visit => {
-        if (visit.dealClosed) {
-            closedDays.add(startOfDay(new Date(visit.timestamp)).getTime());
-            if (visit.futureMeetingDateTime) {
-                closedDays.add(startOfDay(new Date(visit.futureMeetingDateTime)).getTime());
-            }
+        if (visit.dealClosed && visit.dealClosedDate) {
+            closedDays.add(startOfDay(new Date(visit.dealClosedDate)).getTime());
         }
     });
     return Array.from(closedDays).map(time => new Date(time));
@@ -431,7 +428,7 @@ export default function HomePage() {
   const closedDeals = useMemo(() => {
     return visits
       .filter(visit => visit.dealClosed)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      .sort((a, b) => new Date(b.dealClosedDate || b.timestamp).getTime() - new Date(a.dealClosedDate || a.timestamp).getTime());
   }, [visits]);
 
   const totalTrialCommission = useMemo(() => {
@@ -520,6 +517,7 @@ export default function HomePage() {
                   notesSummary: payload.notesSummary || undefined,
                   contactInfo: payload.contactInfo || undefined,
                   dealClosed: payload.dealClosed || false,
+                  dealClosedDate: payload.dealClosedDate ? new Date(payload.dealClosedDate) : undefined,
                   pricingDiscussed: payload.pricingDiscussed || false,
                   priceQuoted: payload.priceQuoted,
                   leaseTerm: payload.leaseTerm,
@@ -1167,6 +1165,7 @@ export default function HomePage() {
                   timestamp: toSafeDate(v.timestamp) || new Date(), // Fallback to now if timestamp is invalid
                   futureMeetingDateTime: toSafeDate(v.futureMeetingDateTime),
                   freeTrialStartDate: toSafeDate(v.freeTrialStartDate),
+                  dealClosedDate: toSafeDate(v.dealClosedDate),
               };
           });
           setVisits(parsedVisits);
@@ -1510,8 +1509,12 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    const updatedVisits = visits.map(v => v.id === visitId ? { ...v, dealClosed } : v);
+  const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => {
+    const updatedVisits = visits.map(v => 
+        v.id === visitId 
+            ? { ...v, dealClosed, dealClosedDate: dealClosed ? (dealClosedDate || v.dealClosedDate || new Date()) : undefined } 
+            : v
+    );
     setVisits(updatedVisits);
     localStorage.setItem('visits', JSON.stringify(updatedVisits));
     toast({ title: 'Deal Status Updated Locally' });
@@ -1823,6 +1826,7 @@ export default function HomePage() {
         freeTrial: false,
         freeTrialStartDate: undefined,
         dealClosed: false,
+        dealClosedDate: undefined,
         pricingDiscussed: false,
         priceQuoted: undefined,
         leaseTerm: undefined,
@@ -1906,6 +1910,7 @@ export default function HomePage() {
       freeTrial: false,
       freeTrialStartDate: undefined,
       dealClosed: false,
+      dealClosedDate: undefined,
       contactInfo: undefined,
       notesSummary: undefined,
       pricingDiscussed: false,
@@ -2000,6 +2005,7 @@ export default function HomePage() {
                     freeTrial: false,
                     freeTrialStartDate: undefined,
                     dealClosed: false,
+                    dealClosedDate: undefined,
                     pricingDiscussed: false,
                     priceQuoted: undefined,
                     leaseTerm: undefined,
@@ -2920,7 +2926,7 @@ export default function HomePage() {
                                               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                           </div>
                                           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                            <span>Closed: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+                                            <span>Closed: {format(new Date(visit.dealClosedDate || visit.timestamp), 'MMM d, yy')}</span>
                                             {visit.partnershipConfidence && (
                                                 <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
                                                     <span className="leading-none">{visit.partnershipConfidence}</span>
@@ -3541,7 +3547,7 @@ export default function HomePage() {
                   visit={zoomedVisit}
                   onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
                   onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
-                  onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
+                  onUpdateDealClosed={(id, status, date) => { handleUpdateDealClosed(id, status, date); setZoomedVisit(prev => prev ? {...prev, dealClosed: status, dealClosedDate: date} : null); }}
                   isZoomedView={true}
                   onDictateNotes={handleDictateNotes}
                   onLogFollowUp={handleLogFollowUp}
@@ -3684,10 +3690,10 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-muted text-foreground shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
-        <Flame className="h-8 w-8 text-red-500" />
+        <Flame className="h-8 w-8" />
       </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
@@ -3698,6 +3704,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
