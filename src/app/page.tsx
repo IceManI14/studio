@@ -252,6 +252,7 @@ export default function HomePage() {
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
   const companyDocsRef = useRef<HTMLDivElement>(null);
+  const debbieRef = useRef<HTMLDivElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -2770,7 +2771,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
-                        <div className="flex items-center justify-center gap-2 flex-1">
+                        <div className="flex items-center justify-center gap-3 flex-1">
                             <h2 className="text-2xl font-headline font-semibold text-foreground">
                                 Active Free Trials
                             </h2>
@@ -2973,112 +2974,126 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <UiCard className="w-full max-w-2xl mx-auto shadow-xl bg-card border-primary/20">
-                <UiCardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Bot className="h-8 w-8 text-primary" />
-                      <h2 className="text-2xl font-headline font-semibold text-foreground">
-                        Debbie
-                      </h2>
+              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="debbie-chat">
+                <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                    <div className="flex items-center justify-center w-full">
+                      <div className="flex items-center gap-2 text-foreground">
+                        <Bot className="mr-1 h-7 w-7 text-primary" />
+                        <h2 className="text-2xl font-headline font-semibold">Debbie AI Assistant</h2>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Brain className="h-5 w-5 text-muted-foreground" />
-                      <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
-                        <SelectTrigger className="w-[180px] h-9 text-xs">
-                          <SelectValue placeholder="Select AI Model" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </UiCardHeader>
-                <UiCardContent className="p-0">
-                  <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
-                    {chatMessages.map((message) => (
-                      <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-                        <div className={`flex items-end gap-2 max-w-[75%]`}>
-                          {message.sender === 'ai' && (
-                            <Avatar className="h-8 w-8 self-start">
-                              <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
-                              <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-                            <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-0">
+                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                      <UiCardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Bot className="h-8 w-8 text-primary" />
+                            <h2 className="text-2xl font-headline font-semibold text-foreground">
+                              Debbie
+                            </h2>
                           </div>
-                          {message.sender === 'user' && (
-                            <Avatar className="h-8 w-8 self-start">
-                              <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
-                              <AvatarFallback>U</AvatarFallback>
-                            </Avatar>
-                          )}
+                          <div className="flex items-center gap-2">
+                             <Brain className="h-5 w-5 text-muted-foreground" />
+                            <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                              <SelectTrigger className="w-[180px] h-9 text-xs">
+                                <SelectValue placeholder="Select AI Model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {isAiResponding && ( 
-                      <div className="flex justify-start mb-4">
-                        <div className="flex items-end gap-2 max-w-[75%]">
-                            <Avatar className="h-8 w-8 self-start">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
-                                <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
-                            <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      </UiCardHeader>
+                      <UiCardContent className="p-0">
+                        <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
+                          {chatMessages.map((message) => (
+                            <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                              <div className={`flex items-end gap-2 max-w-[75%]`}>
+                                {message.sender === 'ai' && (
+                                  <Avatar className="h-8 w-8 self-start">
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                                    <AvatarFallback>AI</AvatarFallback>
+                                  </Avatar>
+                                )}
+                                <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
+                                  <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                                  <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
+                                </div>
+                                {message.sender === 'user' && (
+                                  <Avatar className="h-8 w-8 self-start">
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
+                                    <AvatarFallback>U</AvatarFallback>
+                                  </Avatar>
+                                )}
+                              </div>
                             </div>
+                          ))}
+                          {isAiResponding && ( 
+                            <div className="flex justify-start mb-4">
+                              <div className="flex items-end gap-2 max-w-[75%]">
+                                  <Avatar className="h-8 w-8 self-start">
+                                      <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                                      <AvatarFallback>AI</AvatarFallback>
+                                  </Avatar>
+                                  <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
+                                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                  </div>
+                              </div>
+                            </div>
+                          )}
+                          <div ref={messagesEndRef} />
+                        </ScrollArea>
+                      </UiCardContent>
+                      <UiCardFooter className="p-4 space-y-2 flex-col items-start">
+                        {selectedFile && (
+                          <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
+                            <div className="flex items-center gap-2 truncate">
+                              <Paperclip className="h-4 w-4 text-primary shrink-0" />
+                              <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
+                              <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                              <span className="sr-only">Clear File</span>
+                            </Button>
+                          </div>
+                        )}
+                        <div className="flex w-full items-center space-x-2">
+                          <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
+                          <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
+                          <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
+                          <Input 
+                            type="text" 
+                            placeholder={isRecordingChat ? "Listening..." : "Type your message..."} 
+                            value={chatInput} 
+                            onChange={(e) => setChatInput(e.target.value)} 
+                            onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} 
+                            className="flex-1" 
+                            disabled={isAiResponding || isRecordingChat} 
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={handleToggleChatVoice} 
+                            disabled={isAiResponding}
+                            aria-label="Speak message"
+                            title="Speak message"
+                          >
+                            {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                          </Button>
+                          <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
+                            {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            <span className="sr-only">Send</span>
+                          </Button>
                         </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </ScrollArea>
-                </UiCardContent>
-                <UiCardFooter className="p-4 space-y-2 flex-col items-start">
-                  {selectedFile && (
-                    <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
-                      <div className="flex items-center gap-2 truncate">
-                        <Paperclip className="h-4 w-4 text-primary shrink-0" />
-                        <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
-                        <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        <span className="sr-only">Clear File</span>
-                      </Button>
-                    </div>
-                  )}
-                  <div className="flex w-full items-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
-                    <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
-                    <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
-                    <Input 
-                      type="text" 
-                      placeholder={isRecordingChat ? "Listening..." : "Type your message..."} 
-                      value={chatInput} 
-                      onChange={(e) => setChatInput(e.target.value)} 
-                      onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} 
-                      className="flex-1" 
-                      disabled={isAiResponding || isRecordingChat} 
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={handleToggleChatVoice} 
-                      disabled={isAiResponding}
-                      aria-label="Speak message"
-                      title="Speak message"
-                    >
-                      {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4" />}
-                    </Button>
-                    <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
-                      {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      <span className="sr-only">Send</span>
-                    </Button>
-                  </div>
-                </UiCardFooter>
-              </UiCard>
+                      </UiCardFooter>
+                    </UiCard>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
               )}
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
                 <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
