@@ -27,6 +27,8 @@ const ExtractVisitDetailsOutputSchema = z.object({
   futureMeetingSet: z.boolean().optional().describe("Set to true if the notes mention that a future meeting or follow-up was scheduled or booked."),
   futureMeetingDateTime: z.string().optional().describe("If a future meeting is set, extract the specific date and time. Return in a machine-readable format like 'YYYY-MM-DDTHH:mm:ss'. If only a date is mentioned, assume 9:00 AM local time."),
   freeTrial: z.boolean().optional().describe("Set to true if a free trial was discussed, agreed upon, or set up."),
+  dealClosed: z.boolean().optional().describe("Set to true if the notes indicate the deal was closed, contract was signed, or an invoice was sent."),
+  dealClosedDate: z.string().optional().describe("If the deal was closed, extract the date it was closed. Return in 'YYYY-MM-DD' format."),
 });
 export type ExtractVisitDetailsOutput = z.infer<typeof ExtractVisitDetailsOutputSchema>;
 
@@ -52,6 +54,7 @@ Analyze the following notes. Based ONLY on the text provided, extract the specif
 - If a future meeting was booked, scheduled, or agreed upon (e.g., phrases like "set a meeting", "follow-up scheduled", "booked a demo"), set futureMeetingSet to true. Also, extract the specific date and time into futureMeetingDateTime.
 - **IMPORTANT DATE LOGIC:** If a meeting is confirmed but no specific date is mentioned, you MUST infer the date as the next business day (Monday-Friday) relative to the provided 'currentDate'. If no time is mentioned, you MUST default to 9:00 AM.
 - If a free trial was set up, set freeTrial to true.
+- If the notes mention closing the deal, signing a contract, or sending an invoice (e.g., "they signed", "deal closed", "sent them the invoice on Friday"), set dealClosed to true and extract the date it happened into dealClosedDate. If no date is specified for the closing, use the 'currentDate'.
 
 Do not infer or make up information that isn't explicitly in the notes beyond the date inference instruction above. If a piece of information is not present, omit its key from the output.
 

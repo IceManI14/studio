@@ -126,6 +126,8 @@ const visitFormSchema = z.object({
   futureMeetingDateTime: z.coerce.date().optional(),
   freeTrial: z.boolean().optional(),
   freeTrialStartDate: z.coerce.date().optional(),
+  dealClosed: z.boolean().optional(),
+  dealClosedDate: z.coerce.date().optional(),
   pricingDiscussed: z.boolean().optional(),
   priceQuoted: z.coerce.number().optional(),
   leaseTerm: z.coerce.number().optional(),
@@ -175,13 +177,14 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     futureMeetingDateTime: data.futureMeetingSet ? data.futureMeetingDateTime : undefined,
     freeTrial: data.freeTrial,
     freeTrialStartDate: data.freeTrial ? data.freeTrialStartDate : undefined,
+    dealClosed: data.dealClosed,
+    dealClosedDate: data.dealClosed ? data.dealClosedDate : undefined,
     pricingDiscussed: data.pricingDiscussed,
     priceQuoted: data.pricingDiscussed ? data.priceQuoted : undefined,
     leaseTerm: data.pricingDiscussed ? data.leaseTerm : undefined,
     installationFee: data.pricingDiscussed ? data.installationFee : undefined,
     creditApproved: data.creditApproved,
     manualCommission: data.manualCommission,
-    dealClosed: visitState?.dealClosed,
     visitNumber: visitState?.visitNumber,
     contactInfo: visitState?.contactInfo,
     notesSummary: notesSummaryToSave,
@@ -316,6 +319,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingDateTime: undefined,
       freeTrial: false,
       freeTrialStartDate: undefined,
+      dealClosed: false,
+      dealClosedDate: undefined,
       pricingDiscussed: false,
       priceQuoted: undefined,
       leaseTerm: undefined,
@@ -386,6 +391,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const dealClosedValue = form.watch('dealClosed');
   
   const handleRemoveImage = useCallback(() => {
     setBusinessCardPreviewUrl(null);
@@ -592,6 +598,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
              if (updatedData.futureMeetingSet !== true) {
                updateField('futureMeetingSet', true);
              }
+        }
+        
+        if (details.dealClosed) {
+            updateField('dealClosed', true);
+            if (details.dealClosedDate) {
+                const closedDate = new Date(details.dealClosedDate);
+                if (closedDate.toString() !== 'Invalid Date') {
+                    updateField('dealClosedDate', closedDate);
+                }
+            }
         }
 
         updateField('hasBusinessCard', details.hasBusinessCard);
@@ -964,6 +980,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
       freeTrial: data?.freeTrial || false,
       freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
+      dealClosed: data?.dealClosed || false,
+      dealClosedDate: data?.dealClosedDate ? new Date(data.dealClosedDate) : undefined,
       pricingDiscussed: data?.pricingDiscussed || false,
       priceQuoted: data?.priceQuoted ?? undefined,
       leaseTerm: data?.leaseTerm ?? undefined,
@@ -1789,6 +1807,68 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   )}
                 />
               )}
+              
+              <FormField
+                control={form.control}
+                name="dealClosed"
+                render={({ field }) => (
+                  <FormItem className="rounded-md border border-green-500 bg-green-900/20 p-3 shadow-sm">
+                    <div className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            const boolValue = !!checked;
+                            field.onChange(boolValue);
+                            if (boolValue && !form.getValues('dealClosedDate')) {
+                                form.setValue('dealClosedDate', new Date());
+                            } else if (!boolValue) {
+                                form.setValue('dealClosedDate', undefined);
+                            }
+                          }}
+                          id="dealClosed"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel htmlFor="dealClosed" className="cursor-pointer font-medium text-green-400">
+                          Deal Closed!
+                        </FormLabel>
+                      </div>
+                    </div>
+                    {dealClosedValue && (
+                        <FormField
+                            control={form.control}
+                            name="dealClosedDate"
+                            render={({ field: dateField }) => (
+                                <FormItem className="flex flex-col space-y-2 pt-2 pl-8">
+                                    <FormLabel className="text-sm">Closing Date</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full pl-3 text-left font-normal",
+                                                        !dateField.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {dateField.value ? format(dateField.value, "PPP") : <span>Pick a date</span>}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar mode="single" selected={dateField.value} onSelect={dateField.onChange} initialFocus />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                  </FormItem>
+                )}
+              />
 
               <div className="space-y-3 pt-2 p-3 border border-accent rounded-md bg-background/10">
                 <Label className="font-medium text-base">Competitor Name (If Noted)</Label>

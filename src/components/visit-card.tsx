@@ -18,12 +18,15 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { format } from 'date-fns';
 
 interface VisitCardProps {
   visit: Visit;
   onEdit: (visit: Visit) => void;
   onDelete: (visitId: string) => void;
-  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => void;
   onZoom?: (visit: Visit | null) => void;
   isZoomedView?: boolean;
   onLogFollowUp?: (visit: Visit) => void;
@@ -38,8 +41,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
-  const handleDealClosedChange = (checked: boolean | 'indeterminate') => {
-    onUpdateDealClosed(visit.id, !!checked);
+  const handleDealClosedChange = (checked: boolean | 'indeterminate', date?: Date) => {
+    onUpdateDealClosed(visit.id, !!checked, date);
   };
 
   const handleSummarizeAgain = async () => {
@@ -501,12 +504,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           <Checkbox 
             id={`deal-closed-${visit.id}`} 
             checked={!!visit.dealClosed}
-            onCheckedChange={handleDealClosedChange}
+            onCheckedChange={(checked) => handleDealClosedChange(checked, new Date())}
             aria-label="Mark deal as closed"
           />
           <Label htmlFor={`deal-closed-${visit.id}`} className="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400">
             Deal Closed!
           </Label>
+          {visit.dealClosed && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={visit.dealClosedDate ? new Date(visit.dealClosedDate) : new Date()}
+                  onSelect={(date) => handleDealClosedChange(true, date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+          {visit.dealClosed && visit.dealClosedDate && (
+              <span className="text-xs text-muted-foreground">({format(new Date(visit.dealClosedDate), "MMM d")})</span>
+          )}
         </div>
 
         <div className="flex justify-end gap-1">

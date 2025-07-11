@@ -44,6 +44,7 @@ export interface Visit {
   freeTrial?: boolean;
   freeTrialStartDate?: Date;
   dealClosed?: boolean;
+  dealClosedDate?: Date;
   pricingDiscussed?: boolean;
   priceQuoted?: number;
   leaseTerm?: number;

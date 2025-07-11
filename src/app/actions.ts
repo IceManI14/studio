@@ -41,7 +41,7 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     // --- Defensive Data Sanitization ---
     // Each field is meticulously checked and sanitized to prevent invalid data from reaching Firestore.
     // This robust approach prevents the server crashes that were causing the "unexpected error".
-    const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
+    const visitForDb: Omit<Visit, 'id'> = {
       companyName: payload.companyName.trim(),
       city: payload.city ?? null,
       timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
@@ -66,6 +66,8 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       futureMeetingDateTime: (payload.futureMeetingSet || false) && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
       freeTrial: payload.freeTrial || false,
       freeTrialStartDate: (payload.freeTrial || false) && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
+      dealClosed: payload.dealClosed || false,
+      dealClosedDate: (payload.dealClosed || false) && payload.dealClosedDate && new Date(payload.dealClosedDate).toString() !== 'Invalid Date' ? new Date(payload.dealClosedDate) : null,
       pricingDiscussed: payload.pricingDiscussed || false,
       priceQuoted: (payload.pricingDiscussed || false) && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
       leaseTerm: (payload.pricingDiscussed || false) && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
@@ -84,10 +86,10 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
-      dealClosed: payload.dealClosed || false,
       timestamp: new Date(visitForDb.timestamp),
       futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
       freeTrialStartDate: visitForDb.freeTrialStartDate ? new Date(visitForDb.freeTrialStartDate) : undefined,
+      dealClosedDate: visitForDb.dealClosedDate ? new Date(visitForDb.dealClosedDate) : undefined,
     };
 
     return { visit: finalVisitData, isNewVisit };
@@ -446,7 +448,7 @@ export async function findCompanyAction(
 }
 
 // Action to update the dealClosed status from the card
-export async function updateDealClosedAction(visitId: string, dealClosed: boolean): Promise<{ success?: boolean, error?: string }> {
+export async function updateDealClosedAction(visitId: string, dealClosed: boolean, dealClosedDate?: Date): Promise<{ success?: boolean, error?: string }> {
     if (!db) {
         return { error: 'Firebase is not configured. Cannot update visit.' };
     }
@@ -456,7 +458,14 @@ export async function updateDealClosedAction(visitId: string, dealClosed: boolea
 
     try {
         const visitDocRef = doc(db, 'visits', visitId);
-        await setDoc(visitDocRef, { dealClosed }, { merge: true });
+        const updatePayload: { dealClosed: boolean, dealClosedDate?: Date | null } = { dealClosed };
+        if (dealClosed) {
+            updatePayload.dealClosedDate = dealClosedDate || new Date(); // Default to now if not provided
+        } else {
+            updatePayload.dealClosedDate = null; // Clear date if deal is un-closed
+        }
+
+        await setDoc(visitDocRef, updatePayload, { merge: true });
         return { success: true };
     } catch (error: any) {
         console.error("Error in updateDealClosedAction:", error);
@@ -489,7 +498,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       'Has Business Card', 'Business Card Front URL', 'Business Card Back URL', 'Discussed Competitors', 
       'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
       'Decision Maker Contact', 'Visit Number', 'Interested Units', 'Has TDS Reading', 
-      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
+      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed', 'Deal Closed Date',
       'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission Override'
     ];
     const rows = visits.map(visit => [
@@ -522,6 +531,7 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.freeTrial ? 'Yes' : 'No',
       visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
       visit.dealClosed ? 'Yes' : 'No',
+      visit.dealClosedDate ? new Date(visit.dealClosedDate).toISOString() : '',
       visit.pricingDiscussed ? 'Yes' : 'No',
       visit.priceQuoted ?? '',
       visit.leaseTerm ?? '',
