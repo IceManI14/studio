@@ -2083,7 +2083,7 @@ export default function HomePage() {
       />
       <div className="container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
-          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg">
+          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
@@ -2742,7 +2742,7 @@ export default function HomePage() {
                                   No hotspots flagged yet.
                               </p>
                               <p className="text-muted-foreground">
-                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-accent text-black shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
+                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
                               </p>
                           </div>
                       ) : (
@@ -3141,7 +3141,7 @@ export default function HomePage() {
                                     onClick={() => handleDeleteNewsItem(index)}
                                     aria-label="Delete news item"
                                   >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    <Trash2 className="h-4 w-4 text-red-500" />
                                   </Button>
                                 </li>
                               ))}
@@ -3215,7 +3215,7 @@ export default function HomePage() {
                                               <span className="ml-1">Analyze</span>
                                           </Button>
                                           <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
-                                              <Trash2 className="h-4 w-4 text-destructive-foreground" />
+                                              <Trash2 className="h-4 w-4" />
                                               <span className="sr-only">Delete {doc.name}</span>
                                           </Button>
                                         </div>
@@ -3426,7 +3426,7 @@ export default function HomePage() {
                                 <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
                             </li>
                             <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-accent text-black shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-orange-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
                                 <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
@@ -3668,7 +3668,7 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-accent text-black shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
         <Flame className="h-8 w-8" />
@@ -3682,3 +3682,4 @@ export default function HomePage() {
     </div>
   );
 }
+
