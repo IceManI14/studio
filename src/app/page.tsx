@@ -2977,11 +2977,14 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="debbie-chat">
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center justify-center w-full">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <Bot className="mr-1 h-7 w-7 text-primary" />
-                        <h2 className="text-2xl font-headline font-semibold">Debbie AI Assistant</h2>
+                    <div className="flex items-center w-full">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <Bot className="h-7 w-7 text-primary" />
                       </div>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                        Debbie AI Assistant
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
@@ -3098,11 +3101,12 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
                 <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center justify-center w-full">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <Newspaper className="mr-1 h-7 w-7 text-primary" />
-                        <h2 className="text-2xl font-headline font-semibold">Optimum New England News</h2>
+                    <div className="flex items-center w-full">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <Newspaper className="h-7 w-7 text-primary" />
                       </div>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Optimum New England News</h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
@@ -3151,11 +3155,12 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
                 <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center justify-center w-full">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <FileText className="mr-1 h-7 w-7 text-primary" />
-                        <h2 className="text-2xl font-headline font-semibold">Company Documents</h2>
+                    <div className="flex items-center w-full">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <FileText className="h-7 w-7 text-primary" />
                       </div>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Company Documents</h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
@@ -3221,11 +3226,14 @@ export default function HomePage() {
               <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto" defaultValue="hot-leads">
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex items-center justify-center w-full">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <Flame className="mr-1 h-7 w-7 text-orange-500" />
-                        <h2 id="hot-leads-title" className="text-2xl font-headline font-semibold">Hot Leads ({hotLeads.length})</h2>
+                    <div className="flex items-center w-full">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <Flame className="h-7 w-7 text-orange-500" />
                       </div>
+                      <h2 id="hot-leads-title" className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                        Hot Leads ({hotLeads.length})
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
@@ -3326,7 +3334,7 @@ export default function HomePage() {
                                                   <AlertDialog>
                                                       <AlertDialogTrigger asChild>
                                                           <Button variant="destructive" size="icon" className="h-7 w-7">
-                                                              <Trash2 className="h-4 w-4" />
+                                                              <Trash2 className="h-4 w-4 text-red-500" />
                                                           </Button>
                                                       </AlertDialogTrigger>
                                                       <AlertDialogContent>
