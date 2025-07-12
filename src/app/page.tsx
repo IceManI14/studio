@@ -3687,7 +3687,7 @@ export default function HomePage() {
         className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
-        <Flame className="h-8 w-8 text-black" />
+        <Flame className="h-8 w-8 text-white" />
       </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
