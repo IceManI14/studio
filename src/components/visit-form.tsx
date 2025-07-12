@@ -164,7 +164,8 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     longitude: currentLongitude,
     partnershipConfidence: data.partnershipConfidence,
     hasBusinessCard: data.hasBusinessCard,
-    businessCardImageUrl: data.hasBusinessCard ? data.businessCardImageUrl : null,
+    businessCardImageFrontUrl: data.hasBusinessCard ? data.businessCardImageUrl : null,
+    businessCardImageBackUrl: visitState?.businessCardImageBackUrl,
     competitorName: data.competitorName,
     coolerType: data.competitorName ? data.coolerType : undefined,
     decisionMakerName: data.decisionMakerName,
@@ -967,7 +968,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       longitude: data?.longitude ?? undefined,
       partnershipConfidence: data?.partnershipConfidence ?? undefined,
       hasBusinessCard: data?.hasBusinessCard || false,
-      businessCardImageUrl: data?.businessCardImageUrl || null,
+      businessCardImageUrl: data?.businessCardImageFrontUrl || null,
       competitorName: data?.competitorName || undefined,
       coolerType: data?.coolerType || undefined,
       decisionMakerName: data?.decisionMakerName || '',
@@ -992,7 +993,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     form.reset(defaultValues);
     setCurrentLatitude(data?.latitude ?? undefined);
     setCurrentLongitude(data?.longitude ?? undefined);
-    setBusinessCardPreviewUrl(data?.businessCardImageUrl || null);
+    setBusinessCardPreviewUrl(data?.businessCardImageFrontUrl || null);
     setCustomCoolerNameInput('');
     setIsCameraViewVisible(false);
     setHasCameraPermission(null);
@@ -2143,7 +2144,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
 
               <DialogFooter className="pt-4">
-                <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow w-full">
+                <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="w-full">
                   {(isSaving || isSuggestingCompany || isUploadingCard || isAnalyzingNotes) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {(isRecordingNotes || isRecordingCompanyName) && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                   {initialData?.id ? 'Save Changes & Close' : 'Log Meeting & Close'}
