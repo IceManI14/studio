@@ -167,7 +167,8 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
       ))}
     </Accordion>
   )
-});
+}
+);
 
 export default function HomePage() {
   // State and Refs
