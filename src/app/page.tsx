@@ -2498,7 +2498,7 @@ export default function HomePage() {
                                       ) : sortCriteria === 'timestamp' ? (
                                         <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
                                       ) : ( // Default is partnershipConfidence
-                                        <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
+                                        <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to Low</SelectItem> </>
                                       )}
                                     </SelectContent>
                                   </Select>
