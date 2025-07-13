@@ -226,12 +226,12 @@ export default function HomePage() {
   const [isRecordingDestinationSearch, setIsRecordingDestinationSearch] = useState(false);
   const [newsItems, setNewsItems] = useState<string[]>([]);
   const [newNewsItem, setNewNewsItem] = useState('');
-  const [addingFutureVisit, setAddingFutureVisit] = useState(false);
   const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string[]>([]);
   const [companyDocs, setCompanyDocs] = useState<CompanyDoc[]>([]);
   const [newDocName, setNewDocName] = useState('');
   const [newDocUrl, setNewDocUrl] = useState('');
   const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
+  const [addingFutureVisit, setAddingFutureVisit] = useState(false);
   
   const { toast } = useToast();
   const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -2085,7 +2085,6 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
   
-}
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
