@@ -126,15 +126,10 @@ export default function HomePage() {
         },
         (error) => {
           console.error("Error getting user location:", error);
-          toast({
-              variant: 'destructive',
-              title: 'Location Access Denied',
-              description: 'Could not get your location. Some features may be limited. Please enable location access in your browser settings.',
-          });
         }
       );
     }
-  }, [toast]);
+  }, []);
 
   const handleUpdateDealClosed = useCallback(async (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => {
     const visitToUpdate = allVisits.find(v => v.id === visitId);
