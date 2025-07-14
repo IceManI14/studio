@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
   input: {schema: ChatWithVisitsInputSchema.omit({modelName: true})}, // modelName is used by the flow, not the prompt template directly
   output: {schema: ChatWithVisitsOutputSchema},
   tools: [readFromDropboxLinkTool],
-  prompt: `You are Optimum Trailblazer AI, a friendly and highly knowledgeable sales assistant for Optimum, a company specializing in water solutions (filtration, bottle-free coolers, etc.).
+  prompt: `You are Debbie, a friendly and highly knowledgeable sales assistant for Optimum, a company specializing in water solutions (filtration, bottle-free coolers, etc.).
 Your goal is to help the salesperson plan their day, analyze visit data, and strategize.
 
 {{#if newsItems}}
