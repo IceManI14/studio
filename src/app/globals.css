@@ -5,33 +5,33 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 220 20% 7%;
     --foreground: 210 40% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 220 20% 11%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 240 10% 3.9%;
+    --popover: 220 20% 7%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 263.4 70% 50.4%; /* A vibrant violet */
+    --primary: 175 80% 40%;
     --primary-foreground: 210 40% 98%;
  
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 217 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
  
-    --muted: 240 3.7% 15.9%;
+    --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
  
-    --accent: 240 3.7% 15.9%;
+    --accent: 175 70% 30%;
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263.4 70% 50.4%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 175 80% 45%;
     
     --radius: 0.5rem;
   }
@@ -43,8 +43,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #020617 100%);
+    background: radial-gradient(circle, hsl(200 15% 15%) 0%, hsl(220 20% 7%) 100%);
   }
 }
-
-    
