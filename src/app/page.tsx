@@ -46,6 +46,7 @@ import ExportHotLeadsCsvButton from '@/components/export-hot-leads-csv-button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 const GoogleMapComponent = dynamic(() => import('@/components/google-map'), {
   ssr: false,
@@ -125,11 +126,23 @@ export default function HomePage() {
           setUserLongitude(position.coords.longitude);
         },
         (error) => {
-          console.error("Error getting user location:", error);
+            let errorMessage = "Could not retrieve location. This may happen on insecure (http) connections.";
+            if (error.code === error.PERMISSION_DENIED) {
+              errorMessage = "Location access denied by user.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              errorMessage = "Location information is unavailable.";
+            } else if (error.code === error.TIMEOUT) {
+              errorMessage = "The request to get user location timed out.";
+            }
+            toast({
+                variant: 'destructive',
+                title: 'Geolocation Error',
+                description: errorMessage,
+            });
         }
       );
     }
-  }, []);
+  }, [toast]);
 
   const handleUpdateDealClosed = useCallback(async (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => {
     const visitToUpdate = allVisits.find(v => v.id === visitId);
@@ -537,6 +550,12 @@ export default function HomePage() {
               Get Daily Report (CSV)
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuLabel>App</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/about">
+                <Info className="mr-2 h-4 w-4" /> About
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setSalesperson(null)}>
               <Users className="mr-2 h-4 w-4" />
               Switch Salesperson
