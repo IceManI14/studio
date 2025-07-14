@@ -30,8 +30,12 @@ const DUMMY_HOT_LEADS: HotLead[] = [
 
 export default function HomePage() {
   const [salesperson, setSalesperson] = useState<Salesperson>(DUMMY_SALESPERSON);
-  const [currentDate, setCurrentDate] = useState(new Date('2025-07-10'));
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [currentLocation, setCurrentLocation] = useState("Lynn, MA");
+
+  useEffect(() => {
+    setCurrentDate(new Date('2025-07-10'));
+  }, []);
 
   const { futureMeetings, futureVisits, flaggedHotspots, activeTrials, closedDeals } = useMemo(() => {
     const today = startOfToday();
@@ -88,7 +92,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <Calendar size={20} className="text-purple-400" />
-            <span className="font-semibold">{format(currentDate, 'MMM dd, yyyy')}</span>
+            <span className="font-semibold">{currentDate ? format(currentDate, 'MMM dd, yyyy') : 'Loading...'}</span>
           </div>
         </div>
 
