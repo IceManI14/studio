@@ -5,48 +5,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
- 
-  .dark {
-    --background: 240 10% 4%; /* Near-black */
-    --foreground: 210 40% 98%; /* White */
-    --card: 240 6% 12%; /* Opaque dark blue-grey */
+    --background: 240 10% 3.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 240 10% 3.9%;
     --card-foreground: 210 40% 98%;
-    --popover: 242 47% 10%;
+ 
+    --popover: 240 10% 3.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 243 79% 65%; /* Indigo */
+ 
+    --primary: 263.4 70% 50.4%; /* A vibrant violet */
     --primary-foreground: 210 40% 98%;
-    --secondary: 265 83% 65%; /* Violet */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 242 47% 20%; /* Muted dark blue */
-    --muted-foreground: 220 15% 65%;
-    --accent: 187 95% 43%; /* Turquoise */
+ 
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+ 
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 240 3.7% 15.9%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 51%;
+ 
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 243 79% 58% / 0.2; /* Semi-transparent indigo border */
-    --input: 243 79% 58% / 0.15;
-    --ring: 187 95% 43%; /* Turquoise ring for focus */
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
+    
+    --radius: 0.5rem;
   }
 }
 
@@ -56,97 +43,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a2e4a 50%, #2e1a4a 100%);
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #020617 100%);
   }
-  
-  /* Custom Calendar Day Modifiers - Order defines priority (last one wins) */
-  .day-logged-past:not([aria-selected]) {
-    @apply text-blue-400 font-bold;
-  }
-  .day-logged-past:hover:not([aria-selected]) {
-    @apply text-blue-300;
-  }
-
-  .day-scheduled:not([aria-selected]) {
-    @apply text-orange-500 font-bold;
-  }
-  .day-scheduled:hover:not([aria-selected]) {
-    @apply text-orange-400;
-  }
-
-  .day-deal-closed:not([aria-selected]) {
-    @apply text-green-500 font-bold;
-  }
-  .day-deal-closed:hover:not([aria-selected]) {
-    @apply text-green-400;
-  }
-
-  .day-trial-end:not([aria-selected]) {
-    @apply text-red-500 font-bold;
-  }
-  .day-trial-end:hover:not([aria-selected]) {
-    @apply text-red-400;
-  }
-
-  /* Ensure today's date is highly visible */
-  .day_today:not([aria-selected]) {
-    @apply bg-cyan-400 text-black;
-  }
-
-  /* Override for selected today */
-  .day_today[aria-selected="true"],
-  .day_today[aria-selected="true"]:hover,
-  .day_today[aria-selected="true"]:focus {
-    @apply bg-cyan-400 text-black;
-  }
-}
-
-@layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  .rolodex-preserve-3d {
-    transform-style: preserve-3d;
-  }
-  .aurora-text {
-    background: linear-gradient(180deg, #a855f7 0%, #06b6d4 50%, #1a2e4a 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .aurora-glow {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--secondary) / 0.2);
-  }
-  .bluish-glow {
-    box-shadow: 0 0 40px hsl(var(--accent) / 0.6);
-  }
-}
-
-/* Pulsing dot animation for map placeholder */
-@layer utilities {
-  .pulse-dot {
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 hsla(var(--primary), 0.7);
-    }
-    70% {
-      transform: scale(1);
-      box-shadow: 0 0 0 10px hsla(var(--primary), 0);
-    }
-    100% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 hsla(var(--primary), 0);
-    }
-  }
-}
-/* Helper to convert HSL to RGB for box-shadow (since CSS vars in rgba are tricky) */
-/* This part is less critical if we use hsla directly in the animation */
-:root {
-  --primary-rgb: 66, 133, 244; /* #4285F4 - Default light theme primary */
-}
-.dark {
-   --primary-rgb: 36, 93, 154; /* #245D9A - Nautical dark theme primary */
 }
