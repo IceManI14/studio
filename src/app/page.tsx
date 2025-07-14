@@ -125,11 +125,23 @@ export default function HomePage() {
           setUserLongitude(position.coords.longitude);
         },
         (error) => {
-          console.error("Error getting user location:", error);
+            let message = "Could not get your location.";
+            if (error.code === 1) { // PERMISSION_DENIED
+                message = "Location access was denied. You can enable it in your browser settings.";
+            } else if (error.code === 2) { // POSITION_UNAVAILABLE
+                message = "Location information is unavailable.";
+            } else if (error.code === 3) { // TIMEOUT
+                message = "The request to get user location timed out.";
+            }
+            toast({
+                variant: 'destructive',
+                title: "Location Error",
+                description: message,
+            });
         }
       );
     }
-  }, []);
+  }, [toast]);
 
   const handleUpdateDealClosed = useCallback(async (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => {
     const visitToUpdate = allVisits.find(v => v.id === visitId);
@@ -577,7 +589,7 @@ export default function HomePage() {
     const todaysVisits = allVisits.filter(v => isToday(v.timestamp)).length;
     const weeklyVisits = allVisits.filter(v => new Date(v.timestamp) >= startOfThisWeek).length;
     const monthlyVisits = allVisits.filter(v => new Date(v.timestamp) >= startOfThisMonth).length;
-    const dealsClosedThisMonth = allVisits.filter(v => v.dealClosed && new Date(v.dealClosedDate!) >= startOfThisMonth).length;
+    const dealsClosedThisMonth = allVisits.filter(v => v.dealClosed && v.dealClosedDate && new Date(v.dealClosedDate) >= startOfThisMonth).length;
 
     const chartData = useMemo(() => {
       const data: { name: string; visits: number, deals: number }[] = [];
@@ -585,7 +597,7 @@ export default function HomePage() {
         const day = subDays(new Date(), i);
         const dayStr = format(day, 'MMM d');
         const visitsOnDay = allVisits.filter(v => format(new Date(v.timestamp), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length;
-        const dealsOnDay = allVisits.filter(v => v.dealClosed && format(new Date(v.dealClosedDate!), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length;
+        const dealsOnDay = allVisits.filter(v => v.dealClosed && v.dealClosedDate && format(new Date(v.dealClosedDate), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length;
         data.push({ name: dayStr, visits: visitsOnDay, deals: dealsOnDay });
       }
       return data;
@@ -619,7 +631,7 @@ export default function HomePage() {
     }
     
     const todaysVisitsList = allVisits.filter(v => isToday(v.timestamp));
-    const upcomingMeetings = allVisits.filter(v => v.futureMeetingDateTime && new Date(v.futureMeetingDateTime) >= new Date() && !v.dealClosed).sort((a,b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
+    const upcomingMeetings = allVisits.filter(v => v.futureMeetingDateTime && new Date(v.futureMeetingDateTime) >= new Date() && !v.dealClosed).sort((a,b) => (a.futureMeetingDateTime && b.futureMeetingDateTime) ? new Date(a.futureMeetingDateTime).getTime() - new Date(b.futureMeetingDateTime).getTime() : 0);
 
     return (
       <div className="p-4 md:p-6 space-y-4">
@@ -816,9 +828,9 @@ export default function HomePage() {
           <ScrollArea className="flex-1" ref={chatScrollRef}>
             <div className="p-4 space-y-4">
               {chatMessages.map(msg => (
-                <div key={msg.id} className={cn("flex items-start gap-3", msg.sender === 'user' ? 'justify-end' : '')}>
+                <div key={msg.id} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
                   {msg.sender === 'ai' && <UserCircle className="h-8 w-8 text-primary" />}
-                  <div className={cn("max-w-sm rounded-lg p-3 text-sm", msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                  <div className={`max-w-sm rounded-lg p-3 text-sm ${msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                     <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br />') }}></div>
                   </div>
                 </div>
@@ -939,5 +951,5 @@ export default function HomePage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
