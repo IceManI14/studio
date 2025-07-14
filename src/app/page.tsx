@@ -125,23 +125,11 @@ export default function HomePage() {
           setUserLongitude(position.coords.longitude);
         },
         (error) => {
-            let message = "Could not get your location.";
-            if (error.code === 1) { // PERMISSION_DENIED
-                message = "Location access was denied. You can enable it in your browser settings.";
-            } else if (error.code === 2) { // POSITION_UNAVAILABLE
-                message = "Location information is unavailable.";
-            } else if (error.code === 3) { // TIMEOUT
-                message = "The request to get user location timed out.";
-            }
-            toast({
-                variant: 'destructive',
-                title: "Location Error",
-                description: message,
-            });
+          console.error("Error getting user location:", error);
         }
       );
     }
-  }, [toast]);
+  }, []);
 
   const handleUpdateDealClosed = useCallback(async (visitId: string, dealClosed: boolean, dealClosedDate?: Date) => {
     const visitToUpdate = allVisits.find(v => v.id === visitId);
