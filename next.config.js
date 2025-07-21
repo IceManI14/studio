@@ -32,6 +32,14 @@ const nextConfig = {
         fs: false,
       };
     }
+    
+    // This resolves the "require.extensions is not supported by webpack" error
+    // caused by the handlebars package, which is a dependency of Genkit.
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+    });
 
     return config;
   },
