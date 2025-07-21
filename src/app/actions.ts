@@ -20,8 +20,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { Storage } from '@google-cloud/storage';
 
 // The payload now directly uses fields from the Visit type, simplifying the data flow.
-export interface SaveVisitPayload extends Omit<Visit, 'id'> {
+export interface SaveVisitPayload extends Omit<Visit, 'id' | 'timestamp'> {
   id?: string;
+  timestamp?: Date;
 }
 
 
@@ -38,20 +39,19 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       return { error: 'Company name is required.' };
     }
 
-    // --- Defensive Data Sanitization ---
-    // Each field is meticulously checked and sanitized to prevent invalid data from reaching Firestore.
-    // This robust approach prevents the server crashes that were causing the "unexpected error".
+    const timestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date();
+
     const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
       companyName: payload.companyName.trim(),
       city: payload.city ?? null,
-      timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
+      timestamp: timestamp,
       notes: payload.notes ?? null,
       latitude: payload.latitude ?? null,
       longitude: payload.longitude ?? null,
       partnershipConfidence: payload.partnershipConfidence ?? null,
       hasBusinessCard: payload.hasBusinessCard || false,
-      businessCardImageFrontUrl: payload.hasBusinessCard ? (payload.businessCardImageFrontUrl ?? null) : null,
-      businessCardImageBackUrl: payload.hasBusinessCard ? (payload.businessCardImageBackUrl ?? null) : null,
+      businessCardImageFrontUrl: payload.businessCardImageFrontUrl ?? null,
+      businessCardImageBackUrl: payload.businessCardImageBackUrl ?? null,
       discussedCompetitors: !!payload.competitorName,
       competitorName: payload.competitorName ?? null,
       coolerType: (!!payload.competitorName) ? (payload.coolerType ?? null) : null,
@@ -76,11 +76,9 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       contactInfo: payload.contactInfo ?? null,
     };
 
-    // --- Save to Firestore ---
     const visitDocRef = doc(db, 'visits', visitId);
     await setDoc(visitDocRef, visitForDb, { merge: true });
 
-    // --- Prepare the return object ---
     const finalVisitData: Visit = {
       ...visitForDb,
       id: visitId,
@@ -115,8 +113,8 @@ export async function deleteVisitAction(visitId: string): Promise<{ success?: bo
     if (!db) {
         return { error: 'Firebase is not configured. Cannot delete visit.' };
     }
-    if (!visitId) {
-        return { error: 'Visit ID is required.' };
+    if (!visitId || visitId.startsWith('temp_')) {
+        return { success: true }; // Optimistically deleted, no need to call DB
     }
 
     try {
@@ -632,3 +630,4 @@ export async function analyzeDocumentAction(
     return { error: error.message || 'Failed to analyze document. An unexpected error occurred.' };
   }
 }
+

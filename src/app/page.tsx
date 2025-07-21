@@ -482,48 +482,73 @@ export default function HomePage() {
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
+    const isNew = !payload.id || payload.id.startsWith('temp_');
+    const optimisticVisit = {
+      ...payload,
+      id: payload.id || `temp_${crypto.randomUUID()}`,
+      timestamp: payload.timestamp || new Date(),
+    } as Visit;
   
-    // The optimistic UI update is now handled by the real-time listener.
-    // We just call the server action.
+    // Optimistic UI Update
+    setVisits(prevVisits => {
+      const existingIndex = prevVisits.findIndex(v => v.id === optimisticVisit.id);
+      let newVisits;
+      if (existingIndex > -1) {
+        newVisits = [...prevVisits];
+        newVisits[existingIndex] = optimisticVisit;
+      } else {
+        newVisits = [optimisticVisit, ...prevVisits];
+      }
+      localStorage.setItem('visits', JSON.stringify(newVisits));
+      return newVisits;
+    });
+  
     if (andClose) {
-        setIsVisitFormOpen(false);
+      setIsVisitFormOpen(false);
     }
   
     try {
-        const result = await saveVisitAction(payload);
-
-        if (result.error) {
-            throw new Error(result.error);
-        }
-    
-        if (result.visit) {
-            toast({
-                title: !result.isNewVisit ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
-                description: `${result.visit.companyName} data saved.`,
-            });
-    
-            if (expandOnClose && result.visit.id) {
-              setActiveTab('field-day');
-              // Use a timeout to allow the real-time listener to update the state first
-              setTimeout(() => {
-                setFieldDayAccordionValue(prev => {
-                  if (!prev.includes(result.visit!.id!)) {
-                    return [...prev, result.visit!.id!];
-                  }
-                  return prev;
-                });
-              }, 100);
-            }
-            return result.visit;
-        }
-        throw new Error("Save action did not return a visit object.");
-    } catch (error: any) {
-        toast({
-            title: "Error Saving Visit",
-            description: error.message,
-            variant: "destructive",
+      const result = await saveVisitAction(payload);
+  
+      if (result.error) {
+        throw new Error(result.error);
+      }
+  
+      if (result.visit) {
+        // Replace temp visit with real one after successful save
+        setVisits(prevVisits => {
+            const newVisits = prevVisits.map(v => v.id === optimisticVisit.id ? result.visit! : v);
+            localStorage.setItem('visits', JSON.stringify(newVisits));
+            return newVisits;
         });
-        throw error;
+
+        toast({
+          title: !isNew ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
+          description: `${result.visit.companyName} data saved successfully.`,
+        });
+  
+        if (expandOnClose && result.visit.id) {
+          setActiveTab('field-day');
+          setTimeout(() => {
+            setFieldDayAccordionValue(prev => {
+              if (!prev.includes(result.visit!.id!)) {
+                return [...prev, result.visit!.id!];
+              }
+              return prev;
+            });
+          }, 100);
+        }
+        return result.visit;
+      }
+      throw new Error("Save action did not return a visit object.");
+    } catch (error: any) {
+      toast({
+        title: "Sync Error",
+        description: `Could not save to cloud: ${error.message}. Your data is saved locally.`,
+        variant: "destructive",
+      });
+      // Return the optimistic visit so followup actions can still work
+      return optimisticVisit;
     }
   }, [toast, setFieldDayAccordionValue]);
 
@@ -808,16 +833,14 @@ export default function HomePage() {
     const visitToUpdate = visits.find(v => v.id === visitId);
     if (!visitToUpdate) return;
   
-    const payload = { ...visitToUpdate, ...updatedData };
-    await saveVisitAction(payload);
+    const payload: SaveVisitPayload = { ...visitToUpdate, ...updatedData };
+    await handleSaveFromForm(payload); // Use the local-first save function
   
-    // The real-time listener will handle the UI update.
-    // We can show a toast here for immediate feedback.
     toast({
         title: "Visit Updated",
         description: `${payload.companyName} has been updated.`,
     });
-  }, [visits, toast]);
+  }, [visits, toast, handleSaveFromForm]);
 
   const handleClearHotLeads = useCallback(() => {
     if (hotLeads.length === 0) return;
@@ -1142,6 +1165,24 @@ export default function HomePage() {
   }, [visits]);
   
   useEffect(() => {
+    // Load from Local Storage First
+    try {
+      const storedVisits = localStorage.getItem('visits');
+      if (storedVisits) {
+        // Need to parse dates correctly from JSON string
+        const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
+          ...v,
+          timestamp: new Date(v.timestamp),
+          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
+        }));
+        setVisits(parsedVisits);
+      }
+    } catch (error) {
+      console.error("Failed to load visits from local storage:", error);
+      toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load saved visits from this device." });
+    }
+    
     const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
     setSelectedSalesperson(defaultSalesperson);
   
@@ -1155,7 +1196,7 @@ export default function HomePage() {
       });
     }
   
-    // Load local-only data
+    // Load other local-only data
     try {
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
@@ -1200,14 +1241,16 @@ export default function HomePage() {
   }, [toast]);
   
   useEffect(() => {
-    if (!db) return;
+    if (!db) {
+        setIsSyncing(false);
+        return;
+    }
   
     const q = query(collection(db, "visits"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const visitsFromDb: Visit[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Convert Firestore Timestamps to JS Dates
         const visit: Visit = {
           id: doc.id,
           ...data,
@@ -1217,19 +1260,37 @@ export default function HomePage() {
         } as Visit;
         visitsFromDb.push(visit);
       });
-      setVisits(visitsFromDb);
+
+      // Merge with local data, Firebase is the source of truth
+      setVisits(prevVisits => {
+        const localVisits = new Map(prevVisits.map(v => [v.id, v]));
+        visitsFromDb.forEach(dbVisit => localVisits.set(dbVisit.id, dbVisit));
+        const mergedVisits = Array.from(localVisits.values());
+        
+        // Remove temp visits that have been replaced by real ones
+        const finalVisits = mergedVisits.filter(v => {
+            if (v.id.startsWith('temp_')) {
+                // Check if a non-temp version exists
+                return !mergedVisits.some(realV => !realV.id.startsWith('temp_') && realV.companyName === v.companyName && isSameDay(realV.timestamp, v.timestamp));
+            }
+            return true;
+        });
+        
+        localStorage.setItem('visits', JSON.stringify(finalVisits));
+        return finalVisits;
+      });
+
       setIsSyncing(false);
     }, (error) => {
       console.error("Firestore real-time update error:", error);
       toast({
         variant: 'destructive',
         title: 'Connection Error',
-        description: `Could not connect to the database. Data may be out of date. Error: ${error.message}`
+        description: `Could not sync with the database. Using local data. Error: ${error.message}`
       });
       setIsSyncing(false);
     });
   
-    // Cleanup subscription on component unmount
     return () => unsubscribe();
   }, [toast]);
 
@@ -1494,12 +1555,7 @@ export default function HomePage() {
   };
 
   const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    const result = await saveVisitAction({ id: visitId, dealClosed } as any);
-    if (result.error) {
-        toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
-    } else {
-        toast({ title: 'Deal Status Updated' });
-    }
+    handleUpdateVisit(visitId, { dealClosed });
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
@@ -1523,11 +1579,35 @@ export default function HomePage() {
   };
 
   const handleDeleteVisit = async (visitId: string) => {
-    const result = await deleteVisitAction(visitId);
-    if (result.error) {
-        toast({ variant: 'destructive', title: 'Delete Failed', description: result.error });
-    } else {
-        toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
+    // Optimistic Deletion
+    const visitToDelete = visits.find(v => v.id === visitId);
+    setVisits(prevVisits => {
+        const newVisits = prevVisits.filter(v => v.id !== visitId);
+        localStorage.setItem('visits', JSON.stringify(newVisits));
+        return newVisits;
+    });
+
+    toast({
+        title: 'Visit Deleted',
+        description: `${visitToDelete?.companyName || 'The visit'} has been removed locally.`,
+    });
+
+    try {
+        const result = await deleteVisitAction(visitId);
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        // No need to update state again, as it's already done.
+        // We could show a "synced" toast, but it might be noisy.
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Sync Delete Failed',
+            description: `Could not delete from cloud: ${error.message}. It remains deleted on this device.`,
+        });
+        // Here you might want to add logic to re-add the visit to the UI
+        // or have a "pending deletes" queue if full offline-sync is needed.
+        // For now, we'll keep it deleted optimistically.
     }
   };
 
@@ -1791,7 +1871,7 @@ export default function HomePage() {
         manualCommission: undefined,
     };
     
-    saveVisitAction(newVisit);
+    handleSaveFromForm(newVisit);
 
     toast({
         title: "Added to Planner",
@@ -1849,7 +1929,7 @@ export default function HomePage() {
       manualCommission: undefined,
     };
     
-    saveVisitAction(newVisit);
+    handleSaveFromForm(newVisit);
     
     setConvertedHotLeads(prev => {
         const newSet = new Set(prev).add(lead.id);
@@ -3635,5 +3715,6 @@ export default function HomePage() {
  
 
     
+
 
 
