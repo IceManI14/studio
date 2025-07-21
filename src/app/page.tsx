@@ -482,37 +482,64 @@ export default function HomePage() {
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
+  
+    const tempId = `temp_${crypto.randomUUID()}`;
+    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
+    const finalPayload = { ...payload, id: isNewVisit ? tempId : payload.id };
+    
+    // Optimistic UI update
+    setVisits(prev => {
+        const existingIndex = prev.findIndex(v => v.id === finalPayload.id);
+        if (existingIndex > -1) {
+            const newVisits = [...prev];
+            newVisits[existingIndex] = finalPayload as Visit;
+            return newVisits;
+        } else {
+            return [...prev, finalPayload as Visit];
+        }
+    });
+
     if (andClose) {
         setIsVisitFormOpen(false);
     }
   
-    const result = await saveVisitAction(payload);
-  
-    if (result.error) {
+    try {
+        const result = await saveVisitAction(finalPayload);
+
+        if (result.error) {
+            throw new Error(result.error);
+        }
+    
+        if (result.visit) {
+            // Replace temporary visit with final version from server
+            setVisits(prev => prev.map(v => v.id === tempId ? result.visit! : v));
+            toast({
+                title: !result.isNewVisit ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
+                description: `${result.visit.companyName} data saved.`,
+            });
+    
+            if (expandOnClose && result.visit.id) {
+              setActiveTab('field-day');
+              if (!fieldDayAccordionValue.includes(result.visit.id)) {
+                setFieldDayAccordionValue(prev => [...prev, result.visit!.id!]);
+              }
+            }
+            return result.visit;
+        }
+        throw new Error("Save action did not return a visit object.");
+    } catch (error: any) {
         toast({
             title: "Error Saving Visit",
-            description: result.error,
+            description: error.message,
             variant: "destructive",
         });
-        throw new Error(result.error);
-    }
-  
-    if (result.visit) {
-        toast({
-            title: !result.isNewVisit ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
-            description: `${result.visit.companyName} data saved.`,
-        });
-  
-        if (expandOnClose && result.visit.id) {
-          setActiveTab('field-day');
-          if (!fieldDayAccordionValue.includes(result.visit.id)) {
-            setFieldDayAccordionValue(prev => [...prev, result.visit.id!]);
-          }
+        // Remove the optimistic update if server save fails
+        if (isNewVisit) {
+            setVisits(prev => prev.filter(v => v.id !== tempId));
         }
-        return result.visit;
+        throw error;
     }
-    throw new Error("Save action did not return a visit object.");
-  }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue, fieldDayAccordionValue]);
+  }, [setVisits, toast, setFieldDayAccordionValue, fieldDayAccordionValue]);
 
   const handleToggleChatVoice = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1230,17 +1257,18 @@ export default function HomePage() {
   }, [currentCity]);
   
   useEffect(() => {
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
       setCurrentCity("Geolocation not supported.");
       setIsFetchingCity(false);
       return;
     }
   
+    let watchId: number;
+
     const handlePositionUpdate = async (position: GeolocationPosition) => {
-      // For initial load, don't set fetching city to false immediately
-      if (currentCityRef.current === null) {
-        setIsFetchingCity(true);
+      if (isFetchingCity) {
+        setIsFetchingCity(false); // Set to false on first successful read
       }
       
       try {
@@ -1251,31 +1279,24 @@ export default function HomePage() {
   
         if (result.error) {
           console.warn("Location Update Failed:", result.error);
-          if (currentCityRef.current === null) {
-            setCurrentCity("Location lookup failed");
-          }
-          return; // Don't show error toast on every failure of watch
+          return;
         }
   
-        if (result.city) {
-          if (currentCityRef.current && currentCityRef.current !== result.city) {
-            toast({
+        if (result.city && currentCityRef.current !== result.city) {
+          if (currentCityRef.current !== null) { // Don't toast on initial load
+             toast({
               title: "City Changed",
               description: `You are now in ${result.city}.`
             });
           }
           setCurrentCity(result.city);
-        } else if (currentCityRef.current === null) {
+        } else if (currentCityRef.current === null && !result.city) {
           setCurrentCity("Location Unknown");
         }
       } catch (e: any) {
         console.error("Error fetching city:", e);
         if (currentCityRef.current === null) {
           setCurrentCity("Error fetching city.");
-        }
-      } finally {
-        if (isFetchingCity) {
-           setIsFetchingCity(false);
         }
       }
     };
@@ -1285,21 +1306,21 @@ export default function HomePage() {
       if (error.code === error.PERMISSION_DENIED) {
         errorMessage = "Location access denied. Please enable it in your browser settings.";
       }
-  
       toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-      
       setCurrentCity("Location access denied.");
       setIsFetchingCity(false);
     };
   
-    const watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
+    watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
       enableHighAccuracy: true,
       timeout: 20000,
       maximumAge: 60000
     });
   
     return () => {
-      navigator.geolocation.clearWatch(watchId);
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
   }, [toast, isFetchingCity]);
 
