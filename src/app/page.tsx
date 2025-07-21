@@ -451,6 +451,23 @@ export default function HomePage() {
     }, 0);
   }, [activeFreeTrials]);
 
+  const totalClosedCommission = useMemo(() => {
+    return closedDeals.reduce((total, visit) => {
+      if (typeof visit.manualCommission === 'number') {
+        return total + visit.manualCommission;
+      }
+      if (visit.pricingDiscussed) {
+        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+          return total + visit.priceQuoted;
+        }
+        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+        return total + leaseCommission + installCommission;
+      }
+      return total;
+    }, 0);
+  }, [closedDeals]);
+
   const todaysVisits = useMemo(() => {
     return visits.filter(visit => isToday(new Date(visit.timestamp)));
   }, [visits]);
@@ -1290,7 +1307,9 @@ export default function HomePage() {
       }, { enableHighAccuracy: true });
 
       locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
-          console.warn("Geolocation watch error:", error.message);
+          if (error.code !== 3) { // Ignore timeout errors for the watch
+            console.warn("Geolocation watch error:", error.message);
+          }
       }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
 
     } else {
@@ -2805,7 +2824,7 @@ export default function HomePage() {
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
                         <div className="flex-1 flex justify-center items-center gap-3">
-                            <h2 className="text-2xl font-headline font-semibold text-foreground">
+                            <h2 className="text-2xl font-headline font-semibold text-foreground text-center">
                                 Active Free Trials
                             </h2>
                             {activeFreeTrials.length > 0 && (
@@ -2910,41 +2929,56 @@ export default function HomePage() {
                             </p>
                         </div>
                     ) : (
-                      <Accordion type="multiple" className="w-full space-y-4">
-                          {closedDeals.map((visit) => (
-                              <AccordionItem value={`planner-closed-${visit.id}`} key={visit.id} className="border border-green-500/50 bg-card rounded-lg overflow-hidden">
-                                  <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-green-500/50">
-                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                          <div className="flex flex-1 items-center gap-3 min-w-0">
-                                              <span className="h-3 w-3 rounded-full shrink-0 bg-green-500"></span>
-                                              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                          </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                            <span>Closed: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-                                            {visit.partnershipConfidence && (
-                                                <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                    <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                    <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                </Badge>
-                                            )}
-                                          </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="p-0">
-                                      <VisitCard
-                                          visit={visit}
-                                          onEdit={handleEditVisit}
-                                          onDelete={handleDeleteVisit}
-                                          onUpdateDealClosed={handleUpdateDealClosed}
-                                          onZoom={setZoomedVisit}
-                                          onLogFollowUp={handleLogFollowUp}
-                                          onDictateNotes={handleDictateNotes}
-                                          variant="planner"
-                                      />
-                                  </AccordionContent>
-                              </AccordionItem>
-                          ))}
-                      </Accordion>
+                      <>
+                        <Accordion type="multiple" className="w-full space-y-4">
+                            {closedDeals.map((visit) => (
+                                <AccordionItem value={`planner-closed-${visit.id}`} key={visit.id} className="border border-green-500/50 bg-card rounded-lg overflow-hidden">
+                                    <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-green-500/50">
+                                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                            <div className="flex flex-1 items-center gap-3 min-w-0">
+                                                <span className="h-3 w-3 rounded-full shrink-0 bg-green-500"></span>
+                                                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                              <span>Closed: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+                                              {visit.partnershipConfidence && (
+                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                      <span className="leading-none">{visit.partnershipConfidence}</span>
+                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                  </Badge>
+                                              )}
+                                            </div>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-0">
+                                        <VisitCard
+                                            visit={visit}
+                                            onEdit={handleEditVisit}
+                                            onDelete={handleDeleteVisit}
+                                            onUpdateDealClosed={handleUpdateDealClosed}
+                                            onZoom={setZoomedVisit}
+                                            onLogFollowUp={handleLogFollowUp}
+                                            onDictateNotes={handleDictateNotes}
+                                            variant="planner"
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                        {totalClosedCommission > 0 && (
+                          <div className="mt-6 pt-4 border-t border-primary/20 text-center">
+                            <p className="text-lg font-semibold text-foreground">
+                              Total Commission from Closed Deals:
+                            </p>
+                            <p className="text-3xl font-bold text-green-400 aurora-text bg-gradient-to-r from-green-400 to-emerald-500">
+                              ${totalClosedCommission.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Congratulations on your success!
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </AccordionContent>
                 </AccordionItem>
@@ -3698,6 +3732,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 

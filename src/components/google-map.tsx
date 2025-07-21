@@ -350,12 +350,25 @@ const GoogleMapLoader: React.FC<GoogleMapLoaderProps> = ({ visits, apiKey, userL
           const inTrial = visit.freeTrial;
 
           let iconUrl;
-          if (inTrial && !isDealClosed) {
+          if (isDealClosed) {
+            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
+            if (window.google) {
+              const icon = {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" fill="%2322c55e"/>
+                    <line x1="4" y1="22" x2="4" y2="15" stroke="%23166534" />
+                    <text x="12" y="11" font-size="8" font-family="Arial" font-weight="bold" fill="white" text-anchor="middle">$</text>
+                  </svg>
+                `),
+                scaledSize: new window.google.maps.Size(32, 32),
+              }
+              iconUrl = icon as any;
+            }
+          } else if (inTrial && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red.png';
           } else if (isHotspot && !isDealClosed) {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/orange.png';
-          } else if (isDealClosed) {
-            iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green.png';
           } else {
             iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue.png';
           }
@@ -563,5 +576,3 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits, userLat
 
 
 export default GoogleMapComponent;
-
-    
