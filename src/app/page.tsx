@@ -196,7 +196,7 @@ export default function HomePage() {
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('field-day');
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
   const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
   const [convertedHotLeads, setConvertedHotLeads] = useState<Set<string>>(new Set());
@@ -483,36 +483,20 @@ export default function HomePage() {
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
   
-    const tempId = `temp_${crypto.randomUUID()}`;
-    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-    const finalPayload = { ...payload, id: isNewVisit ? tempId : payload.id };
-    
-    // Optimistic UI update
-    setVisits(prev => {
-        const existingIndex = prev.findIndex(v => v.id === finalPayload.id);
-        if (existingIndex > -1) {
-            const newVisits = [...prev];
-            newVisits[existingIndex] = finalPayload as Visit;
-            return newVisits;
-        } else {
-            return [...prev, finalPayload as Visit];
-        }
-    });
-
+    // The optimistic UI update is now handled by the real-time listener.
+    // We just call the server action.
     if (andClose) {
         setIsVisitFormOpen(false);
     }
   
     try {
-        const result = await saveVisitAction(finalPayload);
+        const result = await saveVisitAction(payload);
 
         if (result.error) {
             throw new Error(result.error);
         }
     
         if (result.visit) {
-            // Replace temporary visit with final version from server
-            setVisits(prev => prev.map(v => v.id === tempId ? result.visit! : v));
             toast({
                 title: !result.isNewVisit ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
                 description: `${result.visit.companyName} data saved.`,
@@ -520,9 +504,15 @@ export default function HomePage() {
     
             if (expandOnClose && result.visit.id) {
               setActiveTab('field-day');
-              if (!fieldDayAccordionValue.includes(result.visit.id)) {
-                setFieldDayAccordionValue(prev => [...prev, result.visit!.id!]);
-              }
+              // Use a timeout to allow the real-time listener to update the state first
+              setTimeout(() => {
+                setFieldDayAccordionValue(prev => {
+                  if (!prev.includes(result.visit!.id!)) {
+                    return [...prev, result.visit!.id!];
+                  }
+                  return prev;
+                });
+              }, 100);
             }
             return result.visit;
         }
@@ -533,13 +523,9 @@ export default function HomePage() {
             description: error.message,
             variant: "destructive",
         });
-        // Remove the optimistic update if server save fails
-        if (isNewVisit) {
-            setVisits(prev => prev.filter(v => v.id !== tempId));
-        }
         throw error;
     }
-  }, [setVisits, toast, setFieldDayAccordionValue, fieldDayAccordionValue]);
+  }, [toast, setFieldDayAccordionValue]);
 
   const handleToggleChatVoice = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1160,6 +1146,7 @@ export default function HomePage() {
     setSelectedSalesperson(defaultSalesperson);
   
     if (!firebaseConfigured) {
+      setIsSyncing(false);
       toast({
         variant: 'destructive',
         title: 'Firebase Not Configured',
@@ -1213,12 +1200,8 @@ export default function HomePage() {
   }, [toast]);
   
   useEffect(() => {
-    if (!db) {
-      setIsSyncing(false);
-      return;
-    }
+    if (!db) return;
   
-    setIsSyncing(true);
     const q = query(collection(db, "visits"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const visitsFromDb: Visit[] = [];
@@ -3652,4 +3635,5 @@ export default function HomePage() {
  
 
     
+
 
