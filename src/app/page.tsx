@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
-import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, FoundPlace, CompanyDoc } from '@/lib/types';
+import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactInfo, HotLead, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
@@ -42,7 +42,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction } from '@/app/actions';
+import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -52,10 +52,11 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import { fileToDataUri, cn, stateNameToAbbreviation } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
-import { firebaseConfigured } from '@/lib/firebase';
+import { db, firebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import ExportHotLeadsCsvButton from '@/components/export-hot-leads-csv-button';
 import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
+import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 
 
 interface SubmittedSuggestion {
@@ -255,6 +256,7 @@ export default function HomePage() {
   const debbieRef = useRef<HTMLDivElement>(null);
   const visitCardsRef = useRef<HTMLDivElement>(null);
   const todaysVisitsRef = useRef<HTMLDivElement>(null);
+  const eagleEyeRef = useRef<HTMLDivElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -380,14 +382,14 @@ export default function HomePage() {
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
-      } else if (sortCriteria === 'partnershipConfidence') {
-        comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
-        if (comparison !== 0) return comparison;
-        return timeB - timeA;
-      } else { // 'timestamp'
+      } else if (sortCriteria === 'timestamp') {
         comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
+      } else { // 'partnershipConfidence'
+        comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
+        if (comparison !== 0) return comparison;
+        return timeB - timeA;
       }
     });
     return sorted;
@@ -477,99 +479,38 @@ export default function HomePage() {
   }, [scheduledVisits]);
 
   // Callbacks
-  const handleSaveFromForm = useCallback((payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
-    return new Promise((resolve) => {
-        const { andClose = true, expandOnClose = false } = options;
-        if (andClose) {
-            setIsVisitFormOpen(false);
-        }
-
-        const findIndexAndSave = (currentVisits: Visit[]): {updatedVisits: Visit[], finalVisit: Visit, wasNew: boolean} => {
-            let existingVisitIndex = payload.id ? currentVisits.findIndex(v => v.id === payload.id) : -1;
-
-            if (existingVisitIndex === -1 && (!payload.id || payload.id.startsWith('temp_'))) {
-                existingVisitIndex = currentVisits.findIndex(v => 
-                    v.companyName === payload.companyName && 
-                    isToday(new Date(v.timestamp))
-                );
-            }
-
-            if (existingVisitIndex !== -1) {
-                const existingVisit = currentVisits[existingVisitIndex];
-                const finalPayload = { ...payload, id: existingVisit.id };
-                const mergedVisit: Visit = { ...existingVisit, ...finalPayload };
-
-                if (payload.notes !== undefined && payload.notes !== existingVisit.notes) {
-                    mergedVisit.notesSummary = undefined;
-                }
-                const updatedVisits = [...currentVisits];
-                updatedVisits[existingVisitIndex] = mergedVisit;
-                return { updatedVisits, finalVisit: mergedVisit, wasNew: false };
-            } else {
-                const visitId = payload.id && !payload.id.startsWith('temp_') ? `temp_${crypto.randomUUID()}` : payload.id || `temp_${crypto.randomUUID()}`;
-                
-                const newVisit: Visit = {
-                  id: visitId,
-                  timestamp: payload.timestamp || new Date(),
-                  companyName: payload.companyName || '',
-                  city: payload.city,
-                  notes: payload.notes || undefined,
-                  latitude: payload.latitude || undefined,
-                  longitude: payload.longitude || undefined,
-                  partnershipConfidence: payload.partnershipConfidence || undefined,
-                  hasBusinessCard: payload.hasBusinessCard || false,
-                  businessCardImageFrontUrl: payload.businessCardImageFrontUrl || undefined,
-                  businessCardImageBackUrl: payload.businessCardImageBackUrl || undefined,
-                  discussedCompetitors: !!payload.competitorName,
-                  competitorName: payload.competitorName || undefined,
-                  coolerType: payload.coolerType || undefined,
-                  decisionMakerName: payload.decisionMakerName || undefined,
-                  decisionMakerTitle: payload.decisionMakerTitle || undefined,
-                  decisionMakerContact: payload.decisionMakerContact || undefined,
-                  visitNumber: payload.visitNumber || undefined,
-                  interestedUnits: payload.interestedUnits || undefined,
-                  hasTDSReading: payload.hasTDSReading || false,
-                  tdsValue: payload.tdsValue ?? undefined,
-                  futureMeetingSet: payload.futureMeetingSet || false,
-                  futureMeetingDateTime: payload.futureMeetingDateTime ? new Date(payload.futureMeetingDateTime) : undefined,
-                  freeTrial: payload.freeTrial || false,
-                  freeTrialStartDate: payload.freeTrialStartDate ? new Date(payload.freeTrialStartDate) : undefined,
-                  notesSummary: payload.notesSummary || undefined,
-                  contactInfo: payload.contactInfo || undefined,
-                  dealClosed: payload.dealClosed || false,
-                  pricingDiscussed: payload.pricingDiscussed || false,
-                  priceQuoted: payload.priceQuoted,
-                  leaseTerm: payload.leaseTerm,
-                  installationFee: payload.installationFee,
-                  creditApproved: payload.creditApproved || false,
-                  manualCommission: payload.manualCommission,
-                };
-                
-                const updatedVisits = [newVisit, ...currentVisits];
-                return { updatedVisits, finalVisit: newVisit, wasNew: true };
-            }
-        }
-
-        const { updatedVisits, finalVisit, wasNew } = findIndexAndSave(visitsRef.current);
-        
-        setVisits(updatedVisits);
-        visitsRef.current = updatedVisits;
-        localStorage.setItem('visits', JSON.stringify(updatedVisits));
-
+  const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
+    const { andClose = true, expandOnClose = false } = options;
+    if (andClose) {
+        setIsVisitFormOpen(false);
+    }
+  
+    const result = await saveVisitAction(payload);
+  
+    if (result.error) {
         toast({
-            title: !wasNew ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
-            description: `${finalVisit.companyName} data saved to device.`,
+            title: "Error Saving Visit",
+            description: result.error,
+            variant: "destructive",
         });
-
-        if (expandOnClose && finalVisit.id) {
+        throw new Error(result.error);
+    }
+  
+    if (result.visit) {
+        toast({
+            title: !result.isNewVisit ? (andClose ? "Visit Updated" : "Progress Saved") : "Visit Logged",
+            description: `${result.visit.companyName} data saved.`,
+        });
+  
+        if (expandOnClose && result.visit.id) {
           setActiveTab('field-day');
-          if (!fieldDayAccordionValue.includes(finalVisit.id)) {
-            setFieldDayAccordionValue(prev => [...prev, finalVisit.id!]);
+          if (!fieldDayAccordionValue.includes(result.visit.id)) {
+            setFieldDayAccordionValue(prev => [...prev, result.visit.id!]);
           }
         }
-
-        resolve(finalVisit);
-    });
+        return result.visit;
+    }
+    throw new Error("Save action did not return a visit object.");
   }, [setIsVisitFormOpen, toast, setFieldDayAccordionValue, fieldDayAccordionValue]);
 
   const handleToggleChatVoice = useCallback(() => {
@@ -843,35 +784,46 @@ export default function HomePage() {
             });
         }
         
-        return [...prevHotLeads, ...uniqueNewLeads];
+        const updatedLeads = [...prevHotLeads, ...uniqueNewLeads];
+        localStorage.setItem('hotLeads', JSON.stringify(updatedLeads));
+        return updatedLeads;
     });
   }, [toast]);
 
-  const handleUpdateVisit = useCallback((visitId: string, updatedData: Partial<Visit>) => {
-    setVisits(prevVisits => {
-      const newVisits = prevVisits.map(v => 
-        v.id === visitId ? { ...v, ...updatedData } : v
-      );
-      localStorage.setItem('visits', JSON.stringify(newVisits));
-      return newVisits;
+  const handleUpdateVisit = useCallback(async (visitId: string, updatedData: Partial<Visit>) => {
+    const visitToUpdate = visits.find(v => v.id === visitId);
+    if (!visitToUpdate) return;
+  
+    const payload = { ...visitToUpdate, ...updatedData };
+    await saveVisitAction(payload);
+  
+    // The real-time listener will handle the UI update.
+    // We can show a toast here for immediate feedback.
+    toast({
+        title: "Visit Updated",
+        description: `${payload.companyName} has been updated.`,
     });
-  }, []);
+  }, [visits, toast]);
 
   const handleClearHotLeads = useCallback(() => {
     if (hotLeads.length === 0) return;
     setHotLeads([]);
     setConvertedHotLeads(new Set());
+    localStorage.removeItem('hotLeads');
+    localStorage.removeItem('convertedHotLeads');
     toast({ title: "Hot Leads Cleared", description: "The hot leads list has been cleared from this device." });
   }, [hotLeads.length, toast]);
 
   const handleDeleteHotLead = useCallback((leadId: string) => {
     setHotLeads(prevHotLeads => {
         const updatedLeads = prevHotLeads.filter(lead => lead.id !== leadId);
+        localStorage.setItem('hotLeads', JSON.stringify(updatedLeads));
         return updatedLeads;
     });
     setConvertedHotLeads(prev => {
         const newSet = new Set(prev);
         newSet.delete(leadId);
+        localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(newSet)));
         return newSet;
     });
     toast({ title: "Hot Lead Removed" });
@@ -903,11 +855,13 @@ export default function HomePage() {
   }, [hotLeads, toast]);
 
   const handleUpdateHotLeadNotes = useCallback((leadId: string, notes: string) => {
-    setHotLeads(prevLeads => 
-      prevLeads.map(lead => 
-        lead.id === leadId ? { ...lead, notes } : lead
-      )
-    );
+    setHotLeads(prevLeads => {
+        const newLeads = prevLeads.map(lead => 
+            lead.id === leadId ? { ...lead, notes } : lead
+        );
+        localStorage.setItem('hotLeads', JSON.stringify(newLeads));
+        return newLeads;
+    });
   }, []);
 
   const handleToggleVoiceForHotLead = useCallback((leadId: string) => {
@@ -953,13 +907,15 @@ export default function HomePage() {
         }
       }
       if (newTranscript) {
-        setHotLeads(prevLeads =>
-          prevLeads.map(lead =>
-            lead.id === leadId
-              ? { ...lead, notes: (lead.notes ? `${lead.notes} ${newTranscript.trim()}` : newTranscript.trim()) }
-              : lead
-          )
-        );
+        setHotLeads(prevLeads => {
+            const newLeads = prevLeads.map(lead =>
+              lead.id === leadId
+                ? { ...lead, notes: (lead.notes ? `${lead.notes} ${newTranscript.trim()}` : newTranscript.trim()) }
+                : lead
+            );
+            localStorage.setItem('hotLeads', JSON.stringify(newLeads));
+            return newLeads;
+        });
         toast({ title: 'Notes Updated' });
       }
     };
@@ -1085,16 +1041,20 @@ export default function HomePage() {
   
   const handleAddNewsItem = useCallback(() => {
     if (newNewsItem.trim()) {
-      setNewsItems(prev => [newNewsItem.trim(), ...prev]);
+      const newItems = [newNewsItem.trim(), ...newsItems];
+      setNewsItems(newItems);
+      localStorage.setItem('companyNews', JSON.stringify(newItems));
       setNewNewsItem('');
       toast({ title: 'News Item Added' });
     }
-  }, [newNewsItem, toast]);
+  }, [newNewsItem, newsItems, toast]);
 
   const handleDeleteNewsItem = useCallback((indexToDelete: number) => {
-    setNewsItems(prev => prev.filter((_, index) => index !== indexToDelete));
+    const newItems = newsItems.filter((_, index) => index !== indexToDelete);
+    setNewsItems(newItems);
+    localStorage.setItem('companyNews', JSON.stringify(newItems));
     toast({ title: 'News Item Removed' });
-  }, [toast]);
+  }, [newsItems, toast]);
   
   const handleAddCompanyDoc = useCallback(() => {
     if (newDocName.trim() && newDocUrl.trim()) {
@@ -1106,7 +1066,9 @@ export default function HomePage() {
           name: newDocName.trim(),
           url: newDocUrl.trim(),
         };
-        setCompanyDocs(prev => [...prev, newDoc]);
+        const updatedDocs = [...companyDocs, newDoc];
+        setCompanyDocs(updatedDocs);
+        localStorage.setItem('companyDocs', JSON.stringify(updatedDocs));
         setNewDocName('');
         setNewDocUrl('');
         toast({ title: "Document Added", description: `${newDoc.name} has been added to your list.`});
@@ -1116,12 +1078,14 @@ export default function HomePage() {
     } else {
       toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide both a name and a URL.' });
     }
-  }, [newDocName, newDocUrl, toast]);
+  }, [newDocName, newDocUrl, companyDocs, toast]);
 
   const handleDeleteCompanyDoc = useCallback((docId: string) => {
-    setCompanyDocs(prev => prev.filter(doc => doc.id !== docId));
+    const updatedDocs = companyDocs.filter(doc => doc.id !== docId);
+    setCompanyDocs(updatedDocs);
+    localStorage.setItem('companyDocs', JSON.stringify(updatedDocs));
     toast({ title: "Document Removed" });
-  }, [toast]);
+  }, [companyDocs, toast]);
 
   const handleAnalyzeCompanyDoc = useCallback(async (doc: CompanyDoc) => {
     if (isAiResponding || analyzingDocId) return;
@@ -1160,46 +1124,35 @@ export default function HomePage() {
 
   // Effects
   useEffect(() => {
-      visitsRef.current = visits;
+    visitsRef.current = visits;
   }, [visits]);
   
   useEffect(() => {
+    const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
+    setSelectedSalesperson(defaultSalesperson);
+  
+    if (!firebaseConfigured) {
+      toast({
+        variant: 'destructive',
+        title: 'Firebase Not Configured',
+        description: 'Syncing and real-time updates are disabled. Please check your .env file.',
+        duration: 10000,
+      });
+    }
+  
+    // Load local-only data
     try {
-      const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
-      setSelectedSalesperson(defaultSalesperson);
-
-      const localVisits = localStorage.getItem('visits');
-      if (localVisits) {
-          const parsedVisits = JSON.parse(localVisits).map((v: any) => {
-              // Helper to safely create a Date object
-              const toSafeDate = (dateString: any): Date | undefined => {
-                  if (!dateString) return undefined;
-                  const date = new Date(dateString);
-                  // Check if the date is valid. getTime() on an invalid date returns NaN.
-                  return isNaN(date.getTime()) ? undefined : date;
-              };
-              
-              return {
-                  ...v,
-                  timestamp: toSafeDate(v.timestamp) || new Date(), // Fallback to now if timestamp is invalid
-                  futureMeetingDateTime: toSafeDate(v.futureMeetingDateTime),
-                  freeTrialStartDate: toSafeDate(v.freeTrialStartDate),
-              };
-          });
-          setVisits(parsedVisits);
-      }
-      
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
         setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
       }
-
+  
       const storedFiles = localStorage.getItem('managedFiles');
       if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
       
       const storedCompanyDocs = localStorage.getItem('companyDocs');
       if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
-
+  
       const storedHotLeads = localStorage.getItem('hotLeads');
       if (storedHotLeads) {
         setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
@@ -1222,38 +1175,53 @@ export default function HomePage() {
           setNewsItems(JSON.parse(storedNews));
       } else {
           setNewsItems(defaultNewsItems);
+          localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
       }
-
-      const startupSequenceDone = sessionStorage.getItem('startupSequenceDone');
-      if (!startupSequenceDone) {
-          sessionStorage.setItem('startupSequenceDone', 'true');
-
-          const scheduledToday = (localVisits ? JSON.parse(localVisits) : []).filter((visit: Visit) =>
-              visit.futureMeetingSet &&
-              visit.futureMeetingDateTime &&
-              isToday(new Date(visit.futureMeetingDateTime))
-          );
-          
-          if (scheduledToday.length > 0) {
-              const firstMeeting = scheduledToday[0];
-              if (firstMeeting.latitude && firstMeeting.longitude) {
-                  setStartupNavigationTarget({ 
-                      companyName: firstMeeting.companyName, 
-                      latitude: firstMeeting.latitude, 
-                      longitude: firstMeeting.longitude 
-                  });
-                  setIsStartupNavigationConfirmOpen(true);
-              }
-          }
-      }
-
+  
     } catch (error) {
-      console.error("Failed to load data from localStorage:", error);
-      toast({ variant: "destructive", title: "Local Data Corrupted", description: "Could not load saved data from this device. Some data may be missing."});
-      localStorage.removeItem('visits'); // Clear corrupted data to prevent future errors
+      console.error("Failed to load some local data:", error);
+      toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device."});
     }
   }, [toast]);
   
+  useEffect(() => {
+    if (!db) {
+      setIsSyncing(false);
+      return;
+    }
+  
+    setIsSyncing(true);
+    const q = query(collection(db, "visits"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const visitsFromDb: Visit[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Convert Firestore Timestamps to JS Dates
+        const visit: Visit = {
+          id: doc.id,
+          ...data,
+          timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+          futureMeetingDateTime: (data.futureMeetingDateTime as Timestamp)?.toDate(),
+          freeTrialStartDate: (data.freeTrialStartDate as Timestamp)?.toDate(),
+        } as Visit;
+        visitsFromDb.push(visit);
+      });
+      setVisits(visitsFromDb);
+      setIsSyncing(false);
+    }, (error) => {
+      console.error("Firestore real-time update error:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: `Could not connect to the database. Data may be out of date. Error: ${error.message}`
+      });
+      setIsSyncing(false);
+    });
+  
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, [toast]);
+
   useEffect(() => {
     const handlePositionUpdate = async (position: GeolocationPosition) => {
         const lat = position.coords.latitude;
@@ -1300,16 +1268,24 @@ export default function HomePage() {
         let errorMessage = "Could not retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
           errorMessage = "Location access denied. Please enable it in your browser settings.";
+        } else if (error.code === error.TIMEOUT) {
+          // This is a common, non-critical error, so we don't show a toast for it.
+          // The UI will reflect the "fetching" state and then timeout gracefully.
+          console.warn("Geolocation timeout.");
+        } else {
+          toast({ variant: "destructive", title: "Location Error", description: errorMessage });
         }
-        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+        
         setCurrentCity("Location access denied.");
         setIsFetchingCity(false);
       }, { enableHighAccuracy: true });
 
       locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
-          if (error.code !== 3) { // Ignore timeout errors for the watch
-            console.warn("Geolocation watch error:", error.message);
+          if (error.code === 3) {
+            // Ignore timeout errors for the watch as they are common
+            return;
           }
+          console.warn("Geolocation watch error:", error.message);
       }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
 
     } else {
@@ -1332,18 +1308,6 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem('companyDocs', JSON.stringify(companyDocs));
   }, [companyDocs]);
-
-  useEffect(() => {
-    localStorage.setItem('hotLeads', JSON.stringify(hotLeads));
-  }, [hotLeads]);
-  
-  useEffect(() => {
-    localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(convertedHotLeads)));
-  }, [convertedHotLeads]);
-
-  useEffect(() => {
-    localStorage.setItem('companyNews', JSON.stringify(newsItems));
-  }, [newsItems]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -1466,15 +1430,14 @@ export default function HomePage() {
     if (!userCurrentLatitude || !userCurrentLongitude) {
         toast({
             title: 'Location Not Available',
-            description: 'Opening form for manual entry.',
+            description: 'Please enable location services or log the visit manually.',
             duration: 3000,
         });
-        const todaysVisitsCount = visits.filter((v) => isToday(new Date(v.timestamp))).length;
         const newVisitTemplate: Partial<Visit> = {
             latitude: undefined,
             longitude: undefined,
             timestamp: new Date(),
-            visitNumber: todaysVisitsCount + 1,
+            visitNumber: todaysVisits.length + 1,
             companyName: '',
             notes: '',
             decisionMakerContact: '',
@@ -1508,13 +1471,12 @@ export default function HomePage() {
     } finally {
         setIsFetchingCity(false);
     }
-
-    const todaysVisitsCount = visits.filter((v) => isToday(new Date(v.timestamp))).length;
+    
     const newVisitTemplate: Partial<Visit> = {
         latitude: latitude,
         longitude: longitude,
         timestamp: new Date(),
-        visitNumber: todaysVisitsCount + 1,
+        visitNumber: todaysVisits.length + 1,
         companyName: companyName,
         city: city,
         notes: notes,
@@ -1530,16 +1492,17 @@ export default function HomePage() {
   };
 
   const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    const updatedVisits = visits.map(v => v.id === visitId ? { ...v, dealClosed } : v);
-    setVisits(updatedVisits);
-    localStorage.setItem('visits', JSON.stringify(updatedVisits));
-    toast({ title: 'Deal Status Updated Locally' });
+    const result = await updateDealClosedAction(visitId, dealClosed);
+    if (result.error) {
+        toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
+    } else {
+        toast({ title: 'Deal Status Updated' });
+    }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
     toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
-  
+    
     const newVisitTemplate: Partial<Visit> = {
       companyName: existingVisit.companyName,
       latitude: existingVisit.latitude,
@@ -1550,7 +1513,7 @@ export default function HomePage() {
       decisionMakerName: existingVisit.decisionMakerName,
       decisionMakerTitle: existingVisit.decisionMakerTitle,
       decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: todaysVisitsCount + 1,
+      visitNumber: todaysVisits.length + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -1558,14 +1521,12 @@ export default function HomePage() {
   };
 
   const handleDeleteVisit = async (visitId: string) => {
-    const updatedVisits = visits.filter(v => v.id !== visitId);
-    setVisits(updatedVisits);
-    localStorage.setItem('visits', JSON.stringify(updatedVisits));
-
-    toast({
-      title: 'Visit Deleted Locally',
-      description: 'The visit log has been removed from this device.',
-    });
+    const result = await deleteVisitAction(visitId);
+    if (result.error) {
+        toast({ variant: 'destructive', title: 'Delete Failed', description: result.error });
+    } else {
+        toast({ title: 'Visit Deleted', description: 'The visit log has been removed.' });
+    }
   };
 
   const confirmEndDay = async () => {
@@ -1806,15 +1767,12 @@ export default function HomePage() {
       });
       return;
     }
-
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
     
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 1);
     futureDate.setHours(10, 0, 0, 0);
 
-    const newVisit: Visit = {
-        id: `temp_${crypto.randomUUID()}`,
+    const newVisit: SaveVisitPayload = {
         timestamp: new Date(),
         companyName: visitData.companyName || '',
         city: visitData.city,
@@ -1833,7 +1791,7 @@ export default function HomePage() {
         decisionMakerName: '',
         decisionMakerTitle: '',
         decisionMakerContact: visitData.decisionMakerContact || '',
-        visitNumber: todaysVisitsCount + 1,
+        visitNumber: todaysVisits.length + 1,
         interestedUnits: undefined,
         hasTDSReading: false,
         tdsValue: undefined,
@@ -1850,11 +1808,7 @@ export default function HomePage() {
         manualCommission: undefined,
     };
     
-    setVisits(prevVisits => {
-        const newVisits = [newVisit, ...prevVisits];
-        localStorage.setItem('visits', JSON.stringify(newVisits));
-        return newVisits;
-    });
+    saveVisitAction(newVisit);
 
     toast({
         title: "Added to Planner",
@@ -1892,14 +1846,15 @@ export default function HomePage() {
         title: 'Visit Already Exists',
         description: `A visit for ${lead.companyName} is already in your planner or history.`,
       });
-      setConvertedHotLeads((prev) => new Set(prev).add(lead.id));
+      setConvertedHotLeads(prev => {
+        const newSet = new Set(prev).add(lead.id);
+        localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(newSet)));
+        return newSet;
+      });
       return;
     }
-
-    const todaysVisitsCount = visits.filter(v => isToday(new Date(v.timestamp))).length;
   
-    const newVisit: Visit = {
-      id: `temp_${crypto.randomUUID()}`,
+    const newVisit: SaveVisitPayload = {
       timestamp: new Date(),
       companyName: lead.companyName,
       city: lead.city,
@@ -1907,7 +1862,7 @@ export default function HomePage() {
       longitude: lead.longitude,
       notes: `Address: ${lead.address}\n\nHot Lead Notes:\n${lead.notes || 'No notes.'}`.trim(),
       decisionMakerContact: lead.phone,
-      visitNumber: todaysVisitsCount + 1,
+      visitNumber: todaysVisits.length + 1,
       futureMeetingSet: true,
       futureMeetingDateTime: undefined,
       partnershipConfidence: undefined,
@@ -1935,13 +1890,13 @@ export default function HomePage() {
       manualCommission: undefined,
     };
     
-    setVisits(prevVisits => {
-        const newVisits = [newVisit, ...prevVisits];
-        localStorage.setItem('visits', JSON.stringify(newVisits));
-        return newVisits;
-    });
+    saveVisitAction(newVisit);
     
-    setConvertedHotLeads(prev => new Set(prev).add(lead.id));
+    setConvertedHotLeads(prev => {
+        const newSet = new Set(prev).add(lead.id);
+        localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(newSet)));
+        return newSet;
+    });
 
     toast({
         title: "Added to Planner",
@@ -1990,8 +1945,7 @@ export default function HomePage() {
                   return;
                 }
 
-                const newVisit: Visit = {
-                    id: `temp_${crypto.randomUUID()}`,
+                const newVisit: SaveVisitPayload = {
                     timestamp: new Date(),
                     companyName: companyName,
                     city: result.city,
@@ -2027,11 +1981,7 @@ export default function HomePage() {
                     manualCommission: undefined,
                 };
                 
-                setVisits(prevVisits => {
-                    const newVisits = [newVisit, ...prevVisits];
-                    localStorage.setItem('visits', JSON.stringify(newVisits));
-                    return newVisits;
-                });
+                saveVisitAction(newVisit);
 
                 flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner for a future visit.` });
 
@@ -2275,7 +2225,7 @@ export default function HomePage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Save Daily Report to Cloud Storage?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will generate a CSV report of today's visits and save it to the Trailblazer storage bucket. Your local data for the day will remain on this device.
+                            This will generate a CSV report of today's visits and save it to the Trailblazer storage bucket.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -2294,9 +2244,9 @@ export default function HomePage() {
                       </p>
                        <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
-                            <AlertTitle>Local-First Mode Enabled</AlertTitle>
+                            <AlertTitle>Real-time Sync Enabled</AlertTitle>
                             <AlertDescription>
-                            Your visits are being saved to this device. Click "Save Daily Report" to upload a report to the cloud.
+                            {firebaseConfigured ? 'Your visits are being saved and synced in real-time.' : 'Firebase is not configured. Data is saved locally only.'}
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -2820,7 +2770,7 @@ export default function HomePage() {
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
-                        <div className="flex items-center justify-start w-10 shrink-0">
+                      <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
                         <div className="flex-1 flex justify-center items-center gap-3">
@@ -3214,6 +3164,35 @@ export default function HomePage() {
                           Add to News
                         </Button>
                       </UiCardFooter>
+                    </UiCard>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+                <AccordionItem ref={eagleEyeRef} value="eagle-eye-feed" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                    <div className="flex w-full items-center">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <UserCog className="h-7 w-7 text-primary" />
+                      </div>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Eagle Eye Live Feed</h2>
+                      <div className="w-10 shrink-0"></div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-0">
+                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                      <UiCardHeader>
+                        <UiCardTitle>Live Chat & Notifications</UiCardTitle>
+                        <UiCardDescription>
+                          This section will contain live updates, messages, and notifications from the Eagle Eye command station.
+                        </UiCardDescription>
+                      </UiCardHeader>
+                      <UiCardContent className="space-y-4">
+                         <div className="text-center text-sm text-muted-foreground p-8 rounded-md border border-dashed">
+                            Real-time chat and notification functionality will be implemented here.
+                        </div>
+                      </UiCardContent>
                     </UiCard>
                   </AccordionContent>
                 </AccordionItem>
@@ -3726,14 +3705,10 @@ export default function HomePage() {
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
          <p className="text-xs mt-1">
-            {firebaseConfigured ? "Data is saved locally. Use 'Save Daily Report' to upload to the cloud." : "Data is saved locally to your browser."}
+            {firebaseConfigured ? "Data is being synced with the cloud in real-time." : "Data is saved locally to your browser."}
          </p>
       </footer>
     </div>
   );
 }
-
-
-
-
-
+ 
