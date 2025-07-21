@@ -32,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -98,24 +97,6 @@ const salespeople: Salesperson[] = [
     { id: '5', name: 'John Doe (No Territory)', territory: [] },
 ];
 
-function getDistanceFromLatLonInM(lat1:number, lon1:number, lat2:number, lon2:number) {
-    var R = 6371; // Radius of the earth in km
-    var dLat = deg2rad(lat2-lat1);
-    var dLon = deg2rad(lon2-lon1); 
-    var a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2)
-      ; 
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    var d = R * c; // Distance in km
-    return d * 1000; // Distance in m
-}
-
-function deg2rad(deg:number) {
-  return deg * (Math.PI/180)
-}
-
 const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
   visits: Visit[],
   onEdit: (visit: Visit) => void,
@@ -176,8 +157,6 @@ export default function HomePage() {
   const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
-  const [userCurrentLatitude, setUserCurrentLatitude] = useState<number | undefined>();
-  const [userCurrentLongitude, setUserCurrentLongitude] = useState<number | undefined>();
   const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
@@ -240,7 +219,6 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
-  const locationWatchId = useRef<number | null>(null);
   const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const visitsRef = useRef<Visit[]>([]);
   const dailyPlanRef = useRef<HTMLDivElement>(null);
@@ -374,7 +352,7 @@ export default function HomePage() {
         return timeB - timeA;
       } else if (sortCriteria === 'inTrial') {
         const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
-        const trialTimeB = b.freeTrialStartDate ? new Date(b.freeTrialStartDate).getTime() : 0;
+        const trialTimeB = b.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
         comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
@@ -469,6 +447,27 @@ export default function HomePage() {
       return total;
     }, 0);
   }, [closedDeals]);
+
+  const pastVisitsByDay = useMemo(() => {
+    const today = startOfDay(new Date());
+    const grouped: { [key: string]: Visit[] } = {};
+  
+    visits.forEach((visit) => {
+      const visitDay = startOfDay(new Date(visit.timestamp));
+      if (visitDay < today) {
+        const dayKey = visitDay.toISOString().split('T')[0];
+        if (!grouped[dayKey]) {
+          grouped[dayKey] = [];
+        }
+        grouped[dayKey].push(visit);
+      }
+    });
+  
+    for (const dayKey in grouped) {
+      grouped[dayKey].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
+  }, [visits]);
 
   const todaysVisits = useMemo(() => {
     return visits.filter(visit => isToday(new Date(visit.timestamp)));
@@ -1224,43 +1223,24 @@ export default function HomePage() {
 
   useEffect(() => {
     const handlePositionUpdate = async (position: GeolocationPosition) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        let shouldUpdateCity = false;
-        
-        if (userCurrentLatitude === undefined || userCurrentLongitude === undefined) {
-            shouldUpdateCity = true;
+      setIsFetchingCity(true);
+      try {
+        const result = await getCompanyNameFromCoordsAction({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        if (result.error) {
+          // Do not toast for every update failure to avoid spamming user
+          console.warn("Location Update Failed:", result.error);
+          setCurrentCity(prev => prev || "Location lookup failed");
+        } else if (result.city) {
+          setCurrentCity(result.city);
         } else {
-            const distance = getDistanceFromLatLonInM(lat, lon, userCurrentLatitude, userCurrentLongitude);
-            if (distance > 500) {
-                shouldUpdateCity = true;
-            }
+          setCurrentCity(prev => prev || "Location Unknown");
         }
-        
-        setUserCurrentLatitude(lat);
-        setUserCurrentLongitude(lon);
-
-        if (shouldUpdateCity) {
-          setIsFetchingCity(true);
-          try {
-            const result = await getCompanyNameFromCoordsAction({ latitude: lat, longitude: lon });
-            if (result.error) {
-              toast({ title: "Location Update Failed", description: result.error, duration: 3000 });
-              setCurrentCity(prev => prev || "Location lookup failed");
-            } else if (result.city) {
-              setCurrentCity(result.city);
-            } else {
-              setCurrentCity(prev => prev || "Location Unknown");
-            }
-          } catch (e: any) {
-            console.error("Error fetching city:", e);
-            setCurrentCity(prev => prev || "Error fetching city.");
-          } finally {
-            setIsFetchingCity(false);
-          }
-        } else {
-           setIsFetchingCity(false);
-        }
+      } catch (e: any) {
+        console.error("Error fetching city:", e);
+        setCurrentCity(prev => prev || "Error fetching city.");
+      } finally {
+        setIsFetchingCity(false);
+      }
     };
     
     if (navigator.geolocation) {
@@ -1268,38 +1248,24 @@ export default function HomePage() {
         let errorMessage = "Could not retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
           errorMessage = "Location access denied. Please enable it in your browser settings.";
-        } else if (error.code === error.TIMEOUT) {
-          // This is a common, non-critical error, so we don't show a toast for it.
-          // The UI will reflect the "fetching" state and then timeout gracefully.
-          console.warn("Geolocation timeout.");
+        }
+        
+        // Don't show toast for timeouts, just update the UI state.
+        if (error.code !== error.TIMEOUT) {
+            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
         } else {
-          toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+            console.warn(`Geolocation Error (Code: ${error.code}): ${error.message}`);
         }
         
         setCurrentCity("Location access denied.");
         setIsFetchingCity(false);
-      }, { enableHighAccuracy: true });
-
-      locationWatchId.current = navigator.geolocation.watchPosition(handlePositionUpdate, (error) => {
-          if (error.code === 3) {
-            // Ignore timeout errors for the watch as they are common
-            return;
-          }
-          console.warn("Geolocation watch error:", error.message);
-      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
-
+      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     } else {
       toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
       setCurrentCity("Geolocation not supported.");
       setIsFetchingCity(false);
     }
-    
-    return () => {
-        if (locationWatchId.current && navigator.geolocation) {
-            navigator.geolocation.clearWatch(locationWatchId.current);
-        }
-    };
-  }, [toast, userCurrentLatitude, userCurrentLongitude]);
+  }, [toast]);
 
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
@@ -1427,54 +1393,12 @@ export default function HomePage() {
   };
 
   const handleQuickLog = async () => {
-    if (!userCurrentLatitude || !userCurrentLongitude) {
-        toast({
-            title: 'Location Not Available',
-            description: 'Please enable location services or log the visit manually.',
-            duration: 3000,
-        });
-        const newVisitTemplate: Partial<Visit> = {
-            latitude: undefined,
-            longitude: undefined,
-            timestamp: new Date(),
-            visitNumber: todaysVisits.length + 1,
-            companyName: '',
-            notes: '',
-            decisionMakerContact: '',
-        };
-        setCurrentEditingVisit(newVisitTemplate as Visit);
-        setIsVisitFormOpen(true);
-        return;
-    }
-
     let companyName = '';
     let notes = '';
     let phone = '';
     let city: string | undefined = undefined;
-    const latitude = userCurrentLatitude;
-    const longitude = userCurrentLongitude;
-
-    setIsFetchingCity(true);
-    try {
-        const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-        if (result.error) {
-            toast({ variant: 'destructive', title: 'Location Lookup Failed', description: result.error });
-        } else {
-            companyName = result.suggestedCompanyName || '';
-            notes = result.address ? `Company Address: ${result.address}` : '';
-            phone = result.phone || '';
-            city = result.city;
-        }
-    } catch (e: any) {
-        console.error('Error fetching company name for quicklog:', e);
-        toast({ variant: 'destructive', title: 'Location Lookup Error', description: e.message });
-    } finally {
-        setIsFetchingCity(false);
-    }
     
     const newVisitTemplate: Partial<Visit> = {
-        latitude: latitude,
-        longitude: longitude,
         timestamp: new Date(),
         visitNumber: todaysVisits.length + 1,
         companyName: companyName,
@@ -1748,25 +1672,6 @@ export default function HomePage() {
   };
 
   const handleAddFoundCompanyAsVisit = (visitData: Partial<Visit>) => {
-    const existingVisitForCompany = visits.find((visit) => {
-        if (visit.companyName !== visitData.companyName) return false;
-        if (!visit.latitude || !visit.longitude || !visitData.latitude || !visitData.longitude) return false;
-        
-        return getDistanceFromLatLonInM(
-            visitData.latitude,
-            visitData.longitude,
-            visit.latitude,
-            visit.longitude
-        ) < 50;
-    });
-
-    if (existingVisitForCompany) {
-      toast({
-        title: 'Visit Already Exists',
-        description: `A visit for ${visitData.companyName} is already in your planner or history.`,
-      });
-      return;
-    }
     
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 1);
@@ -1830,30 +1735,6 @@ export default function HomePage() {
   const handleAddHotLeadAsVisit = (lead: HotLead) => {
     if (convertedHotLeads.has(lead.id)) return;
     
-    const existingVisitForCompany = visits.find((visit) => {
-        if (visit.companyName !== lead.companyName) return false;
-        if (!visit.latitude || !visit.longitude || !lead.latitude || !lead.longitude) return false;
-        return getDistanceFromLatLonInM(
-            lead.latitude,
-            lead.longitude,
-            visit.latitude,
-            visit.longitude
-          ) < 50;
-    });
-
-    if (existingVisitForCompany) {
-      toast({
-        title: 'Visit Already Exists',
-        description: `A visit for ${lead.companyName} is already in your planner or history.`,
-      });
-      setConvertedHotLeads(prev => {
-        const newSet = new Set(prev).add(lead.id);
-        localStorage.setItem('convertedHotLeads', JSON.stringify(Array.from(newSet)));
-        return newSet;
-      });
-      return;
-    }
-  
     const newVisit: SaveVisitPayload = {
       timestamp: new Date(),
       companyName: lead.companyName,
@@ -1905,101 +1786,8 @@ export default function HomePage() {
   };
 
   const handleHotspotCreation = useCallback(async () => {
-    toast({ title: "Flagging Hotspot...", description: "Getting your current location." });
-
-    if (!navigator.geolocation) {
-        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Could not access location services." });
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-            const flagToast = toast({ title: "Location Captured!", description: `Identifying nearby business...` });
-
-            try {
-                const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                const companyName = result.suggestedCompanyName || 'Flagged Hotspot';
-                
-                const existingVisitForCompany = visits.find((visit) => {
-                    if (visit.companyName !== companyName) return false;
-                    if (!visit.latitude || !visit.longitude) return false;
-                    return getDistanceFromLatLonInM(
-                        latitude,
-                        longitude,
-                        visit.latitude,
-                        visit.longitude
-                      ) < 50;
-                });
-
-                if (existingVisitForCompany) {
-                  flagToast.dismiss();
-                  toast({
-                    title: 'Visit Already Exists',
-                    description: `A visit for ${companyName} is already in your planner or history.`,
-                  });
-                  return;
-                }
-
-                const newVisit: SaveVisitPayload = {
-                    timestamp: new Date(),
-                    companyName: companyName,
-                    city: result.city,
-                    notes: `Flagged as a hotspot. Address: ${result.address || 'Unknown'}`.trim(),
-                    latitude: latitude,
-                    longitude: longitude,
-                    contactInfo: undefined,
-                    notesSummary: undefined,
-                    partnershipConfidence: undefined,
-                    hasBusinessCard: false,
-                    businessCardImageFrontUrl: undefined,
-                    businessCardImageBackUrl: undefined,
-                    discussedCompetitors: false,
-                    competitorName: undefined,
-                    coolerType: undefined,
-                    decisionMakerName: '',
-                    decisionMakerTitle: '',
-                    decisionMakerContact: result.phone || '',
-                    visitNumber: undefined,
-                    interestedUnits: undefined,
-                    hasTDSReading: false,
-                    tdsValue: undefined,
-                    futureMeetingSet: true,
-                    futureMeetingDateTime: undefined,
-                    freeTrial: false,
-                    freeTrialStartDate: undefined,
-                    dealClosed: false,
-                    pricingDiscussed: false,
-                    priceQuoted: undefined,
-                    leaseTerm: undefined,
-                    installationFee: undefined,
-                    creditApproved: false,
-                    manualCommission: undefined,
-                };
-                
-                saveVisitAction(newVisit);
-
-                flagToast.update({ id: flagToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner for a future visit.` });
-
-            } catch (e: any) {
-                 flagToast.dismiss();
-                 toast({ variant: "destructive", title: "Could Not Flag Hotspot", description: e.message });
-            }
-        },
-        (error) => {
-            let errorMessage = "Could not get your current location.";
-            if (error.code === error.PERMISSION_DENIED) {
-              errorMessage = "Location access has been denied.";
-            }
-            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, [visits, toast]);
+    toast({ title: "Flagging Hotspot...", description: "This feature is currently disabled." });
+  }, [toast]);
 
   const handleConfirmStartupNavigation = async () => {
     if (!startupNavigationTarget) return;
@@ -2055,8 +1843,16 @@ export default function HomePage() {
       />
       <div className="container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
-          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
-            Optimum Trailblazer
+          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg flex items-center justify-center" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
+            <svg
+              viewBox="0 0 100 100"
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-[0.8em] w-[0.8em] inline-block -mr-1 fill-current"
+            >
+              <path d="M50,0 C22.4,0 0,22.4 0,50 C0,77.6 22.4,100 50,100 C77.6,100 100,77.6 100,50 C100,22.4 77.6,0 50,0 Z M50,90 C27.9,90 10,72.1 10,50 C10,27.9 27.9,10 50,10 C72.1,10 90,27.9 90,50 C90,72.1 72.1,90 50,90 Z"></path>
+              <path d="M50,20 C33.4,20 20,33.4 20,50 C20,66.6 33.4,80 50,80 C58.9,80 66.9,75.1 71.9,67.6 C65.4,63 65.1,52.2 65.1,50 C65.1,47.8 65.4,37 71.9,32.4 C66.9,24.9 58.9,20 50,20 Z"></path>
+            </svg>
+            ptimum Trailblazer
           </h1>
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto mt-2">
@@ -2210,9 +2006,9 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!userCurrentLatitude || isFetchingCity}>
-                        {isFetchingCity ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                        Quicklog Visit
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Log Visit Manually
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -2240,7 +2036,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to instantly create a new visit at your current location, pre-filled with company details when possible.
+                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Log Visit Manually</span> to create a new visit.
                       </p>
                        <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
@@ -2312,6 +2108,64 @@ export default function HomePage() {
                         </Accordion>
                       </AccordionContent>
                     </AccordionItem>
+                  </Accordion>
+                )}
+                 {pastVisitsByDay.length > 0 && (
+                  <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="past-visits" className="border-none">
+                          <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                            <div className="flex items-center justify-center w-full">
+                              <div className="flex items-center justify-center gap-2">
+                                <ListChecks className="h-5 w-5 text-primary" />
+                                <h3 className="text-lg font-medium text-foreground text-center">
+                                  Past Visits
+                                </h3>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-6">
+                            {pastVisitsByDay.map(([day, visitsOnDay]) => (
+                                <div key={day}>
+                                    <h4 className="font-semibold text-lg text-foreground mb-3 border-b pb-2">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                                    <Accordion type="multiple" className="space-y-4">
+                                      {visitsOnDay.map(visit => (
+                                        <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+                                            <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
+                                                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                                    <div className="flex flex-1 items-center gap-3 min-w-0">
+                                                        <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+                                                        <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                                                    </div>
+                                                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                                        <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
+                                                        {visit.partnershipConfidence && (
+                                                            <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                                                <span className="leading-none">{visit.partnershipConfidence}</span>
+                                                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                            </Badge>
+                                                        )}
+                                                        {visit.futureMeetingSet && <CalendarCheck className="h-4 w-4 text-green-500" />}
+                                                    </div>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4">
+                                                <VisitCard
+                                                    visit={visit}
+                                                    onEdit={handleEditVisit}
+                                                    onDelete={handleDeleteVisit}
+                                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                                    onZoom={setZoomedVisit}
+                                                    onLogFollowUp={handleLogFollowUp}
+                                                    onDictateNotes={handleDictateNotes}
+                                                />
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                      ))}
+                                    </Accordion>
+                                </div>
+                            ))}
+                          </AccordionContent>
+                      </AccordionItem>
                   </Accordion>
                 )}
             </div>
@@ -2773,17 +2627,16 @@ export default function HomePage() {
                       <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
-                        <div className="flex-1 flex justify-center items-center gap-3">
-                            <h2 className="text-2xl font-headline font-semibold text-foreground text-center">
-                                Active Free Trials
-                            </h2>
+                        <h2 className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                            Active Free Trials
+                        </h2>
+                        <div className="flex items-center justify-end w-10 shrink-0">
                             {activeFreeTrials.length > 0 && (
                                 <Badge variant="secondary" className="text-base">
                                     {activeFreeTrials.length}
                                 </Badge>
                             )}
                         </div>
-                        <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
@@ -2969,8 +2822,6 @@ export default function HomePage() {
                   </div>
                   <GoogleMapComponent 
                     visits={visits} 
-                    userLatitude={userCurrentLatitude}
-                    userLongitude={userCurrentLongitude}
                     onUpdateVisit={handleUpdateVisit}
                     onIntelRequest={setZoomedVisit}
                     onZoomRequest={setZoomedVisit}
@@ -3458,7 +3309,7 @@ export default function HomePage() {
                                 <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
-                                <strong>Quicklog Visit:</strong> When you arrive at a business, use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog Visit</span> to create a new record. Debbie will try to auto-fill the company name based on your location.
+                                <strong>Log Visit Manually:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Log Visit Manually</span> to create a new record for any business.
                             </li>
                             <li>
                                 <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
@@ -3682,7 +3533,7 @@ export default function HomePage() {
         <AlertDialog open={isStartupNavigationConfirmOpen} onOpenChange={setIsStartupNavigationConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Navigate to Today's Meeting?</AlertDialogTitle>
+              <DialogTitle>Navigate to Today's Meeting?</DialogTitle>
               <AlertDialogDescription>
                 You have a meeting with {startupNavigationTarget?.companyName}. Would you like to navigate there now?
               </AlertDialogDescription>
@@ -3700,7 +3551,7 @@ export default function HomePage() {
         className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
       >
-        <Flame className="h-8 w-8 text-red-500" />
+        <Flame className="h-8 w-8" />
       </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
         <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
@@ -3712,3 +3563,5 @@ export default function HomePage() {
   );
 }
  
+
+    
