@@ -2037,7 +2037,7 @@ export default function HomePage() {
                 <div className="flex justify-center items-center gap-4 w-full">
                     <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1">
                         <PlusCircle className="mr-2 h-5 w-5" />
-                        Log Visit Manually
+                        Quicklog
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
@@ -2065,7 +2065,7 @@ export default function HomePage() {
                     <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
-                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Log Visit Manually</span> to create a new visit.
+                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new visit.
                       </p>
                        <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
                             <WifiOff className="h-4 w-4" />
@@ -3007,7 +3007,7 @@ export default function HomePage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-0">
-                    <UiCard className="bg-card border border-primary/20 rounded-t-none border-t-0">
+                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
                       <UiCardContent className="pt-6">
                         {newsItems.length > 0 ? (
                             <ul className="space-y-3 text-sm text-foreground">
@@ -3338,7 +3338,7 @@ export default function HomePage() {
                                 <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
                             </li>
                             <li>
-                                <strong>Log Visit Manually:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Log Visit Manually</span> to create a new record for any business.
+                                <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
                             </li>
                             <li>
                                 <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
