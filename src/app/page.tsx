@@ -1393,22 +1393,59 @@ export default function HomePage() {
   };
 
   const handleQuickLog = async () => {
-    let companyName = '';
-    let notes = '';
-    let phone = '';
-    let city: string | undefined = undefined;
-    
-    const newVisitTemplate: Partial<Visit> = {
-        timestamp: new Date(),
-        visitNumber: todaysVisits.length + 1,
-        companyName: companyName,
-        city: city,
-        notes: notes,
-        decisionMakerContact: phone,
-    };
-    setCurrentEditingVisit(newVisitTemplate as Visit);
-    setIsVisitFormOpen(true);
-  };
+    if (!navigator.geolocation) {
+        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
+        return;
+    }
+
+    toast({ title: "Getting Location...", description: "Please wait while we find your current location." });
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const { latitude, longitude } = position.coords;
+
+            setIsVisitFormOpen(true);
+            setCurrentEditingVisit({
+                id: `temp_${crypto.randomUUID()}`,
+                timestamp: new Date(),
+                visitNumber: todaysVisits.length + 1,
+                companyName: 'Finding company...',
+                latitude,
+                longitude,
+            } as Visit);
+
+            const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
+
+            setCurrentEditingVisit(prev => ({
+                ...(prev || {} as Visit),
+                id: prev?.id || `temp_${crypto.randomUUID()}`,
+                timestamp: prev?.timestamp || new Date(),
+                companyName: result.suggestedCompanyName || 'Unknown Company',
+                city: result.city || '',
+                notes: result.address ? `Company Address: ${result.address}\n\n` : '',
+                decisionMakerContact: result.phone || '',
+            }));
+            
+            toast({ title: "Location Found!", description: "Visit form has been pre-filled." });
+        },
+        (error) => {
+            let errorMessage = "Could not get your location.";
+            if (error.code === error.PERMISSION_DENIED) {
+                errorMessage = "Location access has been denied. Please enable it in your browser settings.";
+            }
+            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+            // Fallback to manual entry if location fails
+            setCurrentEditingVisit({
+                id: `temp_${crypto.randomUUID()}`,
+                timestamp: new Date(),
+                visitNumber: todaysVisits.length + 1,
+                companyName: '',
+            } as Visit);
+            setIsVisitFormOpen(true);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+};
 
   const handleEditVisit = (visit: Visit) => {
     setCurrentEditingVisit(visit);
@@ -1416,7 +1453,7 @@ export default function HomePage() {
   };
 
   const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    const result = await updateDealClosedAction(visitId, dealClosed);
+    const result = await saveVisitAction({ id: visitId, dealClosed } as any);
     if (result.error) {
         toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
     } else {
@@ -1843,16 +1880,8 @@ export default function HomePage() {
       />
       <div className="container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8">
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
-          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg flex items-center justify-center" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
-            <svg
-              viewBox="0 0 100 100"
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-[0.8em] w-[0.8em] inline-block -mr-1 fill-current"
-            >
-              <path d="M50,0 C22.4,0 0,22.4 0,50 C0,77.6 22.4,100 50,100 C77.6,100 100,77.6 100,50 C100,22.4 77.6,0 50,0 Z M50,90 C27.9,90 10,72.1 10,50 C10,27.9 27.9,10 50,10 C72.1,10 90,27.9 90,50 C90,72.1 72.1,90 50,90 Z"></path>
-              <path d="M50,20 C33.4,20 20,33.4 20,50 C20,66.6 33.4,80 50,80 C58.9,80 66.9,75.1 71.9,67.6 C65.4,63 65.1,52.2 65.1,50 C65.1,47.8 65.4,37 71.9,32.4 C66.9,24.9 58.9,20 50,20 Z"></path>
-            </svg>
-            ptimum Trailblazer
+          <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
+            Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto mt-2">
