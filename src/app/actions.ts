@@ -39,41 +39,39 @@ export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visi
       return { error: 'Company name is required.' };
     }
 
-    const timestamp = (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date();
-
     const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
-      companyName: payload.companyName.trim(),
-      city: payload.city ?? null,
-      timestamp: timestamp,
-      notes: payload.notes ?? null,
-      latitude: payload.latitude ?? null,
-      longitude: payload.longitude ?? null,
-      partnershipConfidence: payload.partnershipConfidence ?? null,
-      hasBusinessCard: payload.hasBusinessCard || false,
-      businessCardImageFrontUrl: payload.businessCardImageFrontUrl ?? null,
-      businessCardImageBackUrl: payload.businessCardImageBackUrl ?? null,
-      discussedCompetitors: !!payload.competitorName,
-      competitorName: payload.competitorName ?? null,
-      coolerType: (!!payload.competitorName) ? (payload.coolerType ?? null) : null,
-      decisionMakerName: payload.decisionMakerName ?? null,
-      decisionMakerTitle: payload.decisionMakerTitle ?? null,
-      decisionMakerContact: payload.decisionMakerContact ?? null,
-      visitNumber: payload.visitNumber ?? null,
-      interestedUnits: payload.interestedUnits ?? [],
-      hasTDSReading: payload.hasTDSReading || false,
-      tdsValue: (payload.hasTDSReading || false) && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
-      futureMeetingSet: payload.futureMeetingSet || false,
-      futureMeetingDateTime: (payload.futureMeetingSet || false) && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
-      freeTrial: payload.freeTrial || false,
-      freeTrialStartDate: (payload.freeTrial || false) && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
-      pricingDiscussed: payload.pricingDiscussed || false,
-      priceQuoted: (payload.pricingDiscussed || false) && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
-      leaseTerm: (payload.pricingDiscussed || false) && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
-      installationFee: (payload.pricingDiscussed || false) && typeof payload.installationFee === 'number' && !isNaN(payload.installationFee) ? payload.installationFee : null,
-      creditApproved: payload.creditApproved || false,
-      manualCommission: payload.manualCommission ?? null,
-      notesSummary: payload.notesSummary ?? null,
-      contactInfo: payload.contactInfo ?? null,
+        companyName: payload.companyName.trim(),
+        city: payload.city ?? null,
+        timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
+        notes: payload.notes ?? null,
+        latitude: payload.latitude ?? null,
+        longitude: payload.longitude ?? null,
+        partnershipConfidence: typeof payload.partnershipConfidence === 'number' && !isNaN(payload.partnershipConfidence) ? payload.partnershipConfidence : null,
+        hasBusinessCard: !!payload.hasBusinessCard,
+        businessCardImageFrontUrl: payload.hasBusinessCard ? (payload.businessCardImageFrontUrl ?? null) : null,
+        businessCardImageBackUrl: payload.hasBusinessCard ? (payload.businessCardImageBackUrl ?? null) : null,
+        discussedCompetitors: !!payload.competitorName,
+        competitorName: payload.competitorName ?? null,
+        coolerType: payload.coolerType ?? null,
+        decisionMakerName: payload.decisionMakerName ?? null,
+        decisionMakerTitle: payload.decisionMakerTitle ?? null,
+        decisionMakerContact: payload.decisionMakerContact ?? null,
+        visitNumber: typeof payload.visitNumber === 'number' && !isNaN(payload.visitNumber) ? payload.visitNumber : null,
+        interestedUnits: Array.isArray(payload.interestedUnits) ? payload.interestedUnits : [],
+        hasTDSReading: !!payload.hasTDSReading,
+        tdsValue: payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
+        futureMeetingSet: !!payload.futureMeetingSet,
+        futureMeetingDateTime: payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
+        freeTrial: !!payload.freeTrial,
+        freeTrialStartDate: payload.freeTrial && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
+        pricingDiscussed: !!payload.pricingDiscussed,
+        priceQuoted: payload.pricingDiscussed && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
+        leaseTerm: payload.pricingDiscussed && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
+        installationFee: payload.pricingDiscussed && typeof payload.installationFee === 'number' && !isNaN(payload.installationFee) ? payload.installationFee : null,
+        creditApproved: !!payload.creditApproved,
+        manualCommission: typeof payload.manualCommission === 'number' && !isNaN(payload.manualCommission) ? payload.manualCommission : null,
+        notesSummary: payload.notesSummary ?? null,
+        contactInfo: payload.contactInfo ?? null,
     };
 
     const visitDocRef = doc(db, 'visits', visitId);
@@ -631,3 +629,5 @@ export async function analyzeDocumentAction(
   }
 }
 
+
+    
