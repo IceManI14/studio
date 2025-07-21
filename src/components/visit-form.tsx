@@ -297,7 +297,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [lastAnalyzedNotes, setLastAnalyzedNotes] = useState<string | undefined>(undefined);
   const [formInitialData, setFormInitialData] = useState<Visit | undefined>(initialData);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const freeTrialValueRef = useRef<boolean | undefined>(false);
 
 
   const form = useForm<VisitFormData>({
@@ -390,10 +389,14 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
 
   const hasBusinessCardValue = form.watch('hasBusinessCard');
+  const hasTDSReadingValue = form.watch('hasTDSReading');
+  const pricingDiscussedValue = form.watch('pricingDiscussed');
+
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const isMountedRef = useRef(false);
   
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
     if (side === 'front') {
@@ -409,6 +412,34 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setIsCameraViewVisible(false);
     // No need to call stopCameraStream here as it's handled by other flows
   }, [form]);
+  
+  useEffect(() => {
+    if (isMountedRef.current) {
+      if (!hasBusinessCardValue) {
+        handleRemoveImage('front');
+        handleRemoveImage('back');
+      }
+    }
+  }, [hasBusinessCardValue, handleRemoveImage]);
+  
+  useEffect(() => {
+    if (isMountedRef.current) {
+      if (!hasTDSReadingValue) {
+        form.setValue('tdsValue', undefined, { shouldValidate: true });
+      }
+    }
+  }, [hasTDSReadingValue, form]);
+
+  useEffect(() => {
+    if (isMountedRef.current) {
+        if (!pricingDiscussedValue) {
+            form.setValue('priceQuoted', undefined);
+            form.setValue('leaseTerm', undefined);
+            form.setValue('installationFee', undefined);
+            form.setValue('manualCommission', undefined);
+        }
+    }
+  }, [pricingDiscussedValue, form]);
 
   const uploadImage = useCallback(async (file: File, side: 'front' | 'back') => {
     setIsUploadingCard(true);
@@ -531,41 +562,29 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsEditingCompanyName(!initialData?.id || !initialData.companyName);
       setFormInitialData(initialData);
     }
+    isMountedRef.current = true;
+    return () => {
+        isMountedRef.current = false;
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, isOpen]);
 
   useEffect(() => {
-    freeTrialValueRef.current = form.getValues('freeTrial');
-  }, [form, isOpen]);
-
-  useEffect(() => {
-    const currentFreeTrialValue = form.watch('freeTrial');
-    
-    if (freeTrialValueRef.current === currentFreeTrialValue) {
-      return;
-    }
-
-    if (currentFreeTrialValue) {
-        const startDate = form.getValues('freeTrialStartDate') || new Date();
-        form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-        form.setValue('futureMeetingSet', true, { shouldValidate: true });
-        const followUpDate = addDays(new Date(startDate), 7);
-        followUpDate.setHours(10, 0, 0, 0);
-        form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-        toast({
-            title: "Free Trial Activated",
-            description: "A follow-up meeting is scheduled for one week from the start date.",
-        });
-    } else {
-        if (freeTrialValueRef.current) { // only reset if it was previously true
-            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-            form.setValue('futureMeetingSet', false, { shouldValidate: true });
-            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-        }
-    }
-    
-    freeTrialValueRef.current = currentFreeTrialValue;
-  }, [form.watch('freeTrial'), form, toast]);
+      if (isMountedRef.current) {
+          if (freeTrialValue) {
+              const startDate = form.getValues('freeTrialStartDate') || new Date();
+              form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+              form.setValue('futureMeetingSet', true, { shouldValidate: true });
+              const followUpDate = addDays(new Date(startDate), 7);
+              followUpDate.setHours(10, 0, 0, 0);
+              form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+              toast({
+                  title: "Free Trial Activated",
+                  description: "A follow-up meeting is scheduled for one week from the start date.",
+              });
+          }
+      }
+  }, [freeTrialValue, form, toast]);
 
 
   useEffect(() => {
@@ -1261,13 +1280,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (!checked) {
-                             handleRemoveImage('front');
-                             handleRemoveImage('back');
-                          }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="hasBusinessCard"
                       />
                     </FormControl>
@@ -1401,13 +1414,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          const booleanChecked = Boolean(checked);
-                          field.onChange(booleanChecked);
-                          if (!booleanChecked) {
-                            form.setValue('tdsValue', undefined, { shouldValidate: true });
-                          }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="hasTDSReading"
                       />
                     </FormControl>
@@ -1420,7 +1427,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {form.watch('hasTDSReading') && (
+              {hasTDSReadingValue && (
                 <FormField
                   control={form.control}
                   name="tdsValue"
@@ -1527,16 +1534,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                   <FormControl>
                                       <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={(checked) => {
-                                              const isChecked = !!checked;
-                                              field.onChange(isChecked);
-                                              if (!isChecked) {
-                                                  form.setValue('priceQuoted', undefined);
-                                                  form.setValue('leaseTerm', undefined);
-                                                  form.setValue('installationFee', undefined);
-                                                  form.setValue('manualCommission', undefined);
-                                              }
-                                          }}
+                                          onCheckedChange={field.onChange}
                                           id="pricingDiscussed"
                                       />
                                   </FormControl>
@@ -1544,7 +1542,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                       <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing
                                   </FormLabel>
                               </div>
-                              {form.watch('pricingDiscussed') && (
+                              {pricingDiscussedValue && (
                                   <div className="pl-8 pt-3 space-y-4 animate-in fade-in-0 zoom-in-95 border-t border-border">
                                       <FormField
                                           control={form.control}
