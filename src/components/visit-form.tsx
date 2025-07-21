@@ -297,6 +297,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [lastAnalyzedNotes, setLastAnalyzedNotes] = useState<string | undefined>(undefined);
   const [formInitialData, setFormInitialData] = useState<Visit | undefined>(initialData);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const freeTrialValueRef = useRef<boolean | undefined>(false);
 
 
   const form = useForm<VisitFormData>({
@@ -532,6 +533,37 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, isOpen]);
+
+  useEffect(() => {
+    if (freeTrialValueRef.current === freeTrialValue) {
+        return;
+    }
+    
+    freeTrialValueRef.current = freeTrialValue;
+
+    if (freeTrialValue) {
+        const startDate = form.getValues('freeTrialStartDate') || new Date();
+        form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+        form.setValue('futureMeetingSet', true, { shouldValidate: true });
+        const followUpDate = addDays(new Date(startDate), 7);
+        followUpDate.setHours(10, 0, 0, 0);
+        form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
+        toast({
+            title: "Free Trial Activated",
+            description: "A follow-up meeting is scheduled for one week from the start date.",
+        });
+    } else {
+        // Only clear if the trial was previously active and is now being turned off.
+        // This avoids clearing a manually set meeting if the trial was never on.
+        if (freeTrialValueRef.current === false && form.getValues('futureMeetingDateTime')) {
+            // No action needed if a meeting was manually set.
+        } else {
+            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
+            form.setValue('futureMeetingSet', false, { shouldValidate: true });
+            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+        }
+    }
+}, [freeTrialValue, form, toast]);
 
 
   useEffect(() => {
@@ -1427,26 +1459,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          const boolValue = !!checked;
-                          field.onChange(boolValue);
-                          if (boolValue) {
-                            const startDate = form.getValues('freeTrialStartDate') || new Date();
-                            form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-                            form.setValue('futureMeetingSet', true, { shouldValidate: true });
-                            const followUpDate = addDays(new Date(startDate), 7);
-                            followUpDate.setHours(10, 0, 0, 0);
-                            form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-                            toast({
-                                title: "Free Trial Activated",
-                                description: "A follow-up meeting is scheduled for one week from the start date.",
-                            });
-                          } else {
-                            form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
-                            form.setValue('futureMeetingSet', false, { shouldValidate: true });
-                            form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                          }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="freeTrial"
                       />
                     </FormControl>
