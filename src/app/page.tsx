@@ -235,6 +235,7 @@ export default function HomePage() {
   const visitCardsRef = useRef<HTMLDivElement>(null);
   const todaysVisitsRef = useRef<HTMLDivElement>(null);
   const eagleEyeRef = useRef<HTMLDivElement>(null);
+  const currentCityRef = useRef<string | null>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -1222,50 +1223,85 @@ export default function HomePage() {
   }, [toast]);
 
   useEffect(() => {
-    const handlePositionUpdate = async (position: GeolocationPosition) => {
-      setIsFetchingCity(true);
-      try {
-        const result = await getCompanyNameFromCoordsAction({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-        if (result.error) {
-          // Do not toast for every update failure to avoid spamming user
-          console.warn("Location Update Failed:", result.error);
-          setCurrentCity(prev => prev || "Location lookup failed");
-        } else if (result.city) {
-          setCurrentCity(result.city);
-        } else {
-          setCurrentCity(prev => prev || "Location Unknown");
-        }
-      } catch (e: any) {
-        console.error("Error fetching city:", e);
-        setCurrentCity(prev => prev || "Error fetching city.");
-      } finally {
-        setIsFetchingCity(false);
-      }
-    };
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(handlePositionUpdate, (error) => {
-        let errorMessage = "Could not retrieve location.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location access denied. Please enable it in your browser settings.";
-        }
-        
-        // Don't show toast for timeouts, just update the UI state.
-        if (error.code !== error.TIMEOUT) {
-            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-        } else {
-            console.warn(`Geolocation Error (Code: ${error.code}): ${error.message}`);
-        }
-        
-        setCurrentCity("Location access denied.");
-        setIsFetchingCity(false);
-      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
-    } else {
+    if (typeof window !== 'undefined') {
+      currentCityRef.current = currentCity;
+    }
+  }, [currentCity]);
+  
+  useEffect(() => {
+    if (!navigator.geolocation) {
       toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
       setCurrentCity("Geolocation not supported.");
       setIsFetchingCity(false);
+      return;
     }
-  }, [toast]);
+  
+    const handlePositionUpdate = async (position: GeolocationPosition) => {
+      // For initial load, don't set fetching city to false immediately
+      if (currentCityRef.current === null) {
+        setIsFetchingCity(true);
+      }
+      
+      try {
+        const result = await getCompanyNameFromCoordsAction({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+  
+        if (result.error) {
+          console.warn("Location Update Failed:", result.error);
+          if (currentCityRef.current === null) {
+            setCurrentCity("Location lookup failed");
+          }
+          return; // Don't show error toast on every failure of watch
+        }
+  
+        if (result.city) {
+          if (currentCityRef.current && currentCityRef.current !== result.city) {
+            toast({
+              title: "City Changed",
+              description: `You are now in ${result.city}.`
+            });
+          }
+          setCurrentCity(result.city);
+        } else if (currentCityRef.current === null) {
+          setCurrentCity("Location Unknown");
+        }
+      } catch (e: any) {
+        console.error("Error fetching city:", e);
+        if (currentCityRef.current === null) {
+          setCurrentCity("Error fetching city.");
+        }
+      } finally {
+        if (isFetchingCity) {
+           setIsFetchingCity(false);
+        }
+      }
+    };
+  
+    const handleError = (error: GeolocationPositionError) => {
+      let errorMessage = "Could not retrieve location.";
+      if (error.code === error.PERMISSION_DENIED) {
+        errorMessage = "Location access denied. Please enable it in your browser settings.";
+      }
+  
+      toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+      
+      setCurrentCity("Location access denied.");
+      setIsFetchingCity(false);
+    };
+  
+    const watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 60000
+    });
+  
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [toast, isFetchingCity]);
+
 
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
@@ -2652,8 +2688,8 @@ export default function HomePage() {
                 </AccordionItem>
                 <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
+                    <div className="flex w-full items-center justify-center">
+                        <div className="flex items-center justify-start w-10 shrink-0">
                            <PackageCheck className="h-7 w-7 text-primary" />
                         </div>
                         <h2 className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
