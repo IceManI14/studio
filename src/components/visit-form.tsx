@@ -535,13 +535,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen]);
 
   useEffect(() => {
-    if (freeTrialValueRef.current === freeTrialValue) {
-        return;
-    }
-    
-    freeTrialValueRef.current = freeTrialValue;
+    freeTrialValueRef.current = form.getValues('freeTrial');
+  }, [form, isOpen]);
 
-    if (freeTrialValue) {
+  useEffect(() => {
+    const currentFreeTrialValue = form.watch('freeTrial');
+    
+    if (freeTrialValueRef.current === currentFreeTrialValue) {
+      return;
+    }
+
+    if (currentFreeTrialValue) {
         const startDate = form.getValues('freeTrialStartDate') || new Date();
         form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
         form.setValue('futureMeetingSet', true, { shouldValidate: true });
@@ -553,17 +557,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             description: "A follow-up meeting is scheduled for one week from the start date.",
         });
     } else {
-        // Only clear if the trial was previously active and is now being turned off.
-        // This avoids clearing a manually set meeting if the trial was never on.
-        if (freeTrialValueRef.current === false && form.getValues('futureMeetingDateTime')) {
-            // No action needed if a meeting was manually set.
-        } else {
+        if (freeTrialValueRef.current) { // only reset if it was previously true
             form.setValue('freeTrialStartDate', undefined, { shouldValidate: true });
             form.setValue('futureMeetingSet', false, { shouldValidate: true });
             form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
         }
     }
-}, [freeTrialValue, form, toast]);
+    
+    freeTrialValueRef.current = currentFreeTrialValue;
+  }, [form.watch('freeTrial'), form, toast]);
 
 
   useEffect(() => {
@@ -1528,16 +1530,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                           onCheckedChange={(checked) => {
                                               const isChecked = !!checked;
                                               field.onChange(isChecked);
-                                              if (isChecked) {
-                                                  // Only set defaults if the fields are currently empty.
-                                                  // This prevents overriding manual entries.
-                                                  if (form.getValues('leaseTerm') === undefined) {
-                                                      form.setValue('leaseTerm', 60, { shouldValidate: true });
-                                                  }
-                                                  if (form.getValues('installationFee') === undefined) {
-                                                      form.setValue('installationFee', 199, { shouldValidate: true });
-                                                  }
-                                              } else {
+                                              if (!isChecked) {
                                                   form.setValue('priceQuoted', undefined);
                                                   form.setValue('leaseTerm', undefined);
                                                   form.setValue('installationFee', undefined);
