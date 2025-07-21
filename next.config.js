@@ -33,6 +33,12 @@ const nextConfig = {
       };
     }
     
+    // This loader handles the 'handlebars' dependency issue with Genkit.
+    config.module.rules.push({
+      test: /node_modules\/handlebars\/.+\.js$/,
+      loader: 'shebang-loader',
+    });
+    
     return config;
   },
 };
