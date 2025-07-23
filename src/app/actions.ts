@@ -19,6 +19,8 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { Storage } from '@google-cloud/storage';
 
+const GOOGLE_API_DISABLED_ERROR = "Google API features are currently disabled by the administrator.";
+
 // The payload now directly uses fields from the Visit type, simplifying the data flow.
 export interface SaveVisitPayload extends Omit<Visit, 'id' | 'timestamp'> {
   id?: string;
@@ -133,31 +135,7 @@ const getCompanyNameFromCoordsPayloadSchema = z.object({
 export async function getCompanyNameFromCoordsAction(
     payload: { latitude?: number; longitude?: number; }
 ): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; address?: string; city?: string; phone?: string; error?: string }> {
-    try {
-        const validatedPayload = getCompanyNameFromCoordsPayloadSchema.parse(payload);
-        const result = await getCompanyNameFromCoords({
-            latitude: validatedPayload.latitude,
-            longitude: validatedPayload.longitude,
-        });
-        return {
-            suggestedCompanyName: result.suggestedCompanyName,
-            confidenceScore: result.confidenceScore,
-            address: result.address,
-            city: result.city,
-            phone: result.phone,
-        };
-    } catch (error: any) {
-        console.error("Error in getCompanyNameFromCoordsAction:", error);
-        if (error instanceof z.ZodError) {
-            return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-        }
-        const errorMessage = error?.message?.toLowerCase() || '';
-        if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-            return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
-        }
-        const userErrorMessage = error?.message ? `: ${error.message}` : '. An unexpected error occurred.';
-        return { error: `Failed to suggest company name${userErrorMessage}` };
-    }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const aiChatPayloadSchema = z.object({
@@ -194,50 +172,7 @@ const aiChatPayloadSchema = z.object({
 export async function getAiChatResponseAction(
   payload: z.infer<typeof aiChatPayloadSchema>
 ): Promise<{ aiResponse?: string; error?: string }> {
-  try {
-    const validatedPayload = aiChatPayloadSchema.parse(payload);
-
-    const chatHistoryString = validatedPayload.currentMessages
-      .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.text}`)
-      .join('\n');
-
-    const newUserMessage = validatedPayload.currentMessages[validatedPayload.currentMessages.length - 1].text;
-
-    const visitsContextString = validatedPayload.visits
-      .map(
-        (visit) => {
-          const confidenceText = visit.partnershipConfidence
-            ? `${visit.partnershipConfidence}/5 stars`
-            : 'Not Rated';
-          return `Company: ${visit.companyName}, Visited: ${format(visit.timestamp, 'yyyy-MM-dd')}, Confidence: ${confidenceText}, Summary: ${visit.notesSummary || 'No summary available.'}`;
-        }
-      )
-      .join('\n---\n');
-
-    const result = await chatWithVisits({
-      chatHistory: chatHistoryString,
-      userMessage: newUserMessage,
-      visitsContext: visitsContextString,
-      modelName: validatedPayload.model,
-      pdfUrl: validatedPayload.pdfUrl,
-      csvData: validatedPayload.csvData,
-      territoryPdfUrl: validatedPayload.territoryPdfUrl,
-      managedFiles: validatedPayload.managedFiles?.map(f => ({ name: f.name, url: f.url })),
-      newsItems: validatedPayload.newsItems,
-    });
-
-    return { aiResponse: result.aiResponse };
-  } catch (error: any) {
-    console.error("Error in getAiChatResponseAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-        return { error: `The AI service API key is invalid or has expired. Please check your .env file. (Model: ${payload.model})` };
-    }
-    return { error: `AI chat failed: ${error.message || 'An unexpected error occurred.'}` };
-  }
+  return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const summarizeNotesSchema = z.object({
@@ -247,21 +182,7 @@ const summarizeNotesSchema = z.object({
 export async function summarizeNotesAction(
   payload: z.infer<typeof summarizeNotesSchema>
 ): Promise<{ summary?: string; error?: string }> {
-  try {
-    const validatedPayload = summarizeNotesSchema.parse(payload);
-    const result = await summarizeVisitNotes({ notes: validatedPayload.notes });
-    return { summary: result.summary };
-  } catch (error: any) {
-    console.error("Error in summarizeNotesAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
-    }
-    return { error: error.message || 'Failed to summarize notes. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const findOptimalParkingSchema = z.object({
@@ -271,25 +192,7 @@ const findOptimalParkingSchema = z.object({
 export async function findOptimalParkingAction(
   payload: z.infer<typeof findOptimalParkingSchema>
 ): Promise<{ latitude?: number; longitude?: number; locationDescription?: string; error?: string }> {
-  try {
-    const validatedPayload = findOptimalParkingSchema.parse(payload);
-    const result = await findOptimalParking({ city: validatedPayload.city });
-    return {
-      latitude: result.latitude,
-      longitude: result.longitude,
-      locationDescription: result.locationDescription,
-    };
-  } catch (error: any) {
-    console.error("Error in findOptimalParkingAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid') || errorMessage.includes('permission denied') || errorMessage.includes('authentication failed')) {
-        return { error: "The AI service API key is invalid or has expired. Please check your .env file." };
-    }
-    return { error: error.message || 'Failed to find optimal parking location. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const extractCitiesSchema = z.object({
@@ -299,21 +202,7 @@ const extractCitiesSchema = z.object({
 export async function extractCitiesFromPdfAction(
   payload: z.infer<typeof extractCitiesSchema>
 ): Promise<{ cities?: string[]; error?: string }> {
-  try {
-    const validatedPayload = extractCitiesSchema.parse(payload);
-    const result = await extractCitiesFromPdf({ pdfDataUri: validatedPayload.pdfDataUri });
-    return { cities: result.cities };
-  } catch (error: any) {
-    console.error("Error in extractCitiesFromPdfAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid')) {
-        return { error: "The AI service API key is invalid or has expired." };
-    }
-    return { error: error.message || 'Failed to extract cities from PDF. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const findCompanySchema = z.object({
@@ -346,99 +235,7 @@ export async function findCompanyAction(
   }[];
   error?: string
 }> {
-  try {
-    const validatedPayload = findCompanySchema.parse(payload);
-    let { companyName, city, territoryCities, territory } = validatedPayload;
-
-    // Intelligent Search Logic: If the companyName matches a territory city,
-    // change the search mode to find businesses IN that city.
-    const potentialCityMatch = (territoryCities || []).find(
-      (tc) => tc.toLowerCase().startsWith(companyName.toLowerCase())
-    );
-
-    if (potentialCityMatch && !city) {
-      // User searched for a city name, not a company.
-      // Set the city for the search and clear the company name to find all establishments.
-      city = potentialCityMatch;
-      companyName = 'business'; // Generic term to find establishments
-    }
-    
-    const citiesToSearch = city && city.trim() ? [city.trim()] : (territoryCities || []);
-    const allPlaces: PlaceDetails[] = [];
-    const foundPlaceIds = new Set<string>();
-
-    if (citiesToSearch.length > 0) {
-      // If cities are provided, search within each city (more precise).
-      for (const searchCity of citiesToSearch) {
-        const query = `${companyName}, ${searchCity}`;
-        const results = await findPlacesFromText(query);
-        for (const place of results) {
-          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
-            allPlaces.push(place);
-            foundPlaceIds.add(place.placeId);
-          }
-        }
-      }
-    } else if (territory && territory.length > 0) {
-      // If no cities, but territory bounds exist, search within each territory's bounds.
-      for (const t of territory) {
-        const searchBounds: SearchBounds = t.bounds;
-        const results = await findPlacesFromText(companyName, searchBounds);
-        
-        // Post-filter to ensure results are strictly within bounds, as locationbias is a hint.
-        const filteredResults = results.filter(p => {
-          if (!p.latitude || !p.longitude) return false;
-          return (
-            p.latitude >= searchBounds.minLat &&
-            p.latitude <= searchBounds.maxLat &&
-            p.longitude >= searchBounds.minLng &&
-            p.longitude <= searchBounds.maxLng
-          );
-        });
-
-        for (const place of filteredResults) {
-          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
-            allPlaces.push(place);
-            foundPlaceIds.add(place.placeId);
-          }
-        }
-      }
-    } else {
-      // Fallback to a general search if no territory info is available.
-      const results = await findPlacesFromText(companyName);
-      for (const place of results) {
-          if (place.placeId && !foundPlaceIds.has(place.placeId)) {
-            allPlaces.push(place);
-            foundPlaceIds.add(place.placeId);
-          }
-        }
-    }
-    
-    if (allPlaces.length === 0) {
-      return { error: `No branches of '${validatedPayload.companyName}' found in the specified territory.` };
-    }
-
-    const places = allPlaces.map(result => ({
-        companyName: result.suggestedCompanyName,
-        address: result.address,
-        city: result.city,
-        phone: result.phone,
-        latitude: result.latitude,
-        longitude: result.longitude,
-        openingHours: result.openingHours,
-    }));
-    return { places };
-  } catch (error: any) {
-    console.error("Error in findCompanyAction:", error);
-    if (error instanceof z.ZodError) {
-        return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key')) {
-        return { error: "The Google Maps API key is invalid or not configured properly. Please check your .env file." };
-    }
-    return { error: error.message || 'Failed to find company. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 // Action to update the dealClosed status from the card
@@ -558,25 +355,7 @@ const extractDetailsSchema = z.object({
 export async function extractVisitDetailsAction(
   payload: z.infer<typeof extractDetailsSchema>
 ): Promise<{ details?: z.infer<typeof import('@/ai/flows/extract-visit-details-flow').ExtractVisitDetailsOutput>; error?: string }> {
-  try {
-    const validatedPayload = extractDetailsSchema.parse(payload);
-    const currentDate = format(new Date(), 'yyyy-MM-dd');
-    const result = await extractVisitDetails({ 
-        notes: validatedPayload.notes,
-        currentDate: currentDate 
-    });
-    return { details: result };
-  } catch (error: any) {
-    console.error("Error in extractVisitDetailsAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid')) {
-        return { error: "The AI service API key is invalid or has expired." };
-    }
-    return { error: error.message || 'Failed to extract details from notes. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const getCompanyIntelSchema = z.object({
@@ -588,21 +367,7 @@ const getCompanyIntelSchema = z.object({
 export async function getCompanyIntelAction(
   payload: z.infer<typeof getCompanyIntelSchema>
 ): Promise<{ details?: z.infer<typeof import('@/ai/flows/get-company-intel-flow').GetCompanyIntelOutput>; error?: string }> {
-  try {
-    const validatedPayload = getCompanyIntelSchema.parse(payload);
-    const result = await getCompanyIntel(validatedPayload);
-    return { details: result };
-  } catch (error: any) {
-    console.error("Error in getCompanyIntelAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid')) {
-        return { error: "The AI service API key is invalid or has expired." };
-    }
-    return { error: error.message || 'Failed to get company intelligence. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 const analyzeDocumentSchema = z.object({
@@ -612,21 +377,7 @@ const analyzeDocumentSchema = z.object({
 export async function analyzeDocumentAction(
   payload: z.infer<typeof analyzeDocumentSchema>
 ): Promise<{ summary?: string; error?: string }> {
-  try {
-    const validatedPayload = analyzeDocumentSchema.parse(payload);
-    const result = await analyzeDocument(validatedPayload);
-    return { summary: result.summary };
-  } catch (error: any) {
-    console.error("Error in analyzeDocumentAction:", error);
-    if (error instanceof z.ZodError) {
-      return { error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
-    }
-    const errorMessage = error?.message?.toLowerCase() || '';
-    if (errorMessage.includes('api key not valid')) {
-        return { error: "The AI service API key is invalid or has expired." };
-    }
-    return { error: error.message || 'Failed to analyze document. An unexpected error occurred.' };
-  }
+    return { error: GOOGLE_API_DISABLED_ERROR };
 }
 
 

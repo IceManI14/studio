@@ -9,7 +9,7 @@ import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
-import GoogleMapComponent from '@/components/google-map';
+import MapPlaceholder from '@/components/map-placeholder';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -1301,72 +1301,77 @@ export default function HomePage() {
   }, [currentCity]);
   
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
-      setCurrentCity("Geolocation not supported.");
-      setIsFetchingCity(false);
-      return;
-    }
-  
-    let watchId: number;
+    if (isGenkitConfigured) {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
+        setCurrentCity("Geolocation not supported.");
+        setIsFetchingCity(false);
+        return;
+      }
+    
+      let watchId: number;
 
-    const handlePositionUpdate = async (position: GeolocationPosition) => {
-      if (isFetchingCity) {
-        setIsFetchingCity(false); // Set to false on first successful read
-      }
-      
-      try {
-        const result = await getCompanyNameFromCoordsAction({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-  
-        if (result.error) {
-          console.warn("Location Update Failed:", result.error);
-          return;
+      const handlePositionUpdate = async (position: GeolocationPosition) => {
+        if (isFetchingCity) {
+          setIsFetchingCity(false); // Set to false on first successful read
         }
-  
-        if (result.city && currentCityRef.current !== result.city) {
-          if (currentCityRef.current !== null) { // Don't toast on initial load
-             toast({
-              title: "City Changed",
-              description: `You are now in ${result.city}.`
-            });
+        
+        try {
+          const result = await getCompanyNameFromCoordsAction({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+    
+          if (result.error) {
+            console.warn("Location Update Failed:", result.error);
+            return;
           }
-          setCurrentCity(result.city);
-        } else if (currentCityRef.current === null && !result.city) {
-          setCurrentCity("Location Unknown");
+    
+          if (result.city && currentCityRef.current !== result.city) {
+            if (currentCityRef.current !== null) { // Don't toast on initial load
+               toast({
+                title: "City Changed",
+                description: `You are now in ${result.city}.`
+              });
+            }
+            setCurrentCity(result.city);
+          } else if (currentCityRef.current === null && !result.city) {
+            setCurrentCity("Location Unknown");
+          }
+        } catch (e: any) {
+          console.error("Error fetching city:", e);
+          if (currentCityRef.current === null) {
+            setCurrentCity("Error fetching city.");
+          }
         }
-      } catch (e: any) {
-        console.error("Error fetching city:", e);
-        if (currentCityRef.current === null) {
-          setCurrentCity("Error fetching city.");
+      };
+    
+      const handleError = (error: GeolocationPositionError) => {
+        let errorMessage = "Could not retrieve location.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Location access denied. Please enable it in your browser settings.";
         }
-      }
-    };
-  
-    const handleError = (error: GeolocationPositionError) => {
-      let errorMessage = "Could not retrieve location.";
-      if (error.code === error.PERMISSION_DENIED) {
-        errorMessage = "Location access denied. Please enable it in your browser settings.";
-      }
-      toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-      setCurrentCity("Location access denied.");
-      setIsFetchingCity(false);
-    };
-  
-    watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 60000
-    });
-  
-    return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [toast, isFetchingCity]);
+        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
+        setCurrentCity("Location access denied.");
+        setIsFetchingCity(false);
+      };
+    
+      watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 60000
+      });
+    
+      return () => {
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+      };
+    } else {
+        setIsFetchingCity(false);
+        setCurrentCity("Location services disabled.");
+    }
+  }, [toast, isFetchingCity, isGenkitConfigured]);
 
 
   useEffect(() => {
@@ -2571,374 +2576,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {activeTab === 'planner' && (
-            <div className="space-y-8">
-              <Accordion type="multiple" className="w-full space-y-4">
-                <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
-                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                      <div className="flex w-full items-center">
-                        <div className="flex items-center justify-start w-10 shrink-0">
-                            <CalendarCheck className="h-7 w-7 text-primary" />
-                        </div>
-                        <h2 id="scheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                            Future Meetings
-                        </h2>
-                        <div className="w-10 shrink-0"></div>
-                      </div>
-                   </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    <div className="flex justify-center mb-4">
-                      <Button onClick={(e) => { e.stopPropagation(); handleAddNewFutureVisit(); }} variant="default" size="sm">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add New Future Visit
-                      </Button>
-                    </div>
-                    {scheduledVisits.length === 0 ? (
-                        <div className="text-center py-4">
-                            <p className="text-xl text-muted-foreground mb-4">
-                                No meetings with a specific date scheduled.
-                            </p>
-                            <p className="text-muted-foreground">
-                                When you set a future meeting date on a visit card, it will appear here.
-                            </p>
-                        </div>
-                    ) : (
-                       <Accordion type="multiple" className="w-full space-y-4">
-                          {scheduledVisits.map((visit) => (
-                              <AccordionItem value={`planner-scheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
-                                  <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                          <div className="flex flex-1 items-center gap-3 min-w-0">
-                                              <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
-                                              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                          </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                  <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
-                                              ) : (
-                                                  visit.futureMeetingDateTime && (
-                                                      <span>{format(new Date(visit.futureMeetingDateTime), 'MMM d, yy')}</span>
-                                                  )
-                                              )}
-                                              {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                      <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                  </Badge>
-                                              )}
-                                          </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="p-0">
-                                      <VisitCard
-                                          visit={visit}
-                                          onEdit={handleEditVisit}
-                                          onDelete={handleDeleteVisit}
-                                          onUpdateDealClosed={handleUpdateDealClosed}
-                                          onZoom={setZoomedVisit}
-                                          onLogFollowUp={handleLogFollowUp}
-                                          onDictateNotes={handleDictateNotes}
-                                          variant="planner"
-                                      />
-                                  </AccordionContent>
-                              </AccordionItem>
-                          ))}
-                      </Accordion>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                        <div className="flex items-center justify-start w-10 shrink-0">
-                          <CalendarIcon className="h-7 w-7 text-primary" />
-                        </div>
-                        <h2 id="unscheduled-visits-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                              Future Visits (Unscheduled)
-                        </h2>
-                        <div className="w-10 shrink-0"></div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    {unscheduledFutureVisits.length === 0 ? (
-                        <div className="text-center py-4">
-                            <p className="text-xl text-muted-foreground mb-4">
-                                No other unscheduled future visits.
-                            </p>
-                            <p className="text-muted-foreground">
-                                Convert a "Hot Lead" from the Debbie tab to add it here.
-                            </p>
-                        </div>
-                    ) : (
-                      <Accordion type="multiple" className="w-full space-y-4">
-                          {unscheduledFutureVisits.map((visit) => (
-                              <AccordionItem value={`planner-unscheduled-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
-                                  <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                      <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                          <div className="flex flex-1 items-center gap-3 min-w-0">
-                                              <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
-                                              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                          </div>
-                                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-                                              ) : (
-                                                <span>Added: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-                                              )}
-                                              {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                      <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                  </Badge>
-                                              )}
-                                          </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="p-0">
-                                      <VisitCard
-                                          visit={visit}
-                                          onEdit={handleEditVisit}
-                                          onDelete={handleDeleteVisit}
-                                          onUpdateDealClosed={handleUpdateDealClosed}
-                                          onZoom={setZoomedVisit}
-                                          onLogFollowUp={handleLogFollowUp}
-                                          onDictateNotes={handleDictateNotes}
-                                          variant="planner"
-                                      />
-                                  </AccordionContent>
-                              </AccordionItem>
-                          ))}
-                      </Accordion>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                      <div className="flex w-full items-center">
-                        <div className="flex items-center justify-start w-10 shrink-0">
-                          <Flame className="h-7 w-7 text-red-500" />
-                        </div>
-                        <h2 id="hotspots-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                              Flagged Hotspots
-                        </h2>
-                        <div className="w-10 shrink-0"></div>
-                      </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                      {flaggedHotspots.length === 0 ? (
-                          <div className="text-center py-4">
-                              <p className="text-xl text-muted-foreground mb-4">
-                                  No hotspots flagged yet.
-                              </p>
-                              <p className="text-muted-foreground">
-                                Use the "Flag Hotspot" button <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> to mark locations that look promising while you are driving but have other arrangements.
-                              </p>
-                          </div>
-                      ) : (
-                           <Accordion type="multiple" className="w-full space-y-4">
-                              {flaggedHotspots.map((visit) => (
-                                  <AccordionItem value={`planner-hotspot-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
-                                      <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                          <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                              <div className="flex flex-1 items-center gap-3 min-w-0">
-                                                  <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
-                                                  <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                              </div>
-                                              <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                  {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-                                                  ) : (
-                                                    <span>Flagged: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-                                                  )}
-                                              </div>
-                                          </div>
-                                      </AccordionTrigger>
-                                      <AccordionContent className="p-0">
-                                          <VisitCard
-                                              visit={visit}
-                                              onEdit={handleEditVisit}
-                                              onDelete={handleDeleteVisit}
-                                              onUpdateDealClosed={handleUpdateDealClosed}
-                                              onZoom={setZoomedVisit}
-                                              onLogFollowUp={handleLogFollowUp}
-                                              onDictateNotes={handleDictateNotes}
-                                              variant="planner"
-                                          />
-                                      </AccordionContent>
-                                  </AccordionItem>
-                              ))}
-                          </Accordion>
-                      )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center justify-center">
-                        <div className="flex items-center justify-start w-10 shrink-0">
-                           <PackageCheck className="h-7 w-7 text-primary" />
-                        </div>
-                        <h2 className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                            Active Free Trials
-                        </h2>
-                        <div className="flex items-center justify-end w-10 shrink-0">
-                            {activeFreeTrials.length > 0 && (
-                                <Badge variant="secondary" className="text-base">
-                                    {activeFreeTrials.length}
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    {activeFreeTrials.length === 0 ? (
-                        <div className="text-center py-4">
-                            <p className="text-xl text-muted-foreground mb-4">
-                                No active free trials.
-                            </p>
-                            <p className="text-muted-foreground">
-                                This section will list all of your free trials in session!
-                            </p>
-                        </div>
-                    ) : (
-                      <>
-                        <Accordion type="multiple" className="w-full space-y-4">
-                            {activeFreeTrials.map((visit) => (
-                                <AccordionItem value={`planner-trial-${visit.id}`} key={visit.id} className="border border-orange-500/50 bg-card rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-orange-500/50">
-                                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                            <div className="flex flex-1 items-center gap-3 min-w-0">
-                                                <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-orange-500")}></span>
-                                                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                            </div>
-                                            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                                    <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
-                                                ) : (
-                                                    visit.freeTrialStartDate && (
-                                                        <span>Started: {format(new Date(visit.freeTrialStartDate), 'MMM d, yy')}</span>
-                                                    )
-                                                )}
-                                                {visit.partnershipConfidence && (
-                                                    <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                        <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-0">
-                                        <VisitCard
-                                            visit={visit}
-                                            onEdit={handleEditVisit}
-                                            onDelete={handleDeleteVisit}
-                                            onUpdateDealClosed={handleUpdateDealClosed}
-                                            onZoom={setZoomedVisit}
-                                            onLogFollowUp={handleLogFollowUp}
-                                            onDictateNotes={handleDictateNotes}
-                                            variant="planner"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                        {totalTrialCommission > 0 && (
-                          <div className="mt-6 pt-4 border-t border-primary/20 text-right">
-                            <p className="text-lg font-semibold text-foreground">
-                              Total Potential Commission:
-                              <span className="ml-2 font-bold text-green-400">
-                                ${totalTrialCommission.toFixed(2)}
-                              </span>
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              From all active trials with pricing details.
-                            </p>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <DollarSign className="h-7 w-7 text-green-500" />
-                      </div>
-                      <h2 id="deals-closed-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                            Deals Closed
-                      </h2>
-                      <div className="w-10 shrink-0"></div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                    {closedDeals.length === 0 ? (
-                        <div className="text-center py-4">
-                            <p className="text-xl text-muted-foreground mb-4">
-                                No deals closed yet.
-                            </p>
-                            <p className="text-muted-foreground">
-                                When you mark a deal as closed on a visit card, it will appear here.
-                            </p>
-                        </div>
-                    ) : (
-                      <>
-                        <Accordion type="multiple" className="w-full space-y-4">
-                            {closedDeals.map((visit) => (
-                                <AccordionItem value={`planner-closed-${visit.id}`} key={visit.id} className="border border-green-500/50 bg-card rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b [&[data-state=open]]:border-green-500/50">
-                                        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                            <div className="flex flex-1 items-center gap-3 min-w-0">
-                                                <span className="h-3 w-3 rounded-full shrink-0 bg-green-500"></span>
-                                                <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                            </div>
-                                            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                              <span>Closed: {format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-                                              {visit.partnershipConfidence && (
-                                                  <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                      <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                      <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                  </Badge>
-                                              )}
-                                            </div>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-0">
-                                        <VisitCard
-                                            visit={visit}
-                                            onEdit={handleEditVisit}
-                                            onDelete={handleDeleteVisit}
-                                            onUpdateDealClosed={handleUpdateDealClosed}
-                                            onZoom={setZoomedVisit}
-                                            onLogFollowUp={handleLogFollowUp}
-                                            onDictateNotes={handleDictateNotes}
-                                            variant="planner"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                        {totalClosedCommission > 0 && (
-                          <div className="mt-6 pt-4 border-t border-primary/20 text-center">
-                            <p className="text-lg font-semibold text-foreground">
-                              Total Commission from Closed Deals:
-                            </p>
-                            <p className="text-3xl font-bold text-green-400 aurora-text bg-gradient-to-r from-green-400 to-emerald-500">
-                              ${totalClosedCommission.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Congratulations on your success!
-                            </p>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          )}
-
           {activeTab === 'visits' && (
             <Accordion type="single" collapsible defaultValue="company-map" className="w-full">
               <AccordionItem value="company-map" className="border-none">
@@ -2970,12 +2607,7 @@ export default function HomePage() {
                             </div>
                       )}
                   </div>
-                  <GoogleMapComponent 
-                    visits={visits} 
-                    onUpdateVisit={handleUpdateVisit}
-                    onIntelRequest={setZoomedVisit}
-                    onZoomRequest={setZoomedVisit}
-                  />
+                  <MapPlaceholder visits={visits} />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -3715,6 +3347,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
