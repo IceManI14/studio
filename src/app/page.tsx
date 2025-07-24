@@ -42,7 +42,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAiChatResponseAction, getCompanyNameFromCoordsAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
@@ -1310,35 +1310,6 @@ export default function HomePage() {
         if (isFetchingCity) {
           setIsFetchingCity(false); // Set to false on first successful read
         }
-        
-        try {
-          const result = await getCompanyNameFromCoordsAction({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-    
-          if (result.error) {
-            console.warn("Location Update Failed:", result.error);
-            return;
-          }
-    
-          if (result.city && currentCityRef.current !== result.city) {
-            if (currentCityRef.current !== null) { // Don't toast on initial load
-               toast({
-                title: "City Changed",
-                description: `You are now in ${result.city}.`
-              });
-            }
-            setCurrentCity(result.city);
-          } else if (currentCityRef.current === null && !result.city) {
-            setCurrentCity("Location Unknown");
-          }
-        } catch (e: any) {
-          console.error("Error fetching city:", e);
-          if (currentCityRef.current === null) {
-            setCurrentCity("Error fetching city.");
-          }
-        }
       };
     
       const handleError = (error: GeolocationPositionError) => {
@@ -1511,24 +1482,12 @@ export default function HomePage() {
                 id: `temp_${crypto.randomUUID()}`,
                 timestamp: new Date(),
                 visitNumber: todaysVisits.length + 1,
-                companyName: 'Finding company...',
+                companyName: '',
                 latitude,
                 longitude,
             } as Visit);
 
-            const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-
-            setCurrentEditingVisit(prev => ({
-                ...(prev || {} as Visit),
-                id: prev?.id || `temp_${crypto.randomUUID()}`,
-                timestamp: prev?.timestamp || new Date(),
-                companyName: result.suggestedCompanyName || 'Unknown Company',
-                city: result.city || '',
-                notes: result.address ? `Company Address: ${result.address}\n\n` : '',
-                decisionMakerContact: result.phone || '',
-            }));
-            
-            toast({ title: "Location Found!", description: "Visit form has been pre-filled." });
+            toast({ title: "Location Found!", description: "Please enter the company name." });
         },
         (error) => {
             let errorMessage = "Could not get your location.";
@@ -1951,11 +1910,8 @@ export default function HomePage() {
     if (!startupNavigationTarget) return;
   
     const { latitude, longitude, companyName } = startupNavigationTarget;
-  
-    const result = await getCompanyNameFromCoordsAction({ latitude, longitude });
-    const city = result.city || "Destination";
     
-    setTargetDestination({ city: city, description: `Navigating directly to ${companyName}.` });
+    setTargetDestination({ city: "Destination", description: `Navigating directly to ${companyName}.` });
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
     setNavigationUrl(googleMapsUrl);
     toast({ title: "Destination Set!", description: `Check the navigator to get directions to ${companyName}.` });
@@ -1992,6 +1948,47 @@ export default function HomePage() {
     } as Visit);
     setIsVisitFormOpen(true);
   };
+
+  const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
+    <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+          <div className="flex flex-1 items-center gap-3 min-w-0">
+            <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+            <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+          </div>
+          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+            {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
+            ) : (
+                <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
+            )}
+            {visit.partnershipConfidence && (
+              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                <span className="leading-none">{visit.partnershipConfidence}</span>
+                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+              </Badge>
+            )}
+            {visit.futureMeetingSet && (
+              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
+            )}
+          </div>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="p-4">
+        <VisitCard
+          visit={visit}
+          onEdit={handleEditVisit}
+          onDelete={handleDeleteVisit}
+          onUpdateDealClosed={handleUpdateDealClosed}
+          onZoom={setZoomedVisit}
+          onLogFollowUp={handleLogFollowUp}
+          onDictateNotes={handleDictateNotes}
+          variant={variant}
+        />
+      </AccordionContent>
+    </AccordionItem>
+  );
 
   return (
     <div className="min-h-screen">
@@ -2278,39 +2275,7 @@ export default function HomePage() {
                                 <div key={day}>
                                     <h4 className="font-semibold text-lg text-foreground mb-3 border-b pb-2">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
                                     <Accordion type="multiple" className="space-y-4">
-                                      {visitsOnDay.map(visit => (
-                                        <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-                                            <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
-                                                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                                    <div className="flex flex-1 items-center gap-3 min-w-0">
-                                                        <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-                                                        <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                                    </div>
-                                                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                                        <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
-                                                        {visit.partnershipConfidence && (
-                                                            <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                                                <span className="leading-none">{visit.partnershipConfidence}</span>
-                                                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                                            </Badge>
-                                                        )}
-                                                        {visit.futureMeetingSet && <CalendarCheck className="h-4 w-4 text-green-500" />}
-                                                    </div>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="p-4">
-                                                <VisitCard
-                                                    visit={visit}
-                                                    onEdit={handleEditVisit}
-                                                    onDelete={handleDeleteVisit}
-                                                    onUpdateDealClosed={handleUpdateDealClosed}
-                                                    onZoom={setZoomedVisit}
-                                                    onLogFollowUp={handleLogFollowUp}
-                                                    onDictateNotes={handleDictateNotes}
-                                                />
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                      ))}
+                                      {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
                                     </Accordion>
                                 </div>
                             ))}
@@ -2347,14 +2312,16 @@ export default function HomePage() {
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                  {scheduledVisits.map(visit => <VisitCard key={visit.id} visit={visit} onEdit={handleEditVisit} onDelete={handleDeleteVisit} onUpdateDealClosed={handleUpdateDealClosed} onZoom={setZoomedVisit} onLogFollowUp={handleLogFollowUp} onDictateNotes={handleDictateNotes} variant="planner" />)}
+                                  <Accordion type="multiple" className="w-full space-y-4">
+                                    {scheduledVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                  </Accordion>
                               </AccordionContent>
                           </AccordionItem>
                       </Accordion>
                   )}
 
                   {unscheduledFutureVisits.length > 0 && (
-                       <Accordion type="single" collapsible className="w-full">
+                       <Accordion type="single" collapsible defaultValue="unscheduled-visits" className="w-full">
                           <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                                <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2367,14 +2334,16 @@ export default function HomePage() {
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                  {unscheduledFutureVisits.map(visit => <VisitCard key={visit.id} visit={visit} onEdit={handleEditVisit} onDelete={handleDeleteVisit} onUpdateDealClosed={handleUpdateDealClosed} onZoom={setZoomedVisit} onLogFollowUp={handleLogFollowUp} onDictateNotes={handleDictateNotes} variant="planner" />)}
+                                <Accordion type="multiple" className="w-full space-y-4">
+                                  {unscheduledFutureVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                </Accordion>
                               </AccordionContent>
                           </AccordionItem>
                       </Accordion>
                   )}
 
                   {flaggedHotspots.length > 0 && (
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="single" collapsible defaultValue="flagged-hotspots" className="w-full">
                           <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2387,7 +2356,9 @@ export default function HomePage() {
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                  {flaggedHotspots.map(visit => <VisitCard key={visit.id} visit={visit} onEdit={handleEditVisit} onDelete={handleDeleteVisit} onUpdateDealClosed={handleUpdateDealClosed} onZoom={setZoomedVisit} onLogFollowUp={handleLogFollowUp} onDictateNotes={handleDictateNotes} variant="planner" />)}
+                                <Accordion type="multiple" className="w-full space-y-4">
+                                    {flaggedHotspots.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                </Accordion>
                               </AccordionContent>
                           </AccordionItem>
                       </Accordion>
@@ -2395,7 +2366,7 @@ export default function HomePage() {
 
                   {(activeFreeTrials.length > 0 || closedDeals.length > 0) && (
                       <div className="grid md:grid-cols-2 gap-6">
-                          <Accordion type="single" collapsible className="w-full">
+                          <Accordion type="single" collapsible defaultValue="active-free-trials" className="w-full">
                               <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                       <div className="flex items-center justify-center w-full">
@@ -2409,11 +2380,13 @@ export default function HomePage() {
                                   </AccordionTrigger>
                                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                     {totalTrialCommission > 0 && <Badge variant="secondary" className="w-full justify-center py-1 text-sm">Total Commission: ${totalTrialCommission.toFixed(2)}</Badge>}
-                                    {activeFreeTrials.map(visit => <VisitCard key={visit.id} visit={visit} onEdit={handleEditVisit} onDelete={handleDeleteVisit} onUpdateDealClosed={handleUpdateDealClosed} onZoom={setZoomedVisit} onLogFollowUp={handleLogFollowUp} onDictateNotes={handleDictateNotes} variant="planner" />)}
+                                    <Accordion type="multiple" className="w-full space-y-4">
+                                      {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                    </Accordion>
                                   </AccordionContent>
                               </AccordionItem>
                           </Accordion>
-                          <Accordion type="single" collapsible className="w-full">
+                          <Accordion type="single" collapsible defaultValue="deals-closed" className="w-full">
                               <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
                                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                       <div className="flex items-center justify-center w-full">
@@ -2427,7 +2400,9 @@ export default function HomePage() {
                                   </AccordionTrigger>
                                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                       {totalClosedCommission > 0 && <Badge variant="secondary" className="w-full justify-center py-1 text-sm">Total Commission: ${totalClosedCommission.toFixed(2)}</Badge>}
-                                      {closedDeals.map(visit => <VisitCard key={visit.id} visit={visit} onEdit={handleEditVisit} onDelete={handleDeleteVisit} onUpdateDealClosed={handleUpdateDealClosed} onZoom={setZoomedVisit} onLogFollowUp={handleLogFollowUp} onDictateNotes={handleDictateNotes} />)}
+                                      <Accordion type="multiple" className="w-full space-y-4">
+                                        {closedDeals.map(visit => renderVisitCardAccordion(visit))}
+                                      </Accordion>
                                   </AccordionContent>
                               </AccordionItem>
                           </Accordion>
@@ -3463,6 +3438,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
