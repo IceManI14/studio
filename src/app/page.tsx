@@ -2320,27 +2320,33 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  {unscheduledFutureVisits.length > 0 && (
-                       <Accordion type="single" collapsible defaultValue="unscheduled-visits" className="w-full">
-                          <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
-                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                <div className="flex items-center justify-center w-full">
-                                  <div className="flex items-center justify-center gap-2">
-                                      <CalendarIcon className="h-5 w-5 text-blue-500" />
-                                      <h3 className="text-lg font-medium text-foreground text-center">
-                                          Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
-                                      </h3>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                <Accordion type="multiple" className="w-full space-y-4">
-                                  {unscheduledFutureVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
-                                </Accordion>
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
-                  )}
+                  <Accordion type="single" collapsible defaultValue="unscheduled-visits" className="w-full">
+                    <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
+                        <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                          <div className="flex items-center justify-center w-full">
+                            <div className="flex items-center justify-center gap-2">
+                                <CalendarIcon className="h-5 w-5 text-blue-500" />
+                                <h3 className="text-lg font-medium text-foreground text-center">
+                                    Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
+                                </h3>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                          <div className="flex justify-center mb-4">
+                              <Button onClick={handleAddNewFutureVisit}>
+                                  <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
+                              </Button>
+                          </div>
+                          {unscheduledFutureVisits.length > 0 && (
+                            <Accordion type="multiple" className="w-full space-y-4">
+                              {unscheduledFutureVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                            </Accordion>
+                          )}
+                        </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
 
                   {flaggedHotspots.length > 0 && (
                       <Accordion type="single" collapsible defaultValue="flagged-hotspots" className="w-full">
@@ -2408,12 +2414,6 @@ export default function HomePage() {
                           </Accordion>
                       </div>
                   )}
-
-                  <div className="flex justify-center">
-                      <Button onClick={handleAddNewFutureVisit}>
-                          <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
-                      </Button>
-                  </div>
               </div>
           )}
 
@@ -3438,6 +3438,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
