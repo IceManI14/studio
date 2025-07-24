@@ -1159,17 +1159,10 @@ export default function HomePage() {
     setAnalyzingDocId(null);
   }, [isAiResponding, analyzingDocId, toast]);
 
-  // Effects
-  useEffect(() => {
-    visitsRef.current = visits;
-  }, [visits]);
-  
-  useEffect(() => {
-    // Load from Local Storage First
+  const loadLocalData = useCallback(() => {
     try {
       const storedVisits = localStorage.getItem('visits');
       if (storedVisits) {
-        // Need to parse dates correctly from JSON string
         const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
           ...v,
           timestamp: new Date(v.timestamp),
@@ -1178,26 +1171,7 @@ export default function HomePage() {
         }));
         setVisits(parsedVisits);
       }
-    } catch (error) {
-      console.error("Failed to load visits from local storage:", error);
-      toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load saved visits from this device." });
-    }
-    
-    const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
-    setSelectedSalesperson(defaultSalesperson);
   
-    if (!firebaseConfigured) {
-      setIsSyncing(false);
-      toast({
-        variant: 'destructive',
-        title: 'Firebase Not Configured',
-        description: 'Syncing and real-time updates are disabled. Please check your .env file.',
-        duration: 10000,
-      });
-    }
-  
-    // Load other local-only data
-    try {
       const storedSuggestions = localStorage.getItem('submittedSuggestions');
       if (storedSuggestions) {
         setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
@@ -1233,12 +1207,33 @@ export default function HomePage() {
           setNewsItems(defaultNewsItems);
           localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
       }
-  
     } catch (error) {
       console.error("Failed to load some local data:", error);
       toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device."});
     }
   }, [toast]);
+
+  // Effects
+  useEffect(() => {
+    visitsRef.current = visits;
+  }, [visits]);
+  
+  useEffect(() => {
+    loadLocalData();
+    
+    const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
+    setSelectedSalesperson(defaultSalesperson);
+  
+    if (!firebaseConfigured) {
+      setIsSyncing(false);
+      toast({
+        variant: 'destructive',
+        title: 'Firebase Not Configured',
+        description: 'Syncing and real-time updates are disabled. Please check your .env file.',
+        duration: 10000,
+      });
+    }
+  }, [toast, loadLocalData]);
   
   useEffect(() => {
     if (!db) {
@@ -2326,6 +2321,21 @@ export default function HomePage() {
             </div>
           )}
           
+          {activeTab === 'planner' && (
+              <div className="space-y-6">
+                  <div className="flex justify-center">
+                    <Button onClick={() => {
+                        loadLocalData();
+                        toast({ title: "Data Reloaded", description: "All local data has been refreshed." });
+                    }}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Refresh Data
+                    </Button>
+                  </div>
+                  {/* ... rest of the planner tab JSX ... */}
+              </div>
+          )}
+
           {activeTab === 'call-day' && (
             <div className="space-y-6">
               <Accordion type="single" collapsible className="w-full max-w-sm mx-auto">
@@ -3347,6 +3357,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
