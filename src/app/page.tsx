@@ -2375,10 +2375,18 @@ export default function HomePage() {
                                       </div>
                                   </AccordionTrigger>
                                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                    {totalTrialCommission > 0 && <Badge variant="secondary" className="w-full justify-center py-1 text-sm">Total Commission: ${totalTrialCommission.toFixed(2)}</Badge>}
                                     <Accordion type="multiple" className="w-full space-y-4">
                                       {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
                                     </Accordion>
+                                    {totalTrialCommission > 0 && (
+                                        <Alert className="border-orange-500/50 bg-orange-500/10 text-orange-400 [&>svg]:text-orange-400 mt-4">
+                                            <PartyPopper className="h-4 w-4" />
+                                            <AlertTitle className="font-bold text-orange-300">Potential Trial Commission</AlertTitle>
+                                            <AlertDescription className="text-2xl font-bold">
+                                                ${totalTrialCommission.toFixed(2)}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
                                   </AccordionContent>
                               </AccordionItem>
                           </Accordion>
@@ -2395,10 +2403,18 @@ export default function HomePage() {
                                       </div>
                                   </AccordionTrigger>
                                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                      {totalClosedCommission > 0 && <Badge variant="secondary" className="w-full justify-center py-1 text-sm">Total Commission: ${totalClosedCommission.toFixed(2)}</Badge>}
                                       <Accordion type="multiple" className="w-full space-y-4">
                                         {closedDeals.map(visit => renderVisitCardAccordion(visit))}
                                       </Accordion>
+                                      {totalClosedCommission > 0 && (
+                                        <Alert className="border-green-500/50 bg-green-500/10 text-green-400 [&>svg]:text-green-400 mt-4">
+                                            <PartyPopper className="h-4 w-4" />
+                                            <AlertTitle className="font-bold text-green-300">Total Closed Commission</AlertTitle>
+                                            <AlertDescription className="text-2xl font-bold">
+                                                ${totalClosedCommission.toFixed(2)}
+                                            </AlertDescription>
+                                        </Alert>
+                                      )}
                                   </AccordionContent>
                               </AccordionItem>
                           </Accordion>
@@ -3428,6 +3444,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
