@@ -19,12 +19,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload, extractVisitDetailsAction } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit, Navigation } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit, Navigation, CalendarX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
@@ -442,6 +441,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [pricingDiscussedValue, form]);
 
+  useEffect(() => {
+    if (isMountedRef.current) {
+      if (!futureMeetingSetValue) {
+        if (form.getValues('futureMeetingDateTime') !== undefined) {
+          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+        }
+      }
+    }
+  }, [futureMeetingSetValue, form]);
+
   const uploadImage = useCallback(async (file: File, side: 'front' | 'back') => {
     setIsUploadingCard(true);
     const formData = new FormData();
@@ -555,13 +564,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       videoRef.current.srcObject = null;
     }
   };
-
+  
   useEffect(() => {
     if (isOpen) {
-      resetFormAndState(initialData);
+      setFormInitialData(initialData);
+      form.reset({
+        companyName: initialData?.companyName || '',
+        city: initialData?.city || '',
+        notes: initialData?.notes || '',
+        latitude: initialData?.latitude ?? undefined,
+        longitude: initialData?.longitude ?? undefined,
+        partnershipConfidence: initialData?.partnershipConfidence ?? undefined,
+        hasBusinessCard: initialData?.hasBusinessCard || false,
+        businessCardImageFrontUrl: initialData?.businessCardImageFrontUrl || null,
+        businessCardImageBackUrl: initialData?.businessCardImageBackUrl || null,
+        competitorName: initialData?.competitorName || undefined,
+        coolerType: initialData?.coolerType || undefined,
+        decisionMakerName: initialData?.decisionMakerName || '',
+        decisionMakerTitle: initialData?.decisionMakerTitle || '',
+        decisionMakerContact: initialData?.decisionMakerContact || '',
+        interestedUnits: initialData?.interestedUnits || [],
+        hasTDSReading: initialData?.hasTDSReading || false,
+        tdsValue: initialData?.tdsValue ?? undefined,
+        futureMeetingSet: initialData?.futureMeetingSet || false,
+        futureMeetingDateTime: initialData?.futureMeetingDateTime ? new Date(initialData.futureMeetingDateTime) : undefined,
+        freeTrial: initialData?.freeTrial || false,
+        freeTrialStartDate: initialData?.freeTrialStartDate ? new Date(initialData.freeTrialStartDate) : undefined,
+        pricingDiscussed: initialData?.pricingDiscussed || false,
+        priceQuoted: initialData?.priceQuoted ?? undefined,
+        leaseTerm: initialData?.leaseTerm ?? undefined,
+        installationFee: initialData?.installationFee ?? undefined,
+        creditApproved: initialData?.creditApproved || false,
+        manualCommission: initialData?.manualCommission ?? undefined,
+      });
+
       setLastAnalyzedNotes(initialData?.notes);
       setIsEditingCompanyName(!initialData?.id || !initialData.companyName);
-      setFormInitialData(initialData);
+      
+      setCurrentLatitude(initialData?.latitude ?? undefined);
+      setCurrentLongitude(initialData?.longitude ?? undefined);
+      setBusinessCardFrontPreviewUrl(initialData?.businessCardImageFrontUrl || null);
+      setBusinessCardBackPreviewUrl(initialData?.businessCardImageBackUrl || null);
+      setCustomCoolerNameInput('');
+      setIsCameraViewVisible(false);
+      setHasCameraPermission(null);
+      setCurrentCity(null);
     }
     isMountedRef.current = true;
     return () => {
@@ -571,16 +618,22 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen]);
 
   useEffect(() => {
-      if (isMountedRef.current && isOpen) {
-          if (freeTrialValue) {
-              const startDate = freeTrialStartDateValue || form.getValues('freeTrialStartDate') || new Date();
+    if (isMountedRef.current && isOpen) {
+        if (freeTrialValue) {
+            const startDate = freeTrialStartDateValue || form.getValues('freeTrialStartDate') || new Date();
+            if (JSON.stringify(form.getValues('freeTrialStartDate')) !== JSON.stringify(startDate)) {
               form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
+            }
+            if (form.getValues('futureMeetingSet') !== true) {
               form.setValue('futureMeetingSet', true, { shouldValidate: true });
-              const followUpDate = addDays(new Date(startDate), 7);
-              followUpDate.setHours(10, 0, 0, 0);
+            }
+            const followUpDate = addDays(new Date(startDate), 7);
+            followUpDate.setHours(10, 0, 0, 0);
+            if (JSON.stringify(form.getValues('futureMeetingDateTime')) !== JSON.stringify(followUpDate)) {
               form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-          }
-      }
+            }
+        }
+    }
   }, [freeTrialValue, freeTrialStartDateValue, form, isOpen]);
 
 
@@ -1017,47 +1070,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     return () => stopAudioAndCamera();
   }, [isOpen]);
-
-  const resetFormAndState = useCallback((data?: Visit) => {
-    const defaultValues = {
-      companyName: data?.companyName || '',
-      city: data?.city || '',
-      notes: data?.notes || '',
-      latitude: data?.latitude ?? undefined,
-      longitude: data?.longitude ?? undefined,
-      partnershipConfidence: data?.partnershipConfidence ?? undefined,
-      hasBusinessCard: data?.hasBusinessCard || false,
-      businessCardImageFrontUrl: data?.businessCardImageFrontUrl || null,
-      businessCardImageBackUrl: data?.businessCardImageBackUrl || null,
-      competitorName: data?.competitorName || undefined,
-      coolerType: data?.coolerType || undefined,
-      decisionMakerName: data?.decisionMakerName || '',
-      decisionMakerTitle: data?.decisionMakerTitle || '',
-      decisionMakerContact: data?.decisionMakerContact || '',
-      interestedUnits: data?.interestedUnits || [],
-      hasTDSReading: data?.hasTDSReading || false,
-      tdsValue: data?.tdsValue ?? undefined,
-      futureMeetingSet: data?.futureMeetingSet || false,
-      futureMeetingDateTime: data?.futureMeetingDateTime ? new Date(data.futureMeetingDateTime) : undefined,
-      freeTrial: data?.freeTrial || false,
-      freeTrialStartDate: data?.freeTrialStartDate ? new Date(data.freeTrialStartDate) : undefined,
-      pricingDiscussed: data?.pricingDiscussed || false,
-      priceQuoted: data?.priceQuoted ?? undefined,
-      leaseTerm: data?.leaseTerm ?? undefined,
-      installationFee: data?.installationFee ?? undefined,
-      creditApproved: data?.creditApproved || false,
-      manualCommission: data?.manualCommission ?? undefined,
-    };
-    form.reset(defaultValues);
-    setCurrentLatitude(data?.latitude ?? undefined);
-    setCurrentLongitude(data?.longitude ?? undefined);
-    setBusinessCardFrontPreviewUrl(data?.businessCardImageFrontUrl || null);
-    setBusinessCardBackPreviewUrl(data?.businessCardImageBackUrl || null);
-    setCustomCoolerNameInput('');
-    setIsCameraViewVisible(false);
-    setHasCameraPermission(null);
-    setCurrentCity(null);
-  }, [form]);
   
   const handleSaveManualAddress = (address: { street: string; city: string; state: string; zip: string; }) => {
     const formattedAddress = `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
@@ -1683,13 +1695,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={(checked) => {
-                            const boolValue = !!checked;
-                            field.onChange(boolValue);
-                            if (!boolValue) {
-                              form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                            }
-                          }}
+                          onCheckedChange={field.onChange}
                           id="futureMeetingSet"
                           disabled={freeTrialValue}
                         />
