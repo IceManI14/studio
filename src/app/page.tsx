@@ -2288,16 +2288,6 @@ export default function HomePage() {
           
           {activeTab === 'planner' && (
               <div className="space-y-6">
-                  <div className="flex justify-center">
-                    <Button onClick={() => {
-                        loadLocalData();
-                        toast({ title: "Data Reloaded", description: "All local data has been refreshed." });
-                    }}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Refresh Data
-                    </Button>
-                  </div>
-
                   {scheduledVisits.length > 0 && (
                       <Accordion type="single" collapsible defaultValue="scheduled-visits" className="w-full">
                           <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
@@ -3438,6 +3428,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
