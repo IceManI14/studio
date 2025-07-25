@@ -10,7 +10,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -212,6 +212,10 @@ export default function HomePage() {
   const [newDocName, setNewDocName] = useState('');
   const [newDocUrl, setNewDocUrl] = useState('');
   const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [visitsToReschedule, setVisitsToReschedule] = useState<Visit[]>([]);
+  const [visitBeingRescheduled, setVisitBeingRescheduled] = useState<Visit | null>(null);
+
   
   const { toast } = useToast();
   const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -239,6 +243,7 @@ export default function HomePage() {
   const currentCityRef = useRef<string | null>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+  const isRescheduling = !!visitBeingRescheduled;
 
   // Memos
   const scheduledFutureVisitDays = useMemo(() => {
@@ -834,7 +839,7 @@ export default function HomePage() {
     if (!visitToUpdate) return;
   
     const payload: SaveVisitPayload = { ...visitToUpdate, ...updatedData };
-    await handleSaveFromForm(payload); // Use the local-first save function
+    await handleSaveFromForm(payload);
   
     toast({
         title: "Visit Updated",
@@ -1932,6 +1937,47 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
+  const handleCalendarSelect = useCallback(async (date?: Date) => {
+    if (!date) {
+      setSelectedDate(undefined);
+      return;
+    }
+  
+    if (isRescheduling && visitBeingRescheduled) {
+      const newMeetingTime = new Date(date);
+      const oldMeetingTime = new Date(visitBeingRescheduled.futureMeetingDateTime!);
+      newMeetingTime.setHours(oldMeetingTime.getHours());
+      newMeetingTime.setMinutes(oldMeetingTime.getMinutes());
+  
+      await handleUpdateVisit(visitBeingRescheduled.id, { futureMeetingDateTime: newMeetingTime });
+      toast({
+        title: 'Meeting Rescheduled!',
+        description: `Meeting with ${visitBeingRescheduled.companyName} moved to ${format(newMeetingTime, 'PPP')}.`
+      });
+      setVisitBeingRescheduled(null);
+      setSelectedDate(undefined);
+    } else {
+      const visitsOnDay = visits.filter(v => v.futureMeetingSet && v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date));
+      
+      if (visitsOnDay.length > 0) {
+        setVisitsToReschedule(visitsOnDay);
+        setIsRescheduleModalOpen(true);
+      } else {
+        setSelectedDate(date);
+      }
+    }
+  }, [isRescheduling, visitBeingRescheduled, visits, handleUpdateVisit, toast]);
+  
+  const startRescheduling = useCallback((visit: Visit) => {
+    setVisitBeingRescheduled(visit);
+    setIsRescheduleModalOpen(false);
+    toast({
+        title: "Select New Date",
+        description: `Please pick a new date on the calendar for your meeting with ${visit.companyName}.`
+    });
+  }, [toast]);
+  
+
   const handleScheduleFromCalendar = () => {
     if (!selectedDate) return;
 
@@ -1991,12 +2037,12 @@ export default function HomePage() {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className={cn("min-h-screen", isRescheduling && "cursor-crosshair")}>
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
       />
-      <div className="container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8">
+      <div className={cn("container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8", isRescheduling && "pointer-events-none opacity-50")}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
             Optimum Trailblazer
@@ -2440,11 +2486,28 @@ export default function HomePage() {
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
                       <div className="flex flex-col items-center w-full">
+                         {isRescheduling && (
+                            <Alert variant="default" className="mb-4 border-primary">
+                                <CalendarClock className="h-4 w-4" />
+                                <AlertTitle>Rescheduling Mode</AlertTitle>
+                                <AlertDescription>
+                                Select a new date on the calendar for the meeting with{' '}
+                                <strong>{visitBeingRescheduled?.companyName}</strong>.
+                                <Button
+                                    variant="link"
+                                    className="p-0 h-auto ml-2 text-xs"
+                                    onClick={() => setVisitBeingRescheduled(null)}
+                                >
+                                    Cancel
+                                </Button>
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         <Calendar
                           mode="single"
                           selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          className={cn("rounded-md border", "bluish-glow")}
+                          onSelect={handleCalendarSelect}
+                          className={cn("rounded-md border", "bluish-glow", isRescheduling && "border-2 border-primary animate-pulse")}
                           modifiers={{
                             logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
@@ -2459,7 +2522,7 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        {selectedDate && (
+                        {selectedDate && !isRescheduling && (
                           <div className="w-full mt-2 space-y-2">
                               <Button
                                   onClick={handleScheduleFromCalendar}
@@ -3378,6 +3441,34 @@ export default function HomePage() {
             </DialogContent>
         </Dialog>
 
+        <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reschedule a Meeting</DialogTitle>
+              <DialogDescription>
+                Select a meeting to reschedule from the list below for {selectedDate ? format(selectedDate, 'PPP') : ''}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-80 overflow-y-auto space-y-2 p-1">
+              {visitsToReschedule.map(visit => (
+                <div key={visit.id} className="flex justify-between items-center p-2 rounded-md border">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{visit.companyName}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(visit.futureMeetingDateTime!), 'p')}</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => startRescheduling(visit)}>
+                    Reschedule
+                  </Button>
+                </div>
+              ))}
+            </div>
+             <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsRescheduleModalOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
         <FindCompanyModal
           isOpen={isFindCompanyModalOpen}
           onClose={() => setIsFindCompanyModalOpen(false)}
@@ -3444,6 +3535,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
