@@ -2407,7 +2407,7 @@ export default function HomePage() {
                   )}
 
                   {(activeFreeTrials.length > 0 || closedDeals.length > 0) && (
-                      <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-6">
                           <Accordion type="single" collapsible defaultValue="active-free-trials" className="w-full">
                               <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3535,6 +3535,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
