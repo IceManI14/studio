@@ -510,6 +510,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-end gap-1">
+            {visit.futureMeetingDateTime && (
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Cancel or reschedule meeting for ${visit.companyName}`}>
+                <CalendarX className="h-4 w-4" />
+              </Button>
+            )}
             {onLogFollowUp && !isZoomedView && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onLogFollowUp(visit); }} aria-label={`Log follow-up for ${visit.companyName}`}>
                 <PlusSquare className="h-4 w-4" />

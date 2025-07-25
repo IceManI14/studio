@@ -391,11 +391,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const hasBusinessCardValue = form.watch('hasBusinessCard');
   const hasTDSReadingValue = form.watch('hasTDSReading');
   const pricingDiscussedValue = form.watch('pricingDiscussed');
-
   const watchedCompetitorName = form.watch('competitorName');
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const freeTrialStartDateValue = form.watch('freeTrialStartDate');
+
   const isMountedRef = useRef(false);
   
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
@@ -570,21 +571,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen]);
 
   useEffect(() => {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && isOpen) {
           if (freeTrialValue) {
-              const startDate = form.getValues('freeTrialStartDate') || new Date();
+              const startDate = freeTrialStartDateValue || form.getValues('freeTrialStartDate') || new Date();
               form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
               form.setValue('futureMeetingSet', true, { shouldValidate: true });
               const followUpDate = addDays(new Date(startDate), 7);
               followUpDate.setHours(10, 0, 0, 0);
               form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-              toast({
-                  title: "Free Trial Activated",
-                  description: "A follow-up meeting is scheduled for one week from the start date.",
-              });
           }
       }
-  }, [freeTrialValue, form, toast]);
+  }, [freeTrialValue, freeTrialStartDateValue, form, isOpen]);
 
 
   useEffect(() => {
