@@ -2406,66 +2406,64 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  {(activeFreeTrials.length > 0 || closedDeals.length > 0) && (
-                      <div className="space-y-6">
-                          <Accordion type="single" collapsible defaultValue="active-free-trials" className="w-full">
-                              <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
-                                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                      <div className="flex items-center justify-center w-full">
-                                        <div className="flex items-center justify-center gap-2">
-                                          <PackageCheck className="h-5 w-5 text-orange-500" />
-                                          <h3 className="text-lg font-medium text-foreground text-center">
-                                              In Trial ({activeFreeTrials.length})
-                                          </h3>
-                                        </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                    <Accordion type="multiple" className="w-full space-y-4">
-                                      {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
-                                    </Accordion>
-                                    {totalTrialCommission > 0 && (
-                                        <Alert variant="default" className="mt-4 text-left">
-                                            <PartyPopper className="h-4 w-4 text-orange-500" />
-                                            <AlertTitle className="font-bold text-orange-400">Potential Trial Commission</AlertTitle>
-                                            <AlertDescription className="text-2xl font-bold text-foreground">
-                                                ${totalTrialCommission.toFixed(2)}
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-                                  </AccordionContent>
-                              </AccordionItem>
-                          </Accordion>
-                          <Accordion type="single" collapsible defaultValue="deals-closed" className="w-full">
-                              <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
-                                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                      <div className="flex items-center justify-center w-full">
-                                        <div className="flex items-center justify-center gap-2">
-                                          <PartyPopper className="h-5 w-5 text-green-500" />
-                                          <h3 className="text-lg font-medium text-foreground text-center">
-                                              Deals Closed ({closedDeals.length})
-                                          </h3>
-                                        </div>
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                      <Accordion type="multiple" className="w-full space-y-4">
-                                        {closedDeals.map(visit => renderVisitCardAccordion(visit))}
-                                      </Accordion>
-                                      {totalClosedCommission > 0 && (
-                                        <Alert variant="default" className="mt-4 text-left">
-                                            <PartyPopper className="h-4 w-4 text-green-500" />
-                                            <AlertTitle className="font-bold text-green-400">Total Closed Commission</AlertTitle>
-                                            <AlertDescription className="text-2xl font-bold text-foreground">
-                                                ${totalClosedCommission.toFixed(2)}
-                                            </AlertDescription>
-                                        </Alert>
-                                      )}
-                                  </AccordionContent>
-                              </AccordionItem>
-                          </Accordion>
-                      </div>
-                  )}
+                  <div className="space-y-6">
+                      <Accordion type="single" collapsible defaultValue="active-free-trials" className="w-full">
+                          <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
+                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                  <div className="flex items-center justify-center w-full">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <PackageCheck className="h-5 w-5 text-orange-500" />
+                                      <h3 className="text-lg font-medium text-foreground text-center">
+                                          In Trial ({activeFreeTrials.length})
+                                      </h3>
+                                    </div>
+                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                <Accordion type="multiple" className="w-full space-y-4">
+                                  {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                </Accordion>
+                                {totalTrialCommission > 0 && (
+                                    <Alert variant="default" className="mt-4 text-left">
+                                        <PartyPopper className="h-4 w-4 text-orange-500" />
+                                        <AlertTitle className="font-bold text-orange-400">Potential Trial Commission</AlertTitle>
+                                        <AlertDescription className="text-2xl font-bold text-foreground">
+                                            ${totalTrialCommission.toFixed(2)}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                              </AccordionContent>
+                          </AccordionItem>
+                      </Accordion>
+                      <Accordion type="single" collapsible defaultValue="deals-closed" className="w-full">
+                          <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
+                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                  <div className="flex items-center justify-center w-full">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <PartyPopper className="h-5 w-5 text-green-500" />
+                                      <h3 className="text-lg font-medium text-foreground text-center">
+                                          Deals Closed ({closedDeals.length})
+                                      </h3>
+                                    </div>
+                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                  <Accordion type="multiple" className="w-full space-y-4">
+                                    {closedDeals.map(visit => renderVisitCardAccordion(visit))}
+                                  </Accordion>
+                                  {totalClosedCommission > 0 && (
+                                    <Alert variant="default" className="mt-4 text-left">
+                                        <PartyPopper className="h-4 w-4 text-green-500" />
+                                        <AlertTitle className="font-bold text-green-400">Total Closed Commission</AlertTitle>
+                                        <AlertDescription className="text-2xl font-bold text-foreground">
+                                            ${totalClosedCommission.toFixed(2)}
+                                        </AlertDescription>
+                                    </Alert>
+                                  )}
+                              </AccordionContent>
+                          </AccordionItem>
+                      </Accordion>
+                  </div>
               </div>
           )}
 
@@ -2915,7 +2913,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <Newspaper className="h-7 w-7 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Optimum New England News</h2>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Optimum News</h2>
                       <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
@@ -2969,7 +2967,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <UserCog className="h-7 w-7 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Eagle Eye Live Feed</h2>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Eagle Eye</h2>
                       <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
@@ -3535,6 +3533,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
