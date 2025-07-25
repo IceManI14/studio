@@ -2379,10 +2379,10 @@ export default function HomePage() {
                                       {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
                                     </Accordion>
                                     {totalTrialCommission > 0 && (
-                                        <Alert className="border-orange-500/50 bg-orange-500/10 text-orange-400 [&>svg]:text-orange-400 mt-4">
-                                            <PartyPopper className="h-4 w-4" />
-                                            <AlertTitle className="font-bold text-orange-300">Potential Trial Commission</AlertTitle>
-                                            <AlertDescription className="text-2xl font-bold">
+                                        <Alert variant="default" className="mt-4 text-left">
+                                            <PartyPopper className="h-4 w-4 text-orange-500" />
+                                            <AlertTitle className="font-bold text-orange-400">Potential Trial Commission</AlertTitle>
+                                            <AlertDescription className="text-2xl font-bold text-foreground">
                                                 ${totalTrialCommission.toFixed(2)}
                                             </AlertDescription>
                                         </Alert>
@@ -2407,10 +2407,10 @@ export default function HomePage() {
                                         {closedDeals.map(visit => renderVisitCardAccordion(visit))}
                                       </Accordion>
                                       {totalClosedCommission > 0 && (
-                                        <Alert className="border-green-500/50 bg-green-500/10 text-green-400 [&>svg]:text-green-400 mt-4">
-                                            <PartyPopper className="h-4 w-4" />
-                                            <AlertTitle className="font-bold text-green-300">Total Closed Commission</AlertTitle>
-                                            <AlertDescription className="text-2xl font-bold">
+                                        <Alert variant="default" className="mt-4 text-left">
+                                            <PartyPopper className="h-4 w-4 text-green-500" />
+                                            <AlertTitle className="font-bold text-green-400">Total Closed Commission</AlertTitle>
+                                            <AlertDescription className="text-2xl font-bold text-foreground">
                                                 ${totalClosedCommission.toFixed(2)}
                                             </AlertDescription>
                                         </Alert>
@@ -3444,6 +3444,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
