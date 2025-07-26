@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, addDays } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -394,7 +395,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
-  const freeTrialStartDateValue = form.watch('freeTrialStartDate');
 
   const isMountedRef = useRef(false);
   
@@ -618,23 +618,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen]);
 
   useEffect(() => {
-    if (isMountedRef.current && isOpen) {
-        if (freeTrialValue) {
-            const startDate = freeTrialStartDateValue || form.getValues('freeTrialStartDate') || new Date();
-            if (JSON.stringify(form.getValues('freeTrialStartDate')) !== JSON.stringify(startDate)) {
-              form.setValue('freeTrialStartDate', startDate, { shouldValidate: true });
-            }
-            if (form.getValues('futureMeetingSet') !== true) {
-              form.setValue('futureMeetingSet', true, { shouldValidate: true });
-            }
-            const followUpDate = addDays(new Date(startDate), 7);
-            followUpDate.setHours(10, 0, 0, 0);
-            if (JSON.stringify(form.getValues('futureMeetingDateTime')) !== JSON.stringify(followUpDate)) {
-              form.setValue('futureMeetingDateTime', followUpDate, { shouldValidate: true });
-            }
-        }
+    if (!isOpen || !isMountedRef.current) return;
+
+    if (freeTrialValue) {
+        const startDate = form.getValues('freeTrialStartDate') || new Date();
+        const followUpDate = addDays(startDate, 7);
+        followUpDate.setHours(10, 0, 0, 0);
+
+        form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
+        form.setValue('futureMeetingSet', true, { shouldDirty: true });
+        form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
     }
-  }, [freeTrialValue, freeTrialStartDateValue, form, isOpen]);
+  }, [freeTrialValue, form, isOpen]);
 
 
   useEffect(() => {
