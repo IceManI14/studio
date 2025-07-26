@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -2648,46 +2647,6 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-
-              <div className="relative w-full max-w-sm mx-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                  className="pl-10 pr-20"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  disabled={isRecordingSearch}
-                />
-                {searchTerm && !isRecordingSearch && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                    aria-label="Clear search"
-                    title="Clear search"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleVoiceSearch}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                  aria-label="Search with voice"
-                  title="Search with voice"
-                >
-                  {isRecordingSearch ? (
-                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                  ) : (
-                    <Mic className="h-4 w-4 text-foreground" />
-                  )}
-                </Button>
-              </div>
               
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
@@ -2718,6 +2677,45 @@ export default function HomePage() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
+                      <div className="relative w-full max-w-sm mx-auto mb-6">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                          className="pl-10 pr-20"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          disabled={isRecordingSearch}
+                        />
+                        {searchTerm && !isRecordingSearch && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                            aria-label="Clear search"
+                            title="Clear search"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleToggleVoiceSearch}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                          aria-label="Search with voice"
+                          title="Search with voice"
+                        >
+                          {isRecordingSearch ? (
+                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                          ) : (
+                            <Mic className="h-4 w-4 text-foreground" />
+                          )}
+                        </Button>
+                      </div>
                       <CallDayVisitList 
                         visits={sortedVisitsForCallDay}
                         onEdit={handleEditVisit}
@@ -3533,6 +3531,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
