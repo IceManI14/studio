@@ -418,12 +418,12 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-        const price = visit.priceQuoted ?? 0;
-        if (price > 0) {
-          const numberOfUnits = visit.interestedUnits?.length || 1;
-          return total + (price * numberOfUnits);
-        }
-        return total;
+      const price = visit.priceQuoted ?? 0;
+      if (price > 0) {
+        const numberOfUnits = visit.interestedUnits?.length || 1;
+        return total + (price * numberOfUnits);
+      }
+      return total;
     }, 0);
   }, [activeFreeTrials]);
 
@@ -2466,9 +2466,6 @@ export default function HomePage() {
                                   <PlusSquare className="mr-2 h-4 w-4" />
                                   Schedule on {format(selectedDate, 'MMM d')}
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)} className="w-full">
-                                  Clear Date Filter
-                              </Button>
                           </div>
                         )}
                       </div>
@@ -3438,5 +3435,3 @@ export default function HomePage() {
   );
 }
  
-
-    
