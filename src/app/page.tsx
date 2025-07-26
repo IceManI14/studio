@@ -419,8 +419,11 @@ export default function HomePage() {
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
         const price = visit.priceQuoted ?? 0;
-        const numberOfUnits = visit.interestedUnits?.length || 1;
-        return total + (price * numberOfUnits);
+        if (price > 0) {
+          const numberOfUnits = visit.interestedUnits?.length || 1;
+          return total + (price * numberOfUnits);
+        }
+        return total;
     }, 0);
   }, [activeFreeTrials]);
 
