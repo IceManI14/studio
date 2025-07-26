@@ -418,18 +418,8 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-      if (typeof visit.manualCommission === 'number') {
-        return total + visit.manualCommission;
-      }
-      if (visit.pricingDiscussed) {
-        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-          return total + visit.priceQuoted;
-        }
-        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
-        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-        return total + leaseCommission + installCommission;
-      }
-      return total;
+      const price = visit.priceQuoted ?? 0;
+      return total + price;
     }, 0);
   }, [activeFreeTrials]);
 
@@ -2364,7 +2354,7 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  <div className="flex flex-col gap-6">
+                  <div className="space-y-6">
                       <Accordion type="single" collapsible className="w-full">
                           <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3445,21 +3435,3 @@ export default function HomePage() {
  
 
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
