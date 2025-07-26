@@ -419,7 +419,8 @@ export default function HomePage() {
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
         const price = visit.priceQuoted ?? 0;
-        return total + price;
+        const numberOfUnits = visit.interestedUnits?.length || 1;
+        return total + (price * numberOfUnits);
     }, 0);
   }, [activeFreeTrials]);
 
@@ -1924,6 +1925,7 @@ export default function HomePage() {
 
   const handleCalendarSelect = useCallback((date?: Date) => {
     setSelectedDate(date);
+    if (!date) return;
   }, []);
   
   const handleScheduleFromCalendar = () => {
@@ -2354,7 +2356,7 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                       <Accordion type="single" collapsible>
                           <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
