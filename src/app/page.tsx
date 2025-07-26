@@ -1944,7 +1944,7 @@ export default function HomePage() {
   
     if (isRescheduling && visitBeingRescheduled) {
       const newMeetingTime = new Date(date);
-      const oldMeetingTime = new Date(visitBeingRescheduled.futureMeetingDateTime!);
+      const oldMeetingTime = visitBeingRescheduled.futureMeetingDateTime ? new Date(visitBeingRescheduled.futureMeetingDateTime) : new Date();
       newMeetingTime.setHours(oldMeetingTime.getHours());
       newMeetingTime.setMinutes(oldMeetingTime.getMinutes());
   
@@ -2065,7 +2065,7 @@ export default function HomePage() {
               </div>
 
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem ref={dailyPlanRef} value="daily-plan" className="border-none">
+                <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-between w-full gap-4">
                       <div className="flex items-center gap-3 min-w-0">
@@ -2405,7 +2405,7 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  <div className="space-y-6">
+                  <div className="flex flex-col gap-6">
                       <Accordion type="single" collapsible className="w-full">
                           <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3446,17 +3446,21 @@ export default function HomePage() {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-80 overflow-y-auto space-y-2 p-1">
-              {visitsToReschedule.map(visit => (
-                <div key={visit.id} className="flex justify-between items-center p-2 rounded-md border">
-                  <div className="flex flex-col">
-                    <span className="font-semibold">{visit.companyName}</span>
-                    <span className="text-xs text-muted-foreground">{format(new Date(visit.futureMeetingDateTime!), 'p')}</span>
+              {visitsToReschedule.length > 0 ? (
+                visitsToReschedule.map(visit => (
+                  <div key={visit.id} className="flex justify-between items-center p-2 rounded-md border">
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{visit.companyName}</span>
+                      <span className="text-xs text-muted-foreground">{format(new Date(visit.futureMeetingDateTime!), 'p')}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => startRescheduling(visit)}>
+                      Reschedule
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => startRescheduling(visit)}>
-                    Reschedule
-                  </Button>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No meetings to reschedule for this day.</p>
+              )}
             </div>
              <DialogFooter>
                 <Button variant="ghost" onClick={() => setIsRescheduleModalOpen(false)}>Close</Button>
@@ -3531,6 +3535,7 @@ export default function HomePage() {
  
 
     
+
 
 
 
