@@ -418,8 +418,8 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-      const price = visit.priceQuoted ?? 0;
-      return total + price;
+        const price = visit.priceQuoted ?? 0;
+        return total + price;
     }, 0);
   }, [activeFreeTrials]);
 
@@ -2013,7 +2013,7 @@ export default function HomePage() {
                 )}
               </div>
 
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-between w-full gap-4">
@@ -2188,7 +2188,7 @@ export default function HomePage() {
                         </Alert>
                     </div>
                 ) : (
-                  <Accordion type="single" collapsible className="w-full">
+                  <Accordion type="single" collapsible>
                     <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
                       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                         <div className="flex items-center justify-center w-full">
@@ -2252,7 +2252,7 @@ export default function HomePage() {
                   </Accordion>
                 )}
                  {pastVisitsByDay.length > 0 && (
-                  <Accordion type="single" collapsible className="w-full">
+                  <Accordion type="single" collapsible>
                       <AccordionItem value="past-visits" className="border-none">
                           <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                             <div className="flex items-center justify-center w-full">
@@ -2283,7 +2283,7 @@ export default function HomePage() {
           {activeTab === 'planner' && (
               <div className="space-y-6">
                   {scheduledVisits.length > 0 && (
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="single" collapsible>
                           <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2304,7 +2304,7 @@ export default function HomePage() {
                       </Accordion>
                   )}
 
-                  <Accordion type="single" collapsible className="w-full">
+                  <Accordion type="single" collapsible>
                     <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                         <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                           <div className="flex items-center justify-center w-full">
@@ -2333,7 +2333,7 @@ export default function HomePage() {
 
 
                   {flaggedHotspots.length > 0 && (
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="single" collapsible>
                           <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2355,7 +2355,7 @@ export default function HomePage() {
                   )}
 
                   <div className="space-y-6">
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="single" collapsible>
                           <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                   <div className="flex items-center justify-center w-full">
@@ -2383,7 +2383,7 @@ export default function HomePage() {
                               </AccordionContent>
                           </AccordionItem>
                       </Accordion>
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="single" collapsible>
                           <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                   <div className="flex items-center justify-center w-full">
@@ -2417,7 +2417,7 @@ export default function HomePage() {
 
           {activeTab === 'call-day' && (
             <div className="space-y-6">
-              <Accordion type="single" collapsible className="w-full max-w-sm mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -2596,7 +2596,7 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion type="single" collapsible>
                   <AccordionItem ref={visitCardsRef} value="visit-cards" className="border-none">
                     <AccordionTrigger onClick={(e) => handleAccordionScroll(e, visitCardsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                       <div className="flex items-center justify-center w-full">
@@ -2665,7 +2665,7 @@ export default function HomePage() {
           )}
 
           {activeTab === 'visits' && (
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible>
               <AccordionItem value="company-map" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
@@ -2712,7 +2712,7 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -2836,7 +2836,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               )}
-              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -2890,7 +2890,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={eagleEyeRef} value="eagle-eye-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -2919,7 +2919,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -2984,7 +2984,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <Accordion type="single" collapsible className="w-full max-w-2xl mx-auto">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={hotLeadsRef} value="hot-leads" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, hotLeadsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
