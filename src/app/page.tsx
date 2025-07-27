@@ -211,6 +211,9 @@ export default function HomePage() {
   const [newDocName, setNewDocName] = useState('');
   const [newDocUrl, setNewDocUrl] = useState('');
   const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [visitsForReschedule, setVisitsForReschedule] = useState<Visit[]>([]);
+  const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
 
   
   const { toast } = useToast();
@@ -1926,10 +1929,42 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleCalendarSelect = useCallback((date?: Date) => {
-    setSelectedDate(date);
-    if (!date) return;
-  }, []);
+  const handleCalendarSelect = useCallback(async (date?: Date) => {
+    if (visitToReschedule) {
+        if (!date) {
+            toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
+            setVisitToReschedule(null);
+            return;
+        }
+
+        const updatedVisit = {
+            ...visitToReschedule,
+            futureMeetingDateTime: date,
+        };
+
+        const payload: SaveVisitPayload = updatedVisit;
+        await handleSaveFromForm(payload, { andClose: false });
+
+        toast({
+            title: 'Meeting Rescheduled!',
+            description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
+        });
+        setVisitToReschedule(null);
+        setSelectedDate(undefined);
+    } else {
+        setSelectedDate(date);
+        if (!date) return;
+
+        const meetingsOnDay = visits.filter(v =>
+            v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
+        );
+
+        if (meetingsOnDay.length > 0) {
+            setVisitsForReschedule(meetingsOnDay);
+            setIsRescheduleModalOpen(true);
+        }
+    }
+  }, [visitToReschedule, toast, handleSaveFromForm, visits]);
   
   const handleScheduleFromCalendar = () => {
     if (!selectedDate) return;
@@ -1946,6 +1981,15 @@ export default function HomePage() {
       futureMeetingDateTime: meetingDateTime,
     } as Visit);
     setIsVisitFormOpen(true);
+  };
+
+  const handleInitiateReschedule = (visit: Visit) => {
+    setVisitToReschedule(visit);
+    setIsRescheduleModalOpen(false);
+    toast({
+        title: `Rescheduling: ${visit.companyName}`,
+        description: "Please select a new date on the calendar.",
+    });
   };
 
   const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
@@ -1990,12 +2034,12 @@ export default function HomePage() {
   );
 
   return (
-    <div className={cn("min-h-screen")}>
+    <div className={cn("min-h-screen", visitToReschedule && "cursor-crosshair")}>
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
       />
-      <div className={cn("container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8")}>
+      <div className={cn("container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8", visitToReschedule && "opacity-25 pointer-events-none")}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
             Optimum Trailblazer
@@ -2259,7 +2303,7 @@ export default function HomePage() {
                  {pastVisitsByDay.length > 0 && (
                   <Accordion type="single" collapsible>
                       <AccordionItem value="past-visits" className="border-none">
-                          <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                          <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                             <div className="flex items-center justify-center w-full">
                               <div className="flex items-center justify-center gap-2">
                                 <ListChecks className="h-5 w-5 text-primary" />
@@ -2436,7 +2480,7 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
-                      <div className="flex flex-col items-center w-full">
+                      <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
                         <Calendar
                           mode="single"
                           selected={selectedDate}
@@ -3370,6 +3414,33 @@ export default function HomePage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+        
+        <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Reschedule a Meeting</DialogTitle>
+                    <DialogDescription>
+                        Select a meeting from {selectedDate ? format(selectedDate, 'PPP') : 'the selected date'} to reschedule.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 py-4">
+                    {visitsForReschedule.map(visit => (
+                        <div key={visit.id} className="flex items-center justify-between p-2 rounded-md border">
+                            <div>
+                                <p className="font-semibold">{visit.companyName}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'p') : 'Time not set'}
+                                </p>
+                            </div>
+                            <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>Reschedule</Button>
+                        </div>
+                    ))}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsRescheduleModalOpen(false)}>Cancel</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
         <FindCompanyModal
           isOpen={isFindCompanyModalOpen}
@@ -3435,4 +3506,3 @@ export default function HomePage() {
   );
 }
  
-
