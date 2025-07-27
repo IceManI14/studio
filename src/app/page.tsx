@@ -2300,7 +2300,7 @@ export default function HomePage() {
                 )}
                  {pastVisitsByDay.length > 0 && (
                   <Accordion type="single" collapsible>
-                      <AccordionItem value="past-visits" className="border-none">
+                      <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
                           <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                             <div className="flex items-center justify-center w-full">
                               <div className="flex items-center justify-center gap-2">
@@ -3504,5 +3504,3 @@ export default function HomePage() {
   );
 }
  
-
-    
