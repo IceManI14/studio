@@ -237,6 +237,7 @@ export default function HomePage() {
   const companyDocsRef = useRef<HTMLDivElement>(null);
   const debbieRef = useRef<HTMLDivElement>(null);
   const visitCardsRef = useRef<HTMLDivElement>(null);
+  const pastVisitsRef = useRef<HTMLDivElement>(null);
   const todaysVisitsRef = useRef<HTMLDivElement>(null);
   const eagleEyeRef = useRef<HTMLDivElement>(null);
   const currentCityRef = useRef<string | null>(null);
@@ -421,12 +422,11 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-      const price = visit.priceQuoted ?? 0;
-      if (price > 0) {
-        const numberOfUnits = visit.interestedUnits?.length || 1;
-        return total + (price * numberOfUnits * 5);
-      }
-      return total;
+        if (typeof visit.priceQuoted === 'number' && visit.priceQuoted > 0) {
+            const numberOfUnits = visit.interestedUnits?.length || 1;
+            return total + (visit.priceQuoted * numberOfUnits * 5);
+        }
+        return total;
     }, 0);
   }, [activeFreeTrials]);
 
@@ -1930,18 +1930,20 @@ export default function HomePage() {
   };
 
   const handleCalendarSelect = useCallback(async (date?: Date) => {
-    if (visitToReschedule) {
-        if (!date) {
+    setSelectedDate(date);
+    if (!date) {
+        if (visitToReschedule) {
             toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
             setVisitToReschedule(null);
-            return;
         }
+        return;
+    }
 
+    if (visitToReschedule) {
         const updatedVisit = {
             ...visitToReschedule,
             futureMeetingDateTime: date,
         };
-
         const payload: SaveVisitPayload = updatedVisit;
         await handleSaveFromForm(payload, { andClose: false });
 
@@ -1950,11 +1952,7 @@ export default function HomePage() {
             description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
         });
         setVisitToReschedule(null);
-        setSelectedDate(undefined);
     } else {
-        setSelectedDate(date);
-        if (!date) return;
-
         const meetingsOnDay = visits.filter(v =>
             v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
         );
@@ -1964,7 +1962,7 @@ export default function HomePage() {
             setIsRescheduleModalOpen(true);
         }
     }
-  }, [visitToReschedule, toast, handleSaveFromForm, visits]);
+  }, [visitToReschedule, visits, toast, handleSaveFromForm]);
   
   const handleScheduleFromCalendar = () => {
     if (!selectedDate) return;
@@ -3506,3 +3504,5 @@ export default function HomePage() {
   );
 }
  
+
+    
