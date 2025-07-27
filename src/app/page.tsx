@@ -355,7 +355,7 @@ export default function HomePage() {
       } else if (sortCriteria === 'inTrial') {
         const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
         const trialTimeB = b.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
-        comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
+        comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeA;
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'dealClosed') {
@@ -421,7 +421,7 @@ export default function HomePage() {
       const price = visit.priceQuoted ?? 0;
       if (price > 0) {
         const numberOfUnits = visit.interestedUnits?.length || 1;
-        return total + (price * numberOfUnits);
+        return total + (price * numberOfUnits * 5);
       }
       return total;
     }, 0);
@@ -3435,3 +3435,4 @@ export default function HomePage() {
   );
 }
  
+
