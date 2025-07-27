@@ -1932,35 +1932,35 @@ export default function HomePage() {
   const handleCalendarSelect = useCallback(async (date?: Date) => {
     setSelectedDate(date);
     if (!date) {
-        if (visitToReschedule) {
-            toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
-            setVisitToReschedule(null);
-        }
-        return;
-    }
-
-    if (visitToReschedule) {
-        const updatedVisit = {
-            ...visitToReschedule,
-            futureMeetingDateTime: date,
-        };
-        const payload: SaveVisitPayload = updatedVisit;
-        await handleSaveFromForm(payload, { andClose: false });
-
-        toast({
-            title: 'Meeting Rescheduled!',
-            description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
-        });
+      if (visitToReschedule) {
+        toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
         setVisitToReschedule(null);
+      }
+      return;
+    }
+  
+    if (visitToReschedule) {
+      const updatedVisit = {
+        ...visitToReschedule,
+        futureMeetingDateTime: date,
+      };
+      const payload: SaveVisitPayload = updatedVisit;
+      await handleSaveFromForm(payload, { andClose: false });
+  
+      toast({
+        title: 'Meeting Rescheduled!',
+        description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
+      });
+      setVisitToReschedule(null);
     } else {
-        const meetingsOnDay = visits.filter(v =>
-            v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
-        );
-
-        if (meetingsOnDay.length > 0) {
-            setVisitsForReschedule(meetingsOnDay);
-            setIsRescheduleModalOpen(true);
-        }
+      const meetingsOnDay = visits.filter(v =>
+        v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
+      );
+  
+      if (meetingsOnDay.length > 0) {
+        setVisitsForReschedule(meetingsOnDay);
+        setIsRescheduleModalOpen(true);
+      }
     }
   }, [visitToReschedule, visits, toast, handleSaveFromForm]);
   
@@ -2941,7 +2941,9 @@ export default function HomePage() {
                       <div className="flex items-center justify-start w-10 shrink-0">
                         <UserCog className="h-7 w-7 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Eagle Eye</h2>
+                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                        Eagle Eye
+                      </h2>
                       <div className="w-10 shrink-0"></div>
                     </div>
                   </AccordionTrigger>
@@ -3503,4 +3505,3 @@ export default function HomePage() {
     </div>
   );
 }
- 
