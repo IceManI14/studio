@@ -1931,15 +1931,7 @@ export default function HomePage() {
 
   const handleCalendarSelect = useCallback(async (date?: Date) => {
     setSelectedDate(date);
-    if (!date) {
-      if (visitToReschedule) {
-        toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
-        setVisitToReschedule(null);
-      }
-      return;
-    }
-  
-    if (visitToReschedule) {
+    if (visitToReschedule && date) {
       const updatedVisit = {
         ...visitToReschedule,
         futureMeetingDateTime: date,
@@ -1952,7 +1944,7 @@ export default function HomePage() {
         description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
       });
       setVisitToReschedule(null);
-    } else {
+    } else if (date) {
       const meetingsOnDay = visits.filter(v =>
         v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
       );
@@ -1960,6 +1952,11 @@ export default function HomePage() {
       if (meetingsOnDay.length > 0) {
         setVisitsForReschedule(meetingsOnDay);
         setIsRescheduleModalOpen(true);
+      }
+    } else {
+       if (visitToReschedule) {
+        toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
+        setVisitToReschedule(null);
       }
     }
   }, [visitToReschedule, visits, toast, handleSaveFromForm]);
@@ -1988,6 +1985,9 @@ export default function HomePage() {
         title: `Rescheduling: ${visit.companyName}`,
         description: "Please select a new date on the calendar.",
     });
+    // This part is crucial to make the calendar interactive
+    setActiveTab('call-day');
+    callDayFilterRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
@@ -2190,7 +2190,7 @@ export default function HomePage() {
           </TabsList>
         </Tabs>
         
-        <div className="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", visitToReschedule && "relative z-40")}>
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
@@ -2498,7 +2498,7 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        {selectedDate && (
+                        {selectedDate && !visitToReschedule && (
                           <div className="w-full mt-2 space-y-2">
                               <Button
                                   onClick={handleScheduleFromCalendar}
