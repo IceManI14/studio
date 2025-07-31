@@ -306,9 +306,9 @@ export default function HomePage() {
     if (visits.length === 0) return [];
   
     let processedVisits = [...visits];
-    const isSpecialFilter = ['inTrial', 'dealClosed', 'futureMeetingsSet'].includes(sortCriteria);
-  
-    if (selectedDate && !isSpecialFilter) {
+    
+    // Date filter is primary if selected
+    if (selectedDate) {
       processedVisits = processedVisits.filter(visit =>
         isSameDay(new Date(visit.timestamp), selectedDate) ||
         (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
@@ -1931,35 +1931,32 @@ export default function HomePage() {
   };
 
   const handleCalendarSelect = useCallback(async (date?: Date) => {
-    setSelectedDate(date);
-    if (visitToReschedule && date) {
-      const updatedVisit = {
-        ...visitToReschedule,
-        futureMeetingDateTime: date,
-      };
-      const payload: SaveVisitPayload = updatedVisit;
-      await handleSaveFromForm(payload, { andClose: false });
+      // If we are in "reschedule mode"
+      if (visitToReschedule && date) {
+          const updatedVisit = {
+              ...visitToReschedule,
+              futureMeetingDateTime: date,
+          };
+          const payload: SaveVisitPayload = updatedVisit;
+          await handleSaveFromForm(payload, { andClose: false });
+
+          toast({
+              title: 'Meeting Rescheduled!',
+              description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
+          });
+          setVisitToReschedule(null); // Exit reschedule mode
+      } else {
+          // Normal date selection for filtering
+          setSelectedDate(date);
+          const meetingsOnDay = date ? visits.filter(v => 
+              v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
+          ) : [];
   
-      toast({
-        title: 'Meeting Rescheduled!',
-        description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
-      });
-      setVisitToReschedule(null);
-    } else if (date) {
-      const meetingsOnDay = visits.filter(v =>
-        v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
-      );
-  
-      if (meetingsOnDay.length > 0) {
-        setVisitsForReschedule(meetingsOnDay);
-        setIsRescheduleModalOpen(true);
+          if (meetingsOnDay.length > 0) {
+              setVisitsForReschedule(meetingsOnDay);
+              setIsRescheduleModalOpen(true);
+          }
       }
-    } else {
-       if (visitToReschedule) {
-        toast({ variant: 'destructive', title: 'Reschedule Canceled', description: 'No new date was selected.' });
-        setVisitToReschedule(null);
-      }
-    }
   }, [visitToReschedule, visits, toast, handleSaveFromForm]);
   
   const handleScheduleFromCalendar = () => {
@@ -2040,7 +2037,10 @@ export default function HomePage() {
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
       />
-      <div className={cn("container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8", visitToReschedule && "opacity-25 pointer-events-none")}>
+      <div className={cn(
+          "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8",
+          visitToReschedule && "opacity-25 pointer-events-none"
+      )}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
             Optimum Trailblazer
@@ -2193,7 +2193,9 @@ export default function HomePage() {
           </TabsList>
         </Tabs>
         
-        <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", visitToReschedule && "relative z-40")}>
+        <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+             activeTab === 'call-day' && visitToReschedule && "relative z-40"
+        )}>
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
