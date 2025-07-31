@@ -214,6 +214,7 @@ export default function HomePage() {
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [visitsForReschedule, setVisitsForReschedule] = useState<Visit[]>([]);
   const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
+  const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
 
   
   const { toast } = useToast();
@@ -1981,13 +1982,15 @@ export default function HomePage() {
   const handleInitiateReschedule = (visit: Visit) => {
     setVisitToReschedule(visit);
     setIsRescheduleModalOpen(false);
+    setIsAllMeetingsModalOpen(false);
     toast({
         title: `Rescheduling: ${visit.companyName}`,
         description: "Please select a new date on the calendar.",
     });
-    // This part is crucial to make the calendar interactive
     setActiveTab('call-day');
-    callDayFilterRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      callDayFilterRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
@@ -2498,8 +2501,8 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        {selectedDate && !visitToReschedule && (
-                          <div className="w-full mt-2 space-y-2">
+                        <div className="w-full mt-2 space-y-2">
+                          {selectedDate && !visitToReschedule && (
                               <Button
                                   onClick={handleScheduleFromCalendar}
                                   className="w-full"
@@ -2508,8 +2511,18 @@ export default function HomePage() {
                                   <PlusSquare className="mr-2 h-4 w-4" />
                                   Schedule on {format(selectedDate, 'MMM d')}
                               </Button>
-                          </div>
-                        )}
+                          )}
+                           <Button
+                                onClick={() => setIsAllMeetingsModalOpen(true)}
+                                variant="outline"
+                                className="w-full"
+                                size="sm"
+                                disabled={scheduledVisits.length === 0}
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Reschedule an Appointment
+                            </Button>
+                        </div>
                       </div>
 
                       <Accordion type="single" collapsible className="w-full max-w-sm">
@@ -3438,6 +3451,35 @@ export default function HomePage() {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsRescheduleModalOpen(false)}>Cancel</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={isAllMeetingsModalOpen} onOpenChange={setIsAllMeetingsModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Reschedule an Appointment</DialogTitle>
+                    <DialogDescription>
+                        Select one of your upcoming scheduled appointments to reschedule.
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-96 my-4">
+                  <div className="space-y-2 pr-4">
+                      {scheduledVisits.map(visit => (
+                          <div key={visit.id} className="flex items-center justify-between p-2 rounded-md border">
+                              <div>
+                                  <p className="font-semibold">{visit.companyName}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                      {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PPp') : 'Time not set'}
+                                  </p>
+                              </div>
+                              <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>Reschedule</Button>
+                          </div>
+                      ))}
+                  </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAllMeetingsModalOpen(false)}>Cancel</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
