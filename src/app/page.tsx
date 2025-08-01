@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -48,6 +48,7 @@ import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import ManageFilesModal from '@/components/manage-files-modal';
+import DataUsageDashboard from '@/components/data-usage-dashboard';
 import { fileToDataUri, cn, stateNameToAbbreviation } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
@@ -3209,7 +3210,7 @@ export default function HomePage() {
                 </div>
 
                 <Tabs defaultValue="about-field-day" className="w-full">
-                    <TabsList className="grid w-full grid-cols-6 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                    <TabsList className="grid w-full grid-cols-7 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
                         <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
                             <PlusCircle className="h-5 w-5" />
                         </TabsTrigger>
@@ -3224,6 +3225,9 @@ export default function HomePage() {
                         </TabsTrigger>
                         <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
                             <Bot className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                           <Database className="h-5 w-5" />
                         </TabsTrigger>
                         <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
                            <MessagesSquare className="h-5 w-5" />
@@ -3292,6 +3296,10 @@ export default function HomePage() {
                         </ul>
                     </TabsContent>
                     
+                    <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
+                    </TabsContent>
+
                     <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
                         <div className="w-full">
                             <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
