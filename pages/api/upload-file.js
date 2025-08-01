@@ -100,8 +100,8 @@ export default async (req, res) => {
     if (errorMessage.includes('could not refresh access token')) {
         console.error('[api/upload-file] - AUTH_ERROR: The service account likely lacks the "Service Account Token Creator" role.');
         return res.status(500).json({
-            message: 'Authentication Failed',
-            details: `Your app's service account is missing a required Google Cloud permission. To fix this, grant the "Service Account Token Creator" role to the service account in your Google Cloud IAM page.`
+            message: 'Authentication Failed.',
+            details: `To fix this, grant the "Service Account Token Creator" role to your app's service account in your Google Cloud IAM page.`
         });
     }
     

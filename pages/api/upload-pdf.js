@@ -95,8 +95,8 @@ export default async (req, res) => {
 
     if (errorMessage.includes('could not refresh access token')) {
         return res.status(500).json({
-            message: 'Authentication Failed',
-            details: `Action Required: Your app is missing a required Google Cloud permission. To fix this, add the "Service Account Token Creator" role to your app's service account in the Google Cloud IAM page.`
+            message: 'Authentication Failed.',
+            details: `To fix this, grant the "Service Account Token Creator" role to your app's service account in your Google Cloud IAM page.`
         });
     }
 
