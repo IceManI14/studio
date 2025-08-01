@@ -9,7 +9,7 @@ import VisitCard from '@/components/visit-card';
 import ExportButton from '@/components/export-button';
 import ExportPdfButton from '@/components/export-pdf-button';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -155,6 +155,7 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
 export default function HomePage() {
   // State and Refs
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [importedVisits, setImportedVisits] = useState<Visit[] | null>(null);
   const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
@@ -243,13 +244,16 @@ export default function HomePage() {
   const todaysVisitsRef = useRef<HTMLDivElement>(null);
   const eagleEyeRef = useRef<HTMLDivElement>(null);
   const currentCityRef = useRef<string | null>(null);
+  const importReportInputRef = useRef<HTMLInputElement>(null);
 
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
   // Memos
+  const visitsToDisplay = importedVisits || visits;
+
   const scheduledFutureVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
-    return visits
+    return visitsToDisplay
       .filter(visit => 
         visit.futureMeetingSet && 
         visit.futureMeetingDateTime && 
@@ -257,24 +261,24 @@ export default function HomePage() {
         !visit.dealClosed
       )
       .map(visit => startOfDay(new Date(visit.futureMeetingDateTime!)));
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const trialEndDays = useMemo(() => {
     const today = startOfDay(new Date());
-    return visits
+    return visitsToDisplay
       .filter(v => {
         if (!v.freeTrial || !v.freeTrialStartDate) return false;
         const trialEndDate = addDays(startOfDay(new Date(v.freeTrialStartDate!)), 7);
         return trialEndDate >= today;
       })
       .map(v => addDays(startOfDay(new Date(v.freeTrialStartDate!)), 7));
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const loggedPastVisitDays = useMemo(() => {
     const today = startOfDay(new Date());
     const pastTimestamps = new Set<number>();
   
-    visits.forEach(v => {
+    visitsToDisplay.forEach(v => {
       const visitDay = startOfDay(new Date(v.timestamp));
       if (visitDay < today) {
         pastTimestamps.add(visitDay.getTime());
@@ -288,11 +292,11 @@ export default function HomePage() {
     });
   
     return Array.from(pastTimestamps).map(time => new Date(time));
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const dealClosedDays = useMemo(() => {
     const closedDays = new Set<number>();
-    visits.forEach(visit => {
+    visitsToDisplay.forEach(visit => {
         if (visit.dealClosed) {
             closedDays.add(startOfDay(new Date(visit.timestamp)).getTime());
             if (visit.futureMeetingDateTime) {
@@ -301,12 +305,12 @@ export default function HomePage() {
         }
     });
     return Array.from(closedDays).map(time => new Date(time));
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const sortedVisitsForCallDay = useMemo(() => {
-    if (visits.length === 0) return [];
+    if (visitsToDisplay.length === 0) return [];
   
-    let processedVisits = [...visits];
+    let processedVisits = [...visitsToDisplay];
     
     // Date filter is primary if selected
     if (selectedDate) {
@@ -379,17 +383,17 @@ export default function HomePage() {
       }
     });
     return sorted;
-  }, [visits, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
+  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
 
   const scheduledVisits = useMemo(() => {
-    return visits
+    return visitsToDisplay
       .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date())
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const unscheduledFutureVisits = useMemo(() => {
     const scheduledIds = new Set(scheduledVisits.map(v => v.id));
-    return visits
+    return visitsToDisplay
       .filter(visit => 
         visit.futureMeetingSet && 
         !visit.futureMeetingDateTime && 
@@ -397,30 +401,30 @@ export default function HomePage() {
         !visit.notes?.startsWith('Flagged as a hotspot.')
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits, scheduledVisits]);
+  }, [visitsToDisplay, scheduledVisits]);
 
   const flaggedHotspots = useMemo(() => {
     const scheduledIds = new Set(scheduledVisits.map(v => v.id));
-    return visits
+    return visitsToDisplay
       .filter(visit => 
         visit.notes?.startsWith('Flagged as a hotspot.') && 
         !visit.futureMeetingDateTime && 
         !scheduledIds.has(visit.id)
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits, scheduledVisits]);
+  }, [visitsToDisplay, scheduledVisits]);
 
   const activeFreeTrials = useMemo(() => {
-    return visits
+    return visitsToDisplay
       .filter(visit => visit.freeTrial && visit.freeTrialStartDate && !visit.dealClosed)
       .sort((a, b) => new Date(b.freeTrialStartDate!).getTime() - new Date(a.freeTrialStartDate!).getTime());
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const closedDeals = useMemo(() => {
-    return visits
+    return visitsToDisplay
       .filter(visit => visit.dealClosed)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
@@ -453,7 +457,7 @@ export default function HomePage() {
     const today = startOfDay(new Date());
     const grouped: { [key: string]: Visit[] } = {};
   
-    visits.forEach((visit) => {
+    visitsToDisplay.forEach((visit) => {
       const visitDay = startOfDay(new Date(visit.timestamp));
       if (visitDay < today) {
         const dayKey = visitDay.toISOString().split('T')[0];
@@ -468,11 +472,11 @@ export default function HomePage() {
       grouped[dayKey].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }
     return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
-  }, [visits]);
+  }, [visitsToDisplay]);
 
   const todaysVisits = useMemo(() => {
-    return visits.filter(visit => isToday(new Date(visit.timestamp)));
-  }, [visits]);
+    return visitsToDisplay.filter(visit => isToday(new Date(visit.timestamp)));
+  }, [visitsToDisplay]);
 
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
@@ -829,7 +833,7 @@ export default function HomePage() {
   }, [toast]);
 
   const handleUpdateVisit = useCallback(async (visitId: string, updatedData: Partial<Visit>) => {
-    const visitToUpdate = visits.find(v => v.id === visitId);
+    const visitToUpdate = visitsToDisplay.find(v => v.id === visitId);
     if (!visitToUpdate) return;
   
     const payload: SaveVisitPayload = { ...visitToUpdate, ...updatedData };
@@ -839,7 +843,7 @@ export default function HomePage() {
         title: "Visit Updated",
         description: `${payload.companyName} has been updated.`,
     });
-  }, [visits, toast, handleSaveFromForm]);
+  }, [visitsToDisplay, toast, handleSaveFromForm]);
 
   const handleClearHotLeads = useCallback(() => {
     if (hotLeads.length === 0) return;
@@ -1538,7 +1542,7 @@ export default function HomePage() {
 
   const handleDeleteVisit = async (visitId: string) => {
     // Optimistic Deletion
-    const visitToDelete = visits.find(v => v.id === visitId);
+    const visitToDelete = visitsToDisplay.find(v => v.id === visitId);
     setVisits(prevVisits => {
         const newVisits = prevVisits.filter(v => v.id !== visitId);
         localStorage.setItem('visits', JSON.stringify(newVisits));
@@ -1570,10 +1574,7 @@ export default function HomePage() {
   };
 
   const confirmEndDay = async () => {
-    const todaysVisitsForReport = visits.filter(v => isToday(new Date(v.timestamp)));
-    const numberOfVisits = todaysVisitsForReport.length;
-
-    if (numberOfVisits === 0) {
+    if (visits.length === 0) {
         toast({ title: "No visits to create a report for today." });
         setIsEndDayConfirmOpen(false);
         return;
@@ -1586,18 +1587,18 @@ export default function HomePage() {
     }
 
     setIsSyncing(true);
-    toast({ title: "Generating Daily Report...", description: `Processing ${numberOfVisits} visit(s) and uploading to cloud storage.` });
+    toast({ title: "Generating User Data Report...", description: `Processing ${visits.length} visit(s) and uploading to cloud storage.` });
 
     try {
-      const result = await saveDailyReportAction(todaysVisitsForReport);
+      const result = await saveDailyReportAction(visits, selectedSalesperson?.name);
 
       if (result.error) {
         throw new Error(result.error);
       }
 
       toast({
-        title: "Daily Report Saved!",
-        description: `Your daily visit report has been successfully saved to the cloud storage bucket.`,
+        title: "User Report Saved!",
+        description: `Your user data report has been successfully saved to the cloud storage bucket.`,
         duration: 10000,
       });
       localStorage.removeItem('milestoneAchievedDate');
@@ -1748,7 +1749,7 @@ export default function HomePage() {
     setChatInput('');
 
     const oneWeekAgo = subDays(new Date(), 7);
-    const recentVisits = visits.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
+    const recentVisits = visitsToDisplay.filter(visit => new Date(visit.timestamp) >= oneWeekAgo);
     
     const territoryPdfUrl = localStorage.getItem('userTerritoryPdfUrl') || undefined;
 
@@ -1949,7 +1950,7 @@ export default function HomePage() {
       } else {
           // Normal date selection for filtering
           setSelectedDate(date);
-          const meetingsOnDay = date ? visits.filter(v => 
+          const meetingsOnDay = date ? visitsToDisplay.filter(v => 
               v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
           ) : [];
   
@@ -1958,7 +1959,7 @@ export default function HomePage() {
               setIsRescheduleModalOpen(true);
           }
       }
-  }, [visitToReschedule, visits, toast, handleSaveFromForm]);
+  }, [visitToReschedule, visitsToDisplay, toast, handleSaveFromForm]);
   
   const handleScheduleFromCalendar = () => {
     if (!selectedDate) return;
@@ -1990,6 +1991,72 @@ export default function HomePage() {
       callDayFilterRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
+
+  const handleImportReport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target?.result as string;
+        try {
+            const rows = text.split('\n').slice(1); // Skip header
+            const imported: Visit[] = rows.filter(row => row.trim()).map(row => {
+                // This is a simplified CSV parser and assumes no commas in quoted fields.
+                // A more robust library would be better for production.
+                const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, ''));
+                return {
+                    id: columns[0] || `imported_${crypto.randomUUID()}`,
+                    timestamp: new Date(columns[1]),
+                    latitude: columns[2] ? parseFloat(columns[2]) : undefined,
+                    longitude: columns[3] ? parseFloat(columns[3]) : undefined,
+                    companyName: columns[4],
+                    city: columns[5],
+                    notes: columns[6],
+                    contactInfo: (columns[7] || columns[8]) ? { info: columns[7], confidence: parseFloat(columns[8] || '0') } : undefined,
+                    notesSummary: columns[9],
+                    partnershipConfidence: columns[10] ? parseInt(columns[10]) : undefined,
+                    hasBusinessCard: columns[11] === 'Yes',
+                    businessCardImageFrontUrl: columns[12],
+                    businessCardImageBackUrl: columns[13],
+                    discussedCompetitors: columns[14] === 'Yes',
+                    competitorName: columns[15],
+                    coolerType: columns[16],
+                    decisionMakerName: columns[17],
+                    decisionMakerTitle: columns[18],
+                    decisionMakerContact: columns[19],
+                    visitNumber: columns[20] ? parseInt(columns[20]) : undefined,
+                    interestedUnits: columns[21] ? columns[21].split('; ') : [],
+                    hasTDSReading: columns[22] === 'Yes',
+                    tdsValue: columns[23] ? parseFloat(columns[23]) : undefined,
+                    futureMeetingSet: columns[24] === 'Yes',
+                    futureMeetingDateTime: columns[25] ? new Date(columns[25]) : undefined,
+                    freeTrial: columns[26] === 'Yes',
+                    freeTrialStartDate: columns[27] ? new Date(columns[27]) : undefined,
+                    dealClosed: columns[28] === 'Yes',
+                    pricingDiscussed: columns[29] === 'Yes',
+                    priceQuoted: columns[30] ? parseFloat(columns[30]) : undefined,
+                    leaseTerm: columns[31] ? parseInt(columns[31]) : undefined,
+                    installationFee: columns[32] ? parseFloat(columns[32]) : undefined,
+                    creditApproved: columns[33] === 'Yes',
+                    manualCommission: columns[34] ? parseFloat(columns[34]) : undefined,
+                };
+            });
+            setImportedVisits(imported);
+            toast({ title: 'Report Imported', description: `Loaded ${imported.length} visits. You are now viewing another user's data.` });
+        } catch (error) {
+            console.error("Failed to parse CSV:", error);
+            toast({ variant: 'destructive', title: 'Import Failed', description: 'Could not parse the CSV file. Please ensure it is a valid report.' });
+        }
+    };
+    reader.readAsText(file);
+
+    // Reset file input
+    if (event.target) {
+        event.target.value = '';
+    }
+  };
+
 
   const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
     <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
@@ -2048,110 +2115,127 @@ export default function HomePage() {
           </h1>
           {selectedSalesperson && (
             <div className="w-full max-w-lg mx-auto mt-2">
-              <div className="flex justify-center items-center text-md font-medium text-foreground mb-2">
-                {isFetchingCity ? (
-                  <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Determining current city...</span>
+              {importedVisits ? (
+                <Alert variant="destructive" className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <AlertTitle>Viewing Imported Data</AlertTitle>
+                    <AlertDescription>
+                      You are currently viewing another user's report. To return to your data, click the button.
+                    </AlertDescription>
                   </div>
-                ) : (
-                  currentCity && (
-                    <>
-                      <MapPin className="mr-2 h-4 w-4 text-primary" />
-                      <span>Currently Located: {currentCity}</span>
-                    </>
-                  )
-                )}
-              </div>
+                  <Button variant="outline" onClick={() => setImportedVisits(null)}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Return to My Data
+                  </Button>
+                </Alert>
+              ) : (
+                <>
+                <div className="flex justify-center items-center text-md font-medium text-foreground mb-2">
+                  {isFetchingCity ? (
+                    <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <span>Determining current city...</span>
+                    </div>
+                  ) : (
+                    currentCity && (
+                      <>
+                        <MapPin className="mr-2 h-4 w-4 text-primary" />
+                        <span>Currently Located: {currentCity}</span>
+                      </>
+                    )
+                  )}
+                </div>
 
-              <Accordion type="single" collapsible>
-                <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                    <div className="flex items-center justify-between w-full gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <User className="h-5 w-5 text-primary flex-shrink-0" />
-                        <div className="flex flex-col items-start">
-                          <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
+                <Accordion type="single" collapsible>
+                  <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                      <div className="flex items-center justify-between w-full gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <User className="h-5 w-5 text-primary flex-shrink-0" />
+                          <div className="flex flex-col items-start">
+                            <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
+                          <CalendarIcon className="h-3 w-3" />
+                          {format(new Date(), 'MMM d, yyyy')}
+                        </span>
+                        <div className="flex justify-end min-w-[80px]">
+                          {targetDestination && (
+                              <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
+                          )}
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
-                        <CalendarIcon className="h-3 w-3" />
-                        {format(new Date(), 'MMM d, yyyy')}
-                      </span>
-                      <div className="flex justify-end min-w-[80px]">
-                        {targetDestination && (
-                            <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
-                      {todaysScheduledVisits.length > 0 && (
-                          <Alert
-                            variant="default"
-                            className={cn(
-                              "border-primary/50 bg-primary/10 text-left w-full",
-                              todaysScheduledVisits.length === 1 && "cursor-pointer transition-colors hover:bg-primary/20"
-                            )}
-                            onClick={() => {
-                              if (todaysScheduledVisits.length === 1) {
-                                setZoomedVisit(todaysScheduledVisits[0]);
-                              }
-                            }}
-                          >
-                            <CalendarCheck className="h-4 w-4" />
-                            <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} meeting(s) scheduled for today!</AlertTitle>
-                            <AlertDescription>
-                              {todaysScheduledVisits.length === 1 ? (
-                                todaysScheduledVisits[0].companyName
-                              ) : (
-                                <div className="flex flex-wrap items-center gap-x-1">
-                                  {todaysScheduledVisits.map((v, index) => (
-                                    <div key={v.id} className="inline-flex items-center">
-                                      <Button
-                                        variant="link"
-                                        className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setZoomedVisit(v);
-                                        }}
-                                      >
-                                        {v.companyName}
-                                      </Button>
-                                      {index < todaysScheduledVisits.length - 1 && <span className="text-sm text-muted-foreground">,</span>}
-                                    </div>
-                                  ))}
-                                </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
+                        {todaysScheduledVisits.length > 0 && (
+                            <Alert
+                              variant="default"
+                              className={cn(
+                                "border-primary/50 bg-primary/10 text-left w-full",
+                                todaysScheduledVisits.length === 1 && "cursor-pointer transition-colors hover:bg-primary/20"
                               )}
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                      
-                      <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
-                        Change Destination
-                      </Button>
-
-                      {targetDestination?.description && (
-                        <div className="text-center w-full bg-background/20 p-3 rounded-md">
-                          <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
-                          <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
-                        </div>
-                      )}
-                      {navigationUrl && (
-                        <Button
-                          onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
-                          className="w-full"
-                          variant="default"
-                        >
-                          <MapIcon className="mr-2 h-4 w-4" />
-                          Navigate
+                              onClick={() => {
+                                if (todaysScheduledVisits.length === 1) {
+                                  setZoomedVisit(todaysScheduledVisits[0]);
+                                }
+                              }}
+                            >
+                              <CalendarCheck className="h-4 w-4" />
+                              <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} meeting(s) scheduled for today!</AlertTitle>
+                              <AlertDescription>
+                                {todaysScheduledVisits.length === 1 ? (
+                                  todaysScheduledVisits[0].companyName
+                                ) : (
+                                  <div className="flex flex-wrap items-center gap-x-1">
+                                    {todaysScheduledVisits.map((v, index) => (
+                                      <div key={v.id} className="inline-flex items-center">
+                                        <Button
+                                          variant="link"
+                                          className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setZoomedVisit(v);
+                                          }}
+                                        >
+                                          {v.companyName}
+                                        </Button>
+                                        {index < todaysScheduledVisits.length - 1 && <span className="text-sm text-muted-foreground">,</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        
+                        <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
+                          Change Destination
                         </Button>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+
+                        {targetDestination?.description && (
+                          <div className="text-center w-full bg-background/20 p-3 rounded-md">
+                            <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
+                            <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
+                          </div>
+                        )}
+                        {navigationUrl && (
+                          <Button
+                            onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
+                            className="w-full"
+                            variant="default"
+                          >
+                            <MapIcon className="mr-2 h-4 w-4" />
+                            Navigate
+                          </Button>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                </>
+              )}
             </div>
           )}
         </header>
@@ -2174,7 +2258,7 @@ export default function HomePage() {
               value="visits"
               className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
               onClick={(e) => {
-                if (visits.length === 0) {
+                if (visitsToDisplay.length === 0) {
                   e.preventDefault();
                   toast({title: 'No visits to show at the moment!'});
                 }
@@ -2200,22 +2284,22 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1">
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="flex-1" disabled={isSyncing}>
+                        <Button variant="default" size="sm" className="flex-1" disabled={isSyncing || !!importedVisits}>
                           {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
-                          Save Daily Report
+                          Save User Report
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Save Daily Report to Cloud Storage?</AlertDialogTitle>
+                          <AlertDialogTitle>Save User Data to Cloud Storage?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will generate a CSV report of today's visits and save it to the Trailblazer storage bucket.
+                            This will generate a CSV report of ALL your visits and save it to the cloud. This file can be shared with other users to import your data.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -2224,6 +2308,10 @@ export default function HomePage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
+                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="flex-1" disabled={!!importedVisits}>
+                      <LogIn className="mr-2 h-4 w-4" /> Import User Report
+                    </Button>
                 </div>
 
                 {todaysVisits.length === 0 ? (
@@ -2371,7 +2459,7 @@ export default function HomePage() {
                         </AccordionTrigger>
                         <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                           <div className="flex justify-center mb-4">
-                              <Button onClick={handleAddNewFutureVisit}>
+                              <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits}>
                                   <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
                               </Button>
                           </div>
@@ -2510,6 +2598,7 @@ export default function HomePage() {
                                   onClick={handleScheduleFromCalendar}
                                   className="w-full"
                                   size="sm"
+                                  disabled={!!importedVisits}
                               >
                                   <PlusSquare className="mr-2 h-4 w-4" />
                                   Schedule on {format(selectedDate, 'MMM d')}
@@ -2520,7 +2609,7 @@ export default function HomePage() {
                                 variant="outline"
                                 className="w-full"
                                 size="sm"
-                                disabled={scheduledVisits.length === 0}
+                                disabled={scheduledVisits.length === 0 || !!importedVisits}
                             >
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Reschedule an Appointment
@@ -2740,22 +2829,22 @@ export default function HomePage() {
                 </AccordionTrigger>
                 <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
                   <div className="flex flex-col items-center gap-4 mb-6">
-                      {visits.length > 0 && (
+                      {visitsToDisplay.length > 0 && (
                            <div className="flex flex-col items-center gap-2">
                                 <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                                    Your Visits: {visits.length}
+                                    Your Visits: {visitsToDisplay.length}
                                 </Badge>
                                 <div className="flex flex-wrap gap-2 justify-center">
-                                    <ExportPdfButton visits={visits} className="h-8 px-2 text-xs" />
-                                    <ExportButton visits={visits} className="h-8 px-2 text-xs" />
-                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs">
+                                    <ExportPdfButton visits={visitsToDisplay} className="h-8 px-2 text-xs" />
+                                    <ExportButton visits={visitsToDisplay} className="h-8 px-2 text-xs" />
+                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
                                     Email Manager
                                     </Button>
                                 </div>
                             </div>
                       )}
                   </div>
-                  <MapPlaceholder visits={visits} />
+                  <MapPlaceholder visits={visitsToDisplay} />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -3089,7 +3178,7 @@ export default function HomePage() {
                       </UiCardHeader>
                       <UiCardContent className="flex-grow flex flex-col">
                           <div className="mb-4 flex justify-center">
-                              <Button onClick={() => setIsFindCompanyModalOpen(true)} size="sm">
+                              <Button onClick={() => setIsFindCompanyModalOpen(true)} size="sm" disabled={!!importedVisits}>
                                   <Search className="mr-2 h-4 w-4" /> Find Company
                               </Button>
                           </div>
@@ -3545,6 +3634,7 @@ export default function HomePage() {
         onClick={handleHotspotCreation}
         className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
         aria-label="Flag Hotspot"
+        disabled={!!importedVisits}
       >
         <Flame className="h-8 w-8" />
       </button>

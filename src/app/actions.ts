@@ -257,7 +257,7 @@ export async function updateDealClosedAction(visitId: string, dealClosed: boolea
     }
 }
 
-export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?: boolean; url?: string; error?: string }> {
+export async function saveDailyReportAction(visits: Visit[], salespersonName?: string): Promise<{ success?: boolean; url?: string; error?: string }> {
   if (!firebaseConfigured) {
     return { error: 'Firebase/GCS is not configured. Cannot save report.' };
   }
@@ -323,9 +323,10 @@ export async function saveDailyReportAction(visits: Visit[]): Promise<{ success?
       visit.manualCommission ?? '',
     ].join(','));
     const csvContent = [headers.join(','), ...rows].join('\n');
-
+    
+    const safeSalespersonName = salespersonName ? salespersonName.replace(/[^a-zA-Z0-9]/g, '_') : 'user';
     const reportDate = format(new Date(), 'yyyy-MM-dd');
-    const fileName = `reports/visits-${reportDate}.csv`;
+    const fileName = `reports/${safeSalespersonName}_${reportDate}.csv`;
     const file = storage.bucket(bucketName).file(fileName);
 
     await file.save(csvContent, {
