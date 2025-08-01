@@ -22,34 +22,34 @@ export interface Visit {
   longitude?: number;
   companyName: string;
   city?: string | null;
-  notes?: string;
-  contactInfo?: ContactInfo;
-  notesSummary?: string;
-  partnershipConfidence?: number; // 1-5 stars
+  notes?: string | null;
+  contactInfo?: ContactInfo | null;
+  notesSummary?: string | null;
+  partnershipConfidence?: number | null; // 1-5 stars
   hasBusinessCard?: boolean;
   businessCardImageFrontUrl?: string | null;
   businessCardImageBackUrl?: string | null;
   discussedCompetitors?: boolean;
-  competitorName?: string;
-  coolerType?: string; // Added for selected cooler type
-  decisionMakerName?: string;
-  decisionMakerTitle?: string;
-  decisionMakerContact?: string;
-  visitNumber?: number; // Sequential number of the visit for the day
-  interestedUnits?: string[]; // Unit the company is potentially interested in
+  competitorName?: string | null;
+  coolerType?: string | null; 
+  decisionMakerName?: string | null;
+  decisionMakerTitle?: string | null;
+  decisionMakerContact?: string | null;
+  visitNumber?: number | null; 
+  interestedUnits?: string[] | null; 
   hasTDSReading?: boolean;
-  tdsValue?: number;
+  tdsValue?: number | null;
   futureMeetingSet?: boolean;
   futureMeetingDateTime?: Date;
   freeTrial?: boolean;
   freeTrialStartDate?: Date;
   dealClosed?: boolean;
   pricingDiscussed?: boolean;
-  priceQuoted?: number;
-  leaseTerm?: number;
-  installationFee?: number;
+  priceQuoted?: number | null;
+  leaseTerm?: number | null;
+  installationFee?: number | null;
   creditApproved?: boolean;
-  manualCommission?: number;
+  manualCommission?: number | null;
 }
 
 export interface ChatMessage {

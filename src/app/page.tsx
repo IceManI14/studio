@@ -1579,15 +1579,90 @@ export default function HomePage() {
         setIsEndDayConfirmOpen(false);
         return;
     }
+  
+    const headers = [
+      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'City', 'Notes', 
+      'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
+      'Has Business Card', 'Business Card Front URL', 'Business Card Back URL', 'Discussed Competitors', 
+      'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
+      'Decision Maker Contact', 'Visit Number', 'Interested Units', 'Has TDS Reading', 
+      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
+      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission Override'
+    ];
+    const rows = visits.map(visit => [
+      visit.id,
+      new Date(visit.timestamp).toISOString(),
+      visit.latitude ?? '',
+      visit.longitude ?? '',
+      `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.city ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
+      visit.contactInfo?.confidence ?? '',
+      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`,
+      visit.partnershipConfidence ?? '',
+      visit.hasBusinessCard ? 'Yes' : 'No',
+      `"${(visit.businessCardImageFrontUrl ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.businessCardImageBackUrl ?? '').replace(/"/g, '""')}"`,
+      visit.discussedCompetitors ? 'Yes' : 'No',
+      `"${(visit.competitorName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.coolerType ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerName ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
+      `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
+      visit.visitNumber ?? '',
+      `"${(visit.interestedUnits?.join('; ') ?? '').replace(/"/g, '""')}"`,
+      visit.hasTDSReading ? 'Yes' : 'No',
+      visit.tdsValue ?? '',
+      visit.futureMeetingSet ? 'Yes' : 'No',
+      visit.futureMeetingDateTime ? new Date(visit.futureMeetingDateTime).toISOString() : '',
+      visit.freeTrial ? 'Yes' : 'No',
+      visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
+      visit.dealClosed ? 'Yes' : 'No',
+      visit.pricingDiscussed ? 'Yes' : 'No',
+      visit.priceQuoted ?? '',
+      visit.leaseTerm ?? '',
+      visit.installationFee ?? '',
+      visit.creditApproved ? 'Yes' : 'No',
+      visit.manualCommission ?? '',
+    ].join(','));
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Save locally
+    try {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      const safeSalespersonName = selectedSalesperson?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'user';
+      const reportDate = format(new Date(), 'yyyy-MM-dd');
+      link.setAttribute('download', `report_${safeSalespersonName}_${reportDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'Report Saved Locally',
+        description: 'Your user data report has been downloaded to your device.',
+      });
+    } catch (e: any) {
+      toast({
+          variant: "destructive",
+          title: "Local Download Failed",
+          description: e.message || "Could not save the report to your device.",
+      });
+    }
 
+    // Then, attempt to save to cloud
     if (!firebaseConfigured) {
-        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report. Please check your app's configuration." });
+        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report to the cloud. Please check your app's configuration." });
         setIsEndDayConfirmOpen(false);
         return;
     }
 
     setIsSyncing(true);
-    toast({ title: "Generating User Data Report...", description: `Processing ${visits.length} visit(s) and uploading to cloud storage.` });
+    toast({ title: "Uploading User Data Report...", description: `Processing ${visits.length} visit(s) and uploading to cloud storage.` });
 
     try {
       const result = await saveDailyReportAction(visits, selectedSalesperson?.name);
@@ -1597,7 +1672,7 @@ export default function HomePage() {
       }
 
       toast({
-        title: "User Report Saved!",
+        title: "User Report Saved to Cloud!",
         description: `Your user data report has been successfully saved to the cloud storage bucket.`,
         duration: 10000,
       });
@@ -1605,7 +1680,7 @@ export default function HomePage() {
     } catch (e: any) {
       toast({
           variant: "destructive",
-          title: "Report Save Failed",
+          title: "Cloud Upload Failed",
           description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
           duration: 10000,
       });
@@ -1872,7 +1947,7 @@ export default function HomePage() {
       coolerType: undefined,
       decisionMakerName: '',
       decisionMakerTitle: '',
-      interestedUnits: undefined,
+      interestedUnits: [],
       hasTDSReading: false,
       tdsValue: undefined,
       freeTrial: false,
@@ -2107,7 +2182,7 @@ export default function HomePage() {
       />
       <div className={cn(
           "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8",
-          visitToReschedule && "opacity-25 pointer-events-none"
+          activeTab !== 'call-day' && visitToReschedule && "opacity-25 pointer-events-none"
       )}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
@@ -2299,7 +2374,7 @@ export default function HomePage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Save User Data to Cloud Storage?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will generate a CSV report of ALL your visits and save it to the cloud. This file can be shared with other users to import your data.
+                            This will generate a CSV report of ALL your visits and save it to your device, then upload it to the cloud. This file can be shared with other users to import your data.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
