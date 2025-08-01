@@ -332,11 +332,11 @@ export default function HomePage() {
       );
     }
   
-    if (sortCriteria === 'futureMeetingsSet') {
+    if (sortCriteria === 'futureMeetingsSet' && !selectedDate) {
       processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
-    } else if (sortCriteria === 'inTrial') {
+    } else if (sortCriteria === 'inTrial' && !selectedDate) {
       processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
-    } else if (sortCriteria === 'dealClosed') {
+    } else if (sortCriteria === 'dealClosed' && !selectedDate) {
       processedVisits = processedVisits.filter(visit => visit.dealClosed);
     }
   
@@ -1574,63 +1574,18 @@ export default function HomePage() {
   };
 
   const confirmEndDay = async () => {
-    if (visits.length === 0) {
+    if (visitsToDisplay.length === 0) {
         toast({ title: "No visits to create a report for today." });
         setIsEndDayConfirmOpen(false);
         return;
     }
+
+    const dataToExport = importedVisits || visits;
   
-    const headers = [
-      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'City', 'Notes', 
-      'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
-      'Has Business Card', 'Business Card Front URL', 'Business Card Back URL', 'Discussed Competitors', 
-      'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
-      'Decision Maker Contact', 'Visit Number', 'Interested Units', 'Has TDS Reading', 
-      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission Override'
-    ];
-    const rows = visits.map(visit => [
-      visit.id,
-      new Date(visit.timestamp).toISOString(),
-      visit.latitude ?? '',
-      visit.longitude ?? '',
-      `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.city ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
-      visit.contactInfo?.confidence ?? '',
-      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`,
-      visit.partnershipConfidence ?? '',
-      visit.hasBusinessCard ? 'Yes' : 'No',
-      `"${(visit.businessCardImageFrontUrl ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.businessCardImageBackUrl ?? '').replace(/"/g, '""')}"`,
-      visit.discussedCompetitors ? 'Yes' : 'No',
-      `"${(visit.competitorName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.coolerType ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
-      visit.visitNumber ?? '',
-      `"${(visit.interestedUnits?.join('; ') ?? '').replace(/"/g, '""')}"`,
-      visit.hasTDSReading ? 'Yes' : 'No',
-      visit.tdsValue ?? '',
-      visit.futureMeetingSet ? 'Yes' : 'No',
-      visit.futureMeetingDateTime ? new Date(visit.futureMeetingDateTime).toISOString() : '',
-      visit.freeTrial ? 'Yes' : 'No',
-      visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
-      visit.dealClosed ? 'Yes' : 'No',
-      visit.pricingDiscussed ? 'Yes' : 'No',
-      visit.priceQuoted ?? '',
-      visit.leaseTerm ?? '',
-      visit.installationFee ?? '',
-      visit.creditApproved ? 'Yes' : 'No',
-      visit.manualCommission ?? '',
-    ].join(','));
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    
     // Save locally
     try {
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
+      const blob = new Blob([result.csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -1662,10 +1617,10 @@ export default function HomePage() {
     }
 
     setIsSyncing(true);
-    toast({ title: "Uploading User Data Report...", description: `Processing ${visits.length} visit(s) and uploading to cloud storage.` });
+    toast({ title: "Uploading User Data Report...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
 
     try {
-      const result = await saveDailyReportAction(visits, selectedSalesperson?.name);
+      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
 
       if (result.error) {
         throw new Error(result.error);
@@ -2358,14 +2313,14 @@ export default function HomePage() {
         )}>
           {activeTab === 'field-day' && (
             <div className="space-y-6">
-                <div className="flex justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="flex-1" disabled={!!importedVisits}>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="w-full sm:flex-1" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="flex-1" disabled={isSyncing || !!importedVisits}>
+                        <Button variant="default" size="sm" className="w-full sm:flex-1" disabled={isSyncing || !!importedVisits}>
                           {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
                           Save User Report
                         </Button>
@@ -2384,7 +2339,7 @@ export default function HomePage() {
                       </AlertDialogContent>
                     </AlertDialog>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
-                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="flex-1" disabled={!!importedVisits}>
+                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1" disabled={!!importedVisits}>
                       <LogIn className="mr-2 h-4 w-4" /> Import User Report
                     </Button>
                 </div>
@@ -3722,3 +3677,4 @@ export default function HomePage() {
     </div>
   );
 }
+
