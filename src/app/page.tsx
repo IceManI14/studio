@@ -2129,6 +2129,20 @@ export default function HomePage() {
     </AccordionItem>
   );
 
+  const handleAddNewTrial = () => {
+    setCurrentEditingVisit({
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
+      companyName: '',
+      freeTrial: true,
+      futureMeetingSet: true,
+      freeTrialStartDate: new Date(),
+      futureMeetingDateTime: addDays(new Date(), 7),
+    } as Visit);
+    setIsVisitFormOpen(true);
+  };
+
+
   return (
     <div className={cn("min-h-screen", visitToReschedule && "cursor-crosshair")}>
       <TerritoryUploadModal 
@@ -2539,6 +2553,11 @@ export default function HomePage() {
                                   </div>
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                <div className="flex justify-center mb-4">
+                                    <Button onClick={handleAddNewTrial} disabled={!!importedVisits}>
+                                        <PlusSquare className="mr-2 h-4 w-4" /> Add New Trial
+                                    </Button>
+                                </div>
                                 <Accordion type="multiple" className="w-full space-y-4">
                                   {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
                                 </Accordion>
@@ -3677,4 +3696,3 @@ export default function HomePage() {
     </div>
   );
 }
-
