@@ -114,9 +114,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     }
     
     const numberOfUnits = visit.interestedUnits && visit.interestedUnits.length > 0 ? visit.interestedUnits.length : 1;
+    const priceQuotedNum = typeof visit.priceQuoted === 'string' ? parseFloat(visit.priceQuoted) : visit.priceQuoted;
 
-    const leaseCommission = (visit.priceQuoted && visit.leaseTerm) 
-      ? (visit.priceQuoted * numberOfUnits * (visit.leaseTerm / 12)) 
+    const leaseCommission = (priceQuotedNum && visit.leaseTerm) 
+      ? (priceQuotedNum * numberOfUnits * (visit.leaseTerm / 12)) 
       : 0;
       
     const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
@@ -278,15 +279,15 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                             <p>
                                 <strong>Pricing:</strong>
                                 {visit.priceQuoted && visit.leaseTerm 
-                                    ? ` Quoted $${visit.priceQuoted.toFixed(2)}/mo for ${visit.leaseTerm} months`
+                                    ? ` Quoted $${(typeof visit.priceQuoted === 'string' ? parseFloat(visit.priceQuoted) : visit.priceQuoted).toFixed(2)}/mo for ${visit.leaseTerm} months`
                                     : " Discussed"
                                 }
                             </p>
                         )}
-                        {visit.installationFee && <p><strong>Installation Fee:</strong> ${visit.installationFee.toFixed(2)}</p>}
+                        {visit.installationFee && <p><strong>Installation Fee:</strong> ${ (typeof visit.installationFee === 'string' ? parseFloat(visit.installationFee) : visit.installationFee).toFixed(2)}</p>}
                         {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
                         {typeof visit.manualCommission === 'number' && (
-                           <p className="font-semibold text-primary"><strong>Manual Commission:</strong> ${visit.manualCommission.toFixed(2)}</p>
+                           <p className="font-semibold text-primary"><strong>Manual Commission:</strong> ${(typeof visit.manualCommission === 'string' ? parseFloat(visit.manualCommission) : visit.manualCommission).toFixed(2)}</p>
                         )}
                     </div>
                 </div>
