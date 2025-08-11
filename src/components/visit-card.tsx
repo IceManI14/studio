@@ -458,12 +458,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 )}
               </div>
               
-              {showExtraInfo && (
-                <CardDescription className="text-xs pb-1 animate-in fade-in-0">
-                  {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
-                </CardDescription>
-              )}
-
               <CardTitle 
                 className="font-headline text-3xl text-accent-foreground text-center break-words cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => {
@@ -476,11 +470,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 {visit.companyName}
               </CardTitle>
               
-              {showExtraInfo && address && (
-                <div 
-                  className="text-center text-sm text-muted-foreground mt-1 animate-in fade-in-0 flex items-center gap-1"
-                >
-                   <MapPin className="h-3 w-3" /> {address}
+              {showExtraInfo && (
+                <div className="text-center text-sm text-muted-foreground mt-1 animate-in fade-in-0 flex flex-col items-center">
+                    {address && (
+                        <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" /> {address}
+                        </div>
+                    )}
+                    <CardDescription className="text-xs pt-1">
+                        {formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}
+                    </CardDescription>
                 </div>
               )}
               
