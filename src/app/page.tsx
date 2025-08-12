@@ -309,81 +309,81 @@ export default function HomePage() {
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visitsToDisplay.length === 0) return [];
-  
+
     let processedVisits = [...visitsToDisplay];
-    
+
     // Date filter is primary if selected
     if (selectedDate) {
-      processedVisits = processedVisits.filter(visit =>
-        isSameDay(new Date(visit.timestamp), selectedDate) ||
-        (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
-      );
+        processedVisits = processedVisits.filter(visit => 
+            isSameDay(new Date(visit.timestamp), selectedDate) ||
+            (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
+        );
+    } else {
+        if (searchTerm.trim() !== '') {
+            processedVisits = processedVisits.filter(visit =>
+                visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
+            processedVisits = processedVisits.filter(visit =>
+                visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
+            );
+        }
+
+        if (sortCriteria === 'futureMeetingsSet') {
+            processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
+        } else if (sortCriteria === 'inTrial') {
+            processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
+        } else if (sortCriteria === 'dealClosed') {
+            processedVisits = processedVisits.filter(visit => visit.dealClosed);
+        }
     }
-  
-    if (searchTerm.trim() !== '') {
-      processedVisits = processedVisits.filter(visit =>
-        visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-  
-    if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
-      processedVisits = processedVisits.filter(visit =>
-        visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
-      );
-    }
-  
-    if (sortCriteria === 'futureMeetingsSet' && !selectedDate) {
-      processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
-    } else if (sortCriteria === 'inTrial' && !selectedDate) {
-      processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
-    } else if (sortCriteria === 'dealClosed' && !selectedDate) {
-      processedVisits = processedVisits.filter(visit => visit.dealClosed);
-    }
-  
+
     const uniqueVisits = Array.from(new Map(processedVisits.map(visit => [visit.id, visit])).values());
-  
+
     const sorted = uniqueVisits.sort((a, b) => {
-      const confidenceA = a.partnershipConfidence ?? 0;
-      const confidenceB = b.partnershipConfidence ?? 0;
-      const timeA = new Date(a.timestamp).getTime();
-      const timeB = new Date(b.timestamp).getTime();
-      const cityA = a.city || '';
-      const cityB = b.city || '';
-  
-      let comparison = 0;
-      
-      if (sortCriteria === 'city') {
-        comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
-        if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA;
-      } else if (sortCriteria === 'futureMeetingsSet') {
-        const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
-        const meetingTimeB = b.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
-        comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
-        if (comparison !== 0) return comparison;
-        return timeB - timeA;
-      } else if (sortCriteria === 'inTrial') {
-        const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
-        const trialTimeB = b.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
-        comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeA;
-        if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA;
-      } else if (sortCriteria === 'dealClosed') {
-        comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-        if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA;
-      } else if (sortCriteria === 'timestamp') {
-        comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-        if (comparison !== 0) return comparison;
-        return confidenceB - confidenceA;
-      } else { // 'partnershipConfidence'
-        comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
-        if (comparison !== 0) return comparison;
-        return timeB - timeA;
-      }
+        const confidenceA = a.partnershipConfidence ?? 0;
+        const confidenceB = b.partnershipConfidence ?? 0;
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        const cityA = a.city || '';
+        const cityB = b.city || '';
+
+        let comparison = 0;
+
+        if (sortCriteria === 'city') {
+            comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
+            if (comparison !== 0) return comparison;
+            return confidenceB - confidenceA;
+        } else if (sortCriteria === 'futureMeetingsSet') {
+            const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
+            const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime!).getTime() : Infinity;
+            comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
+            if (comparison !== 0) return comparison;
+            return timeB - timeA;
+        } else if (sortCriteria === 'inTrial') {
+            const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
+            const trialTimeB = b.freeTrialStartDate ? new Date(b.freeTrialStartDate!).getTime() : 0;
+            comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
+            if (comparison !== 0) return comparison;
+            return confidenceB - confidenceA;
+        } else if (sortCriteria === 'dealClosed') {
+            comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+            if (comparison !== 0) return comparison;
+            return confidenceB - confidenceA;
+        } else if (sortCriteria === 'timestamp') {
+            comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+            if (comparison !== 0) return comparison;
+            return confidenceB - confidenceA;
+        } else { // 'partnershipConfidence'
+            comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
+            if (comparison !== 0) return comparison;
+            return timeB - timeA;
+        }
     });
     return sorted;
-  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
+}, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
@@ -1583,10 +1583,6 @@ export default function HomePage() {
 
     // Save locally first
     try {
-      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
-      // This is a bit of a trick. The server action prepares the content,
-      // and here we create a blob from it for local download.
-      // A more robust solution might separate content generation and upload.
       const csvContent = [
         Object.keys(dataToExport[0]).join(','),
         ...dataToExport.map(item =>
@@ -1602,14 +1598,14 @@ export default function HomePage() {
       link.setAttribute('href', url);
       const safeSalespersonName = selectedSalesperson?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'user';
       const reportDate = format(new Date(), 'yyyy-MM-dd');
-      link.setAttribute('download', `report_${safeSalespersonName}_${reportDate}.csv`);
+      link.setAttribute('download', `trail_report_${safeSalespersonName}_${reportDate}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       toast({
-        title: 'Report Saved Locally',
+        title: 'Trail Saved Locally',
         description: 'Your user data report has been downloaded to your device.',
       });
     } catch (e: any) {
@@ -1628,7 +1624,7 @@ export default function HomePage() {
     }
 
     setIsSyncing(true);
-    toast({ title: "Uploading User Data Report...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
+    toast({ title: "Uploading Trail...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
 
     try {
       const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
@@ -1638,7 +1634,7 @@ export default function HomePage() {
       }
 
       toast({
-        title: "User Report Saved to Cloud!",
+        title: "Trail Saved to Cloud!",
         description: `Your user data report has been successfully saved to the cloud storage bucket.`,
         duration: 10000,
       });
@@ -2084,7 +2080,7 @@ export default function HomePage() {
                 };
             });
             setImportedVisits(imported);
-            toast({ title: 'Report Imported', description: `Loaded ${imported.length} visits. You are now viewing another user's data.` });
+            toast({ title: 'Trail Imported', description: `Loaded ${imported.length} visits. You are now viewing another user's data.` });
         } catch (error) {
             console.error("Failed to parse CSV:", error);
             toast({ variant: 'destructive', title: 'Import Failed', description: 'Could not parse the CSV file. Please ensure it is a valid report.' });
@@ -2347,25 +2343,25 @@ export default function HomePage() {
                       <AlertDialogTrigger asChild>
                         <Button variant="default" size="sm" className="w-full sm:flex-1" disabled={isSyncing || !!importedVisits}>
                           {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
-                          Save User Report
+                          Save Trail
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Save User Data to Cloud Storage?</AlertDialogTitle>
+                          <AlertDialogTitle>Save Trail to Cloud Storage?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will generate a CSV report of ALL your visits and save it to your device, then upload it to the cloud. This file can be shared with other users to import your data.
+                            This will generate a CSV report of ALL your visits and save it to your device, then upload it to the cloud. This file can be shared with other users to import their trail data.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmEndDay}>Save Report</AlertDialogAction>
+                          <AlertDialogAction onClick={confirmEndDay}>Save Trail</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
                     <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1" disabled={!!importedVisits}>
-                      <LogIn className="mr-2 h-4 w-4" /> Import User Report
+                      <LogIn className="mr-2 h-4 w-4" /> Import Trail
                     </Button>
                 </div>
 

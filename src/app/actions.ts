@@ -326,7 +326,7 @@ export async function saveDailyReportAction(visits: Visit[], salespersonName?: s
     
     const safeSalespersonName = salespersonName ? salespersonName.replace(/[^a-zA-Z0-9]/g, '_') : 'user';
     const reportDate = format(new Date(), 'yyyy-MM-dd');
-    const fileName = `reports/${safeSalespersonName}_${reportDate}.csv`;
+    const fileName = `trails/trail_report_${safeSalespersonName}_${reportDate}.csv`;
     const file = storage.bucket(bucketName).file(fileName);
 
     await file.save(csvContent, {
@@ -385,4 +385,5 @@ export async function analyzeDocumentAction(
     
 
     
+
 
