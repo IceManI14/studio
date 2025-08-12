@@ -2461,7 +2461,10 @@ export default function HomePage() {
                           {pastVisitsByDay.map(([day, visitsOnDay]) => (
                             <AccordionItem value={day} key={day} className="border-none">
                               <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                                <div className="flex justify-between w-full items-center">
+                                    <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                                    <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
+                                </div>
                               </AccordionTrigger>
                               <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
                                 <Accordion type="multiple" className="space-y-4">
@@ -3398,7 +3401,7 @@ export default function HomePage() {
                                 <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
                             </li>
                             <li>
-                                <strong>Save Daily Report:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Daily Report</span> to generate a CSV of your day's work and upload it to cloud storage.
+                                <strong>Save Trail:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Trail</span> to generate a CSV of your day's work and upload it to cloud storage.
                             </li>
                         </ul>
                     </TabsContent>
