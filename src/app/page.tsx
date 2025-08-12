@@ -1579,13 +1579,24 @@ export default function HomePage() {
         setIsEndDayConfirmOpen(false);
         return;
     }
-
     const dataToExport = importedVisits || visits;
-  
-    // Save locally
+
+    // Save locally first
     try {
       const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
-      const blob = new Blob([result.csvContent], { type: 'text/csv;charset=utf-8;' });
+      // This is a bit of a trick. The server action prepares the content,
+      // and here we create a blob from it for local download.
+      // A more robust solution might separate content generation and upload.
+      const csvContent = [
+        Object.keys(dataToExport[0]).join(','),
+        ...dataToExport.map(item =>
+          Object.values(item).map(value =>
+            typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+          ).join(',')
+        )
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -2438,28 +2449,34 @@ export default function HomePage() {
                 )}
                  {pastVisitsByDay.length > 0 && (
                   <Accordion type="single" collapsible>
-                      <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
-                          <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                            <div className="flex items-center justify-center w-full">
-                              <div className="flex items-center justify-center gap-2">
-                                <ListChecks className="h-5 w-5 text-primary" />
-                                <h3 className="text-lg font-medium text-foreground text-center">
-                                  Past Visits
-                                </h3>
-                              </div>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-6">
-                            {pastVisitsByDay.map(([day, visitsOnDay]) => (
-                                <div key={day}>
-                                    <h4 className="font-semibold text-lg text-foreground mb-3 border-b pb-2">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
-                                    <Accordion type="multiple" className="space-y-4">
-                                      {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
-                                    </Accordion>
-                                </div>
-                            ))}
-                          </AccordionContent>
-                      </AccordionItem>
+                    <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
+                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                        <div className="flex items-center justify-center w-full">
+                          <div className="flex items-center justify-center gap-2">
+                            <ListChecks className="h-5 w-5 text-primary" />
+                            <h3 className="text-lg font-medium text-foreground text-center">
+                              Past Visits
+                            </h3>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
+                        <Accordion type="multiple" className="w-full space-y-4">
+                          {pastVisitsByDay.map(([day, visitsOnDay]) => (
+                            <AccordionItem value={day} key={day} className="border-none">
+                              <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                              </AccordionTrigger>
+                              <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
+                                <Accordion type="multiple" className="space-y-4">
+                                  {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
+                                </Accordion>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
                   </Accordion>
                 )}
             </div>
