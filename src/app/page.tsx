@@ -1236,7 +1236,7 @@ export default function HomePage() {
         duration: 10000,
       });
     }
-  }, [toast, loadLocalData]);
+  }, []);
   
   useEffect(() => {
     if (!db) {
