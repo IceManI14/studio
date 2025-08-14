@@ -428,18 +428,18 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-        if (typeof visit.manualCommission === 'number') {
-            return total + visit.manualCommission;
+      if (typeof visit.manualCommission === 'number') {
+        return total + visit.manualCommission;
+      }
+      if (visit.pricingDiscussed) {
+        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+          return total + visit.priceQuoted;
         }
-        if (visit.pricingDiscussed) {
-            if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-                return total + visit.priceQuoted;
-            }
-            const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
-            const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-            return total + leaseCommission + installCommission;
-        }
-        return total;
+        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+        return total + leaseCommission + installCommission;
+      }
+      return total;
     }, 0);
   }, [activeFreeTrials]);
 
@@ -1580,7 +1580,7 @@ export default function HomePage() {
     }
   };
 
-  const confirmEndDay = async () => {
+  const confirmEndDay = useCallback(async () => {
     if (visitsToDisplay.length === 0) {
         toast({ title: "No visits to create a report for today." });
         setIsEndDayConfirmOpen(false);
@@ -1657,7 +1657,7 @@ export default function HomePage() {
       setIsSyncing(false);
       setIsEndDayConfirmOpen(false);
     }
-  };
+  }, [visitsToDisplay, toast, importedVisits, visits, selectedSalesperson?.name]);
 
   const handleSubmitSuggestion = async () => {
     if (suggestionText.trim() === '') {
@@ -2450,41 +2450,39 @@ export default function HomePage() {
                     </AccordionItem>
                   </Accordion>
                 )}
-                 {pastVisitsByDay.length > 0 && (
-                  <Accordion type="single" collapsible>
-                    <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
-                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                        <div className="flex items-center justify-center w-full">
-                          <div className="flex items-center justify-center gap-2">
-                            <ListChecks className="h-5 w-5 text-primary" />
-                            <h3 className="text-lg font-medium text-foreground text-center">
-                              Past Visits
-                            </h3>
-                          </div>
+                 <Accordion type="single" collapsible>
+                  <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                      <div className="flex items-center justify-center w-full">
+                        <div className="flex items-center justify-center gap-2">
+                          <ListChecks className="h-5 w-5 text-primary" />
+                          <h3 className="text-lg font-medium text-foreground text-center">
+                            Past Visits
+                          </h3>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
-                        <Accordion type="multiple" className="w-full space-y-4">
-                          {pastVisitsByDay.map(([day, visitsOnDay]) => (
-                            <AccordionItem value={day} key={day} className="border-none">
-                              <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                <div className="flex justify-between w-full items-center">
-                                    <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
-                                    <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
-                                <Accordion type="multiple" className="space-y-4">
-                                  {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
-                                </Accordion>
-                              </AccordionContent>
-                            </AccordionItem>
-                          ))}
-                        </Accordion>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
+                      <Accordion type="multiple" className="w-full space-y-4">
+                        {pastVisitsByDay.map(([day, visitsOnDay]) => (
+                          <AccordionItem value={day} key={day} className="border-none">
+                            <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                              <div className="flex justify-between w-full items-center">
+                                  <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                                  <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
+                              <Accordion type="multiple" className="space-y-4">
+                                {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
+                              </Accordion>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
             </div>
           )}
           
