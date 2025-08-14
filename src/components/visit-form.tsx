@@ -104,6 +104,19 @@ const OUR_COOLERS_LIST = [
   "3i",
 ];
 
+const COOLER_PRICING_MAP: Record<string, number> = {
+  "PW50": 39.99,
+  "PW70": 49.99,
+  "PW90CT": 59.99,
+  "PW90": 59.99,
+  "XL1": 69.99,
+  "E6": 79.99,
+  "I14": 99.99,
+  "I15": 119.99,
+  "I16": 129.99,
+  "3i": 129.99,
+};
+
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -395,6 +408,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const partnershipConfidenceValue = form.watch('partnershipConfidence');
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
+  const interestedUnitsValue = form.watch('interestedUnits');
+
+  useEffect(() => {
+    if (pricingDiscussedValue) {
+      const units = interestedUnitsValue || [];
+      const totalPrice = units.reduce((sum, unitName) => {
+        return sum + (COOLER_PRICING_MAP[unitName] || 0);
+      }, 0);
+
+      if (totalPrice > 0) {
+        form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
+      }
+    }
+  }, [interestedUnitsValue, pricingDiscussedValue, form]);
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
     if (side === 'front') {
@@ -1493,9 +1520,30 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           <FormItem className="space-y-3 rounded-md border border-accent p-3 shadow-inner">
                               <div className="flex flex-row items-center space-x-3 space-y-0">
                                   <FormControl>
-                                      <Checkbox
+                                       <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={field.onChange}
+                                          onCheckedChange={(checked) => {
+                                              queueMicrotask(() => {
+                                                  field.onChange(checked);
+                                                  if (checked) {
+                                                      form.setValue('leaseTerm', 60, { shouldDirty: true });
+                                                      form.setValue('installationFee', 149, { shouldDirty: true });
+
+                                                      const units = form.getValues('interestedUnits') || [];
+                                                      const totalPrice = units.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0);
+                                                      if (totalPrice > 0) {
+                                                          form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
+                                                      }
+
+                                                  } else {
+                                                      form.setValue('priceQuoted', undefined, { shouldDirty: true });
+                                                      form.setValue('leaseTerm', undefined, { shouldDirty: true });
+                                                      form.setValue('installationFee', undefined, { shouldDirty: true });
+                                                      form.setValue('creditApproved', false, { shouldDirty: true });
+                                                      form.setValue('manualCommission', undefined, { shouldDirty: true });
+                                                  }
+                                              });
+                                          }}
                                           id="pricingDiscussed"
                                       />
                                   </FormControl>
