@@ -396,8 +396,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const futureMeetingSetValue = form.watch('futureMeetingSet');
   const freeTrialValue = form.watch('freeTrial');
 
-  const isMountedRef = useRef(false);
-  
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
     if (side === 'front') {
         setBusinessCardFrontPreviewUrl(null);
@@ -410,47 +408,8 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       fileInputRef.current.value = '';
     }
     setIsCameraViewVisible(false);
-    // No need to call stopCameraStream here as it's handled by other flows
   }, [form]);
   
-  useEffect(() => {
-    if (isMountedRef.current) {
-      if (!hasBusinessCardValue) {
-        handleRemoveImage('front');
-        handleRemoveImage('back');
-      }
-    }
-  }, [hasBusinessCardValue, handleRemoveImage]);
-  
-  useEffect(() => {
-    if (isMountedRef.current) {
-      if (!hasTDSReadingValue) {
-        form.setValue('tdsValue', undefined, { shouldValidate: true });
-      }
-    }
-  }, [hasTDSReadingValue, form]);
-
-  useEffect(() => {
-    if (isMountedRef.current) {
-        if (!pricingDiscussedValue) {
-            form.setValue('priceQuoted', undefined);
-            form.setValue('leaseTerm', undefined);
-            form.setValue('installationFee', undefined);
-            form.setValue('manualCommission', undefined);
-        }
-    }
-  }, [pricingDiscussedValue, form]);
-
-  useEffect(() => {
-    if (isMountedRef.current) {
-      if (!futureMeetingSetValue) {
-        if (form.getValues('futureMeetingDateTime') !== undefined) {
-          form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-        }
-      }
-    }
-  }, [futureMeetingSetValue, form]);
-
   const uploadImage = useCallback(async (file: File, side: 'front' | 'back') => {
     setIsUploadingCard(true);
     const formData = new FormData();
@@ -557,13 +516,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     );
   }, [handleSuggestCompany, toast, form]);
 
-  const stopCameraStream = () => {
+  const stopCameraStream = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
-  };
+  }, []);
   
   useEffect(() => {
     if (isOpen) {
@@ -610,27 +569,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setHasCameraPermission(null);
       setCurrentCity(null);
     }
-    isMountedRef.current = true;
-    return () => {
-        isMountedRef.current = false;
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen || !isMountedRef.current) return;
-
-    if (freeTrialValue) {
-        const startDate = form.getValues('freeTrialStartDate') || new Date();
-        const followUpDate = addDays(startDate, 7);
-        followUpDate.setHours(10, 0, 0, 0);
-
-        form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
-        form.setValue('futureMeetingSet', true, { shouldDirty: true });
-        form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
-    }
-  }, [freeTrialValue, form, isOpen]);
-
+  }, [initialData, isOpen, form]);
 
   useEffect(() => {
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
@@ -652,12 +591,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     setCurrentCoolerOptions(baseOptions);
   }, [watchedCompetitorName, initialData, isOpen]);
 
-  useEffect(() => {
-    if (partnershipConfidenceValue && partnershipConfidenceValue < 4) {
-      form.setValue('interestedUnits', []);
-    }
-  }, [partnershipConfidenceValue, form]);
-
   const analyzeNotesAndPopulateForm = useCallback(async (notes: string, upToDateVisit: Visit) => {
     if (!notes.trim()) return;
 
@@ -669,7 +602,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     });
 
     try {
-        const result = await extractVisitDetailsAction({ notes });
+        const result = await extractVisitDetailsAction({ notes, currentDate: new Date().toISOString().split('T')[0] });
         if (result.error) throw new Error(result.error);
         if (!result.details) {
             toast({ title: "AI Analysis Complete", description: "No new details found in notes." });
@@ -905,8 +838,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       }, 500);
       return () => clearTimeout(timer);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, startDictationOnOpen]);
+  }, [isOpen, startDictationOnOpen, handleToggleVoiceNotes]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -1018,7 +950,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     } else {
         toast({ variant: "destructive", title: "Capture Error", description: "Camera not ready or permission denied." });
     }
-  }, [hasCameraPermission, uploadImage, toast, isCapturingBack]);
+  }, [hasCameraPermission, uploadImage, toast, isCapturingBack, stopCameraStream]);
 
 
   const handleAddCustomCooler = () => {
@@ -1064,7 +996,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
 
     return () => stopAudioAndCamera();
-  }, [isOpen]);
+  }, [isOpen, stopCameraStream]);
   
   const handleSaveManualAddress = (address: { street: string; city: string; state: string; zip: string; }) => {
     const formattedAddress = `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
@@ -1219,7 +1151,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                 "h-6 w-6 cursor-pointer transition-colors",
                                 isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
                               )}
-                              onClick={() => field.onChange(starValue)}
+                              onClick={() => {
+                                field.onChange(starValue)
+                                if (starValue < 4) {
+                                  form.setValue('interestedUnits', []);
+                                }
+                              }}
                               onMouseEnter={() => setHoveredStars(starValue)}
                             />
                           );
@@ -1284,7 +1221,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (!checked) {
+                            handleRemoveImage('front');
+                            handleRemoveImage('back');
+                          }
+                        }}
                         id="hasBusinessCard"
                       />
                     </FormControl>
@@ -1418,7 +1361,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (!checked) {
+                             form.setValue('tdsValue', undefined, { shouldValidate: true });
+                          }
+                        }}
                         id="hasTDSReading"
                       />
                     </FormControl>
@@ -1472,7 +1420,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (checked) {
+                            const startDate = form.getValues('freeTrialStartDate') || new Date();
+                            const followUpDate = addDays(startDate, 7);
+                            followUpDate.setHours(10, 0, 0, 0);
+
+                            form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
+                            form.setValue('futureMeetingSet', true, { shouldDirty: true });
+                            form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
+                          }
+                        }}
                         id="freeTrial"
                       />
                     </FormControl>
@@ -1538,7 +1497,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                   <FormControl>
                                       <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={field.onChange}
+                                          onCheckedChange={(checked) => {
+                                            field.onChange(checked);
+                                            if (!checked) {
+                                              form.setValue('priceQuoted', undefined);
+                                              form.setValue('leaseTerm', undefined);
+                                              form.setValue('installationFee', undefined);
+                                              form.setValue('manualCommission', undefined);
+                                            }
+                                          }}
                                           id="pricingDiscussed"
                                       />
                                   </FormControl>
@@ -1690,7 +1657,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (!checked) {
+                              form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
+                            }
+                          }}
                           id="futureMeetingSet"
                           disabled={freeTrialValue}
                         />
