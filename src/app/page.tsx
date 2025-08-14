@@ -428,9 +428,16 @@ export default function HomePage() {
 
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => {
-        if (typeof visit.priceQuoted === 'number' && visit.priceQuoted > 0) {
-            const numberOfUnits = visit.interestedUnits?.length || 1;
-            return total + (visit.priceQuoted * numberOfUnits * 5);
+        if (typeof visit.manualCommission === 'number') {
+            return total + visit.manualCommission;
+        }
+        if (visit.pricingDiscussed) {
+            if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+                return total + visit.priceQuoted;
+            }
+            const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
+            const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+            return total + leaseCommission + installCommission;
         }
         return total;
     }, 0);
@@ -1236,7 +1243,7 @@ export default function HomePage() {
         duration: 10000,
       });
     }
-  }, []);
+  }, [loadLocalData, toast]);
   
   useEffect(() => {
     if (!db) {
@@ -2334,14 +2341,14 @@ export default function HomePage() {
         )}>
           {activeTab === 'field-day' && (
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="w-full sm:flex-1" disabled={!!importedVisits}>
+                <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4 w-full">
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
                     <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="w-full sm:flex-1" disabled={isSyncing || !!importedVisits}>
+                        <Button variant="default" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={isSyncing || !!importedVisits}>
                           {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
                           Save Trail
                         </Button>
@@ -2360,7 +2367,7 @@ export default function HomePage() {
                       </AlertDialogContent>
                     </AlertDialog>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
-                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1" disabled={!!importedVisits}>
+                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <LogIn className="mr-2 h-4 w-4" /> Import Trail
                     </Button>
                 </div>
@@ -2580,7 +2587,7 @@ export default function HomePage() {
                                 {totalTrialCommission > 0 && (
                                     <Alert variant="default" className="mt-4 text-left">
                                         <PartyPopper className="h-4 w-4 text-orange-500" />
-                                        <AlertTitle className="font-bold text-orange-400">Potential Trial Commission</AlertTitle>
+                                        <AlertTitle className="font-bold text-orange-400">Total Potential Commission</AlertTitle>
                                         <AlertDescription className="text-2xl font-bold text-foreground">
                                             ${totalTrialCommission.toFixed(2)}
                                         </AlertDescription>
