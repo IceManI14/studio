@@ -1222,11 +1222,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (!checked) {
-                            handleRemoveImage('front');
-                            handleRemoveImage('back');
-                          }
+                           queueMicrotask(() => {
+                              field.onChange(checked);
+                              if (!checked) {
+                                  handleRemoveImage('front');
+                                  handleRemoveImage('back');
+                              }
+                          });
                         }}
                         id="hasBusinessCard"
                       />
@@ -1416,15 +1418,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (checked === true) {
-                            const startDate = form.getValues('freeTrialStartDate') || new Date();
-                            const followUpDate = addDays(startDate, 7);
-                            followUpDate.setHours(10, 0, 0, 0);
-                            form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
-                            form.setValue('futureMeetingSet', true, { shouldDirty: true });
-                            form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
-                          }
+                           queueMicrotask(() => {
+                            field.onChange(checked);
+                            if (checked === true) {
+                                const startDate = form.getValues('freeTrialStartDate') || new Date();
+                                const followUpDate = addDays(startDate, 7);
+                                followUpDate.setHours(10, 0, 0, 0);
+                                form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
+                                form.setValue('futureMeetingSet', true, { shouldDirty: true });
+                                form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
+                            }
+                          });
                         }}
                         id="freeTrial"
                       />
