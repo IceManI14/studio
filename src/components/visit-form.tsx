@@ -1361,12 +1361,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (!checked) {
-                             form.setValue('tdsValue', undefined, { shouldValidate: true });
-                          }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="hasTDSReading"
                       />
                     </FormControl>
@@ -1422,11 +1417,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         checked={field.value}
                         onCheckedChange={(checked) => {
                           field.onChange(checked);
-                          if (checked) {
+                          if (checked === true) {
                             const startDate = form.getValues('freeTrialStartDate') || new Date();
                             const followUpDate = addDays(startDate, 7);
                             followUpDate.setHours(10, 0, 0, 0);
-
                             form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
                             form.setValue('futureMeetingSet', true, { shouldDirty: true });
                             form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
@@ -1497,15 +1491,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                   <FormControl>
                                       <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={(checked) => {
-                                            field.onChange(checked);
-                                            if (!checked) {
-                                              form.setValue('priceQuoted', undefined);
-                                              form.setValue('leaseTerm', undefined);
-                                              form.setValue('installationFee', undefined);
-                                              form.setValue('manualCommission', undefined);
-                                            }
-                                          }}
+                                          onCheckedChange={field.onChange}
                                           id="pricingDiscussed"
                                       />
                                   </FormControl>
@@ -1657,12 +1643,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            if (!checked) {
-                              form.setValue('futureMeetingDateTime', undefined, { shouldValidate: true });
-                            }
-                          }}
+                          onCheckedChange={field.onChange}
                           id="futureMeetingSet"
                           disabled={freeTrialValue}
                         />
