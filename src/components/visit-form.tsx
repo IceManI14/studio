@@ -401,16 +401,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
 
-  const hasBusinessCardValue = form.watch('hasBusinessCard');
-  const hasTDSReadingValue = form.watch('hasTDSReading');
-  const pricingDiscussedValue = form.watch('pricingDiscussed');
-  const watchedCompetitorName = form.watch('competitorName');
-  const partnershipConfidenceValue = form.watch('partnershipConfidence');
-  const futureMeetingSetValue = form.watch('futureMeetingSet');
-  const freeTrialValue = form.watch('freeTrial');
   const interestedUnitsValue = form.watch('interestedUnits');
 
   useEffect(() => {
+    const pricingDiscussedValue = form.watch('pricingDiscussed');
     if (pricingDiscussedValue) {
       const units = interestedUnitsValue || [];
       const totalPrice = units.reduce((sum, unitName) => {
@@ -419,9 +413,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
       if (totalPrice > 0) {
         form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
+      } else {
+        // If no units are selected, don't force a price of 0
+        const currentPrice = form.getValues('priceQuoted');
+        if (currentPrice === 0) {
+           form.setValue('priceQuoted', undefined, { shouldDirty: true });
+        }
       }
     }
-  }, [interestedUnitsValue, pricingDiscussedValue, form]);
+  }, [interestedUnitsValue, form.watch('pricingDiscussed'), form]);
+
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
     if (side === 'front') {
@@ -599,6 +600,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [initialData, isOpen, form]);
 
   useEffect(() => {
+    const watchedCompetitorName = form.watch('competitorName');
     let baseOptions = watchedCompetitorName && COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]
       ? [...COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]]
       : [...DEFAULT_COOLER_TYPES_LIST];
@@ -616,7 +618,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     setCurrentCoolerOptions(baseOptions);
-  }, [watchedCompetitorName, initialData, isOpen]);
+  }, [form.watch('competitorName'), initialData, isOpen]);
 
   const analyzeNotesAndPopulateForm = useCallback(async (notes: string, upToDateVisit: Visit) => {
     if (!notes.trim()) return;
@@ -1195,7 +1197,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {partnershipConfidenceValue && partnershipConfidenceValue >= 4 && (
+              {form.watch('partnershipConfidence') && form.watch('partnershipConfidence')! >= 4 && (
                 <FormField
                   control={form.control}
                   name="interestedUnits"
@@ -1249,12 +1251,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={(checked) => {
-                           queueMicrotask(() => {
-                              field.onChange(checked);
-                              if (!checked) {
-                                  handleRemoveImage('front');
-                                  handleRemoveImage('back');
-                              }
+                          queueMicrotask(() => {
+                            field.onChange(checked);
+                            if (!checked) {
+                                handleRemoveImage('front');
+                                handleRemoveImage('back');
+                            }
                           });
                         }}
                         id="hasBusinessCard"
@@ -1269,7 +1271,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {hasBusinessCardValue && (
+              {form.watch('hasBusinessCard') && (
                 <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                   <FormLabel htmlFor="businessCardImage">Business Card Image</FormLabel>
                   
@@ -1403,7 +1405,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {hasTDSReadingValue && (
+              {form.watch('hasTDSReading') && (
                 <FormField
                   control={form.control}
                   name="tdsValue"
@@ -1469,7 +1471,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {freeTrialValue && (
+              {form.watch('freeTrial') && (
                  <FormField
                   control={form.control}
                   name="freeTrialStartDate"
@@ -1551,7 +1553,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                       <DollarSign className="mr-2 h-4 w-4 text-primary" /> Pricing
                                   </FormLabel>
                               </div>
-                              {pricingDiscussedValue && (
+                              {form.watch('pricingDiscussed') && (
                                   <div className="pl-8 pt-3 space-y-4 animate-in fade-in-0 zoom-in-95 border-t border-border">
                                       <FormField
                                           control={form.control}
@@ -1697,16 +1699,16 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           checked={field.value}
                           onCheckedChange={field.onChange}
                           id="futureMeetingSet"
-                          disabled={freeTrialValue}
+                          disabled={form.watch('freeTrial')}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel htmlFor="futureMeetingSet" className={cn("font-normal flex items-center", freeTrialValue ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer")}>
+                        <FormLabel htmlFor="futureMeetingSet" className={cn("font-normal flex items-center", form.watch('freeTrial') ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer")}>
                           <CalendarCheck className="mr-2 h-4 w-4 text-primary" /> Future Meeting Set?
                         </FormLabel>
                       </div>
                     </div>
-                    {freeTrialValue && (
+                    {form.watch('freeTrial') && (
                         <FormDescription className="pt-2">
                             This is automatically scheduled based on the free trial.
                         </FormDescription>
@@ -1715,7 +1717,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              {(futureMeetingSetValue || freeTrialValue) && (
+              {(form.watch('futureMeetingSet') || form.watch('freeTrial')) && (
                 <FormField
                   control={form.control}
                   name="futureMeetingDateTime"
@@ -1731,7 +1733,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
-                               disabled={freeTrialValue}
+                               disabled={form.watch('freeTrial')}
                             >
                               {field.value ? (
                                 format(new Date(field.value), "PPP 'at' h:mm a")
@@ -1865,7 +1867,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     </FormItem>
                   )}
                 />
-                {watchedCompetitorName && (
+                {form.watch('competitorName') && (
                    <Accordion type="multiple" value={openAccordion} onValueChange={setOpenAccordion} className="w-full">
                       <AccordionItem value="cooler-type" className="border-b-0">
                           <AccordionTrigger className="p-0 hover:no-underline text-sm font-medium">Cooler Type Observed</AccordionTrigger>
