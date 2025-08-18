@@ -1223,6 +1223,85 @@ export default function HomePage() {
     }
   }, [toast]);
 
+  const confirmEndDay = useCallback(async () => {
+    if (visitsToDisplay.length === 0) {
+        toast({ title: "No visits to create a report for today." });
+        setIsEndDayConfirmOpen(false);
+        return;
+    }
+    const dataToExport = importedVisits || visits;
+
+    // Save locally first
+    try {
+      const csvContent = [
+        Object.keys(dataToExport[0]).join(','),
+        ...dataToExport.map(item =>
+          Object.values(item).map(value =>
+            typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+          ).join(',')
+        )
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      const safeSalespersonName = selectedSalesperson?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'user';
+      const reportDate = format(new Date(), 'yyyy-MM-dd');
+      link.setAttribute('download', `trail_report_${safeSalespersonName}_${reportDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'Trail Saved Locally',
+        description: 'Your user data report has been downloaded to your device.',
+      });
+    } catch (e: any) {
+      toast({
+          variant: "destructive",
+          title: "Local Download Failed",
+          description: e.message || "Could not save the report to your device.",
+      });
+    }
+
+    // Then, attempt to save to cloud
+    if (!firebaseConfigured) {
+        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report to the cloud. Please check your app's configuration." });
+        setIsEndDayConfirmOpen(false);
+        return;
+    }
+
+    setIsSyncing(true);
+    toast({ title: "Uploading Trail...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
+
+    try {
+      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: "Trail Saved to Cloud!",
+        description: `Your user data report has been successfully saved to the cloud storage bucket.`,
+        duration: 10000,
+      });
+      localStorage.removeItem('milestoneAchievedDate');
+    } catch (e: any) {
+      toast({
+          variant: "destructive",
+          title: "Cloud Upload Failed",
+          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
+          duration: 10000,
+      });
+    } finally {
+      setIsSyncing(false);
+      setIsEndDayConfirmOpen(false);
+    }
+  }, [visitsToDisplay, toast, importedVisits, visits, selectedSalesperson?.name]);
+
   // Effects
   useEffect(() => {
     visitsRef.current = visits;
@@ -1579,85 +1658,6 @@ export default function HomePage() {
         // For now, we'll keep it deleted optimistically.
     }
   };
-
-  const confirmEndDay = useCallback(async () => {
-    if (visitsToDisplay.length === 0) {
-        toast({ title: "No visits to create a report for today." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-    const dataToExport = importedVisits || visits;
-
-    // Save locally first
-    try {
-      const csvContent = [
-        Object.keys(dataToExport[0]).join(','),
-        ...dataToExport.map(item =>
-          Object.values(item).map(value =>
-            typeof value === 'string' && value.includes(',') ? `"${value}"` : value
-          ).join(',')
-        )
-      ].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      const safeSalespersonName = selectedSalesperson?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'user';
-      const reportDate = format(new Date(), 'yyyy-MM-dd');
-      link.setAttribute('download', `trail_report_${safeSalespersonName}_${reportDate}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast({
-        title: 'Trail Saved Locally',
-        description: 'Your user data report has been downloaded to your device.',
-      });
-    } catch (e: any) {
-      toast({
-          variant: "destructive",
-          title: "Local Download Failed",
-          description: e.message || "Could not save the report to your device.",
-      });
-    }
-
-    // Then, attempt to save to cloud
-    if (!firebaseConfigured) {
-        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report to the cloud. Please check your app's configuration." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-
-    setIsSyncing(true);
-    toast({ title: "Uploading Trail...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
-
-    try {
-      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      toast({
-        title: "Trail Saved to Cloud!",
-        description: `Your user data report has been successfully saved to the cloud storage bucket.`,
-        duration: 10000,
-      });
-      localStorage.removeItem('milestoneAchievedDate');
-    } catch (e: any) {
-      toast({
-          variant: "destructive",
-          title: "Cloud Upload Failed",
-          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
-          duration: 10000,
-      });
-    } finally {
-      setIsSyncing(false);
-      setIsEndDayConfirmOpen(false);
-    }
-  }, [visitsToDisplay, toast, importedVisits, visits, selectedSalesperson?.name]);
 
   const handleSubmitSuggestion = async () => {
     if (suggestionText.trim() === '') {
