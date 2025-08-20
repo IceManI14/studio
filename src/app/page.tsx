@@ -112,9 +112,11 @@ const calculateCommission = (visit: Visit): number => {
         return visit.priceQuoted;
     }
 
-    const priceQuoted = Array.isArray(visit.interestedUnits) 
+    const priceFromUnits = Array.isArray(visit.interestedUnits) 
       ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
-      : (visit.priceQuoted || 0);
+      : 0;
+
+    const priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
 
     const leaseCommission = (priceQuoted && visit.leaseTerm) 
         ? (priceQuoted * (visit.leaseTerm / 12)) 
@@ -1170,60 +1172,6 @@ export default function HomePage() {
     setAnalyzingDocId(null);
   }, [isAiResponding, analyzingDocId, toast]);
 
-  const loadLocalData = useCallback(() => {
-    try {
-      const storedVisits = localStorage.getItem('visits');
-      if (storedVisits) {
-        const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
-          ...v,
-          timestamp: new Date(v.timestamp),
-          futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-          freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
-        }));
-        setVisits(parsedVisits);
-      }
-  
-      const storedSuggestions = localStorage.getItem('submittedSuggestions');
-      if (storedSuggestions) {
-        setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
-      }
-  
-      const storedFiles = localStorage.getItem('managedFiles');
-      if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
-      
-      const storedCompanyDocs = localStorage.getItem('companyDocs');
-      if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
-  
-      const storedHotLeads = localStorage.getItem('hotLeads');
-      if (storedHotLeads) {
-        setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
-      }
-      
-      const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
-      if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
-      
-      const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
-      if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
-      
-      const defaultNewsItems = [
-          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
-          "To compensate, Friday and Tuesday are now fully open for new installations.",
-          "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
-          "The annual sales competition begins next month! More details to follow."
-      ];
-      const storedNews = localStorage.getItem('companyNews');
-      if (storedNews) {
-          setNewsItems(JSON.parse(storedNews));
-      } else {
-          setNewsItems(defaultNewsItems);
-          localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
-      }
-    } catch (error) {
-      console.error("Failed to load some local data:", error);
-      toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device."});
-    }
-  }, [toast]);
-
   const confirmEndDay = useCallback(async () => {
     if (visitsToDisplay.length === 0) {
         toast({ title: "No visits to create a report for today." });
@@ -1309,8 +1257,62 @@ export default function HomePage() {
   }, [visits]);
   
   useEffect(() => {
+    const loadLocalData = () => {
+      try {
+        const storedVisits = localStorage.getItem('visits');
+        if (storedVisits) {
+          const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
+            ...v,
+            timestamp: new Date(v.timestamp),
+            futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+            freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
+          }));
+          setVisits(parsedVisits);
+        }
+
+        const storedSuggestions = localStorage.getItem('submittedSuggestions');
+        if (storedSuggestions) {
+          setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
+        }
+
+        const storedFiles = localStorage.getItem('managedFiles');
+        if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
+        
+        const storedCompanyDocs = localStorage.getItem('companyDocs');
+        if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
+
+        const storedHotLeads = localStorage.getItem('hotLeads');
+        if (storedHotLeads) {
+          setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
+        }
+        
+        const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
+        if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+        
+        const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
+        if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
+        
+        const defaultNewsItems = [
+            "Please note: No new installs are to be scheduled on Thursdays until further notice.",
+            "To compensate, Friday and Tuesday are now fully open for new installations.",
+            "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
+            "The annual sales competition begins next month! More details to follow."
+        ];
+        const storedNews = localStorage.getItem('companyNews');
+        if (storedNews) {
+            setNewsItems(JSON.parse(storedNews));
+        } else {
+            setNewsItems(defaultNewsItems);
+            localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
+        }
+      } catch (error) {
+        console.error("Failed to load some local data:", error);
+        toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device."});
+      }
+    };
+    
     loadLocalData();
-  
+
     if (!firebaseConfigured) {
       setIsSyncing(false);
       toast({
@@ -1320,7 +1322,7 @@ export default function HomePage() {
         duration: 10000,
       });
     }
-  }, []);
+  }, [toast]);
   
   useEffect(() => {
     if (!db) {
