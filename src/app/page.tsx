@@ -1309,9 +1309,6 @@ export default function HomePage() {
   
   useEffect(() => {
     loadLocalData();
-    
-    const defaultSalesperson = salespeople.find(s => s.name === 'Lyman') || salespeople[0];
-    setSelectedSalesperson(defaultSalesperson);
   
     if (!firebaseConfigured) {
       setIsSyncing(false);
