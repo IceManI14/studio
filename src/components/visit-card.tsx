@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
+import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -104,25 +105,29 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   
   const potentialCommission = (() => {
-    if (typeof visit.manualCommission === 'number') {
-        return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
-    }
-    if (!visit.pricingDiscussed) return null;
+      if (typeof visit.manualCommission === 'number') {
+          return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
+      }
+      if (!visit.pricingDiscussed) return null;
 
-    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-        return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
-    }
-    
-    const numberOfUnits = visit.interestedUnits && visit.interestedUnits.length > 0 ? visit.interestedUnits.length : 1;
-    const priceQuotedNum = typeof visit.priceQuoted === 'string' ? parseFloat(visit.priceQuoted) : visit.priceQuoted;
-
-    const leaseCommission = (priceQuotedNum && visit.leaseTerm) 
-      ? (priceQuotedNum * numberOfUnits * (visit.leaseTerm / 12)) 
-      : 0;
+      if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+          return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
+      }
       
-    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-    const total = leaseCommission + installCommission;
-    return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
+      const priceFromUnits = Array.isArray(visit.interestedUnits)
+          ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+          : 0;
+
+      const priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+
+      const leaseCommission = (priceQuoted && visit.leaseTerm) 
+        ? (priceQuoted * (visit.leaseTerm / 12)) 
+        : 0;
+        
+      const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+      const total = leaseCommission + installCommission;
+      
+      return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
   })();
 
   const ZoomedContent = () => (

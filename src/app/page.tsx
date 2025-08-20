@@ -57,6 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import ExportHotLeadsCsvButton from '@/components/export-hot-leads-csv-button';
 import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
+import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 
 
 interface SubmittedSuggestion {
@@ -97,6 +98,32 @@ const salespeople: Salesperson[] = [
     { id: '4', name: 'Corporate', territory: [{ name: 'All Territories', bounds: { minLat: -90, maxLat: 90, minLng: -180, maxLng: 180 } }] },
     { id: '5', name: 'John Doe (No Territory)', territory: [] },
 ];
+
+const calculateCommission = (visit: Visit): number => {
+    if (typeof visit.manualCommission === 'number') {
+        return visit.manualCommission;
+    }
+    
+    if (!visit.pricingDiscussed) {
+        return 0;
+    }
+
+    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+        return visit.priceQuoted;
+    }
+
+    const priceQuoted = Array.isArray(visit.interestedUnits) 
+      ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+      : (visit.priceQuoted || 0);
+
+    const leaseCommission = (priceQuoted && visit.leaseTerm) 
+        ? (priceQuoted * (visit.leaseTerm / 12)) 
+        : 0;
+        
+    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+    
+    return leaseCommission + installCommission;
+};
 
 const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
   visits: Visit[],
@@ -427,37 +454,11 @@ export default function HomePage() {
   }, [visitsToDisplay]);
 
   const totalTrialCommission = useMemo(() => {
-    return activeFreeTrials.reduce((total, visit) => {
-      if (typeof visit.manualCommission === 'number') {
-        return total + visit.manualCommission;
-      }
-      if (visit.pricingDiscussed) {
-        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-          return total + visit.priceQuoted;
-        }
-        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
-        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-        return total + leaseCommission + installCommission;
-      }
-      return total;
-    }, 0);
+    return activeFreeTrials.reduce((total, visit) => total + calculateCommission(visit), 0);
   }, [activeFreeTrials]);
 
   const totalClosedCommission = useMemo(() => {
-    return closedDeals.reduce((total, visit) => {
-      if (typeof visit.manualCommission === 'number') {
-        return total + visit.manualCommission;
-      }
-      if (visit.pricingDiscussed) {
-        if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-          return total + visit.priceQuoted;
-        }
-        const leaseCommission = (visit.priceQuoted && visit.leaseTerm) ? (visit.priceQuoted * (visit.leaseTerm / 12)) : 0;
-        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-        return total + leaseCommission + installCommission;
-      }
-      return total;
-    }, 0);
+    return closedDeals.reduce((total, visit) => total + calculateCommission(visit), 0);
   }, [closedDeals]);
 
   const pastVisitsByDay = useMemo(() => {
@@ -1319,7 +1320,7 @@ export default function HomePage() {
         duration: 10000,
       });
     }
-  }, [loadLocalData, toast]);
+  }, []);
   
   useEffect(() => {
     if (!db) {

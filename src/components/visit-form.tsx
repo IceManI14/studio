@@ -32,6 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
+import { COOLER_PRICING_MAP, OUR_COOLERS_LIST } from '@/lib/cooler-pricing';
 
 
 const COMPETITORS_LIST = [
@@ -90,33 +91,6 @@ const COMPETITOR_SPECIFIC_COOLER_OPTIONS: Record<string, string[]> = {
   "Crystal Rock": ["Bottles", "None Observed", "Other"],
   "ELKAY Wall Unit": ["Wall Unit", "None Observed", "Other"],
 };
-
-const OUR_COOLERS_LIST = [
-  "PW50",
-  "PW70",
-  "PW90CT",
-  "PW90",
-  "XL1",
-  "E6",
-  "I14",
-  "I15",
-  "I16",
-  "3i",
-];
-
-const COOLER_PRICING_MAP: Record<string, number> = {
-  "PW50": 39.99,
-  "PW70": 49.99,
-  "PW90CT": 59.99,
-  "PW90": 59.99,
-  "XL1": 69.99,
-  "E6": 79.99,
-  "I14": 99.99,
-  "I15": 119.99,
-  "I16": 129.99,
-  "3i": 129.99,
-};
-
 
 const visitFormSchema = z.object({
   companyName: z.string().min(1, 'Company name is required'),
@@ -1251,13 +1225,11 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={(checked) => {
-                          queueMicrotask(() => {
-                            field.onChange(checked);
-                            if (!checked) {
-                                handleRemoveImage('front');
-                                handleRemoveImage('back');
-                            }
-                          });
+                          field.onChange(checked);
+                          if (!checked) {
+                              handleRemoveImage('front');
+                              handleRemoveImage('back');
+                          }
                         }}
                         id="hasBusinessCard"
                       />
@@ -1447,8 +1419,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={(checked) => {
-                           queueMicrotask(() => {
-                            field.onChange(checked);
+                          field.onChange(checked);
                             if (checked === true) {
                                 const startDate = form.getValues('freeTrialStartDate') || new Date();
                                 const followUpDate = addDays(startDate, 7);
@@ -1457,7 +1428,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                 form.setValue('futureMeetingSet', true, { shouldDirty: true });
                                 form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
                             }
-                          });
                         }}
                         id="freeTrial"
                       />
@@ -1525,26 +1495,24 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                        <Checkbox
                                           checked={field.value}
                                           onCheckedChange={(checked) => {
-                                              queueMicrotask(() => {
-                                                  field.onChange(checked);
-                                                  if (checked) {
-                                                      form.setValue('leaseTerm', 60, { shouldDirty: true });
-                                                      form.setValue('installationFee', 149, { shouldDirty: true });
+                                              field.onChange(checked);
+                                              if (checked) {
+                                                  form.setValue('leaseTerm', 60, { shouldDirty: true });
+                                                  form.setValue('installationFee', 149, { shouldDirty: true });
 
-                                                      const units = form.getValues('interestedUnits') || [];
-                                                      const totalPrice = units.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0);
-                                                      if (totalPrice > 0) {
-                                                          form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
-                                                      }
-
-                                                  } else {
-                                                      form.setValue('priceQuoted', undefined, { shouldDirty: true });
-                                                      form.setValue('leaseTerm', undefined, { shouldDirty: true });
-                                                      form.setValue('installationFee', undefined, { shouldDirty: true });
-                                                      form.setValue('creditApproved', false, { shouldDirty: true });
-                                                      form.setValue('manualCommission', undefined, { shouldDirty: true });
+                                                  const units = form.getValues('interestedUnits') || [];
+                                                  const totalPrice = units.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0);
+                                                  if (totalPrice > 0) {
+                                                      form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
                                                   }
-                                              });
+
+                                              } else {
+                                                  form.setValue('priceQuoted', undefined, { shouldDirty: true });
+                                                  form.setValue('leaseTerm', undefined, { shouldDirty: true });
+                                                  form.setValue('installationFee', undefined, { shouldDirty: true });
+                                                  form.setValue('creditApproved', false, { shouldDirty: true });
+                                                  form.setValue('manualCommission', undefined, { shouldDirty: true });
+                                              }
                                           }}
                                           id="pricingDiscussed"
                                       />
