@@ -24,7 +24,7 @@ export interface SearchBounds {
   maxLng: number;
 }
 
-const DISABLED_ERROR_MESSAGE = "Google Places API has been disabled by the administrator.";
+const DISABLED_ERROR_MESSAGE = "Location services are temporarily disabled by the administrator.";
 
 export async function findPlaceFromLatLng(latitude: number, longitude: number): Promise<PlaceDetails | null> {
     console.warn(DISABLED_ERROR_MESSAGE);
@@ -35,3 +35,5 @@ export async function findPlacesFromText(query: string, bounds?: SearchBounds): 
     console.warn(DISABLED_ERROR_MESSAGE);
     throw new Error(DISABLED_ERROR_MESSAGE);
 }
+
+    

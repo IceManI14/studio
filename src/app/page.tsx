@@ -1441,22 +1441,15 @@ export default function HomePage() {
   }, [currentCity]);
   
   useEffect(() => {
-    if (isGenkitConfigured) {
-      if (typeof navigator === 'undefined' || !navigator.geolocation) {
-        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
-        setCurrentCity("Geolocation not supported.");
-        setIsFetchingCity(false);
-        return;
-      }
-    
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
       let watchId: number;
 
-      const handlePositionUpdate = async (position: GeolocationPosition) => {
+      const handlePositionUpdate = (position: GeolocationPosition) => {
         if (isFetchingCity) {
-          setIsFetchingCity(false); // Set to false on first successful read
+          setIsFetchingCity(false);
         }
       };
-    
+
       const handleError = (error: GeolocationPositionError) => {
         let errorMessage = "Could not retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
@@ -1466,23 +1459,23 @@ export default function HomePage() {
         setCurrentCity("Location access denied.");
         setIsFetchingCity(false);
       };
-    
+
       watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
         enableHighAccuracy: true,
         timeout: 20000,
-        maximumAge: 60000
+        maximumAge: 60000,
       });
-    
+
       return () => {
         if (watchId) {
           navigator.geolocation.clearWatch(watchId);
         }
       };
     } else {
-        setIsFetchingCity(false);
-        setCurrentCity("Location services disabled.");
+      setIsFetchingCity(false);
+      setCurrentCity("Location services disabled.");
     }
-  }, [toast, isFetchingCity, isGenkitConfigured]);
+  }, [toast, isFetchingCity]);
 
 
   useEffect(() => {
@@ -3816,3 +3809,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

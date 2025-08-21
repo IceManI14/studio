@@ -19,7 +19,7 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { Storage } from '@google-cloud/storage';
 
-const GOOGLE_API_DISABLED_ERROR = "Google API features are currently disabled by the administrator.";
+const GOOGLE_API_DISABLED_ERROR = "Location services are temporarily disabled by the administrator.";
 
 // The payload now directly uses fields from the Visit type, simplifying the data flow.
 export interface SaveVisitPayload extends Omit<Visit, 'id' | 'timestamp'> {
@@ -172,7 +172,18 @@ const aiChatPayloadSchema = z.object({
 export async function getAiChatResponseAction(
   payload: z.infer<typeof aiChatPayloadSchema>
 ): Promise<{ aiResponse?: string; error?: string }> {
-  return { error: GOOGLE_API_DISABLED_ERROR };
+  const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+  if (!isGenkitConfigured) {
+    return { error: "AI features are currently disabled by the administrator." };
+  }
+
+  try {
+    const aiResponse = await chatWithVisits(payload);
+    return { aiResponse: aiResponse.aiResponse };
+  } catch (error: any) {
+    console.error("Error in getAiChatResponseAction:", error);
+    return { error: error.message || "An unexpected error occurred." };
+  }
 }
 
 const summarizeNotesSchema = z.object({
@@ -182,7 +193,16 @@ const summarizeNotesSchema = z.object({
 export async function summarizeNotesAction(
   payload: z.infer<typeof summarizeNotesSchema>
 ): Promise<{ summary?: string; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await summarizeVisitNotes(payload);
+        return { summary: result.summary };
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const findOptimalParkingSchema = z.object({
@@ -202,7 +222,16 @@ const extractCitiesSchema = z.object({
 export async function extractCitiesFromPdfAction(
   payload: z.infer<typeof extractCitiesSchema>
 ): Promise<{ cities?: string[]; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await extractCitiesFromPdf(payload);
+        return { cities: result.cities };
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const findCompanySchema = z.object({
@@ -351,12 +380,22 @@ export async function saveDailyReportAction(visits: Visit[], salespersonName?: s
 
 const extractDetailsSchema = z.object({
   notes: z.string().min(1, "Notes cannot be empty."),
+  currentDate: z.string(),
 });
 
 export async function extractVisitDetailsAction(
   payload: z.infer<typeof extractDetailsSchema>
 ): Promise<{ details?: z.infer<typeof import('@/ai/flows/extract-visit-details-flow').ExtractVisitDetailsOutput>; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await extractVisitDetails(payload);
+        return { details: result };
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const getCompanyIntelSchema = z.object({
@@ -368,7 +407,16 @@ const getCompanyIntelSchema = z.object({
 export async function getCompanyIntelAction(
   payload: z.infer<typeof getCompanyIntelSchema>
 ): Promise<{ details?: z.infer<typeof import('@/ai/flows/get-company-intel-flow').GetCompanyIntelOutput>; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await getCompanyIntel(payload);
+        return { details: result };
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const analyzeDocumentSchema = z.object({
@@ -378,7 +426,16 @@ const analyzeDocumentSchema = z.object({
 export async function analyzeDocumentAction(
   payload: z.infer<typeof analyzeDocumentSchema>
 ): Promise<{ summary?: string; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await analyzeDocument(payload);
+        return { summary: result.summary };
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 
@@ -387,3 +444,6 @@ export async function analyzeDocumentAction(
     
 
 
+
+
+    
