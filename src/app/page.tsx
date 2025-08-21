@@ -1172,7 +1172,7 @@ export default function HomePage() {
     setAnalyzingDocId(null);
   }, [isAiResponding, analyzingDocId, toast]);
 
-  const confirmEndDay = useCallback(async () => {
+  const confirmEndDay = async () => {
     if (visitsToDisplay.length === 0) {
         toast({ title: "No visits to create a report for today." });
         setIsEndDayConfirmOpen(false);
@@ -1249,7 +1249,7 @@ export default function HomePage() {
       setIsSyncing(false);
       setIsEndDayConfirmOpen(false);
     }
-  }, [visitsToDisplay, toast, importedVisits, visits, selectedSalesperson?.name]);
+  };
 
   // Effects
   useEffect(() => {
@@ -2156,9 +2156,15 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
+  const handleSomeFunction = () => {
+      // This is a placeholder function
+  };
 
   return (
     <div className={cn("min-h-screen", visitToReschedule && "cursor-crosshair")}>
+      {!selectedSalesperson ? (
+        <SalespersonSelectorModal salespeople={salespeople} onSelectSalesperson={setSelectedSalesperson} />
+      ) : null}
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
@@ -2475,7 +2481,7 @@ export default function HomePage() {
                             <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
                               <Accordion type="multiple" className="space-y-4">
                                 {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
-                              </Accordion>
+                              </AccordionContent>
                             </AccordionContent>
                           </AccordionItem>
                         ))}
