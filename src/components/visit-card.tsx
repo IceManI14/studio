@@ -105,10 +105,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   
   const potentialCommission = (() => {
-      if (typeof visit.manualCommission === 'number') {
+      if (typeof visit.manualCommission === 'number' && visit.manualCommission > 0) {
           return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
       }
-      if (!visit.pricingDiscussed) return null;
+      if (!visit.pricingDiscussed && !visit.freeTrial) return null;
 
       if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
           return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
