@@ -51,7 +51,7 @@ import ManageFilesModal from '@/components/manage-files-modal';
 import DataUsageDashboard from '@/components/data-usage-dashboard';
 import { fileToDataUri, cn, stateNameToAbbreviation } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
-import type { SaveVisitPayload, FoundPlace } from '@/app/actions';
+import type { SaveVisitPayload } from '@/app/actions';
 import { db, firebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import ExportHotLeadsCsvButton from '@/components/export-hot-leads-csv-button';
@@ -60,6 +60,15 @@ import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 
 
+interface FoundPlace {
+    companyName: string;
+    address: string;
+    city: string;
+    phone: string;
+    latitude?: number;
+    longitude?: number;
+    openingHours?: string[];
+}
 interface SubmittedSuggestion {
   text: string;
   timestamp: Date;
@@ -1259,57 +1268,57 @@ export default function HomePage() {
   
   useEffect(() => {
     const loadLocalData = () => {
-        try {
-            const storedVisits = localStorage.getItem('visits');
-            if (storedVisits) {
-                const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
-                    ...v,
-                    timestamp: new Date(v.timestamp),
-                    futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
-                    freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
-                }));
-                setVisits(parsedVisits);
-            }
-
-            const storedSuggestions = localStorage.getItem('submittedSuggestions');
-            if (storedSuggestions) {
-                setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({...s, timestamp: new Date(s.timestamp)})));
-            }
-
-            const storedFiles = localStorage.getItem('managedFiles');
-            if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
-            
-            const storedCompanyDocs = localStorage.getItem('companyDocs');
-            if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
-
-            const storedHotLeads = localStorage.getItem('hotLeads');
-            if (storedHotLeads) {
-                setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({...hl, addedAt: new Date(hl.addedAt)})));
-            }
-            
-            const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
-            if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
-            
-            const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
-            if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
-            
-            const defaultNewsItems = [
-                "Please note: No new installs are to be scheduled on Thursdays until further notice.",
-                "To compensate, Friday and Tuesday are now fully open for new installations.",
-                "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
-                "The annual sales competition begins next month! More details to follow."
-            ];
-            const storedNews = localStorage.getItem('companyNews');
-            if (storedNews) {
-                setNewsItems(JSON.parse(storedNews));
-            } else {
-                setNewsItems(defaultNewsItems);
-                localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
-            }
-        } catch (error) {
-            console.error("Failed to load some local data:", error);
-            toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device."});
+      try {
+        const storedVisits = localStorage.getItem('visits');
+        if (storedVisits) {
+          const parsedVisits = JSON.parse(storedVisits).map((v: any) => ({
+            ...v,
+            timestamp: new Date(v.timestamp),
+            futureMeetingDateTime: v.futureMeetingDateTime ? new Date(v.futureMeetingDateTime) : undefined,
+            freeTrialStartDate: v.freeTrialStartDate ? new Date(v.freeTrialStartDate) : undefined,
+          }));
+          setVisits(parsedVisits);
         }
+
+        const storedSuggestions = localStorage.getItem('submittedSuggestions');
+        if (storedSuggestions) {
+          setSubmittedSuggestions(JSON.parse(storedSuggestions).map((s: any) => ({ ...s, timestamp: new Date(s.timestamp) })));
+        }
+
+        const storedFiles = localStorage.getItem('managedFiles');
+        if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
+
+        const storedCompanyDocs = localStorage.getItem('companyDocs');
+        if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
+
+        const storedHotLeads = localStorage.getItem('hotLeads');
+        if (storedHotLeads) {
+          setHotLeads(JSON.parse(storedHotLeads).map((hl: any) => ({ ...hl, addedAt: new Date(hl.addedAt) })));
+        }
+
+        const storedConvertedHotLeads = localStorage.getItem('convertedHotLeads');
+        if (storedConvertedHotLeads) setConvertedHotLeads(new Set(JSON.parse(storedConvertedHotLeads)));
+
+        const hasUploadedTerritory = localStorage.getItem('territoryPdfUploaded');
+        if (!hasUploadedTerritory) setShowTerritoryUploadModal(true);
+
+        const defaultNewsItems = [
+          "Please note: No new installs are to be scheduled on Thursdays until further notice.",
+          "To compensate, Friday and Tuesday are now fully open for new installations.",
+          "We are temporarily out of stock on all i-14 models. Please offer alternatives.",
+          "The annual sales competition begins next month! More details to follow."
+        ];
+        const storedNews = localStorage.getItem('companyNews');
+        if (storedNews) {
+          setNewsItems(JSON.parse(storedNews));
+        } else {
+          setNewsItems(defaultNewsItems);
+          localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
+        }
+      } catch (error) {
+        console.error("Failed to load some local data:", error);
+        toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device." });
+      }
     };
 
     loadLocalData();
@@ -2479,7 +2488,7 @@ export default function HomePage() {
                             <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
                               <Accordion type="multiple" className="space-y-4">
                                 {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
-                              </AccordionContent>
+                              </Accordion>
                             </AccordionContent>
                           </AccordionItem>
                         ))}
