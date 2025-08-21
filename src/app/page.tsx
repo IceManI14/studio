@@ -109,31 +109,31 @@ const salespeople: Salesperson[] = [
 ];
 
 const calculateCommission = (visit: Visit): number => {
-  if (typeof visit.manualCommission === 'number') {
-    return visit.manualCommission;
-  }
-  
-  if (!visit.pricingDiscussed) {
-    return 0;
-  }
+    if (typeof visit.manualCommission === 'number' && visit.manualCommission > 0) {
+        return visit.manualCommission;
+    }
 
-  if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-    return visit.priceQuoted;
-  }
+    if (!visit.pricingDiscussed && !visit.freeTrial) {
+        return 0;
+    }
 
-  const priceFromUnits = Array.isArray(visit.interestedUnits) 
-    ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
-    : 0;
+    const priceFromUnits = Array.isArray(visit.interestedUnits)
+        ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+        : 0;
 
-  const priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+    let priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
 
-  const leaseCommission = (priceQuoted && visit.leaseTerm) 
-      ? (priceQuoted * (visit.leaseTerm / 12)) 
-      : 0;
-      
-  const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-  
-  return leaseCommission + installCommission;
+    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+        return priceQuoted;
+    }
+    
+    const leaseCommission = (priceQuoted && visit.leaseTerm)
+        ? (priceQuoted * (visit.leaseTerm / 12))
+        : 0;
+
+    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+
+    return leaseCommission + installCommission;
 };
 
 
