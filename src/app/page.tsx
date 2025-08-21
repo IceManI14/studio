@@ -208,6 +208,8 @@ export default function HomePage() {
   const [isRecordingSearch, setIsRecordingSearch] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [isRecordingCitySearch, setIsRecordingCitySearch] = useState(false);
+  const [fieldDaySearchTerm, setFieldDaySearchTerm] = useState('');
+  const [isRecordingFieldDaySearch, setIsRecordingFieldDaySearch] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { 
         id: 'ai_welcome_init', 
@@ -260,6 +262,7 @@ export default function HomePage() {
   
   const { toast } = useToast();
   const searchRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const fieldDaySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const citySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -477,26 +480,30 @@ export default function HomePage() {
     const today = startOfDay(new Date());
     const grouped: { [key: string]: Visit[] } = {};
   
-    visitsToDisplay.forEach((visit) => {
-      const visitDay = startOfDay(new Date(visit.timestamp));
-      if (visitDay < today) {
-        const dayKey = visitDay.toISOString().split('T')[0];
-        if (!grouped[dayKey]) {
-          grouped[dayKey] = [];
+    visitsToDisplay
+      .filter(visit => fieldDaySearchTerm.trim() === '' || visit.companyName.toLowerCase().includes(fieldDaySearchTerm.toLowerCase()))
+      .forEach((visit) => {
+        const visitDay = startOfDay(new Date(visit.timestamp));
+        if (visitDay < today) {
+          const dayKey = visitDay.toISOString().split('T')[0];
+          if (!grouped[dayKey]) {
+            grouped[dayKey] = [];
+          }
+          grouped[dayKey].push(visit);
         }
-        grouped[dayKey].push(visit);
-      }
-    });
+      });
   
     for (const dayKey in grouped) {
       grouped[dayKey].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }
     return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
-  }, [visitsToDisplay]);
+  }, [visitsToDisplay, fieldDaySearchTerm]);
 
   const todaysVisits = useMemo(() => {
-    return visitsToDisplay.filter(visit => isToday(new Date(visit.timestamp)));
-  }, [visitsToDisplay]);
+    return visitsToDisplay
+      .filter(visit => isToday(new Date(visit.timestamp)))
+      .filter(visit => fieldDaySearchTerm.trim() === '' || visit.companyName.toLowerCase().includes(fieldDaySearchTerm.toLowerCase()));
+  }, [visitsToDisplay, fieldDaySearchTerm]);
 
   const todaysScheduledVisits = useMemo(() => {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
@@ -739,6 +746,45 @@ export default function HomePage() {
       toast({ variant: 'destructive', title: 'Could not start recording', description: `Please ensure microphone access is granted. Error: ${e.message}` });
     }
   }, [isRecordingSearch, toast]);
+
+  const handleToggleVoiceFieldDaySearch = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
+      return;
+    }
+
+    if (isRecordingFieldDaySearch && fieldDaySearchRecognitionRef.current) {
+      fieldDaySearchRecognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    fieldDaySearchRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setIsRecordingFieldDaySearch(true);
+    recognition.onend = () => setIsRecordingFieldDaySearch(false);
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      toast({ variant: 'destructive', title: 'Voice Error', description: event.error });
+      setIsRecordingFieldDaySearch(false);
+    };
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript;
+      if (transcript) {
+        setFieldDaySearchTerm(transcript);
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Could not start recording', description: e.message });
+    }
+  }, [isRecordingFieldDaySearch, toast]);
 
   const handleToggleVoiceCitySearch = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1320,7 +1366,7 @@ export default function HomePage() {
         toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device." });
       }
     };
-
+    
     loadLocalData();
 
     if (!firebaseConfigured) {
@@ -2385,7 +2431,47 @@ export default function HomePage() {
                     </Button>
                 </div>
 
-                {todaysVisits.length === 0 ? (
+                <div className="relative w-full max-w-sm mx-auto">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={isRecordingFieldDaySearch ? "Listening for search term..." : "Search company name..."}
+                    className="pl-10 pr-20"
+                    value={fieldDaySearchTerm}
+                    onChange={(e) => setFieldDaySearchTerm(e.target.value)}
+                    disabled={isRecordingFieldDaySearch}
+                  />
+                  {fieldDaySearchTerm && !isRecordingFieldDaySearch && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setFieldDaySearchTerm('')}
+                      className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                      aria-label="Clear search"
+                      title="Clear search"
+                    >
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleVoiceFieldDaySearch}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                    aria-label="Search with voice"
+                    title="Search with voice"
+                  >
+                    {isRecordingFieldDaySearch ? (
+                      <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                    ) : (
+                      <Mic className="h-4 w-4 text-foreground" />
+                    )}
+                  </Button>
+                </div>
+
+                {todaysVisits.length === 0 && fieldDaySearchTerm.trim() === '' ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
