@@ -580,7 +580,7 @@ export default function HomePage() {
       // Return the optimistic visit so followup actions can still work
       return optimisticVisit;
     }
-  }, [toast, setFieldDayAccordionValue]);
+  }, [toast]);
 
   const handleToggleChatVoice = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
