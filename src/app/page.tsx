@@ -1293,7 +1293,6 @@ export default function HomePage() {
         description: `Your user data report has been successfully saved to the cloud storage bucket.`,
         duration: 10000,
       });
-      localStorage.removeItem('milestoneAchievedDate');
     } catch (e: any) {
       toast({
           variant: "destructive",
