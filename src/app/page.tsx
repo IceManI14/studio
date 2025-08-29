@@ -198,7 +198,6 @@ export default function HomePage() {
   const [hotLeads, setHotLeads] = useState<HotLead[]>([]);
   const [isVisitFormOpen, setIsVisitFormOpen] = useState(false);
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
-  const [isEndDayConfirmOpen, setIsEndDayConfirmOpen] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
   const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial' | 'city'>('partnershipConfidence');
@@ -1228,84 +1227,6 @@ export default function HomePage() {
     setAnalyzingDocId(null);
   }, [isAiResponding, analyzingDocId, toast]);
 
-  const confirmEndDay = useCallback(async () => {
-    if (visitsToDisplay.length === 0) {
-        toast({ title: "No visits to create a report for today." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-    const dataToExport = importedVisits || visits;
-
-    // Save locally first
-    try {
-      const csvContent = [
-        Object.keys(dataToExport[0]).join(','),
-        ...dataToExport.map(item =>
-          Object.values(item).map(value =>
-            typeof value === 'string' && value.includes(',') ? `"${value}"` : value
-          ).join(',')
-        )
-      ].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      const safeSalespersonName = selectedSalesperson?.name.replace(/[^a-zA-Z0-9]/g, '_') || 'user';
-      const reportDate = format(new Date(), 'yyyy-MM-dd');
-      link.setAttribute('download', `trail_report_${safeSalespersonName}_${reportDate}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast({
-        title: 'Trail Saved Locally',
-        description: 'Your user data report has been downloaded to your device.',
-      });
-    } catch (e: any) {
-      toast({
-          variant: "destructive",
-          title: "Local Download Failed",
-          description: e.message || "Could not save the report to your device.",
-      });
-    }
-
-    // Then, attempt to save to cloud
-    if (!firebaseConfigured) {
-        toast({ variant: "destructive", title: "Cloud Storage Not Configured", description: "Cannot save report to the cloud. Please check your app's configuration." });
-        setIsEndDayConfirmOpen(false);
-        return;
-    }
-
-    setIsSyncing(true);
-    toast({ title: "Uploading Trail...", description: `Processing ${dataToExport.length} visit(s) and uploading to cloud storage.` });
-
-    try {
-      const result = await saveDailyReportAction(dataToExport, selectedSalesperson?.name);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      toast({
-        title: "Trail Saved to Cloud!",
-        description: `Your user data report has been successfully saved to the cloud storage bucket.`,
-        duration: 10000,
-      });
-    } catch (e: any) {
-      toast({
-          variant: "destructive",
-          title: "Cloud Upload Failed",
-          description: e.message || "An unexpected error occurred. Your visit data is still safe on this device.",
-          duration: 10000,
-      });
-    } finally {
-      setIsSyncing(false);
-      setIsEndDayConfirmOpen(false);
-    }
-  }, [visitsToDisplay, importedVisits, visits, selectedSalesperson, toast]);
-
   // Effects
   useEffect(() => {
     visitsRef.current = visits;
@@ -1531,10 +1452,6 @@ export default function HomePage() {
         setIsManageFilesModalOpen(false);
         return;
       }
-      if (isEndDayConfirmOpen) {
-        setIsEndDayConfirmOpen(false);
-        return;
-      }
 
       if (activeTab !== 'field-day') {
         setActiveTab('field-day');
@@ -1555,7 +1472,6 @@ export default function HomePage() {
     isDestinationModalOpen,
     isFindCompanyModalOpen,
     isManageFilesModalOpen,
-    isEndDayConfirmOpen,
   ]);
 
   // Handlers
@@ -2207,9 +2123,6 @@ export default function HomePage() {
 
   return (
     <div className={cn("min-h-screen", visitToReschedule && "cursor-crosshair")}>
-      {!selectedSalesperson ? (
-        <SalespersonSelectorModal salespeople={salespeople} onSelectSalesperson={setSelectedSalesperson} />
-      ) : null}
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
@@ -2397,26 +2310,6 @@ export default function HomePage() {
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
-                    <AlertDialog open={isEndDayConfirmOpen} onOpenChange={setIsEndDayConfirmOpen}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="default" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={isSyncing || !!importedVisits}>
-                          {isSyncing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />} 
-                          Save Trail
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Save Trail to Cloud Storage?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will generate a CSV report of ALL your visits and save it to your device, then upload it to the cloud. This file can be shared with other users to import their trail data.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmEndDay}>Save Trail</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
                     <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <LogIn className="mr-2 h-4 w-4" /> Import Trail
@@ -3495,9 +3388,6 @@ export default function HomePage() {
                             </li>
                             <li>
                                 <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
-                            </li>
-                            <li>
-                                <strong>Save Trail:</strong> At the end of the day, click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Save Trail</span> to generate a CSV of your day's work and upload it to cloud storage.
                             </li>
                         </ul>
                     </TabsContent>
