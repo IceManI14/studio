@@ -223,7 +223,7 @@ export default function HomePage() {
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isRecordingChat, setIsRecordingChat] = useState(false);
-  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(salespeople[0]);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
