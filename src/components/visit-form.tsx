@@ -388,7 +388,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (totalPrice > 0) {
         form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
       } else {
-        // If no units are selected, don't force a price of 0
         const currentPrice = form.getValues('priceQuoted');
         if (currentPrice === 0) {
            form.setValue('priceQuoted', undefined, { shouldDirty: true });
@@ -1017,6 +1016,18 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     toast({ title: "Address Added", description: "The address has been saved to the visit notes." });
   };
   
+  const watchedFreeTrial = form.watch("freeTrial");
+  useEffect(() => {
+    if (watchedFreeTrial) {
+      const startDate = form.getValues("freeTrialStartDate") || new Date();
+      const followUpDate = addDays(startDate, 7);
+      followUpDate.setHours(10, 0, 0, 0);
+      form.setValue("freeTrialStartDate", startDate, { shouldDirty: true });
+      form.setValue("futureMeetingSet", true, { shouldDirty: true });
+      form.setValue("futureMeetingDateTime", followUpDate, { shouldDirty: true });
+    }
+  }, [watchedFreeTrial, form]);
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -1224,13 +1235,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (!checked) {
-                              handleRemoveImage('front');
-                              handleRemoveImage('back');
-                          }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="hasBusinessCard"
                       />
                     </FormControl>
@@ -1418,17 +1423,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                            if (checked === true) {
-                                const startDate = form.getValues('freeTrialStartDate') || new Date();
-                                const followUpDate = addDays(startDate, 7);
-                                followUpDate.setHours(10, 0, 0, 0);
-                                form.setValue('freeTrialStartDate', startDate, { shouldDirty: true });
-                                form.setValue('futureMeetingSet', true, { shouldDirty: true });
-                                form.setValue('futureMeetingDateTime', followUpDate, { shouldDirty: true });
-                            }
-                        }}
+                        onCheckedChange={field.onChange}
                         id="freeTrial"
                       />
                     </FormControl>
@@ -1494,26 +1489,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                   <FormControl>
                                        <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={(checked) => {
-                                              field.onChange(checked);
-                                              if (checked) {
-                                                  form.setValue('leaseTerm', 60, { shouldDirty: true });
-                                                  form.setValue('installationFee', 149, { shouldDirty: true });
-
-                                                  const units = form.getValues('interestedUnits') || [];
-                                                  const totalPrice = units.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0);
-                                                  if (totalPrice > 0) {
-                                                      form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
-                                                  }
-
-                                              } else {
-                                                  form.setValue('priceQuoted', undefined, { shouldDirty: true });
-                                                  form.setValue('leaseTerm', undefined, { shouldDirty: true });
-                                                  form.setValue('installationFee', undefined, { shouldDirty: true });
-                                                  form.setValue('creditApproved', false, { shouldDirty: true });
-                                                  form.setValue('manualCommission', undefined, { shouldDirty: true });
-                                              }
-                                          }}
+                                          onCheckedChange={field.onChange}
                                           id="pricingDiscussed"
                                       />
                                   </FormControl>
