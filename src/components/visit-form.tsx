@@ -379,22 +379,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   useEffect(() => {
     const pricingDiscussedValue = form.watch('pricingDiscussed');
-    if (pricingDiscussedValue) {
-      const units = interestedUnitsValue || [];
-      const totalPrice = units.reduce((sum, unitName) => {
-        return sum + (COOLER_PRICING_MAP[unitName] || 0);
-      }, 0);
-
-      if (totalPrice > 0) {
-        form.setValue('priceQuoted', totalPrice, { shouldDirty: true });
-      } else {
+    if (!pricingDiscussedValue) {
         const currentPrice = form.getValues('priceQuoted');
-        if (currentPrice === 0) {
-           form.setValue('priceQuoted', undefined, { shouldDirty: true });
+        const currentLease = form.getValues('leaseTerm');
+        const currentFee = form.getValues('installationFee');
+        if (currentPrice !== undefined || currentLease !== undefined || currentFee !== undefined) {
+             form.setValue('priceQuoted', undefined, { shouldDirty: true });
+             form.setValue('leaseTerm', undefined, { shouldDirty: true });
+             form.setValue('installationFee', undefined, { shouldDirty: true });
         }
-      }
     }
-  }, [interestedUnitsValue, form.watch('pricingDiscussed'), form]);
+  }, [form.watch('pricingDiscussed'), form]);
 
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
@@ -1019,12 +1014,17 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const watchedFreeTrial = form.watch("freeTrial");
   useEffect(() => {
     if (watchedFreeTrial) {
-      const startDate = form.getValues("freeTrialStartDate") || new Date();
-      const followUpDate = addDays(startDate, 7);
-      followUpDate.setHours(10, 0, 0, 0);
-      form.setValue("freeTrialStartDate", startDate, { shouldDirty: true });
-      form.setValue("futureMeetingSet", true, { shouldDirty: true });
-      form.setValue("futureMeetingDateTime", followUpDate, { shouldDirty: true });
+      if (!form.getValues("freeTrialStartDate")) {
+        const startDate = new Date();
+        form.setValue("freeTrialStartDate", startDate, { shouldDirty: true });
+      }
+      if (!form.getValues("futureMeetingDateTime")) {
+        const startDate = form.getValues("freeTrialStartDate") || new Date();
+        const followUpDate = addDays(startDate, 7);
+        followUpDate.setHours(10, 0, 0, 0);
+        form.setValue("futureMeetingSet", true, { shouldDirty: true });
+        form.setValue("futureMeetingDateTime", followUpDate, { shouldDirty: true });
+      }
     }
   }, [watchedFreeTrial, form]);
 
