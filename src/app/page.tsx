@@ -44,7 +44,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAiChatResponseAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import SalespersonSelectorModal from '@/components/salesperson-selector-modal';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import ManageFilesModal from '@/components/manage-files-modal';
@@ -127,7 +126,6 @@ const calculateCommission = (visit: Visit): number => {
         return priceQuoted;
     }
     
-    // lease term is in months, so divide by 12 for years
     const leaseCommission = (priceQuoted && visit.leaseTerm)
         ? (priceQuoted * (visit.leaseTerm / 12))
         : 0;
@@ -223,7 +221,7 @@ export default function HomePage() {
   const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_AI_MODELS[0].id);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isRecordingChat, setIsRecordingChat] = useState(false);
-  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(salespeople[0]);
+  const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [isDestinationModalOpen, setIsDestinationModalOpen] = useState(false);
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
@@ -1233,6 +1231,10 @@ export default function HomePage() {
   useEffect(() => {
     // This effect ensures the date is only set on the client, preventing hydration mismatch.
     setCurrentDate(new Date());
+  }, []);
+
+  useEffect(() => {
+    setSelectedSalesperson(salespeople[0]);
   }, []);
 
   useEffect(() => {
@@ -3697,7 +3699,7 @@ export default function HomePage() {
         <Flame className="h-8 w-8" />
       </button>
       <footer className="text-center py-8 text-muted-foreground text-sm border-t mt-12">
-        <p>&copy; {new Date().getFullYear()} Optimum Trailblazer. Your personal sales companion.</p>
+        <p>&copy; {currentDate ? new Date().getFullYear() : '...'} Optimum Trailblazer. Your personal sales companion.</p>
          <p className="text-xs mt-1">
             {firebaseConfigured ? "Data is being synced with the cloud in real-time." : "Data is saved locally to your browser."}
          </p>
