@@ -257,6 +257,7 @@ export default function HomePage() {
   const [visitsForReschedule, setVisitsForReschedule] = useState<Visit[]>([]);
   const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
   const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   
   const { toast } = useToast();
@@ -1229,6 +1230,11 @@ export default function HomePage() {
 
   // Effects
   useEffect(() => {
+    // This effect ensures the date is only set on the client, preventing hydration mismatch.
+    setCurrentDate(new Date());
+  }, []);
+
+  useEffect(() => {
     visitsRef.current = visits;
   }, [visits]);
   
@@ -2180,7 +2186,7 @@ export default function HomePage() {
                         </div>
                         <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
                           <CalendarIcon className="h-3 w-3" />
-                          {format(new Date(), 'MMM d, yyyy')}
+                          {currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}
                         </span>
                         <div className="flex justify-end min-w-[80px]">
                           {targetDestination && (
