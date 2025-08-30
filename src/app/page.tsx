@@ -127,6 +127,7 @@ const calculateCommission = (visit: Visit): number => {
         return priceQuoted;
     }
     
+    // lease term is in months, so divide by 12 for years
     const leaseCommission = (priceQuoted && visit.leaseTerm)
         ? (priceQuoted * (visit.leaseTerm / 12))
         : 0;
