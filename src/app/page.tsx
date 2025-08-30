@@ -120,7 +120,9 @@ const calculateCommission = (visit: Visit): number => {
         ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
         : 0;
 
-    let priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+    // Use price from units if available, otherwise use the quoted price.
+    // For free trials, the price must come from the units selected.
+    const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
 
     if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
         return priceQuoted;

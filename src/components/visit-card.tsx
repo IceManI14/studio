@@ -118,7 +118,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
       : 0;
 
-    const priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+    const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
 
     const leaseCommission = (priceQuoted && visit.leaseTerm) 
       ? (priceQuoted * (visit.leaseTerm / 12)) 
