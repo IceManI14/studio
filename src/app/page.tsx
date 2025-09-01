@@ -115,27 +115,26 @@ const calculateCommission = (visit: Visit): number => {
     if (!visit.pricingDiscussed && !visit.freeTrial) {
         return 0;
     }
+    
+    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
+        return visit.priceQuoted;
+    }
 
     const priceFromUnits = Array.isArray(visit.interestedUnits)
         ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
         : 0;
-
-    // Use price from units if available, otherwise use the quoted price.
-    // For free trials, the price must come from the units selected.
+        
     const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
 
-    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-        return priceQuoted;
-    }
-    
     const leaseCommission = (priceQuoted && visit.leaseTerm)
         ? (priceQuoted * (visit.leaseTerm / 12))
         : 0;
 
     const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-
+    
     return leaseCommission + installCommission;
 };
+
 
 
 const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
@@ -1374,13 +1373,13 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       let watchId: number;
-
+  
       const handlePositionUpdate = (position: GeolocationPosition) => {
         if (isFetchingCity) {
           setIsFetchingCity(false);
         }
       };
-
+  
       const handleError = (error: GeolocationPositionError) => {
         let errorMessage = "Could not retrieve location.";
         if (error.code === error.PERMISSION_DENIED) {
@@ -1390,23 +1389,28 @@ export default function HomePage() {
         setCurrentCity("Location access denied.");
         setIsFetchingCity(false);
       };
-
-      watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 60000,
-      });
-
-      return () => {
-        if (watchId) {
-          navigator.geolocation.clearWatch(watchId);
-        }
-      };
+  
+      try {
+        watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 60000,
+        });
+  
+        return () => {
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+          }
+        };
+      } catch (error) {
+        setIsFetchingCity(false);
+        setCurrentCity("Location services disabled.");
+      }
     } else {
       setIsFetchingCity(false);
-      setCurrentCity("Location services disabled.");
+      setCurrentCity("Location services not available.");
     }
-  }, [toast, isFetchingCity]);
+  }, [isFetchingCity, toast]);
 
 
   useEffect(() => {
