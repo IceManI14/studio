@@ -15,7 +15,7 @@ function isConfigValid(config: Record<string, any>): boolean {
     return Object.values(config).every(value => typeof value === 'string' && value && !value.includes('YOUR_'));
 }
 
-export const firebaseConfigured = isConfigValid(firebaseConfig);
+export const firebaseConfigured = false; //isConfigValid(firebaseConfig);
 
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;

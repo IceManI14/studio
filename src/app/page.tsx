@@ -227,7 +227,7 @@ export default function HomePage() {
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
-  const [isFetchingCity, setIsFetchingCity] = useState(true);
+  const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -1311,7 +1311,7 @@ export default function HomePage() {
   }, [toast]);
   
   useEffect(() => {
-    if (!db) {
+    if (!db || !firebaseConfigured) {
         setIsSyncing(false);
         return;
     }
@@ -1370,48 +1370,6 @@ export default function HomePage() {
     }
   }, [currentCity]);
   
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      let watchId: number;
-  
-      const handlePositionUpdate = (position: GeolocationPosition) => {
-        if (isFetchingCity) {
-          setIsFetchingCity(false);
-        }
-      };
-  
-      const handleError = (error: GeolocationPositionError) => {
-        let errorMessage = "Could not retrieve location.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location access denied. Please enable it in your browser settings.";
-        }
-        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-        setCurrentCity("Location access denied.");
-        setIsFetchingCity(false);
-      };
-  
-      try {
-        watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 60000,
-        });
-  
-        return () => {
-          if (watchId) {
-            navigator.geolocation.clearWatch(watchId);
-          }
-        };
-      } catch (error) {
-        setIsFetchingCity(false);
-        setCurrentCity("Location services disabled.");
-      }
-    } else {
-      setIsFetchingCity(false);
-      setCurrentCity("Location services not available.");
-    }
-  }, [isFetchingCity, toast]);
-
 
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
