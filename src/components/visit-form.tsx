@@ -279,7 +279,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
-  const [isFetchingCity, setIsFetchingCity] = useState(false);
   const { toast } = useToast();
   const [lastAnalyzedNotes, setLastAnalyzedNotes] = useState<string | undefined>(undefined);
   const [formInitialData, setFormInitialData] = useState<Visit | undefined>(initialData);
@@ -480,38 +479,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     }
   }, [form, setCurrentCity, toast]);
   
-  const handleFindButtonClick = useCallback(() => {
-    if (!navigator.geolocation) {
-      toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
-      return;
-    }
-    
-    setIsSuggestingCompany(true);
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        
-        setCurrentLatitude(lat);
-        setCurrentLongitude(lon);
-        form.setValue('latitude', lat, { shouldValidate: true });
-        form.setValue('longitude', lon, { shouldValidate: true });
-        
-        handleSuggestCompany(lat, lon);
-      },
-      (error) => {
-        setIsSuggestingCompany(false);
-        let errorMessage = "Could not retrieve location.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location access denied. Please enable it in your browser settings.";
-        }
-        toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, [handleSuggestCompany, toast, form]);
-
   const stopCameraStream = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
@@ -1041,13 +1008,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
             </DialogDescription>
           </DialogHeader>
           
-          {isFetchingCity && (
-              <div className="flex items-center text-sm text-muted-foreground p-2 -my-2">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Determining current city...
-              </div>
-          )}
-          {currentCity && !isFetchingCity && (
+          {currentCity && (
               <div className="font-semibold text-lg text-primary flex items-center p-2 -my-2">
                   <MapPin className="mr-2 h-5 w-5" />
                   {currentCity}
@@ -1100,15 +1061,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             ) : (
                               <Mic className="h-4 w-4 text-muted-foreground" />
                             )}
-                          </Button>
-                          <Button
-                              type="button"
-                              onClick={handleFindButtonClick}
-                              variant="outline"
-                              size="sm"
-                              disabled={isSuggestingCompany || isSaving}
-                          >
-                            {isSuggestingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
                           </Button>
                         </div>
                       ) : (

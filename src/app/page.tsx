@@ -227,7 +227,6 @@ export default function HomePage() {
   const [targetDestination, setTargetDestination] = useState<{city: string; description: string} | null>(null);
   const [navigationUrl, setNavigationUrl] = useState<string | null>(null);
   const [currentCity, setCurrentCity] = useState<string | null>(null);
-  const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isFindingParking, setIsFindingParking] = useState(false);
   const [showTerritoryUploadModal, setShowTerritoryUploadModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -1492,46 +1491,15 @@ export default function HomePage() {
   };
 
   const handleQuickLog = async () => {
-    if (!navigator.geolocation) {
-        toast({ variant: "destructive", title: "Geolocation Not Supported", description: "Your browser does not support this feature." });
-        return;
-    }
-
-    toast({ title: "Getting Location...", description: "Please wait while we find your current location." });
-
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-
-            setIsVisitFormOpen(true);
-            setCurrentEditingVisit({
-                id: `temp_${crypto.randomUUID()}`,
-                timestamp: new Date(),
-                visitNumber: todaysVisits.length + 1,
-                companyName: '',
-                latitude,
-                longitude,
-            } as Visit);
-
-            toast({ title: "Location Found!", description: "Please enter the company name." });
-        },
-        (error) => {
-            let errorMessage = "Could not get your location.";
-            if (error.code === error.PERMISSION_DENIED) {
-                errorMessage = "Location access has been denied. Please enable it in your browser settings.";
-            }
-            toast({ variant: "destructive", title: "Location Error", description: errorMessage });
-            // Fallback to manual entry if location fails
-            setCurrentEditingVisit({
-                id: `temp_${crypto.randomUUID()}`,
-                timestamp: new Date(),
-                visitNumber: todaysVisits.length + 1,
-                companyName: '',
-            } as Visit);
-            setIsVisitFormOpen(true);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+    setIsVisitFormOpen(true);
+    setCurrentEditingVisit({
+      id: `temp_${crypto.randomUUID()}`,
+      timestamp: new Date(),
+      visitNumber: todaysVisits.length + 1,
+      companyName: '',
+      latitude: undefined,
+      longitude: undefined,
+    } as Visit);
 };
 
   const handleEditVisit = (visit: Visit) => {
@@ -2126,19 +2094,16 @@ export default function HomePage() {
               ) : (
                 <>
                 <div className="flex justify-center items-center text-md font-medium text-foreground mb-2">
-                  {isFetchingCity ? (
-                    <div className="flex justify-center items-center text-sm text-muted-foreground my-2">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      <span>Determining current city...</span>
-                    </div>
-                  ) : (
-                    currentCity && (
+                  {currentCity ? (
                       <>
                         <MapPin className="mr-2 h-4 w-4 text-primary" />
                         <span>Currently Located: {currentCity}</span>
                       </>
+                    ) : (
+                      <div className="flex justify-center items-center text-sm text-muted-foreground my-2 h-[20px]">
+                      </div>
                     )
-                  )}
+                  }
                 </div>
 
                 <Accordion type="single" collapsible>
