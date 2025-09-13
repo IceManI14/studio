@@ -6,8 +6,6 @@ import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactIn
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
-import ExportButton from '@/components/export-button';
-import ExportPdfButton from '@/components/export-pdf-button';
 import MapPlaceholder from '@/components/map-placeholder';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -353,6 +351,11 @@ export default function HomePage() {
 
     let processedVisits = [...visitsToDisplay];
 
+    // Main filter to exclude closed deals, unless specifically filtering for them
+    if (sortCriteria !== 'dealClosed') {
+        processedVisits = processedVisits.filter(visit => !visit.dealClosed);
+    }
+    
     // Date filter is primary if selected
     if (selectedDate) {
         processedVisits = processedVisits.filter(visit => 
@@ -1364,9 +1367,7 @@ export default function HomePage() {
   }, [toast]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      currentCityRef.current = currentCity;
-    }
+    currentCityRef.current = currentCity;
   }, [currentCity]);
   
 
@@ -2828,7 +2829,6 @@ export default function HomePage() {
                                 </Badge>
                                 <div className="flex flex-wrap gap-2 justify-center">
                                     <ExportPdfButton visits={visitsToDisplay} className="h-8 px-2 text-xs" />
-                                    <ExportButton visits={visitsToDisplay} className="h-8 px-2 text-xs" />
                                     <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
                                     Email Manager
                                     </Button>
