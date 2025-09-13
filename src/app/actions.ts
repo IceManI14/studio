@@ -29,102 +29,67 @@ export interface SaveVisitPayload extends Omit<Visit, 'id' | 'timestamp'> {
 
 
 export async function saveVisitAction(payload: SaveVisitPayload): Promise<{ visit?: Visit; error?: string; isNewVisit?: boolean }> {
-  if (!db) {
-    return { error: 'Firebase is not configured. Cannot save visit.' };
+  // CLOUD SYNC DISABLED FOR TESTING
+  const isNewVisit = !payload.id || payload.id.startsWith('temp_');
+  const visitId = isNewVisit ? uuidv4() : payload.id!;
+
+  if (!payload.companyName || payload.companyName.trim() === '') {
+    return { error: 'Company name is required.' };
   }
 
-  try {
-    const isNewVisit = !payload.id || payload.id.startsWith('temp_');
-    const visitId = isNewVisit ? uuidv4() : payload.id!;
+  const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
+      companyName: payload.companyName.trim(),
+      city: payload.city ?? null,
+      timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
+      notes: payload.notes ?? null,
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
+      partnershipConfidence: typeof payload.partnershipConfidence === 'number' && !isNaN(payload.partnershipConfidence) ? payload.partnershipConfidence : null,
+      hasBusinessCard: !!payload.hasBusinessCard,
+      businessCardImageFrontUrl: payload.hasBusinessCard ? (payload.businessCardImageFrontUrl ?? null) : null,
+      businessCardImageBackUrl: payload.hasBusinessCard ? (payload.businessCardImageBackUrl ?? null) : null,
+      discussedCompetitors: !!payload.competitorName,
+      competitorName: payload.competitorName ?? null,
+      coolerType: payload.coolerType ?? null,
+      decisionMakerName: payload.decisionMakerName ?? null,
+      decisionMakerTitle: payload.decisionMakerTitle ?? null,
+      decisionMakerContact: payload.decisionMakerContact ?? null,
+      visitNumber: typeof payload.visitNumber === 'number' && !isNaN(payload.visitNumber) ? payload.visitNumber : null,
+      interestedUnits: Array.isArray(payload.interestedUnits) ? payload.interestedUnits : [],
+      hasTDSReading: !!payload.hasTDSReading,
+      tdsValue: payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
+      futureMeetingSet: !!payload.futureMeetingSet,
+      futureMeetingDateTime: payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
+      freeTrial: !!payload.freeTrial,
+      freeTrialStartDate: payload.freeTrial && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
+      pricingDiscussed: !!payload.pricingDiscussed,
+      priceQuoted: payload.pricingDiscussed && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
+      leaseTerm: payload.pricingDiscussed && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
+      installationFee: payload.pricingDiscussed && typeof payload.installationFee === 'number' && !isNaN(payload.installationFee) ? payload.installationFee : null,
+      creditApproved: !!payload.creditApproved,
+      manualCommission: typeof payload.manualCommission === 'number' && !isNaN(payload.manualCommission) ? payload.manualCommission : null,
+      notesSummary: payload.notesSummary ?? null,
+      contactInfo: payload.contactInfo ?? null,
+  };
 
-    if (!payload.companyName || payload.companyName.trim() === '') {
-      return { error: 'Company name is required.' };
-    }
+  const finalVisitData: Visit = {
+    ...visitForDb,
+    id: visitId,
+    dealClosed: payload.dealClosed || false,
+    timestamp: new Date(visitForDb.timestamp),
+    futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
+    freeTrialStartDate: visitForDb.freeTrialStartDate ? new Date(visitForDb.freeTrialStartDate) : undefined,
+  };
 
-    const visitForDb: Omit<Visit, 'id' | 'dealClosed'> = {
-        companyName: payload.companyName.trim(),
-        city: payload.city ?? null,
-        timestamp: (payload.timestamp && new Date(payload.timestamp).toString() !== 'Invalid Date') ? new Date(payload.timestamp) : new Date(),
-        notes: payload.notes ?? null,
-        latitude: payload.latitude ?? null,
-        longitude: payload.longitude ?? null,
-        partnershipConfidence: typeof payload.partnershipConfidence === 'number' && !isNaN(payload.partnershipConfidence) ? payload.partnershipConfidence : null,
-        hasBusinessCard: !!payload.hasBusinessCard,
-        businessCardImageFrontUrl: payload.hasBusinessCard ? (payload.businessCardImageFrontUrl ?? null) : null,
-        businessCardImageBackUrl: payload.hasBusinessCard ? (payload.businessCardImageBackUrl ?? null) : null,
-        discussedCompetitors: !!payload.competitorName,
-        competitorName: payload.competitorName ?? null,
-        coolerType: payload.coolerType ?? null,
-        decisionMakerName: payload.decisionMakerName ?? null,
-        decisionMakerTitle: payload.decisionMakerTitle ?? null,
-        decisionMakerContact: payload.decisionMakerContact ?? null,
-        visitNumber: typeof payload.visitNumber === 'number' && !isNaN(payload.visitNumber) ? payload.visitNumber : null,
-        interestedUnits: Array.isArray(payload.interestedUnits) ? payload.interestedUnits : [],
-        hasTDSReading: !!payload.hasTDSReading,
-        tdsValue: payload.hasTDSReading && typeof payload.tdsValue === 'number' && !isNaN(payload.tdsValue) ? payload.tdsValue : null,
-        futureMeetingSet: !!payload.futureMeetingSet,
-        futureMeetingDateTime: payload.futureMeetingSet && payload.futureMeetingDateTime && new Date(payload.futureMeetingDateTime).toString() !== 'Invalid Date' ? new Date(payload.futureMeetingDateTime) : null,
-        freeTrial: !!payload.freeTrial,
-        freeTrialStartDate: payload.freeTrial && payload.freeTrialStartDate && new Date(payload.freeTrialStartDate).toString() !== 'Invalid Date' ? new Date(payload.freeTrialStartDate) : null,
-        pricingDiscussed: !!payload.pricingDiscussed,
-        priceQuoted: payload.pricingDiscussed && typeof payload.priceQuoted === 'number' && !isNaN(payload.priceQuoted) ? payload.priceQuoted : null,
-        leaseTerm: payload.pricingDiscussed && typeof payload.leaseTerm === 'number' && !isNaN(payload.leaseTerm) ? payload.leaseTerm : null,
-        installationFee: payload.pricingDiscussed && typeof payload.installationFee === 'number' && !isNaN(payload.installationFee) ? payload.installationFee : null,
-        creditApproved: !!payload.creditApproved,
-        manualCommission: typeof payload.manualCommission === 'number' && !isNaN(payload.manualCommission) ? payload.manualCommission : null,
-        notesSummary: payload.notesSummary ?? null,
-        contactInfo: payload.contactInfo ?? null,
-    };
-
-    const visitDocRef = doc(db, 'visits', visitId);
-    await setDoc(visitDocRef, visitForDb, { merge: true });
-
-    const finalVisitData: Visit = {
-      ...visitForDb,
-      id: visitId,
-      dealClosed: payload.dealClosed || false,
-      timestamp: new Date(visitForDb.timestamp),
-      futureMeetingDateTime: visitForDb.futureMeetingDateTime ? new Date(visitForDb.futureMeetingDateTime) : undefined,
-      freeTrialStartDate: visitForDb.freeTrialStartDate ? new Date(visitForDb.freeTrialStartDate) : undefined,
-    };
-
-    return { visit: finalVisitData, isNewVisit };
-
-  } catch (error: any) {
-    console.error("CRITICAL ERROR IN saveVisitAction:", error);
-    const errorMessage = String(error?.message || '').toLowerCase();
-    const errorCode = String(error?.code || '').toLowerCase();
-
-    if (errorCode.includes('permission-denied') || errorMessage.includes('permission denied')) {
-        return { error: 'Failed to save: Permission denied. Please check your Firestore security rules.' };
-    }
-    if (errorMessage.includes('document data maximum size')) {
-        return { error: 'Failed to save: The visit data is too large. This can be caused by a very large business card image. Please try a smaller image.' };
-    }
-    if (errorCode.includes('invalid-argument') || errorMessage.includes('invalid argument')) {
-         return { error: `Failed to save: Invalid data was sent to the database. Details: ${error.message}` };
-    }
-
-    return { error: `An unexpected error occurred during the save operation. Details: ${error.message || 'No specific error message was provided.'}` };
-  }
+  return { visit: finalVisitData, isNewVisit };
 }
 
 export async function deleteVisitAction(visitId: string): Promise<{ success?: boolean; error?: string }> {
-    if (!db) {
-        return { error: 'Firebase is not configured. Cannot delete visit.' };
-    }
+    // CLOUD SYNC DISABLED FOR TESTING
     if (!visitId || visitId.startsWith('temp_')) {
-        return { success: true }; // Optimistically deleted, no need to call DB
-    }
-
-    try {
-        const visitDocRef = doc(db, 'visits', visitId);
-        await deleteDoc(visitDocRef);
         return { success: true };
-    } catch (error: any) {
-        console.error("Error in deleteVisitAction:", error);
-        return { error: `Failed to delete visit: ${error.message}` };
     }
+    return { success: true };
 }
 
 const getCompanyNameFromCoordsPayloadSchema = z.object({
@@ -269,113 +234,19 @@ export async function findCompanyAction(
 
 // Action to update the dealClosed status from the card
 export async function updateDealClosedAction(visitId: string, dealClosed: boolean): Promise<{ success?: boolean, error?: string }> {
-    if (!db) {
-        return { error: 'Firebase is not configured. Cannot update visit.' };
-    }
+    // CLOUD SYNC DISABLED FOR TESTING
     if (!visitId) {
         return { error: 'Visit ID is required.' };
     }
-
-    try {
-        const visitDocRef = doc(db, 'visits', visitId);
-        await setDoc(visitDocRef, { dealClosed }, { merge: true });
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error in updateDealClosedAction:", error);
-        return { error: `Failed to update deal status: ${error.message}` };
-    }
+    return { success: true };
 }
 
 export async function saveDailyReportAction(visits: Visit[], salespersonName?: string): Promise<{ success?: boolean; url?: string; error?: string }> {
-  if (!firebaseConfigured) {
-    return { error: 'Firebase/GCS is not configured. Cannot save report.' };
-  }
+  // CLOUD SYNC DISABLED FOR TESTING
   if (!visits || visits.length === 0) {
     return { error: 'No visits to generate a report for.' };
   }
-
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-
-  if (!projectId || !bucketName) {
-    return { error: 'Server configuration error: Missing Firebase Project ID or Storage Bucket Name.' };
-  }
-
-  try {
-    const storage = new Storage({ projectId });
-    
-    // CSV Generation Logic
-    const headers = [
-      'ID', 'Timestamp', 'Latitude', 'Longitude', 'Company Name', 'City', 'Notes', 
-      'Contact Info', 'Contact Confidence', 'Notes Summary', 'Partnership Confidence',
-      'Has Business Card', 'Business Card Front URL', 'Business Card Back URL', 'Discussed Competitors', 
-      'Competitor Name', 'Cooler Type', 'Decision Maker Name', 'Decision Maker Title',
-      'Decision Maker Contact', 'Visit Number', 'Interested Units', 'Has TDS Reading', 
-      'TDS Value', 'Future Meeting Set', 'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission Override'
-    ];
-    const rows = visits.map(visit => [
-      visit.id,
-      new Date(visit.timestamp).toISOString(),
-      visit.latitude ?? '',
-      visit.longitude ?? '',
-      `"${(visit.companyName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.city ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.notes ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.contactInfo?.info ?? '').replace(/"/g, '""')}"`,
-      visit.contactInfo?.confidence ?? '',
-      `"${(visit.notesSummary ?? '').replace(/"/g, '""')}"`,
-      visit.partnershipConfidence ?? '',
-      visit.hasBusinessCard ? 'Yes' : 'No',
-      `"${(visit.businessCardImageFrontUrl ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.businessCardImageBackUrl ?? '').replace(/"/g, '""')}"`,
-      visit.discussedCompetitors ? 'Yes' : 'No',
-      `"${(visit.competitorName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.coolerType ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerName ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerTitle ?? '').replace(/"/g, '""')}"`,
-      `"${(visit.decisionMakerContact ?? '').replace(/"/g, '""')}"`,
-      visit.visitNumber ?? '',
-      `"${(visit.interestedUnits?.join('; ') ?? '').replace(/"/g, '""')}"`,
-      visit.hasTDSReading ? 'Yes' : 'No',
-      visit.tdsValue ?? '',
-      visit.futureMeetingSet ? 'Yes' : 'No',
-      visit.futureMeetingDateTime ? new Date(visit.futureMeetingDateTime).toISOString() : '',
-      visit.freeTrial ? 'Yes' : 'No',
-      visit.freeTrialStartDate ? new Date(visit.freeTrialStartDate).toISOString() : '',
-      visit.dealClosed ? 'Yes' : 'No',
-      visit.pricingDiscussed ? 'Yes' : 'No',
-      visit.priceQuoted ?? '',
-      visit.leaseTerm ?? '',
-      visit.installationFee ?? '',
-      visit.creditApproved ? 'Yes' : 'No',
-      visit.manualCommission ?? '',
-    ].join(','));
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    
-    const safeSalespersonName = salespersonName ? salespersonName.replace(/[^a-zA-Z0-9]/g, '_') : 'user';
-    const reportDate = format(new Date(), 'yyyy-MM-dd');
-    const fileName = `trails/trail_report_${safeSalespersonName}_${reportDate}.csv`;
-    const file = storage.bucket(bucketName).file(fileName);
-
-    await file.save(csvContent, {
-      metadata: { contentType: 'text/csv' },
-    });
-
-    const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
-    return { success: true, url: publicUrl };
-
-  } catch (error: any) {
-    console.error("Error in saveDailyReportAction:", error);
-    const errorMessage = String(error?.message || '').toLowerCase();
-    if (errorMessage.includes('could not refresh access token')) {
-      return { error: 'Authentication Failed. To fix this, grant the "Service Account Token Creator" role to your app\'s service account in your Google Cloud IAM page.' };
-    }
-    if (errorMessage.includes('forbidden') || error.code === 403) {
-      return { error: 'Permission Denied. The service account may need the "Storage Object Creator" role.' };
-    }
-    return { error: `Failed to save daily report to storage: ${error.message}` };
-  }
+  return { error: 'Cloud saving is disabled for testing.' };
 }
 
 const extractDetailsSchema = z.object({
@@ -445,5 +316,7 @@ export async function analyzeDocumentAction(
 
 
 
+
+    
 
     
