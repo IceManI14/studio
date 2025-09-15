@@ -146,8 +146,25 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+// Flag to disable UI toasts for testing
+const inTestingMode = process.env.NODE_ENV !== 'production';
+
 function toast({ ...props }: Toast) {
   const id = genId()
+
+  if (inTestingMode) {
+    console.log('Toast Triggered:', {
+      title: props.title,
+      description: props.description,
+      variant: props.variant,
+    });
+    // Return dummy functions so consuming code doesn't break
+    return {
+      id: id,
+      dismiss: () => {},
+      update: () => {},
+    }
+  }
 
   const update = (props: ToasterToast) =>
     dispatch({
