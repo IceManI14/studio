@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -2249,6 +2250,9 @@ export default function HomePage() {
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                      <UserPlus className="mr-2 h-4 w-4" /> Bonnie Lead
+                    </Button>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
                     <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <LogIn className="mr-2 h-4 w-4" /> Import Trail
@@ -2828,7 +2832,7 @@ export default function HomePage() {
                                     Your Visits: {visitsToDisplay.length}
                                 </Badge>
                                 <div className="flex flex-wrap gap-2 justify-center">
-                                    <ExportPdfButton visits={visitsToDisplay} className="h-8 px-2 text-xs" />
+                                    <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
                                     <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
                                     Email Manager
                                     </Button>
@@ -3636,3 +3640,4 @@ export default function HomePage() {
     </div>
   );
 }
+
