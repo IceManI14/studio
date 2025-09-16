@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
@@ -106,6 +107,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
             } else if (result.places && result.places.length > 0) {
                 setFoundPlaces(result.places);
                 onAddHotLeads(result.places);
+                toast({ title: `${result.places.length} lead(s) found`, description: "They have been added to the Bonnie List." });
             } else {
                  toast({ title: "No Results Found", description: "No companies found with that name in the specified area." });
             }
@@ -145,9 +147,9 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Find a Company</DialogTitle>
+                    <DialogTitle>Find a Company for Bonnie's List</DialogTitle>
                     <DialogDescription>
-                        Search for all branches of a company within your territory. You can optionally narrow the search to a specific city.
+                        Search for all branches of a company within your territory. You can optionally narrow the search to a specific city. Found leads are added to the Bonnie List.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -206,7 +208,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                         </div>
                     </div>
                     <Button onClick={handleSearch} disabled={isSearching || !!recordingField} className="w-full">
-                        {isSearching ? <Loader2 className="animate-spin" /> : 'Search'}
+                        {isSearching ? <Loader2 className="animate-spin" /> : 'Search & Add to Bonnie List'}
                     </Button>
                 </div>
                 {foundPlaces.length > 0 && (
@@ -254,3 +256,4 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
         </Dialog>
     );
 }
+
