@@ -3584,6 +3584,11 @@ export default function HomePage() {
             destinationCities={destinationCities}
             territory={selectedSalesperson?.territory}
             isBonnieLeadMode={true}
+            hotLeads={hotLeads}
+            onDeleteHotLead={handleDeleteHotLead}
+            onUpdateHotLeadNotes={handleUpdateHotLeadNotes}
+            convertedHotLeads={convertedHotLeads}
+            onAddHotLeadAsVisit={handleAddHotLeadAsVisit}
         />
         
         <ManageFilesModal
@@ -3641,9 +3646,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
-
-
-    
