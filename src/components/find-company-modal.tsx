@@ -212,7 +212,7 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
                         </div>
                     </div>
                     <Button onClick={handleSearch} disabled={isSearching || !!recordingField} className="w-full">
-                        {isSearching ? <Loader2 className="animate-spin" /> : 'Search & Add to Bonnie List'}
+                        {isSearching ? <Loader2 className="animate-spin" /> : 'Add to Bonnie Lead'}
                     </Button>
                 </div>
                 {foundPlaces.length > 0 && (
