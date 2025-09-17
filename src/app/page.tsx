@@ -285,8 +285,7 @@ export default function HomePage() {
   const eagleEyeRef = useRef<HTMLDivElement>(null);
   const currentCityRef = useRef<string | null>(null);
   const importReportInputRef = useRef<HTMLInputElement>(null);
-  const [isBonnieLeadModalOpen, setIsBonnieLeadModalOpen] = useState(false);
-
+  
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
   // Memos
@@ -2251,7 +2250,7 @@ export default function HomePage() {
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
-                    <Button onClick={() => setIsBonnieLeadModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Bonnie Lead
                     </Button>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
@@ -2771,7 +2770,7 @@ export default function HomePage() {
                       <UiCardContent className="flex-grow flex flex-col">
                           <div className="mb-4 flex justify-center">
                               <Button onClick={() => setIsFindCompanyModalOpen(true)} size="sm" disabled={!!importedVisits}>
-                                  <Search className="mr-2 h-4 w-4" /> Find Company
+                                  <Search className="mr-2 h-4 w-4" /> Create Lead
                               </Button>
                           </div>
                           {hotLeads.length === 0 ? (
@@ -3576,167 +3575,16 @@ export default function HomePage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
-        <Dialog open={isBonnieLeadModalOpen} onOpenChange={setIsBonnieLeadModalOpen}>
-            <DialogContent className="max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Bonnie Lead List</DialogTitle>
-                    <DialogDescription>
-                        Manage the prospect list for Bonnie. Find new companies or review existing leads.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="pt-4">
-                    <Accordion type="single" collapsible className="w-full">
-                        <AccordionItem value="bonnie-list-accordion">
-                            <AccordionTrigger>
-                                <h3 className="text-lg font-medium text-foreground">
-                                    View Bonnie's List ({hotLeads.length})
-                                </h3>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                               <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col shadow-none">
-                                    <UiCardHeader>
-                                        <div className="flex justify-between items-center">
-                                            <UiCardDescription>A list of possible customer leads for our telemarketer to phone call and try to set up an appointment.</UiCardDescription>
-                                            {hotLeads.length > 0 && (
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="sm">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Clear
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This will permanently delete all {hotLeads.length} hot leads from your local device. This action cannot be undone.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={handleClearHotLeads}>Clear</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            )}
-                                        </div>
-                                    </UiCardHeader>
-                                    <UiCardContent className="flex-grow flex flex-col">
-                                        <div className="mb-4 flex justify-center">
-                                            <Button onClick={() => { setIsBonnieLeadModalOpen(false); setIsFindCompanyModalOpen(true); }} size="sm" disabled={!!importedVisits}>
-                                                <Search className="mr-2 h-4 w-4" /> Find New Company
-                                            </Button>
-                                        </div>
-                                        {hotLeads.length === 0 ? (
-                                            <div className="flex-grow flex items-center justify-center">
-                                                <p className="text-sm text-muted-foreground text-center py-4">No leads yet. Use the "Find New Company" button to build the list.</p>
-                                            </div>
-                                        ) : (
-                                            <ScrollArea className="h-64">
-                                                <div className="space-y-3 pr-4">
-                                                    {hotLeads.map((lead, index) => {
-                                                        const isConverted = convertedHotLeads.has(lead.id);
-                                                        return (
-                                                        <div key={lead.id} className="p-3 rounded-md border-2 border-orange-500 space-y-2 shadow-lg shadow-orange-500/20 flex flex-col bg-background/50">
-                                                            <div className="flex-grow space-y-2">
-                                                                <div className="bg-muted/50 p-2 rounded-md">
-                                                                    <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                                    <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
-                                                                    {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
-                                                                </div>
-
-                                                                <div className="space-y-1 bg-black p-2 rounded-md">
-                                                                    <Label htmlFor={`bonnie-lead-notes-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
-                                                                    <div className="relative">
-                                                                        <Textarea
-                                                                            id={`bonnie-lead-notes-${lead.id}`}
-                                                                            value={lead.notes || ''}
-                                                                            onChange={(e) => handleUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                                            placeholder="e.g., Competitor: Blue Drop."
-                                                                            className="text-sm h-20 bg-black pr-10"
-                                                                            rows={3}
-                                                                            disabled={isRecordingHotLeadNotes === lead.id}
-                                                                        />
-                                                                        <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() => handleToggleVoiceForHotLead(lead.id)}
-                                                                        className="absolute right-1 top-1 h-8 w-8"
-                                                                        aria-label="Dictate lead notes"
-                                                                        >
-                                                                        {isRecordingHotLeadNotes === lead.id ? (
-                                                                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                                                        ) : (
-                                                                            <Mic className="h-4 w-4 text-foreground" />
-                                                                        )}
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50 shrink-0">
-                                                                <Button 
-                                                                    variant={isConverted ? "default" : "outline"}
-                                                                    size="sm" 
-                                                                    className="h-7 px-2 text-xs"
-                                                                    onClick={() => handleAddHotLeadAsVisit(lead)}
-                                                                    disabled={isConverted}
-                                                                >
-                                                                    {isConverted ? (
-                                                                        <>
-                                                                            <CheckCircle className="mr-1 h-3 w-3" /> Added
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <PlusSquare className="mr-1 h-3 w-3" /> Add Future Visit
-                                                                        </>
-                                                                    )}
-                                                                </Button>
-                                                                <AlertDialog>
-                                                                    <AlertDialogTrigger asChild>
-                                                                        <Button variant="destructive" size="icon" className="h-7 w-7">
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </AlertDialogTrigger>
-                                                                    <AlertDialogContent>
-                                                                        <AlertDialogHeader>
-                                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                            <AlertDialogDescription>
-                                                                                This will permanently delete the lead for "{lead.companyName}". This action cannot be undone.
-                                                                            </AlertDialogDescription>
-                                                                        </AlertDialogHeader>
-                                                                        <AlertDialogFooter>
-                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                            <AlertDialogAction onClick={() => handleDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
-                                                                        </AlertDialogFooter>
-                                                                    </AlertDialogContent>
-                                                                </AlertDialog>
-                                                            </div>
-                                                        </div>
-                                                    )})}
-                                                </div>
-                                            </ScrollArea>
-                                        )}
-                                    </UiCardContent>
-                                    {hotLeads.length > 0 && (
-                                        <UiCardFooter className="flex-wrap gap-2 shrink-0">
-                                            <ExportHotLeadsCsvButton hotLeads={hotLeads} size="sm" variant="default" />
-                                            <Button onClick={handleEmailHotLeads} variant="default" size="sm">
-                                                <Mail className="mr-2 h-4 w-4" /> Email to Bonnie
-                                            </Button>
-                                        </UiCardFooter>
-                                    )}
-                                </UiCard>
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsBonnieLeadModalOpen(false)}>Close</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        
+        <FindCompanyModal
+            isOpen={isFindCompanyModalOpen}
+            onClose={() => setIsFindCompanyModalOpen(false)}
+            onAddAsVisit={handleAddFoundCompanyAsVisit}
+            onAddHotLeads={handleAddHotLeads}
+            destinationCities={destinationCities}
+            territory={selectedSalesperson?.territory}
+            isBonnieLeadMode={true}
+        />
         
         <ManageFilesModal
             isOpen={isManageFilesModalOpen}
@@ -3796,3 +3644,6 @@ export default function HomePage() {
 
 
 
+
+
+    

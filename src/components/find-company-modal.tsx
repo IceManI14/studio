@@ -22,9 +22,10 @@ interface FindCompanyModalProps {
     onAddHotLeads: (places: FoundPlace[]) => void;
     destinationCities: string[];
     territory?: Territory[];
+    isBonnieLeadMode?: boolean;
 }
 
-export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddHotLeads, destinationCities, territory }: FindCompanyModalProps) {
+export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddHotLeads, destinationCities, territory, isBonnieLeadMode }: FindCompanyModalProps) {
     const [companyName, setCompanyName] = useState('');
     const [city, setCity] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -147,9 +148,12 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Find a Company for Bonnie's List</DialogTitle>
+                    <DialogTitle>{isBonnieLeadMode ? "Create a Lead for Bonnie" : "Find a Company"}</DialogTitle>
                     <DialogDescription>
-                        Search for all branches of a company within your territory. You can optionally narrow the search to a specific city. Found leads are added to the Bonnie List.
+                        {isBonnieLeadMode 
+                            ? "Dictate or type the company name and location to create a new lead for Bonnie."
+                            : "Search for all branches of a company within your territory. You can optionally narrow the search to a specific city."
+                        }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -257,3 +261,6 @@ export default function FindCompanyModal({ isOpen, onClose, onAddAsVisit, onAddH
     );
 }
 
+
+
+    
