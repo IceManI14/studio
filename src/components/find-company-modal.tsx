@@ -219,7 +219,7 @@ export default function FindCompanyModal({
                         </div>
                     </div>
                     <Button onClick={handleSearch} disabled={isSearching || !!recordingField} className="w-full">
-                        {isSearching ? <Loader2 className="animate-spin" /> : 'Add to Bonnie Leads'}
+                        {isSearching ? <Loader2 className="animate-spin" /> : 'Search & Add to Bonnie List'}
                     </Button>
                 </div>
                 
