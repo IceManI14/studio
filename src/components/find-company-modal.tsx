@@ -192,13 +192,13 @@ export default function FindCompanyModal({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="city-search">City (Optional)</Label>
+                        <Label htmlFor="city-search">Location</Label>
                          <div className="relative flex items-center">
                             <Input
                                 id="city-search"
                                 value={city}
                                 onChange={(e) => setCity(e.target.value)}
-                                placeholder="Leave blank to search entire territory"
+                                placeholder="Enter company location (e.g., Boston, MA)"
                                 className="pr-10"
                                 disabled={!!recordingField}
                             />
