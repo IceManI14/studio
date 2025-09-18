@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from './ui/textarea';
+import ExportHotLeadsPdfButton from './export-hot-leads-pdf-button';
 
 
 interface FindCompanyModalProps {
@@ -287,6 +288,9 @@ export default function FindCompanyModal({
                                         })}
                                     </div>
                                 </ScrollArea>
+                                <div className="mt-4 flex justify-start">
+                                    <ExportHotLeadsPdfButton hotLeads={hotLeads} />
+                                </div>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>

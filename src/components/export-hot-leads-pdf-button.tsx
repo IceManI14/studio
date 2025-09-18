@@ -34,7 +34,7 @@ const ExportHotLeadsPdfButton: React.FC<ExportHotLeadsPdfButtonProps> = ({ hotLe
       const doc = new jsPDF();
       
       doc.setFontSize(18);
-      doc.text('Optimum Trailblazer - Hot Leads List', 14, 22);
+      doc.text('Optimum Trailblazer - Bonnie\'s Leads', 14, 22);
       doc.setFontSize(11);
       doc.setTextColor(100);
       const exportDate = formatInTimeZone(new Date(), timeZone, 'MMM d, yyyy, h:mm a');
