@@ -8,12 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, Map, MapPin, Phone, Clock, PlusSquare, Mic, Trash2, Building } from 'lucide-react';
+import { Loader2, MapPin, Phone, PlusSquare, Mic, Trash2, Building } from 'lucide-react';
 import type { Visit, Territory, FoundPlace, HotLead } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from './ui/textarea';
@@ -127,9 +125,16 @@ export default function FindCompanyModal({
                 territory: territory
             });
             if (result.error) {
-                toast({ variant: 'destructive', title: "Search Failed", description: result.error });
+                // Manually create a hot lead if the API is disabled
+                const newLead: FoundPlace = {
+                    companyName: companyName,
+                    address: 'N/A',
+                    city: city || 'N/A',
+                    phone: 'N/A',
+                };
+                onAddHotLeads([newLead]);
+                toast({ title: "Lead Added Manually", description: "Location services disabled. Lead added with provided info." });
             } else if (result.places && result.places.length > 0) {
-                setFoundPlaces(result.places);
                 onAddHotLeads(result.places);
                 toast({ title: `${result.places.length} lead(s) found`, description: "They have been added to the Bonnie List." });
             } else {
@@ -139,6 +144,8 @@ export default function FindCompanyModal({
             toast({ variant: 'destructive', title: "Error", description: error.message });
         } finally {
             setIsSearching(false);
+            setCompanyName('');
+            setCity('');
         }
     };
     
@@ -238,7 +245,7 @@ export default function FindCompanyModal({
                                                     <div className="flex-grow space-y-2">
                                                         <div className="bg-muted/50 p-2 rounded-md">
                                                             <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                            <p className="text-sm text-muted-foreground pl-6">{lead.address}</p>
+                                                            <p className="text-sm text-muted-foreground pl-6 flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.address}</p>
                                                             {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
                                                         </div>
                                                         <div className="space-y-1 bg-black p-2 rounded-md">
@@ -303,3 +310,5 @@ export default function FindCompanyModal({
         </Dialog>
     );
 }
+
+    
