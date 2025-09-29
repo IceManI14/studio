@@ -117,13 +117,14 @@ export default function FindCompanyModal({
         }
         setIsSearching(true);
         
-        const newLead: FoundPlace = {
+        const newLead: HotLead = {
+            id: crypto.randomUUID(),
             companyName: companyName,
             address: 'N/A', // Address will come from search or be manually added to notes
             city: location || 'N/A',
             phone: phone || 'N/A',
-            // Pre-fill notes with contact name if provided
             notes: contactName ? `Contact: ${contactName}` : '',
+            addedAt: new Date(),
         };
 
         onAddHotLeads([newLead]);

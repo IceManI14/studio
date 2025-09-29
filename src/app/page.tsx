@@ -871,35 +871,13 @@ export default function HomePage() {
     }
   }, [isRecordingCitySearch, toast]);
 
-  const handleAddHotLeads = useCallback((places: FoundPlace[]) => {
+  const handleAddHotLeads = useCallback((newLeads: HotLead[]) => {
     setHotLeads(prevHotLeads => {
-        const newLeads: HotLead[] = places.map(place => ({
-            id: crypto.randomUUID(),
-            companyName: place.companyName,
-            address: place.address,
-            city: place.city,
-            phone: place.phone,
-            latitude: place.latitude,
-            longitude: place.longitude,
-            addedAt: new Date(),
-            notes: '',
-        }));
-
-        const existingAddresses = new Set(prevHotLeads.map(lead => lead.address));
-        const uniqueNewLeads = newLeads.filter(lead => !existingAddresses.has(lead.address));
-
-        if (uniqueNewLeads.length > 0) {
-            toast({
-                title: `${uniqueNewLeads.length} Hot Lead(s) Added`,
-                description: `New potential leads have been saved locally for future reference.`
-            });
-        }
-        
-        const updatedLeads = [...prevHotLeads, ...uniqueNewLeads];
+        const updatedLeads = [...prevHotLeads, ...newLeads];
         localStorage.setItem('hotLeads', JSON.stringify(updatedLeads));
         return updatedLeads;
     });
-  }, [toast]);
+  }, []);
 
   const handleUpdateVisit = useCallback(async (visitId: string, updatedData: Partial<Visit>) => {
     const visitToUpdate = visitsToDisplay.find(v => v.id === visitId);
