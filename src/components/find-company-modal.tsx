@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, MapPin, Phone, PlusSquare, Mic, Trash2, Building } from 'lucide-react';
+import { Loader2, MapPin, Phone, PlusSquare, Mic, Trash2, Building, User } from 'lucide-react';
 import type { Visit, Territory, FoundPlace, HotLead } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -48,14 +48,15 @@ export default function FindCompanyModal({
     onAddHotLeadAsVisit,
 }: FindCompanyModalProps) {
     const [companyName, setCompanyName] = useState('');
-    const [city, setCity] = useState('');
+    const [location, setLocation] = useState('');
+    const [phone, setPhone] = useState('');
+    const [contactName, setContactName] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [foundPlaces, setFoundPlaces] = useState<FoundPlace[]>([]);
     const { toast } = useToast();
-    const [recordingField, setRecordingField] = useState<'company' | 'city' | null>(null);
+    const [recordingField, setRecordingField] = useState<'company' | 'location' | 'phone' | 'contact' | null>(null);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-    const handleToggleVoice = useCallback((field: 'company' | 'city') => {
+    const handleToggleVoice = useCallback((field: 'company' | 'location' | 'phone' | 'contact') => {
         const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (!SpeechRecognition) {
             toast({ variant: 'destructive', title: 'Voice Recognition Not Supported' });
@@ -93,11 +94,10 @@ export default function FindCompanyModal({
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             if (transcript) {
-                if (field === 'company') {
-                    setCompanyName(transcript);
-                } else if (field === 'city') {
-                    setCity(transcript);
-                }
+                if (field === 'company') setCompanyName(transcript);
+                else if (field === 'location') setLocation(transcript);
+                else if (field === 'phone') setPhone(transcript);
+                else if (field === 'contact') setContactName(transcript);
                 toast({ title: `${field.charAt(0).toUpperCase() + field.slice(1)} Updated` });
             }
         };
@@ -116,43 +116,32 @@ export default function FindCompanyModal({
             return;
         }
         setIsSearching(true);
-        setFoundPlaces([]);
-        try {
-            const result = await findCompanyAction({ 
-                companyName, 
-                city: city.trim() ? city.trim() : undefined,
-                territoryCities: destinationCities,
-                territory: territory
-            });
-            if (result.error) {
-                // Manually create a hot lead if the API is disabled
-                const newLead: FoundPlace = {
-                    companyName: companyName,
-                    address: 'N/A',
-                    city: city || 'N/A',
-                    phone: 'N/A',
-                };
-                onAddHotLeads([newLead]);
-                toast({ title: "Lead Added Manually", description: "Location services disabled. Lead added with provided info." });
-            } else if (result.places && result.places.length > 0) {
-                onAddHotLeads(result.places);
-                toast({ title: `${result.places.length} lead(s) found`, description: "They have been added to the Bonnie List." });
-            } else {
-                 toast({ title: "No Results Found", description: "No companies found with that name in the specified area." });
-            }
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: "Error", description: error.message });
-        } finally {
-            setIsSearching(false);
-            setCompanyName('');
-            setCity('');
-        }
+        
+        const newLead: FoundPlace = {
+            companyName: companyName,
+            address: 'N/A', // Address will come from search or be manually added to notes
+            city: location || 'N/A',
+            phone: phone || 'N/A',
+            // Pre-fill notes with contact name if provided
+            notes: contactName ? `Contact: ${contactName}` : '',
+        };
+
+        onAddHotLeads([newLead]);
+        toast({ title: "Lead Added", description: `${companyName} has been added to Bonnie's list.` });
+
+        // Clear form after adding
+        setCompanyName('');
+        setLocation('');
+        setPhone('');
+        setContactName('');
+        setIsSearching(false);
     };
     
     const handleClose = () => {
         setCompanyName('');
-        setCity('');
-        setFoundPlaces([]);
+        setLocation('');
+        setPhone('');
+        setContactName('');
         if (recognitionRef.current) {
             recognitionRef.current.stop();
         }
@@ -199,13 +188,13 @@ export default function FindCompanyModal({
                             </Button>
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="city-search">Location</Label>
+                     <div className="space-y-2">
+                        <Label htmlFor="location-search">Location</Label>
                          <div className="relative flex items-center">
                             <Input
-                                id="city-search"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
+                                id="location-search"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
                                 placeholder="Enter company location (e.g., Boston, MA)"
                                 className="pr-10"
                                 disabled={!!recordingField}
@@ -214,11 +203,66 @@ export default function FindCompanyModal({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleToggleVoice('city')}
+                                onClick={() => handleToggleVoice('location')}
                                 className="absolute right-1 h-8 w-8"
-                                aria-label="Dictate city"
+                                aria-label="Dictate location"
                             >
-                                {recordingField === 'city' ? (
+                                {recordingField === 'location' ? (
+                                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                ) : (
+                                    <Mic className="h-4 w-4 text-foreground" />
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="phone-search">Phone Number</Label>
+                         <div className="relative flex items-center">
+                            <Input
+                                id="phone-search"
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="e.g., 555-123-4567"
+                                className="pr-10"
+                                disabled={!!recordingField}
+                            />
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleVoice('phone')}
+                                className="absolute right-1 h-8 w-8"
+                                aria-label="Dictate phone number"
+                            >
+                                {recordingField === 'phone' ? (
+                                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                ) : (
+                                    <Mic className="h-4 w-4 text-foreground" />
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="contact-search">Contact Name</Label>
+                         <div className="relative flex items-center">
+                            <Input
+                                id="contact-search"
+                                value={contactName}
+                                onChange={(e) => setContactName(e.target.value)}
+                                placeholder="e.g., Jane Doe, Office Manager"
+                                className="pr-10"
+                                disabled={!!recordingField}
+                            />
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleVoice('contact')}
+                                className="absolute right-1 h-8 w-8"
+                                aria-label="Dictate contact name"
+                            >
+                                {recordingField === 'contact' ? (
                                     <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                                 ) : (
                                     <Mic className="h-4 w-4 text-foreground" />
@@ -232,7 +276,7 @@ export default function FindCompanyModal({
                 </div>
                 
                 {hotLeads.length > 0 && (
-                    <Accordion type="single" collapsible className="w-full mt-4">
+                    <Accordion type="single" collapsible className="w-full mt-4" defaultValue="bonnie-list">
                         <AccordionItem value="bonnie-list">
                             <AccordionTrigger>Bonnie's List ({hotLeads.length})</AccordionTrigger>
                             <AccordionContent>
@@ -245,7 +289,7 @@ export default function FindCompanyModal({
                                                     <div className="flex-grow space-y-2">
                                                         <div className="bg-muted/50 p-2 rounded-md">
                                                             <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                            <p className="text-sm text-muted-foreground pl-6 flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.address}</p>
+                                                            <p className="text-sm text-muted-foreground pl-6 flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.city}</p>
                                                             {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
                                                         </div>
                                                         <div className="space-y-1 bg-black p-2 rounded-md">
@@ -254,7 +298,7 @@ export default function FindCompanyModal({
                                                                 id={`hot-lead-notes-modal-${lead.id}`}
                                                                 value={lead.notes || ''}
                                                                 onChange={(e) => onUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                                placeholder="e.g., Competitor contract ends soon..."
+                                                                placeholder="e.g., Contact: John Doe, contract ends soon..."
                                                                 className="text-sm h-20 bg-black"
                                                                 rows={3}
                                                             />
@@ -310,5 +354,3 @@ export default function FindCompanyModal({
         </Dialog>
     );
 }
-
-    

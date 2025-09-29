@@ -80,6 +80,7 @@ export interface FoundPlace {
     latitude?: number;
     longitude?: number;
     openingHours?: string[];
+    notes?: string;
 }
 
 export interface HotLead {
