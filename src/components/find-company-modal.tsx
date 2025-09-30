@@ -22,7 +22,7 @@ interface FindCompanyModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAddAsVisit: (visitData: Partial<Visit>) => void;
-    onAddHotLeads: (places: FoundPlace[]) => void;
+    onAddHotLeads: (places: HotLead[]) => void;
     destinationCities: string[];
     territory?: Territory[];
     isBonnieLeadMode?: boolean;
@@ -120,7 +120,7 @@ export default function FindCompanyModal({
         const newLead: HotLead = {
             id: crypto.randomUUID(),
             companyName: companyName,
-            address: 'N/A', // Address will come from search or be manually added to notes
+            address: 'N/A',
             city: location || 'N/A',
             phone: phone || 'N/A',
             notes: contactName ? `Contact: ${contactName}` : '',
@@ -130,7 +130,6 @@ export default function FindCompanyModal({
         onAddHotLeads([newLead]);
         toast({ title: "Lead Added", description: `${companyName} has been added to Bonnie's list.` });
 
-        // Clear form after adding
         setCompanyName('');
         setLocation('');
         setPhone('');
