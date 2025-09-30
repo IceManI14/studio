@@ -25,7 +25,7 @@ interface FindCompanyModalProps {
     onAddHotLeads: (places: HotLead[]) => void;
     destinationCities: string[];
     territory?: Territory[];
-    isBonnieLeadMode?: boolean;
+    isTelemarketerLeadMode?: boolean;
     hotLeads: HotLead[];
     onDeleteHotLead: (leadId: string) => void;
     onUpdateHotLeadNotes: (leadId: string, notes: string) => void;
@@ -40,7 +40,7 @@ export default function FindCompanyModal({
     onAddHotLeads,
     destinationCities,
     territory,
-    isBonnieLeadMode,
+    isTelemarketerLeadMode,
     hotLeads,
     onDeleteHotLead,
     onUpdateHotLeadNotes,
@@ -128,7 +128,7 @@ export default function FindCompanyModal({
         };
 
         onAddHotLeads([newLead]);
-        toast({ title: "Lead Added", description: `${companyName} has been added to Bonnie's list.` });
+        toast({ title: "Lead Added", description: `${companyName} has been added to the Telemarketer list.` });
 
         setCompanyName('');
         setLocation('');
@@ -152,10 +152,10 @@ export default function FindCompanyModal({
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{isBonnieLeadMode ? "Create a Lead for Bonnie" : "Find a Company"}</DialogTitle>
+                    <DialogTitle>{isTelemarketerLeadMode ? "Create a Telemarketer Lead" : "Find a Company"}</DialogTitle>
                     <DialogDescription>
-                        {isBonnieLeadMode 
-                            ? "Dictate or type the company name and location to create a new lead for Bonnie."
+                        {isTelemarketerLeadMode 
+                            ? "Dictate or type the company name and location to create a new lead for the Telemarketer."
                             : "Search for all branches of a company within your territory. You can optionally narrow the search to a specific city."
                         }
                     </DialogDescription>
@@ -276,9 +276,9 @@ export default function FindCompanyModal({
                         </Button>
 
                         {hotLeads.length > 0 && (
-                            <Accordion type="single" collapsible className="w-full mt-4" defaultValue="bonnie-list">
-                                <AccordionItem value="bonnie-list">
-                                    <AccordionTrigger>Bonnie's List ({hotLeads.length})</AccordionTrigger>
+                            <Accordion type="single" collapsible className="w-full mt-4" defaultValue="telemarketer-list">
+                                <AccordionItem value="telemarketer-list">
+                                    <AccordionTrigger>Telemarketer List ({hotLeads.length})</AccordionTrigger>
                                     <AccordionContent>
                                         <Accordion type="multiple" className="space-y-3">
                                             {hotLeads.map((lead) => {

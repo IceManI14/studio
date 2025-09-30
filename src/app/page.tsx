@@ -2229,7 +2229,7 @@ export default function HomePage() {
                         Quicklog
                     </Button>
                     <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
-                      <UserPlus className="mr-2 h-4 w-4" /> Bonnie Lead
+                      <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
                     <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
                     <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
@@ -3408,7 +3408,7 @@ export default function HomePage() {
             onAddHotLeads={handleAddHotLeads}
             destinationCities={destinationCities}
             territory={selectedSalesperson?.territory}
-            isBonnieLeadMode={true}
+            isTelemarketerLeadMode={true}
             hotLeads={hotLeads}
             onDeleteHotLead={handleDeleteHotLead}
             onUpdateHotLeadNotes={handleUpdateHotLeadNotes}
