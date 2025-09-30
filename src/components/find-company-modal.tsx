@@ -281,63 +281,67 @@ export default function FindCompanyModal({
                             <AccordionTrigger>Bonnie's List ({hotLeads.length})</AccordionTrigger>
                             <AccordionContent>
                                 <ScrollArea className="max-h-60">
-                                    <div className="space-y-3 pr-4">
-                                        {hotLeads.map((lead, index) => {
+                                    <Accordion type="multiple" className="space-y-3 pr-4">
+                                        {hotLeads.map((lead) => {
                                             const isConverted = convertedHotLeads.has(lead.id);
                                             return (
-                                                <div key={lead.id} className="p-3 rounded-md border border-orange-500/50 space-y-2 flex flex-col bg-background/50">
-                                                    <div className="flex-grow space-y-2">
-                                                        <div className="bg-muted/50 p-2 rounded-md">
-                                                            <h4 className="font-semibold text-foreground flex items-center"><span className="mr-2 text-primary font-bold">{index + 1}.</span><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
-                                                            <p className="text-sm text-muted-foreground pl-6 flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.city}</p>
-                                                            {lead.phone && <p className="text-sm text-muted-foreground pl-6 flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
-                                                        </div>
-                                                        <div className="space-y-1 bg-black p-2 rounded-md">
-                                                            <Label htmlFor={`hot-lead-notes-modal-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
-                                                            <Textarea
-                                                                id={`hot-lead-notes-modal-${lead.id}`}
-                                                                value={lead.notes || ''}
-                                                                onChange={(e) => onUpdateHotLeadNotes(lead.id, e.target.value)}
-                                                                placeholder="e.g., Contact: John Doe, contract ends soon..."
-                                                                className="text-sm h-20 bg-black"
-                                                                rows={3}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex justify-between items-center gap-2 mt-2 pt-2 border-t border-border/50 shrink-0">
-                                                        <Button
-                                                            variant={isConverted ? "default" : "outline"}
-                                                            size="sm"
-                                                            className="h-7 px-2 text-xs"
-                                                            onClick={() => onAddHotLeadAsVisit(lead)}
-                                                            disabled={isConverted}
-                                                        >
-                                                            <PlusSquare className="mr-1 h-3 w-3" /> {isConverted ? 'Added' : 'Add to Planner'}
-                                                        </Button>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="destructive" size="icon" className="h-7 w-7">
-                                                                    <Trash2 className="h-4 w-4" />
+                                                <AccordionItem value={lead.id} key={lead.id} className="p-3 rounded-md border border-orange-500/50 bg-background/50 data-[state=open]:bg-muted/50">
+                                                    <AccordionTrigger className="p-0 hover:no-underline [&>svg]:hidden">
+                                                        <h4 className="font-semibold text-foreground flex items-center text-left"><Building className="mr-2 h-4 w-4 shrink-0" />{lead.companyName}</h4>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="pt-2">
+                                                        <div className="space-y-2">
+                                                            <div className="bg-muted/50 p-2 rounded-md">
+                                                                <p className="text-sm text-muted-foreground flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.city}</p>
+                                                                {lead.phone && <p className="text-sm text-muted-foreground flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
+                                                            </div>
+                                                            <div className="space-y-1 bg-black p-2 rounded-md">
+                                                                <Label htmlFor={`hot-lead-notes-modal-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
+                                                                <Textarea
+                                                                    id={`hot-lead-notes-modal-${lead.id}`}
+                                                                    value={lead.notes || ''}
+                                                                    onChange={(e) => onUpdateHotLeadNotes(lead.id, e.target.value)}
+                                                                    placeholder="e.g., Contact: John Doe, contract ends soon..."
+                                                                    className="text-sm h-20 bg-black"
+                                                                    rows={3}
+                                                                />
+                                                            </div>
+                                                            <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/50">
+                                                                <Button
+                                                                    variant={isConverted ? "default" : "outline"}
+                                                                    size="sm"
+                                                                    className="h-7 px-2 text-xs"
+                                                                    onClick={() => onAddHotLeadAsVisit(lead)}
+                                                                    disabled={isConverted}
+                                                                >
+                                                                    <PlusSquare className="mr-1 h-3 w-3" /> {isConverted ? 'Added' : 'Add to Planner'}
                                                                 </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        This will permanently delete the lead for "{lead.companyName}".
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => onDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </div>
-                                                </div>
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="destructive" size="icon" className="h-7 w-7">
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                This will permanently delete the lead for "{lead.companyName}".
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction onClick={() => onDeleteHotLead(lead.id)}>Delete</AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </div>
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
                                             );
                                         })}
-                                    </div>
+                                    </Accordion>
                                 </ScrollArea>
                                 <div className="mt-4 flex justify-start">
                                     <ExportHotLeadsPdfButton hotLeads={hotLeads} />
