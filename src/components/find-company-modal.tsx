@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { findCompanyAction } from '@/app/actions';
-import { Loader2, MapPin, Phone, PlusSquare, Mic, Trash2, Building, User } from 'lucide-react';
+import { Loader2, MapPin, Phone, PlusSquare, Mic, Trash2, Building, User, CheckCircle } from 'lucide-react';
 import type { Visit, Territory, FoundPlace, HotLead } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -313,7 +313,15 @@ export default function FindCompanyModal({
                                                                         onClick={() => onAddHotLeadAsVisit(lead)}
                                                                         disabled={isConverted}
                                                                     >
-                                                                        <PlusSquare className="mr-1 h-3 w-3" /> {isConverted ? 'Added' : 'Add to Planner'}
+                                                                        {isConverted ? (
+                                                                            <>
+                                                                                <CheckCircle className="mr-1 h-3 w-3" /> Added to Planner
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <PlusSquare className="mr-1 h-3 w-3" /> Add Future Visit
+                                                                            </>
+                                                                        )}
                                                                     </Button>
                                                                     <AlertDialog>
                                                                         <AlertDialogTrigger asChild>
