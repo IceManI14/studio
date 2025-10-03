@@ -2285,19 +2285,12 @@ export default function HomePage() {
                   </Button>
                 </div>
 
-                {todaysVisits.length === 0 && fieldDaySearchTerm.trim() === '' ? (
+                {todaysVisits.length === 0 && pastVisitsByDay.length === 0 && fieldDaySearchTerm.trim() === '' ? (
                     <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
                       <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
                       <p className="text-muted-foreground mb-4">
                           Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new visit.
                       </p>
-                       <Alert variant="default" className="mt-4 text-left max-w-md mx-auto">
-                            <WifiOff className="h-4 w-4" />
-                            <AlertTitle>Real-time Sync Enabled</AlertTitle>
-                            <AlertDescription>
-                            {firebaseConfigured ? 'Your visits are being saved and synced in real-time.' : 'Firebase is not configured. Data is saved locally only.'}
-                            </AlertDescription>
-                        </Alert>
                     </div>
                 ) : (
                   <Accordion type="single" collapsible>
