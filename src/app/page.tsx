@@ -2231,10 +2231,6 @@ export default function HomePage() {
                     <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
-                    <input type="file" ref={importReportInputRef} className="hidden" accept=".csv" onChange={handleImportReport} />
-                    <Button onClick={() => importReportInputRef.current?.click()} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
-                      <LogIn className="mr-2 h-4 w-4" /> Import Trail
-                    </Button>
                 </div>
 
                 <div className="relative w-full max-w-sm mx-auto">
