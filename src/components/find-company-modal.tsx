@@ -162,7 +162,7 @@ export default function FindCompanyModal({
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-1">
                     <div className="space-y-3 pr-4">
-                        <div className="space-y-1.5 border p-2 rounded-md">
+                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="company-name-search">Company Name</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -189,7 +189,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border p-2 rounded-md">
+                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="location-search">Location</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -216,7 +216,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border p-2 rounded-md">
+                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="phone-search">Phone Number</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -244,7 +244,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border p-2 rounded-md">
+                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="contact-search">Contact Name</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -294,14 +294,14 @@ export default function FindCompanyModal({
                                                                     <p className="text-sm text-muted-foreground flex items-center"><MapPin className="mr-2 h-4 w-4 shrink-0" />{lead.city}</p>
                                                                     {lead.phone && <p className="text-sm text-muted-foreground flex items-center"><Phone className="mr-2 h-4 w-4 shrink-0" />{lead.phone}</p>}
                                                                 </div>
-                                                                <div className="space-y-1 bg-black p-2 rounded-md">
+                                                                <div className="space-y-1 bg-zinc-900 p-2 rounded-md border border-orange-500">
                                                                     <Label htmlFor={`hot-lead-notes-modal-${lead.id}`} className="text-xs font-medium text-muted-foreground">Lead Notes</Label>
                                                                     <Textarea
                                                                         id={`hot-lead-notes-modal-${lead.id}`}
                                                                         value={lead.notes || ''}
                                                                         onChange={(e) => onUpdateHotLeadNotes(lead.id, e.target.value)}
                                                                         placeholder="e.g., Contact: John Doe, contract ends soon..."
-                                                                        className="text-sm h-20 bg-black"
+                                                                        className="text-sm h-20 bg-zinc-900"
                                                                         rows={3}
                                                                     />
                                                                 </div>
