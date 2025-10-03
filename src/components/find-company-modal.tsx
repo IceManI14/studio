@@ -152,17 +152,11 @@ export default function FindCompanyModal({
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{isTelemarketerLeadMode ? "Create a Telemarketer Lead" : "Find a Company"}</DialogTitle>
-                    <DialogDescription>
-                        {isTelemarketerLeadMode 
-                            ? "Dictate or type the company name and location to create a new lead for the Telemarketer."
-                            : "Search for all branches of a company within your territory. You can optionally narrow the search to a specific city."
-                        }
-                    </DialogDescription>
+                    <DialogTitle>{"Create a Telemarketer Lead"}</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-1">
-                    <div className="space-y-3 pr-4">
-                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
+                    <div className="space-y-1 pr-4">
+                        <div className="space-y-1 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="company-name-search">Company Name</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -189,7 +183,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
+                        <div className="space-y-1 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="location-search">Location</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -216,7 +210,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
+                        <div className="space-y-1 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="phone-search">Phone Number</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -244,7 +238,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-1.5 border border-orange-500 bg-zinc-900 p-2 rounded-md">
+                        <div className="space-y-1 border border-orange-500 bg-zinc-900 p-2 rounded-md">
                             <Label htmlFor="contact-search">Contact Name</Label>
                             <div className="relative flex items-center">
                                 <Input
