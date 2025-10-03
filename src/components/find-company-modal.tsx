@@ -162,7 +162,7 @@ export default function FindCompanyModal({
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-1">
                     <div className="space-y-4 pr-6">
-                        <div className="space-y-2">
+                        <div className="space-y-2 border p-3 rounded-md">
                             <Label htmlFor="company-name-search">Company Name</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -189,7 +189,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 border p-3 rounded-md">
                             <Label htmlFor="location-search">Location</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -216,7 +216,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 border p-3 rounded-md">
                             <Label htmlFor="phone-search">Phone Number</Label>
                             <div className="relative flex items-center">
                                 <Input
@@ -244,7 +244,7 @@ export default function FindCompanyModal({
                                 </Button>
                             </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 border p-3 rounded-md">
                             <Label htmlFor="contact-search">Contact Name</Label>
                             <div className="relative flex items-center">
                                 <Input
