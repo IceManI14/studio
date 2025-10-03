@@ -256,6 +256,7 @@ export default function HomePage() {
   const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
   const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
+  const [activeTabLabel, setActiveTabLabel] = useState('Field Day');
 
   
   const { toast } = useToast();
@@ -1361,6 +1362,19 @@ export default function HomePage() {
     currentCityRef.current = currentCity;
   }, [currentCity]);
   
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    const labels: { [key: string]: string } = {
+      'field-day': 'Field Day',
+      'planner': 'Planner',
+      'call-day': 'Call Day',
+      'visits': 'Visits Map',
+      'ai-chat': 'Debbie AI',
+      'about': 'About & Feedback',
+    };
+    setActiveTabLabel(labels[newTab] || '');
+  };
+
 
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
@@ -2068,137 +2082,127 @@ export default function HomePage() {
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
             Optimum Trailblazer
           </h1>
-          {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-4">
-              {importedVisits ? (
-                <Alert variant="destructive" className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
-                    <AlertTitle>Viewing Imported Data</AlertTitle>
-                    <AlertDescription>
-                      You are currently viewing another user's report. To return to your data, click the button.
-                    </AlertDescription>
-                  </div>
-                  <Button variant="outline" onClick={() => setImportedVisits(null)}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Return to My Data
-                  </Button>
-                </Alert>
-              ) : (
+          <div className="w-full max-w-lg mx-auto mt-2">
+            {selectedSalesperson && (
                 <>
-                <div className="flex justify-center items-center text-md font-medium text-foreground mb-2">
-                  {currentCity ? (
-                      <>
-                        <MapPin className="mr-2 h-4 w-4 text-primary" />
-                        <span>Currently Located: {currentCity}</span>
-                      </>
-                    ) : (
-                      <div className="flex justify-center items-center text-sm text-muted-foreground my-2 h-[20px]">
+                {importedVisits ? (
+                  <Alert variant="destructive" className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <AlertTitle>Viewing Imported Data</AlertTitle>
+                      <AlertDescription>
+                        You are currently viewing another user's report. To return to your data, click the button.
+                      </AlertDescription>
+                    </div>
+                    <Button variant="outline" onClick={() => setImportedVisits(null)}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Return to My Data
+                    </Button>
+                  </Alert>
+                ) : (
+                  <>
+                  <div className="flex justify-center items-center gap-4 text-sm font-medium text-foreground mb-2">
+                      <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">{selectedSalesperson.name}</span>
                       </div>
-                    )
-                  }
-                </div>
-                <div className="flex justify-center items-center gap-4 text-sm font-medium text-foreground mb-2">
-                    <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-primary" />
-                        <span className="font-semibold">{selectedSalesperson.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                         <CalendarIcon className="h-4 w-4 text-primary" />
-                         <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
-                    </div>
-                </div>
+                      <div className="flex items-center gap-2">
+                           <CalendarIcon className="h-4 w-4 text-primary" />
+                           <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
+                      </div>
+                  </div>
 
-                <Accordion type="single" collapsible>
-                  <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
-                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                      <div className="flex items-center justify-between w-full gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Compass className="h-5 w-5 text-primary flex-shrink-0" />
-                          <div className="flex flex-col items-start">
-                            <span className="font-semibold text-foreground truncate">Daily Plan</span>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
+                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Compass className="h-5 w-5 text-primary flex-shrink-0" />
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold text-foreground truncate">Daily Plan</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-end min-w-[80px]">
+                            {targetDestination && (
+                                <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
+                            )}
                           </div>
                         </div>
-                        <div className="flex justify-end min-w-[80px]">
-                          {targetDestination && (
-                              <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
-                        {todaysScheduledVisits.length > 0 && (
-                            <Alert
-                              variant="default"
-                              className={cn(
-                                "border-primary/50 bg-primary/10 text-left w-full",
-                                todaysScheduledVisits.length === 1 && "cursor-pointer transition-colors hover:bg-primary/20"
-                              )}
-                              onClick={() => {
-                                if (todaysScheduledVisits.length === 1) {
-                                  setZoomedVisit(todaysScheduledVisits[0]);
-                                }
-                              }}
-                            >
-                              <CalendarCheck className="h-4 w-4" />
-                              <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} meeting(s) scheduled for today!</AlertTitle>
-                              <AlertDescription>
-                                {todaysScheduledVisits.length === 1 ? (
-                                  todaysScheduledVisits[0].companyName
-                                ) : (
-                                  <div className="flex flex-wrap items-center gap-x-1">
-                                    {todaysScheduledVisits.map((v, index) => (
-                                      <div key={v.id} className="inline-flex items-center">
-                                        <Button
-                                          variant="link"
-                                          className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setZoomedVisit(v);
-                                          }}
-                                        >
-                                          {v.companyName}
-                                        </Button>
-                                        {index < todaysScheduledVisits.length - 1 && <span className="text-sm text-muted-foreground">,</span>}
-                                      </div>
-                                    ))}
-                                  </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-col justify-center items-center gap-4 p-4 bg-primary/10 backdrop-blur-sm rounded-b-lg border border-primary/20 border-t-0">
+                          {todaysScheduledVisits.length > 0 && (
+                              <Alert
+                                variant="default"
+                                className={cn(
+                                  "border-primary/50 bg-primary/10 text-left w-full",
+                                  todaysScheduledVisits.length === 1 && "cursor-pointer transition-colors hover:bg-primary/20"
                                 )}
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        
-                        <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
-                          Change Destination
-                        </Button>
-
-                        {targetDestination?.description && (
-                          <div className="text-center w-full bg-background/20 p-3 rounded-md">
-                            <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
-                            <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
-                          </div>
-                        )}
-                        {navigationUrl && (
-                          <Button
-                            onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
-                            className="w-full"
-                            variant="default"
-                          >
-                            <MapIcon className="mr-2 h-4 w-4" />
-                            Navigate
+                                onClick={() => {
+                                  if (todaysScheduledVisits.length === 1) {
+                                    setZoomedVisit(todaysScheduledVisits[0]);
+                                  }
+                                }}
+                              >
+                                <CalendarCheck className="h-4 w-4" />
+                                <AlertTitle className="font-semibold text-primary">You have {todaysScheduledVisits.length} meeting(s) scheduled for today!</AlertTitle>
+                                <AlertDescription>
+                                  {todaysScheduledVisits.length === 1 ? (
+                                    todaysScheduledVisits[0].companyName
+                                  ) : (
+                                    <div className="flex flex-wrap items-center gap-x-1">
+                                      {todaysScheduledVisits.map((v, index) => (
+                                        <div key={v.id} className="inline-flex items-center">
+                                          <Button
+                                            variant="link"
+                                            className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setZoomedVisit(v);
+                                            }}
+                                          >
+                                            {v.companyName}
+                                          </Button>
+                                          {index < todaysScheduledVisits.length - 1 && <span className="text-sm text-muted-foreground">,</span>}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          
+                          <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
+                            Change Destination
                           </Button>
-                        )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-                </>
-              )}
-            </div>
-          )}
+
+                          {targetDestination?.description && (
+                            <div className="text-center w-full bg-background/20 p-3 rounded-md">
+                              <h4 className="font-semibold text-sm text-primary mb-1">AI Parking Suggestion</h4>
+                              <p className="text-sm text-muted-foreground">{targetDestination.description}</p>
+                            </div>
+                          )}
+                          {navigationUrl && (
+                            <Button
+                              onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
+                              className="w-full"
+                              variant="default"
+                            >
+                              <MapIcon className="mr-2 h-4 w-4" />
+                              Navigate
+                            </Button>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </header>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner mt-2">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
@@ -2234,6 +2238,7 @@ export default function HomePage() {
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
+          <div className="text-center text-sm font-medium text-foreground mt-2">{activeTabLabel}</div>
         </Tabs>
         
         <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -2250,78 +2255,68 @@ export default function HomePage() {
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
                 </div>
-
-                {todaysVisits.length === 0 && pastVisitsByDay.length === 0 && fieldDaySearchTerm.trim() === '' ? (
-                    <div className="text-center py-10 bg-card rounded-lg shadow-lg px-4">
-                      <p className="text-xl text-muted-foreground mb-4">No visits logged yet for field day.</p>
-                      <p className="text-muted-foreground mb-4">
-                          Click <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new visit.
-                      </p>
-                    </div>
-                ) : (
-                  <Accordion type="single" collapsible>
-                    <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
-                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                        <div className="flex items-center justify-center w-full">
-                          <div className="flex items-center justify-center gap-2">
-                            <PlusCircle className="h-5 w-5 text-primary" />
-                            <h3 className="text-lg font-medium text-foreground text-center">
-                              Today's Visits ({todaysVisits.length})
-                            </h3>
-                          </div>
+                <Accordion type="single" collapsible>
+                  <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                      <div className="flex items-center justify-center w-full">
+                        <div className="flex items-center justify-center gap-2">
+                          <PlusCircle className="h-5 w-5 text-primary" />
+                          <h3 className="text-lg font-medium text-foreground text-center">
+                            Today's Visits ({todaysVisits.length})
+                          </h3>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
-                        <Accordion 
-                          type="multiple"
-                          className="w-full space-y-4"
-                          value={fieldDayAccordionValue}
-                          onValueChange={setFieldDayAccordionValue}
-                        >
-                          {todaysVisits.map((visit) => (
-                            <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-                              <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
-                                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                    <div className="flex flex-1 items-center gap-3 min-w-0">
-                                      <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-                                      <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                    </div>
-                                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                      {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                          <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-                                      ) : (
-                                          <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
-                                      )}
-                                      {visit.partnershipConfidence && (
-                                        <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                          <span className="leading-none">{visit.partnershipConfidence}</span>
-                                          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                        </Badge>
-                                      )}
-                                      {visit.futureMeetingSet && (
-                                        <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
-                                      )}
-                                    </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
+                      <Accordion 
+                        type="multiple"
+                        className="w-full space-y-4"
+                        value={fieldDayAccordionValue}
+                        onValueChange={setFieldDayAccordionValue}
+                      >
+                        {todaysVisits.map((visit) => (
+                          <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+                            <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
+                              <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                                  <div className="flex flex-1 items-center gap-3 min-w-0">
+                                    <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
+                                    <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
                                   </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="p-4">
-                                <VisitCard
-                                  visit={visit}
-                                  onEdit={handleEditVisit}
-                                  onDelete={handleDeleteVisit}
-                                  onUpdateDealClosed={handleUpdateDealClosed}
-                                  onZoom={setZoomedVisit}
-                                  onLogFollowUp={handleLogFollowUp}
-                                  onDictateNotes={handleDictateNotes}
-                                />
-                              </AccordionContent>
-                            </AccordionItem>
-                          ))}
-                        </Accordion>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
+                                  <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                                    {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
+                                        <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
+                                    ) : (
+                                        <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
+                                    )}
+                                    {visit.partnershipConfidence && (
+                                      <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
+                                        <span className="leading-none">{visit.partnershipConfidence}</span>
+                                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                      </Badge>
+                                    )}
+                                    {visit.futureMeetingSet && (
+                                      <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
+                                    )}
+                                  </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-4">
+                              <VisitCard
+                                visit={visit}
+                                onEdit={handleEditVisit}
+                                onDelete={handleDeleteVisit}
+                                onUpdateDealClosed={handleUpdateDealClosed}
+                                onZoom={setZoomedVisit}
+                                onLogFollowUp={handleLogFollowUp}
+                                onDictateNotes={handleDictateNotes}
+                              />
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
                  <Accordion type="single" collapsible>
                   <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
                     <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3491,3 +3486,4 @@ export default function HomePage() {
     </div>
   );
 }
+
