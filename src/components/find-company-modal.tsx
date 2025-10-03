@@ -163,7 +163,6 @@ export default function FindCompanyModal({
                                     id="company-name-search"
                                     value={companyName}
                                     onChange={(e) => setCompanyName(e.target.value)}
-                                    placeholder="e.g., Optimum Water Solutions"
                                     className="pr-10"
                                     disabled={!!recordingField}
                                 />
@@ -190,7 +189,6 @@ export default function FindCompanyModal({
                                     id="location-search"
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
-                                    placeholder="Enter company location (e.g., Boston, MA)"
                                     className="pr-10"
                                     disabled={!!recordingField}
                                 />
@@ -218,7 +216,6 @@ export default function FindCompanyModal({
                                     type="tel"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="e.g., 555-123-4567"
                                     className="pr-10"
                                     disabled={!!recordingField}
                                 />
@@ -245,7 +242,6 @@ export default function FindCompanyModal({
                                     id="contact-search"
                                     value={contactName}
                                     onChange={(e) => setContactName(e.target.value)}
-                                    placeholder="e.g., Jane Doe, Office Manager"
                                     className="pr-10"
                                     disabled={!!recordingField}
                                 />
