@@ -512,6 +512,18 @@ export default function HomePage() {
     return scheduledVisits.filter(visit => isToday(new Date(visit.futureMeetingDateTime!)));
   }, [scheduledVisits]);
 
+  const callDayVisitsByDay = useMemo(() => {
+    const grouped: { [key: string]: Visit[] } = {};
+    sortedVisitsForCallDay.forEach(visit => {
+      const dayKey = startOfDay(new Date(visit.timestamp)).toISOString().split('T')[0];
+      if (!grouped[dayKey]) {
+        grouped[dayKey] = [];
+      }
+      grouped[dayKey].push(visit);
+    });
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
+  }, [sortedVisitsForCallDay]);
+
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
@@ -2768,15 +2780,29 @@ export default function HomePage() {
                           )}
                         </Button>
                       </div>
-                      <CallDayVisitList 
-                        visits={sortedVisitsForCallDay}
-                        onEdit={handleEditVisit}
-                        onDelete={handleDeleteVisit}
-                        onUpdateDealClosed={handleUpdateDealClosed}
-                        onZoom={setZoomedVisit}
-                        onLogFollowUp={handleLogFollowUp}
-                        onDictateNotes={handleDictateNotes}
-                      />
+                      <Accordion type="multiple" className="w-full space-y-4">
+                        {callDayVisitsByDay.map(([day, visitsOnDay]) => (
+                          <AccordionItem value={day} key={day} className="border-none">
+                            <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                              <div className="flex justify-between w-full items-center">
+                                <h4 className="font-semibold text-lg text-foreground">{format(new Date(day), 'eeee, MMMM d, yyyy')}</h4>
+                                <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
+                              <CallDayVisitList 
+                                visits={visitsOnDay}
+                                onEdit={handleEditVisit}
+                                onDelete={handleDeleteVisit}
+                                onUpdateDealClosed={handleUpdateDealClosed}
+                                onZoom={setZoomedVisit}
+                                onLogFollowUp={handleLogFollowUp}
+                                onDictateNotes={handleDictateNotes}
+                              />
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -3467,3 +3493,4 @@ export default function HomePage() {
     </div>
   );
 }
+
