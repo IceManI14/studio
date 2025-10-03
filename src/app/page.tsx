@@ -2069,7 +2069,7 @@ export default function HomePage() {
             Optimum Trailblazer
           </h1>
           {selectedSalesperson && (
-            <div className="w-full max-w-lg mx-auto mt-2">
+            <div className="w-full max-w-lg mx-auto mt-4">
               {importedVisits ? (
                 <Alert variant="destructive" className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
@@ -2097,21 +2097,27 @@ export default function HomePage() {
                     )
                   }
                 </div>
+                <div className="flex justify-center items-center gap-4 text-sm font-medium text-foreground mb-2">
+                    <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">{selectedSalesperson.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <CalendarIcon className="h-4 w-4 text-primary" />
+                         <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
+                    </div>
+                </div>
 
                 <Accordion type="single" collapsible>
                   <AccordionItem ref={dailyPlanRef} value="item-1" className="border-none">
                     <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dailyPlanRef)} className={cn("p-3 bg-primary/10 backdrop-blur-sm rounded-lg border border-primary/20 hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                       <div className="flex items-center justify-between w-full gap-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <User className="h-5 w-5 text-primary flex-shrink-0" />
+                          <Compass className="h-5 w-5 text-primary flex-shrink-0" />
                           <div className="flex flex-col items-start">
-                            <span className="font-semibold text-foreground truncate">{selectedSalesperson.name}</span>
+                            <span className="font-semibold text-foreground truncate">Daily Plan</span>
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground flex items-center gap-2 shrink-0">
-                          <CalendarIcon className="h-3 w-3" />
-                          {currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}
-                        </span>
                         <div className="flex justify-end min-w-[80px]">
                           {targetDestination && (
                               <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
@@ -2193,22 +2199,22 @@ export default function HomePage() {
         </header>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20 mt-2">
-            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner mt-2">
+            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
-              className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
+              className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2"
               onClick={(e) => {
                 if (visitsToDisplay.length === 0) {
                   e.preventDefault();
@@ -2219,11 +2225,11 @@ export default function HomePage() {
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
             </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <InfoIcon className="h-5 w-5" />
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
@@ -2243,46 +2249,6 @@ export default function HomePage() {
                     <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
-                </div>
-
-                <div className="relative w-full max-w-sm mx-auto">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={isRecordingFieldDaySearch ? "Listening for search term..." : "Search company name..."}
-                    className="pl-10 pr-20"
-                    value={fieldDaySearchTerm}
-                    onChange={(e) => setFieldDaySearchTerm(e.target.value)}
-                    disabled={isRecordingFieldDaySearch}
-                  />
-                  {fieldDaySearchTerm && !isRecordingFieldDaySearch && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setFieldDaySearchTerm('')}
-                      className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                      aria-label="Clear search"
-                      title="Clear search"
-                    >
-                      <X className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleToggleVoiceFieldDaySearch}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                    aria-label="Search with voice"
-                    title="Search with voice"
-                  >
-                    {isRecordingFieldDaySearch ? (
-                      <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                    ) : (
-                      <Mic className="h-4 w-4 text-foreground" />
-                    )}
-                  </Button>
                 </div>
 
                 {todaysVisits.length === 0 && pastVisitsByDay.length === 0 && fieldDaySearchTerm.trim() === '' ? (
@@ -2369,6 +2335,45 @@ export default function HomePage() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
+                       <div className="relative w-full max-w-sm mx-auto mb-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder={isRecordingFieldDaySearch ? "Listening for search term..." : "Search company name..."}
+                                className="pl-10 pr-20"
+                                value={fieldDaySearchTerm}
+                                onChange={(e) => setFieldDaySearchTerm(e.target.value)}
+                                disabled={isRecordingFieldDaySearch}
+                            />
+                            {fieldDaySearchTerm && !isRecordingFieldDaySearch && (
+                                <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setFieldDaySearchTerm('')}
+                                className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                                aria-label="Clear search"
+                                title="Clear search"
+                                >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleToggleVoiceFieldDaySearch}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                aria-label="Search with voice"
+                                title="Search with voice"
+                            >
+                                {isRecordingFieldDaySearch ? (
+                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                                ) : (
+                                <Mic className="h-4 w-4 text-foreground" />
+                                )}
+                            </Button>
+                        </div>
                       <Accordion type="multiple" className="w-full space-y-4">
                         {pastVisitsByDay.map(([day, visitsOnDay]) => (
                           <AccordionItem value={day} key={day} className="border-none">
@@ -2778,7 +2783,7 @@ export default function HomePage() {
                           <AccordionItem value={day} key={day} className="border-none">
                             <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                               <div className="flex justify-between w-full items-center">
-                                <h4 className="font-semibold text-lg text-foreground">{format(new Date(day), 'eeee, MMMM d, yyyy')}</h4>
+                                <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
                                 <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
                               </div>
                             </AccordionTrigger>
@@ -3486,4 +3491,3 @@ export default function HomePage() {
     </div>
   );
 }
-
