@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -56,6 +56,7 @@ import ExportHotLeadsCsvButton from '@/components/export-hot-leads-csv-button';
 import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
+import ExportPdfButton from '@/components/export-pdf-button';
 
 
 interface FoundPlace {
@@ -2590,6 +2591,11 @@ export default function HomePage() {
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Reschedule an Appointment
                             </Button>
+                             <ExportPdfButton
+                              visits={visitsToDisplay}
+                              className="w-full"
+                              size="sm"
+                             />
                         </div>
                       </div>
 
@@ -3422,7 +3428,6 @@ export default function HomePage() {
             onAddAsVisit={handleAddFoundCompanyAsVisit}
             onAddHotLeads={handleAddHotLeads}
             destinationCities={destinationCities}
-            territory={selectedSalesperson?.territory}
             isTelemarketerLeadMode={true}
             hotLeads={hotLeads}
             onDeleteHotLead={handleDeleteHotLead}
@@ -3487,3 +3492,6 @@ export default function HomePage() {
   );
 }
 
+
+
+    

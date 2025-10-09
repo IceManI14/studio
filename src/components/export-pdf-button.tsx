@@ -9,6 +9,7 @@ import autoTable from 'jspdf-autotable';
 import { formatInTimeZone } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { FileDown } from 'lucide-react';
 
 interface ExportPdfButtonProps {
   visits: Visit[];
@@ -133,10 +134,13 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="default" disabled={visits.length === 0} size={size} className={cn(className)}>
-      Export PDF
+    <Button onClick={handleExportPdf} variant="outline" disabled={visits.length === 0} size={size} className={cn("w-full", className)}>
+       <FileDown className="mr-2 h-4 w-4" />
+      Export All Visits to PDF
     </Button>
   );
 };
 
 export default ExportPdfButton;
+
+    
