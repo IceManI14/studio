@@ -67,11 +67,13 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
 
       const tableRows = visits.map(visit => {
         const visitDate = visit.timestamp ? formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy, h:mm a') : 'N/A';
+        const safeToString = (val: any) => val?.toString() ?? 'N/A';
+
         return [
           visitDate,
           visit.companyName || 'N/A',
           visit.city || 'N/A',
-          visit.visitNumber?.toString() ?? 'N/A',
+          safeToString(visit.visitNumber),
           visit.partnershipConfidence ? `${visit.partnershipConfidence} star(s)` : 'N/A',
           visit.notesSummary || 'N/A',
           (visit.interestedUnits && visit.interestedUnits.length > 0) ? visit.interestedUnits.join(', ') : 'N/A',
@@ -85,9 +87,9 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MM/dd/yy') : 'N/A',
           visit.dealClosed ? 'Yes' : 'No',
           visit.pricingDiscussed ? 'Yes' : 'No',
-          visit.priceQuoted ? `$${visit.priceQuoted.toFixed(2)}` : 'N/A',
+          visit.priceQuoted ? `$${Number(visit.priceQuoted).toFixed(2)}` : 'N/A',
           visit.leaseTerm ? `${visit.leaseTerm} mos` : 'N/A',
-          visit.installationFee ? `$${visit.installationFee.toFixed(2)}` : 'N/A',
+          visit.installationFee ? `$${Number(visit.installationFee).toFixed(2)}` : 'N/A',
           visit.creditApproved ? 'Yes' : 'No',
         ];
       });
@@ -105,13 +107,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
           2: { cellWidth: 16 }, // City
           3: { cellWidth: 10 }, // Visit #
           4: { cellWidth: 16 }, // Confidence
-          // Remaining columns will auto-adjust or can be specified
         },
         didDrawPage: function (data) {
-          // Footer with page number
           let str = "Page " + doc.internal.getNumberOfPages();
           doc.setFontSize(10);
-          // jsPDF 1.4+ uses getWidth, <1.4 uses .width
           let pageSize = doc.internal.pageSize;
           let pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
           doc.text(str, data.settings.margin.left, pageHeight - 10);
@@ -122,15 +121,17 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
       doc.save(pdfFilename);
 
       toast({
-        title: 'PDF Export Successful',
-        description: `${pdfFilename} has been downloaded.`,
+        title: 'PDF Export Started',
+        description: `Your file '${pdfFilename}' is downloading. Please check your browser's downloads.`,
+        duration: 7000,
       });
 
-    } catch (error) {
+    } catch (error: any) {
+      console.error("PDF Export Error:", error);
       toast({
         variant: 'destructive',
         title: 'PDF Export Failed',
-        description: 'Could not generate or download the PDF file.',
+        description: `Could not generate the PDF. Error: ${error.message}`,
       });
     }
   };
@@ -144,5 +145,3 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
 };
 
 export default ExportPdfButton;
-
-    
