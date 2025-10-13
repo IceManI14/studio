@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Visit } from '@/lib/types';
@@ -15,9 +14,10 @@ interface ExportPdfButtonProps {
   visits: Visit[];
   size?: ButtonProps['size'];
   className?: string;
+  label?: string;
 }
 
-const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className }) => {
+const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className, label = "Export All Visits to PDF" }) => {
   const { toast } = useToast();
   const timeZone = 'America/New_York';
 
@@ -26,7 +26,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
       toast({
         variant: 'destructive',
         title: 'No Data to Export',
-        description: 'There are no visits logged to export as a PDF.',
+        description: 'There are no visits to export as a PDF.',
       });
       return;
     }
@@ -59,7 +59,10 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
 
       const tableRows = visits.map(visit => {
         const visitDate = visit.timestamp ? formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy') : 'N/A';
-        const safeToString = (val: any) => val?.toString() ?? 'N/A';
+        const safeToString = (val: any): string => {
+            if (val === null || val === undefined) return 'N/A';
+            return val.toString();
+        };
 
         return [
           visitDate,
@@ -127,9 +130,11 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
   return (
     <Button onClick={handleExportPdf} variant="outline" disabled={visits.length === 0} size={size} className={cn("w-full", className)}>
        <FileDown className="mr-2 h-4 w-4" />
-      Export All Visits to PDF
+      {label}
     </Button>
   );
 };
 
 export default ExportPdfButton;
+
+    

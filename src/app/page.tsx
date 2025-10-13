@@ -2700,6 +2700,13 @@ export default function HomePage() {
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
+                      <Separator />
+                      <ExportPdfButton
+                        visits={sortedVisitsForCallDay}
+                        label="Export Sorted Visits to PDF"
+                        className="w-full max-w-sm"
+                        size="sm"
+                      />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -2708,6 +2715,7 @@ export default function HomePage() {
               <div className="mt-6 mb-4 flex justify-center">
                 <ExportPdfButton
                   visits={visitsToDisplay}
+                  label="Export All Visits to PDF"
                   className="w-full max-w-sm"
                   size="sm"
                 />
@@ -3493,3 +3501,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
