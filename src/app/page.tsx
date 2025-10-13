@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -2024,7 +2023,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
             {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length-1}`: ''}}`}</span>
+                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
             ) : (
                 <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
             )}
@@ -2591,11 +2590,6 @@ export default function HomePage() {
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Reschedule an Appointment
                             </Button>
-                             <ExportPdfButton
-                              visits={visitsToDisplay}
-                              className="w-full"
-                              size="sm"
-                             />
                         </div>
                       </div>
 
@@ -2710,6 +2704,14 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+              
+              <div className="mt-6 mb-4 flex justify-center">
+                <ExportPdfButton
+                  visits={visitsToDisplay}
+                  className="w-full max-w-sm"
+                  size="sm"
+                />
+              </div>
 
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
@@ -3491,7 +3493,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
-    
