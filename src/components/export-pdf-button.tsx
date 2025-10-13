@@ -32,7 +32,9 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
     }
 
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        orientation: 'landscape',
+      });
       
       doc.setFontSize(18);
       doc.text('Optimum Trailblazer - Company Visits', 14, 22);
@@ -45,52 +47,32 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         "Date",
         "Company",
         "City",
-        "Visit #",
         "Confidence",
         "Summary",
         "Units",
-        "Contact Info",
-        "DM Name",
-        "DM Title",
         "DM Contact",
         "Competitor",
-        "Cooler",
-        "Free Trial",
-        "Trial Start",
+        "Trial",
         "Deal Closed",
-        "Pricing",
-        "Price Quoted",
-        "Lease Term",
-        "Install Fee",
-        "Credit Approved",
+        "Price",
       ];
 
       const tableRows = visits.map(visit => {
-        const visitDate = visit.timestamp ? formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy, h:mm a') : 'N/A';
+        const visitDate = visit.timestamp ? formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy') : 'N/A';
         const safeToString = (val: any) => val?.toString() ?? 'N/A';
 
         return [
           visitDate,
           visit.companyName || 'N/A',
           visit.city || 'N/A',
-          safeToString(visit.visitNumber),
-          visit.partnershipConfidence ? `${visit.partnershipConfidence} star(s)` : 'N/A',
+          visit.partnershipConfidence ? `${visit.partnershipConfidence}/5` : 'N/A',
           visit.notesSummary || 'N/A',
           (visit.interestedUnits && visit.interestedUnits.length > 0) ? visit.interestedUnits.join(', ') : 'N/A',
-          visit.contactInfo?.info || 'N/A',
-          visit.decisionMakerName || 'N/A',
-          visit.decisionMakerTitle || 'N/A',
           visit.decisionMakerContact || 'N/A',
-          visit.competitorName || (visit.discussedCompetitors ? 'Yes (Unspecified)' : 'No'),
-          visit.coolerType || 'N/A',
+          visit.competitorName || (visit.discussedCompetitors ? 'Yes' : 'No'),
           visit.freeTrial ? 'Yes' : 'No',
-          visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'MM/dd/yy') : 'N/A',
           visit.dealClosed ? 'Yes' : 'No',
-          visit.pricingDiscussed ? 'Yes' : 'No',
           visit.priceQuoted ? `$${Number(visit.priceQuoted).toFixed(2)}` : 'N/A',
-          visit.leaseTerm ? `${visit.leaseTerm} mos` : 'N/A',
-          visit.installationFee ? `$${Number(visit.installationFee).toFixed(2)}` : 'N/A',
-          visit.creditApproved ? 'Yes' : 'No',
         ];
       });
 
@@ -99,14 +81,20 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         body: tableRows,
         startY: 35,
         theme: 'striped',
-        headStyles: { fillColor: [36, 104, 180] }, // A blue shade for header (approx. HSL primary)
-        styles: { fontSize: 6, cellPadding: 1.5, overflow: 'linebreak' },
+        headStyles: { fillColor: [36, 93, 154] }, // Nautical dark blue
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
         columnStyles: {
-          0: { cellWidth: 22 }, // Date
-          1: { cellWidth: 20 }, // Company
-          2: { cellWidth: 16 }, // City
-          3: { cellWidth: 10 }, // Visit #
-          4: { cellWidth: 16 }, // Confidence
+          0: { cellWidth: 18 }, // Date
+          1: { cellWidth: 40 }, // Company
+          2: { cellWidth: 25 }, // City
+          3: { cellWidth: 15 }, // Confidence
+          4: { cellWidth: 'auto' }, // Summary
+          5: { cellWidth: 20 }, // Units
+          6: { cellWidth: 25 }, // DM Contact
+          7: { cellWidth: 25 }, // Competitor
+          8: { cellWidth: 12 }, // Trial
+          9: { cellWidth: 15 }, // Deal Closed
+          10: { cellWidth: 15 }, // Price
         },
         didDrawPage: function (data) {
           let str = "Page " + doc.internal.getNumberOfPages();
