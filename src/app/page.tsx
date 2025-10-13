@@ -525,6 +525,23 @@ export default function HomePage() {
     return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
   }, [sortedVisitsForCallDay]);
 
+  const sortedVisitsTitle = useMemo(() => {
+    if (selectedDate) {
+        return `Visits on ${format(selectedDate, 'PPP')}`;
+    }
+    if (searchTerm.trim()) {
+        return `Visits matching "${searchTerm.trim()}"`;
+    }
+    switch (sortCriteria) {
+        case 'dealClosed': return 'All Closed Deals';
+        case 'futureMeetingsSet': return 'Visits with Future Meetings';
+        case 'inTrial': return 'Visits with Active Trials';
+        case 'city': return citySearchTerm.trim() ? `Visits in ${citySearchTerm.trim()}` : 'Visits by City';
+        case 'partnershipConfidence': return 'Visits by Confidence';
+        default: return 'Sorted Visits';
+    }
+  }, [sortCriteria, selectedDate, searchTerm, citySearchTerm]);
+
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
@@ -2703,9 +2720,11 @@ export default function HomePage() {
                       <Separator />
                       <ExportPdfButton
                         visits={sortedVisitsForCallDay}
+                        reportTitle={sortedVisitsTitle}
                         label="Export Sorted Visits to PDF"
                         className="w-full max-w-sm"
                         size="sm"
+                        salespersonName={selectedSalesperson?.name}
                       />
                     </div>
                   </AccordionContent>
@@ -2718,6 +2737,8 @@ export default function HomePage() {
                   label="Export All Visits to PDF"
                   className="w-full max-w-sm"
                   size="sm"
+                  salespersonName={selectedSalesperson?.name}
+                  reportTitle="All Visits"
                 />
               </div>
 

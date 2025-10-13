@@ -15,9 +15,11 @@ interface ExportPdfButtonProps {
   size?: ButtonProps['size'];
   className?: string;
   label?: string;
+  salespersonName?: string;
+  reportTitle?: string;
 }
 
-const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className, label = "Export All Visits to PDF" }) => {
+const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className, label = "Export All Visits to PDF", salespersonName, reportTitle = "Company Visits" }) => {
   const { toast } = useToast();
   const timeZone = 'America/New_York';
 
@@ -36,12 +38,19 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
         orientation: 'landscape',
       });
       
+      const title = salespersonName ? `Optimum Trailblazer - ${salespersonName}` : 'Optimum Trailblazer';
       doc.setFontSize(18);
-      doc.text('Optimum Trailblazer - Company Visits', 14, 22);
-      doc.setFontSize(11);
+      doc.text(title, 14, 22);
+
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      doc.text(reportTitle, 14, 30);
+      
+      doc.setFontSize(9);
       doc.setTextColor(100); // Grey for subtitle
       const exportDate = formatInTimeZone(new Date(), timeZone, 'MMM d, yyyy, h:mm a');
-      doc.text(`Exported on: ${exportDate}`, 14, 30);
+      doc.text(`Exported on: ${exportDate}`, doc.internal.pageSize.getWidth() - 14, 22, { align: 'right' });
+
 
       const tableColumn = [
         "Date",
@@ -59,11 +68,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
 
       const tableRows = visits.map(visit => {
         const visitDate = visit.timestamp ? formatInTimeZone(new Date(visit.timestamp), timeZone, 'MM/dd/yy') : 'N/A';
-        const safeToString = (val: any): string => {
-            if (val === null || val === undefined) return 'N/A';
-            return val.toString();
-        };
-
+        
         return [
           visitDate,
           visit.companyName || 'N/A',
@@ -82,7 +87,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 35,
+        startY: 38,
         theme: 'striped',
         headStyles: { fillColor: [36, 93, 154] }, // Nautical dark blue
         styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
