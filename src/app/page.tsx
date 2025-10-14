@@ -348,6 +348,16 @@ export default function HomePage() {
     return Array.from(closedDays).map(time => new Date(time));
   }, [visitsToDisplay]);
 
+  const uniqueCities = useMemo(() => {
+    const cities = new Set<string>();
+    visitsToDisplay.forEach(visit => {
+      if (visit.city) {
+        cities.add(visit.city);
+      }
+    });
+    return Array.from(cities).sort((a, b) => a.localeCompare(b));
+  }, [visitsToDisplay]);
+
   const sortedVisitsForCallDay = useMemo(() => {
     if (visitsToDisplay.length === 0) return [];
 
@@ -373,7 +383,7 @@ export default function HomePage() {
 
         if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
             processedVisits = processedVisits.filter(visit =>
-                visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
+                visit.city?.toLowerCase() === citySearchTerm.toLowerCase()
             );
         }
 
@@ -2643,47 +2653,21 @@ export default function HomePage() {
                               </div>
                               {sortCriteria === 'city' ? (
                                 <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
-                                    <Label htmlFor="city-search" className="text-sm text-center">Search by City</Label>
-                                    <div className="relative w-full">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                        id="city-search"
-                                        type="text"
-                                        placeholder={isRecordingCitySearch ? "Listening..." : "Type a city..."}
-                                        className="pl-10 pr-20"
+                                    <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
+                                    <Select
                                         value={citySearchTerm}
-                                        onChange={(e) => setCitySearchTerm(e.target.value)}
-                                        disabled={isRecordingCitySearch}
-                                        />
-                                        {citySearchTerm && !isRecordingCitySearch && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setCitySearchTerm('')}
-                                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                                            aria-label="Clear city search"
-                                            title="Clear city search"
-                                        >
-                                            <X className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={handleToggleVoiceCitySearch}
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                                            aria-label="Search city with voice"
-                                            title="Search city with voice"
-                                        >
-                                        {isRecordingCitySearch ? (
-                                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                        ) : (
-                                            <Mic className="h-4 w-4 text-foreground" />
-                                        )}
-                                        </Button>
-                                    </div>
+                                        onValueChange={(value) => setCitySearchTerm(value === '_all_' ? '' : value)}
+                                    >
+                                        <SelectTrigger id="city-search" className="w-full">
+                                            <SelectValue placeholder="Select a city..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="_all_">All Cities</SelectItem>
+                                            {uniqueCities.map(city => (
+                                                <SelectItem key={city} value={city}>{city}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
