@@ -108,7 +108,19 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     if (typeof visit.manualCommission === 'number' && visit.manualCommission > 0) {
         return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
     }
-    if (!visit.pricingDiscussed && !visit.freeTrial) return null;
+    
+    if (visit.freeTrial) {
+        const priceFromUnits = Array.isArray(visit.interestedUnits)
+            ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+            : 0;
+        
+        const coolerCommission = (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0)) * 5;
+        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+        const total = coolerCommission + installCommission;
+        return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
+    }
+
+    if (!visit.pricingDiscussed) return null;
 
     if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
         return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
@@ -118,7 +130,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
       ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
       : 0;
 
-    const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
+    const priceQuoted = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
 
     const leaseCommission = (priceQuoted && visit.leaseTerm) 
       ? (priceQuoted * (visit.leaseTerm / 12)) 
@@ -246,13 +258,24 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number' || (visit.interestedUnits && visit.interestedUnits.length > 0)) && <Separator />}
 
             {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
-                 <div>
+                <div>
                     <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />Interested Units</h4>
                     <div className="pl-6 space-y-1">
                         <ul className="list-disc list-inside">
-                            {visit.interestedUnits.map((unit, index) => (
-                                <li key={index}>{unit}</li>
-                            ))}
+                            {visit.interestedUnits.map((unit, index) => {
+                                const price = COOLER_PRICING_MAP[unit];
+                                const commission = price ? price * 5 : 0;
+                                return (
+                                    <li key={index}>
+                                        {unit}
+                                        {commission > 0 && (
+                                            <span className="text-green-400 font-mono ml-2">
+                                                (Potential Comm: ${commission.toFixed(2)})
+                                            </span>
+                                        )}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
                 </div>
