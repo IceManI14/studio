@@ -56,6 +56,7 @@ import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 interface FoundPlace {
@@ -2577,16 +2578,31 @@ export default function HomePage() {
                     <div className="flex flex-col gap-6 items-center">
                       <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
                         <div className="w-full mb-2 space-y-2">
-                            <Button
-                                onClick={() => setIsAllMeetingsModalOpen(true)}
-                                variant="outline"
-                                className="w-full"
-                                size="sm"
-                                disabled={scheduledVisits.length === 0 || !!importedVisits}
-                            >
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Reschedule an Appointment
-                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        size="sm"
+                                        disabled={scheduledVisits.length === 0 || !!importedVisits}
+                                    >
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Reschedule an Appointment
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-64">
+                                    {scheduledVisits.map(visit => (
+                                        <DropdownMenuItem key={visit.id} onSelect={() => handleInitiateReschedule(visit)}>
+                                            <div className="flex flex-col">
+                                                <span>{visit.companyName}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PP') : 'Unscheduled'}
+                                                </span>
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                         <Calendar
                           mode="single"
