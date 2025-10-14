@@ -1147,13 +1147,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           {field.value?.map((unit, index) => (
                               <Badge key={index} variant="secondary" className="text-sm">
                                   {unit}
-                                  <button type="button" onClick={() => field.onChange(field.value?.filter(u => u !== unit))} className="ml-2 rounded-full p-0.5 hover:bg-destructive/20"><X className="h-3 w-3"/></button>
+                                  <button type="button" onClick={() => {
+                                    const newUnits = [...field.value || []];
+                                    const unitIndex = newUnits.lastIndexOf(unit);
+                                    if(unitIndex > -1) {
+                                      newUnits.splice(unitIndex, 1);
+                                      field.onChange(newUnits);
+                                    }
+                                  }} className="ml-2 rounded-full p-0.5 hover:bg-destructive/20"><X className="h-3 w-3"/></button>
                               </Badge>
                           ))}
                       </div>
                       <Select
                         onValueChange={(value) => {
-                          if (value && !field.value?.includes(value)) {
+                          if (value) {
                               field.onChange([...(field.value || []), value]);
                           }
                         }}
@@ -1165,7 +1172,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {OUR_COOLERS_LIST.filter(c => !field.value?.includes(c)).map((cooler) => (
+                          {OUR_COOLERS_LIST.map((cooler) => (
                             <SelectItem key={cooler} value={cooler}>
                               {cooler}
                             </SelectItem>
