@@ -2568,7 +2568,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-center gap-2">
                         <ListFilter className="h-5 w-5 text-primary" />
                         <h3 className="text-lg font-medium text-foreground text-center">
-                            Filter & Sort
+                            Filter &amp; Sort
                         </h3>
                       </div>
                     </div>
@@ -2576,6 +2576,18 @@ export default function HomePage() {
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
                       <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
+                        <div className="w-full mb-2 space-y-2">
+                            <Button
+                                onClick={() => setIsAllMeetingsModalOpen(true)}
+                                variant="outline"
+                                className="w-full"
+                                size="sm"
+                                disabled={scheduledVisits.length === 0 || !!importedVisits}
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Reschedule an Appointment
+                            </Button>
+                        </div>
                         <Calendar
                           mode="single"
                           selected={selectedDate}
@@ -2595,7 +2607,7 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        <div className="w-full mt-2 space-y-2">
+                        <div className="w-full mt-2">
                           {selectedDate && !visitToReschedule && (
                               <Button
                                   onClick={handleScheduleFromCalendar}
@@ -2607,16 +2619,6 @@ export default function HomePage() {
                                   Schedule on {format(selectedDate, 'MMM d')}
                               </Button>
                           )}
-                           <Button
-                                onClick={() => setIsAllMeetingsModalOpen(true)}
-                                variant="outline"
-                                className="w-full"
-                                size="sm"
-                                disabled={scheduledVisits.length === 0 || !!importedVisits}
-                            >
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Reschedule an Appointment
-                            </Button>
                         </div>
                       </div>
 
@@ -3065,7 +3067,7 @@ export default function HomePage() {
                   <AccordionContent className="p-0">
                     <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
                       <UiCardHeader>
-                        <UiCardTitle>Live Chat & Notifications</UiCardTitle>
+                        <UiCardTitle>Live Chat &amp; Notifications</UiCardTitle>
                         <UiCardDescription>
                           This section will contain live updates, messages, and notifications from the Eagle Eye command station.
                         </UiCardDescription>
@@ -3228,7 +3230,7 @@ export default function HomePage() {
                                 <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
                             </li>
                             <li>
-                                <strong>Smart Scheduling & Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
+                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
                             </li>
                             <li>
                                 <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
@@ -3506,5 +3508,4 @@ export default function HomePage() {
     </div>
   );
 }
-
     
