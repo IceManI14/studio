@@ -465,6 +465,7 @@ export default function HomePage() {
         visit.futureMeetingSet && 
         !visit.futureMeetingDateTime && 
         !scheduledIds.has(visit.id) &&
+        !visit.dealClosed &&
         !visit.notes?.startsWith('Flagged as a hotspot.')
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -476,7 +477,8 @@ export default function HomePage() {
       .filter(visit => 
         visit.notes?.startsWith('Flagged as a hotspot.') && 
         !visit.futureMeetingDateTime && 
-        !scheduledIds.has(visit.id)
+        !scheduledIds.has(visit.id) &&
+        !visit.dealClosed
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visitsToDisplay, scheduledVisits]);
@@ -3533,4 +3535,3 @@ export default function HomePage() {
     </div>
   );
 }
-    
