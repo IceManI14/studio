@@ -112,7 +112,17 @@ const calculateCommission = (visit: Visit): number => {
         return visit.manualCommission;
     }
 
-    if (!visit.pricingDiscussed && !visit.freeTrial) {
+    if (visit.freeTrial) {
+        const priceFromUnits = Array.isArray(visit.interestedUnits)
+            ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+            : 0;
+        
+        const coolerCommission = (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0)) * 5;
+        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
+        return coolerCommission + installCommission;
+    }
+
+    if (!visit.pricingDiscussed) {
         return 0;
     }
     
@@ -124,7 +134,7 @@ const calculateCommission = (visit: Visit): number => {
         ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
         : 0;
         
-    const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
+    const priceQuoted = (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
 
     const leaseCommission = (priceQuoted && visit.leaseTerm)
         ? (priceQuoted * (visit.leaseTerm / 12))
