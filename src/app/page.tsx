@@ -454,7 +454,7 @@ export default function HomePage() {
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
-      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date())
+      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date() && !visit.dealClosed)
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visitsToDisplay]);
 
@@ -3205,8 +3205,7 @@ export default function HomePage() {
                         </TabsTrigger>
                         <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
                            <MessagesSquare className="h-5 w-5" />
-                        </TabsTrigger>
-                    </TabsList>
+                        </TabsList>
 
                     <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
                         <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
