@@ -3,7 +3,7 @@ export const COOLER_PRICING_MAP: Record<string, number> = {
   "PW50": 39.99,
   "PW70": 49.99,
   "PW90CT": 59.99,
-  "PW90": 59.99,
+  "PW90": 79,
   "XL1": 69.99,
   "E6": 79.99,
   "I14": 99.99,
