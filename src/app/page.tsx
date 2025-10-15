@@ -450,7 +450,7 @@ export default function HomePage() {
         }
     });
     return sorted;
-}, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
+  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
