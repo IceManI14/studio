@@ -2588,68 +2588,6 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-6 items-center">
-                      <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
-                        <div className="w-full mb-2 space-y-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full"
-                                        size="sm"
-                                        disabled={scheduledVisits.length === 0 || !!importedVisits}
-                                    >
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        Reschedule an Appointment
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-64">
-                                    {scheduledVisits.map(visit => (
-                                        <DropdownMenuItem key={visit.id} onSelect={() => handleInitiateReschedule(visit)}>
-                                            <div className="flex flex-col">
-                                                <span>{visit.companyName}</span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PP') : 'Unscheduled'}
-                                                </span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={handleCalendarSelect}
-                          className={cn("rounded-md border", "bluish-glow")}
-                          modifiers={{
-                            logged: loggedPastVisitDays,
-                            scheduled: scheduledFutureVisitDays,
-                            dealClosed: dealClosedDays,
-                            trialEnd: trialEndDays,
-                          }}
-                          modifiersClassNames={{
-                            scheduled: 'day-scheduled',
-                            logged: 'day-logged-past',
-                            dealClosed: 'day-deal-closed',
-                            today: 'day_today',
-                            trialEnd: 'day-trial-end',
-                          }}
-                        />
-                        <div className="w-full mt-2">
-                          {selectedDate && !visitToReschedule && (
-                              <Button
-                                  onClick={handleScheduleFromCalendar}
-                                  className="w-full"
-                                  size="sm"
-                                  disabled={!!importedVisits}
-                              >
-                                  <PlusSquare className="mr-2 h-4 w-4" />
-                                  Schedule on {format(selectedDate, 'MMM d')}
-                              </Button>
-                          )}
-                        </div>
-                      </div>
-
                       <Accordion type="single" collapsible className="w-full max-w-sm">
                         <AccordionItem value="sorters" className="border-b-0">
                           <AccordionTrigger className="text-sm">
@@ -2732,24 +2670,85 @@ export default function HomePage() {
                         </AccordionItem>
                       </Accordion>
                       <Separator />
-                      <ExportPdfButton
-                        visits={sortedVisitsForCallDay}
-                        reportTitle={sortedVisitsTitle}
-                        label="Export Sorted Visits to PDF"
-                        className="w-full max-w-sm"
-                        size="sm"
-                        salespersonName={selectedSalesperson?.name}
-                      />
+                      <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
+                        <div className="w-full mb-2 space-y-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        size="sm"
+                                        disabled={scheduledVisits.length === 0 || !!importedVisits}
+                                    >
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Reschedule an Appointment
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-64">
+                                    {scheduledVisits.map(visit => (
+                                        <DropdownMenuItem key={visit.id} onSelect={() => handleInitiateReschedule(visit)}>
+                                            <div className="flex flex-col">
+                                                <span>{visit.companyName}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PP') : 'Unscheduled'}
+                                                </span>
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleCalendarSelect}
+                          className={cn("rounded-md border", "bluish-glow")}
+                          modifiers={{
+                            logged: loggedPastVisitDays,
+                            scheduled: scheduledFutureVisitDays,
+                            dealClosed: dealClosedDays,
+                            trialEnd: trialEndDays,
+                          }}
+                          modifiersClassNames={{
+                            scheduled: 'day-scheduled',
+                            logged: 'day-logged-past',
+                            dealClosed: 'day-deal-closed',
+                            today: 'day_today',
+                            trialEnd: 'day-trial-end',
+                          }}
+                        />
+                        <div className="w-full mt-2">
+                          {selectedDate && !visitToReschedule && (
+                              <Button
+                                  onClick={handleScheduleFromCalendar}
+                                  className="w-full"
+                                  size="sm"
+                                  disabled={!!importedVisits}
+                              >
+                                  <PlusSquare className="mr-2 h-4 w-4" />
+                                  Schedule on {format(selectedDate, 'MMM d')}
+                              </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
               
-              <div className="mt-6 mb-4 flex justify-center">
+              <div className="mt-6 mb-4 flex flex-col gap-2 justify-center max-w-sm mx-auto">
+                <ExportPdfButton
+                  visits={sortedVisitsForCallDay}
+                  reportTitle={sortedVisitsTitle}
+                  label="Export Sorted Visits to PDF"
+                  className="w-full"
+                  size="sm"
+                  salespersonName={selectedSalesperson?.name}
+                />
                 <ExportPdfButton
                   visits={visitsToDisplay}
                   label="Export All Visits to PDF"
-                  className="w-full max-w-sm"
+                  className="w-full"
                   size="sm"
                   salespersonName={selectedSalesperson?.name}
                   reportTitle="All Visits"
