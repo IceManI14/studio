@@ -244,12 +244,12 @@ export default function HomePage() {
   }, [toast]);
 
 
-  const { futureMeetings, futureVisits, flaggedHotspots, activeTrials, closedDeals } = useMemo(() => {
-    if (isLoading) return { futureMeetings: [], futureVisits: [], flaggedHotspots: [], activeTrials: [], closedDeals: [] };
+  const { scheduledVisits, unscheduledFutureVisits, flaggedHotspots, activeTrials, closedDeals } = useMemo(() => {
+    if (isLoading) return { scheduledVisits: [], unscheduledFutureVisits: [], flaggedHotspots: [], activeTrials: [], closedDeals: [] };
     const today = startOfToday();
     return {
-      futureMeetings: visits.filter(v => v.futureMeetingDateTime && new Date(v.futureMeetingDateTime) >= today),
-      futureVisits: visits.filter(v => !v.futureMeetingDateTime && !v.dealClosed && new Date(v.timestamp) >= today),
+      scheduledVisits: visits.filter(v => v.futureMeetingDateTime && new Date(v.futureMeetingDateTime) >= today && !v.dealClosed),
+      unscheduledFutureVisits: visits.filter(v => !v.futureMeetingDateTime && !v.dealClosed && new Date(v.timestamp) >= today),
       flaggedHotspots: hotLeads,
       activeTrials: visits.filter(v => v.freeTrial && !v.dealClosed),
       closedDeals: visits.filter(v => v.dealClosed),
@@ -339,12 +339,12 @@ export default function HomePage() {
         </div>
         
         <Accordion type="multiple" defaultValue={['future-meetings']} className="w-full space-y-3">
-          <AccordionSection title="Future Meetings" icon={<Calendar size={24} className="text-purple-400"/>} count={futureMeetings.length} defaultOpen>
-            {renderVisitList(futureMeetings)}
+          <AccordionSection title="Future Meetings" icon={<Calendar size={24} className="text-purple-400"/>} count={scheduledVisits.length} defaultOpen>
+            {renderVisitList(scheduledVisits)}
           </AccordionSection>
 
-          <AccordionSection title="Future Visits (Unscheduled)" icon={<Folder size={24} className="text-blue-400"/>} count={futureVisits.length}>
-             {renderVisitList(futureVisits)}
+          <AccordionSection title="Future Visits (Unscheduled)" icon={<Folder size={24} className="text-blue-400"/>} count={unscheduledFutureVisits.length}>
+             {renderVisitList(unscheduledFutureVisits)}
           </AccordionSection>
 
           <AccordionSection title="Flagged Hotspots" icon={<AlertTriangle size={24} className="text-orange-400"/>} count={flaggedHotspots.length}>
@@ -415,5 +415,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
