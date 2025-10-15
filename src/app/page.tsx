@@ -198,7 +198,7 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
         </AccordionItem>
       ))}
     </Accordion>
-  )
+  );
 });
 
 export default function HomePage() {
