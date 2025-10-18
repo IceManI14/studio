@@ -545,7 +545,7 @@ export default function HomePage() {
       }
       grouped[dayKey].push(visit);
     });
-    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(a.timestamp).getTime());
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
   }, [sortedVisitsForCallDay]);
 
   const sortedVisitsTitle = useMemo(() => {
