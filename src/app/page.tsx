@@ -545,7 +545,7 @@ export default function HomePage() {
       }
       grouped[dayKey].push(visit);
     });
-    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime());
+    return Object.entries(grouped).sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(a.timestamp).getTime());
   }, [sortedVisitsForCallDay]);
 
   const sortedVisitsTitle = useMemo(() => {
@@ -1546,7 +1546,7 @@ export default function HomePage() {
       latitude: undefined,
       longitude: undefined,
     } as Visit);
-};
+  };
 
   const handleEditVisit = (visit: Visit) => {
     setCurrentEditingVisit(visit);
