@@ -1536,7 +1536,7 @@ export default function HomePage() {
     setDestinationCities(cities);
   };
 
-  const handleQuickLog = async () => {
+  const handleQuickLog = () => {
     setIsVisitFormOpen(true);
     setCurrentEditingVisit({
       id: `temp_${crypto.randomUUID()}`,
