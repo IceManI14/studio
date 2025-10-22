@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -2199,7 +2200,7 @@ export default function HomePage() {
                             </div>
                           </div>
                           <div className="flex justify-end min-w-[80px] items-center gap-2">
-                            <div className="flex items-center text-sm text-muted-foreground" title={`Current Speed: ${currentSpeed.toFixed(1)} MPH`}>
+                            <div className="flex items-center text-sm text-green-400" title={`Current Speed: ${currentSpeed.toFixed(1)} MPH`}>
                               <Gauge className="mr-1 h-4 w-4" />
                               <span className="font-mono">{currentSpeed.toFixed(0)}</span>
                             </div>
