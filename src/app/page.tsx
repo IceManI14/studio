@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -46,7 +46,7 @@ import TerritoryUploadModal from '@/components/territory-upload-modal';
 import FindCompanyModal from '@/components/find-company-modal';
 import ManageFilesModal from '@/components/manage-files-modal';
 import DataUsageDashboard from '@/components/data-usage-dashboard';
-import { fileToDataUri, cn, stateNameToAbbreviation } from '@/lib/utils';
+import { fileToDataUri, cn, stateNameToAbbreviation, haversineDistance } from '@/lib/utils';
 import { Calendar } from "@/components/ui/calendar";
 import type { SaveVisitPayload } from '@/app/actions';
 import { db, firebaseConfigured } from '@/lib/firebase';
@@ -268,6 +268,8 @@ export default function HomePage() {
   const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [activeTabLabel, setActiveTabLabel] = useState('Field Day');
+  const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
+  const [currentSpeed, setCurrentSpeed] = useState<number>(0);
 
   
   const { toast } = useToast();
@@ -450,7 +452,7 @@ export default function HomePage() {
         }
     });
     return sorted;
-}, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
+  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
@@ -1265,6 +1267,43 @@ export default function HomePage() {
     // This effect ensures the date is only set on the client, preventing hydration mismatch.
     setCurrentDate(new Date());
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const currentTime = Date.now();
+
+                if (lastLocation) {
+                    const distance = haversineDistance(
+                        { lat: lastLocation.lat, lng: lastLocation.lng },
+                        { lat: latitude, lng: longitude }
+                    );
+                    const timeDiffSeconds = (currentTime - lastLocation.time) / 1000;
+                    
+                    if (timeDiffSeconds > 0) {
+                        const speedMps = distance / timeDiffSeconds;
+                        const speedMph = speedMps * 2.23694;
+                        setCurrentSpeed(speedMph);
+                    }
+                }
+                setLastLocation({ lat: latitude, lng: longitude, time: currentTime });
+            },
+            (error) => {
+                console.warn(`ERROR(${error.code}): ${error.message}`);
+                setCurrentSpeed(0);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0,
+            }
+        );
+
+        return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, [lastLocation]);
 
   useEffect(() => {
     setSelectedSalesperson(salespeople[0]);
@@ -2159,7 +2198,11 @@ export default function HomePage() {
                               <span className="font-semibold text-foreground truncate">Daily Plan</span>
                             </div>
                           </div>
-                          <div className="flex justify-end min-w-[80px]">
+                          <div className="flex justify-end min-w-[80px] items-center gap-2">
+                            <div className="flex items-center text-sm text-muted-foreground" title={`Current Speed: ${currentSpeed.toFixed(1)} MPH`}>
+                              <Gauge className="mr-1 h-4 w-4" />
+                              <span className="font-mono">{currentSpeed.toFixed(0)}</span>
+                            </div>
                             {targetDestination && (
                                 <Badge variant="secondary" className="shrink-0">{stateNameToAbbreviation(targetDestination.city)}</Badge>
                             )}
