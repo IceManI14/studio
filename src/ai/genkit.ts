@@ -2,8 +2,7 @@ import {genkit, type GenkitPlugin} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
 const googleApiKey = process.env.GOOGLE_API_KEY;
-// Force disable by setting isGenkitConfigured to false
-const isGenkitConfigured = false; 
+const isGenkitConfigured = !!(googleApiKey && googleApiKey.trim() !== '' && !googleApiKey.includes('YOUR_GOOGLE_API_KEY_HERE'));
 
 const plugins: GenkitPlugin[] = [];
 if (isGenkitConfigured) {

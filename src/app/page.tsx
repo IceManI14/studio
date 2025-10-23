@@ -40,7 +40,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAiChatResponseAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction } from '@/app/actions';
+import { getAiChatResponseAction, findOptimalParkingAction, extractCitiesFromPdfAction, findCompanyAction, saveDailyReportAction, analyzeDocumentAction, deleteVisitAction, saveVisitAction, getCompanyNameFromCoordsAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import TerritoryUploadModal from '@/components/territory-upload-modal';
@@ -1936,8 +1936,38 @@ export default function HomePage() {
   };
 
   const handleHotspotCreation = useCallback(async () => {
-    toast({ title: "Flagging Hotspot...", description: "This feature is currently disabled." });
-  }, [toast]);
+    if (!lastLocation) {
+        toast({ variant: 'destructive', title: 'Location Unknown', description: 'Cannot flag hotspot without a current location.' });
+        return;
+    }
+  
+    const hotspotToast = toast({ title: "Flagging Hotspot...", description: "Identifying location and creating a visit." });
+  
+    try {
+        const companyDetails = await getCompanyNameFromCoordsAction({ latitude: lastLocation.lat, longitude: lastLocation.lng });
+  
+        if (companyDetails.error) {
+            throw new Error(companyDetails.error);
+        }
+  
+        const newVisit: SaveVisitPayload = {
+            timestamp: new Date(),
+            companyName: companyDetails.suggestedCompanyName || `Hotspot near ${companyDetails.address || 'your location'}`,
+            city: companyDetails.city,
+            latitude: lastLocation.lat,
+            longitude: lastLocation.lng,
+            notes: 'Flagged as a hotspot.',
+            futureMeetingSet: true, // Mark for future planning
+            futureMeetingDateTime: undefined, // But unscheduled
+        };
+  
+        handleSaveFromForm(newVisit, { andClose: false, expandOnClose: false });
+  
+        hotspotToast.update({ id: hotspotToast.id, title: "Hotspot Flagged!", description: `${newVisit.companyName} added to your Planner.` });
+    } catch (error: any) {
+        hotspotToast.update({ id: hotspotToast.id, title: 'Error Flagging Hotspot', description: error.message, variant: 'destructive' });
+    }
+  }, [lastLocation, toast, handleSaveFromForm]);
 
   const handleConfirmStartupNavigation = async () => {
     if (!startupNavigationTarget) return;
@@ -3563,9 +3593,10 @@ export default function HomePage() {
       </div>
       <button
         onClick={handleHotspotCreation}
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110 active:scale-100 disabled:bg-gray-500 disabled:cursor-not-allowed"
         aria-label="Flag Hotspot"
-        disabled={!!importedVisits}
+        disabled={!!importedVisits || currentSpeed < 25}
+        title={currentSpeed < 25 ? "Enable by driving over 25 MPH" : "Flag Hotspot"}
       >
         <Flame className="h-8 w-8" />
       </button>

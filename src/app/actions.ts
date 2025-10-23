@@ -100,7 +100,20 @@ const getCompanyNameFromCoordsPayloadSchema = z.object({
 export async function getCompanyNameFromCoordsAction(
     payload: { latitude?: number; longitude?: number; }
 ): Promise<{ suggestedCompanyName?: string; confidenceScore?: number; address?: string; city?: string; phone?: string; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    const validatedPayload = getCompanyNameFromCoordsPayloadSchema.safeParse(payload);
+    if (!validatedPayload.success) {
+        return { error: "Invalid latitude or longitude provided." };
+    }
+    try {
+        const result = await getCompanyNameFromCoords(validatedPayload.data);
+        return result;
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const aiChatPayloadSchema = z.object({
