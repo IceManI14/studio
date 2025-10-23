@@ -17,9 +17,10 @@ interface ExportPdfButtonProps {
   label?: string;
   salespersonName?: string;
   reportTitle?: string;
+  variant?: ButtonProps['variant'];
 }
 
-const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className, label = "Export All Visits to PDF", salespersonName, reportTitle = "Company Visits" }) => {
+const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, className, label = "Export All Visits to PDF", salespersonName, reportTitle = "Company Visits", variant = "outline" }) => {
   const { toast } = useToast();
   const timeZone = 'America/New_York';
 
@@ -133,7 +134,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
   };
 
   return (
-    <Button onClick={handleExportPdf} variant="outline" disabled={visits.length === 0} size={size} className={cn("w-full", className)}>
+    <Button onClick={handleExportPdf} variant={variant} disabled={visits.length === 0} size={size} className={cn("w-full", className)}>
        <FileDown className="mr-2 h-4 w-4" />
       {label}
     </Button>

@@ -1584,7 +1584,7 @@ export default function HomePage() {
       latitude: undefined,
       longitude: undefined,
     } as Visit);
-};
+  };
 
   const handleEditVisit = (visit: Visit) => {
     setCurrentEditingVisit(visit);
@@ -2825,6 +2825,7 @@ export default function HomePage() {
                   size="sm"
                   salespersonName={selectedSalesperson?.name}
                   reportTitle="All Visits"
+                  variant="default"
                 />
               </div>
 
