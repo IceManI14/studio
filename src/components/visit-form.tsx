@@ -1148,17 +1148,30 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Units of Interest
                       </FormLabel>
                       <div className="flex flex-wrap gap-2">
-                          {field.value?.map((unit, index) => (
-                              <Badge key={index} variant="secondary" className="text-sm">
-                                  {unit}
-                                  <button type="button" onClick={() => field.onChange(field.value?.filter(u => u !== unit))} className="ml-2 rounded-full p-0.5 hover:bg-destructive/20"><X className="h-3 w-3"/></button>
-                              </Badge>
-                          ))}
+                        {field.value?.map((unit, index) => (
+                          <Badge key={index} variant="secondary" className="text-sm">
+                            {unit}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newUnits = [...(field.value || [])];
+                                const unitIndexToRemove = newUnits.findIndex(u => u === unit);
+                                if (unitIndexToRemove > -1) {
+                                  newUnits.splice(unitIndexToRemove, 1);
+                                  field.onChange(newUnits);
+                                }
+                              }}
+                              className="ml-2 rounded-full p-0.5 hover:bg-destructive/20"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
                       </div>
                       <Select
                         onValueChange={(value) => {
-                          if (value && !field.value?.includes(value)) {
-                              field.onChange([...(field.value || []), value]);
+                          if (value) {
+                            field.onChange([...(field.value || []), value]);
                           }
                         }}
                         value={''}
@@ -1169,7 +1182,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {OUR_COOLERS_LIST.filter(c => !field.value?.includes(c)).map((cooler) => (
+                          {OUR_COOLERS_LIST.map((cooler) => (
                             <SelectItem key={cooler} value={cooler}>
                               {cooler}
                             </SelectItem>
