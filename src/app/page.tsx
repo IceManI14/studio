@@ -2283,7 +2283,7 @@ export default function HomePage() {
                               </Alert>
                             )}
                           
-                          <Button variant="default" onClick={() => handleChangeDestination()} className="w-full">
+                          <Button variant="default" onClick={() => handleChangeDestination()}>
                             Change Destination
                           </Button>
 
@@ -2296,7 +2296,6 @@ export default function HomePage() {
                           {navigationUrl && (
                             <Button
                               onClick={() => window.open(navigationUrl, '_blank', 'noopener,noreferrer')}
-                              className="w-full"
                               variant="default"
                             >
                               <MapIcon className="mr-2 h-4 w-4" />
@@ -2666,7 +2665,6 @@ export default function HomePage() {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="outline"
-                                        className="w-full"
                                         size="sm"
                                         disabled={scheduledVisits.length === 0 || !!importedVisits}
                                     >
@@ -2711,7 +2709,6 @@ export default function HomePage() {
                           {selectedDate && !visitToReschedule && (
                               <Button
                                   onClick={handleScheduleFromCalendar}
-                                  className="w-full"
                                   size="sm"
                                   disabled={!!importedVisits}
                               >
@@ -2740,7 +2737,7 @@ export default function HomePage() {
                                     }
                                   }}
                                 >
-                                  <SelectTrigger id="sort-criteria" className="w-full">
+                                  <SelectTrigger id="sort-criteria">
                                     <SelectValue placeholder="Select criteria" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -2760,7 +2757,7 @@ export default function HomePage() {
                                         value={citySearchTerm}
                                         onValueChange={(value) => setCitySearchTerm(value === '_all_' ? '' : value)}
                                     >
-                                        <SelectTrigger id="city-search" className="w-full">
+                                        <SelectTrigger id="city-search">
                                             <SelectValue placeholder="Select a city..." />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -2778,7 +2775,7 @@ export default function HomePage() {
                                     value={sortOrder}
                                     onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
                                   >
-                                    <SelectTrigger id="sort-order" className="w-full">
+                                    <SelectTrigger id="sort-order">
                                       <SelectValue placeholder="Select order" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -2808,7 +2805,6 @@ export default function HomePage() {
                         visits={sortedVisitsForCallDay}
                         reportTitle={sortedVisitsTitle}
                         label="Export Sorted Visits to PDF"
-                        className="max-w-sm"
                         size="sm"
                         salespersonName={selectedSalesperson?.name}
                       />
@@ -2821,8 +2817,6 @@ export default function HomePage() {
                 <ExportPdfButton
                   visits={visitsToDisplay}
                   label="Export All Visits to PDF"
-                  className="max-w-sm"
-                  size="sm"
                   salespersonName={selectedSalesperson?.name}
                   reportTitle="All Visits"
                   variant="default"

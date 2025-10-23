@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Visit, Salesperson } from '@/lib/types';
@@ -1078,11 +1079,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       )}
                     </FormControl>
                     
-                    <div className="flex flex-col gap-2 pt-1">
+                    <div className="flex flex-col items-center gap-2 pt-1">
                       <Button
                           type="button"
                           variant="secondary"
-                          className="w-full"
                           onClick={handleSaveAndView}
                           disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
                       >
@@ -1092,7 +1092,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
                         onClick={() => setIsAddressModalOpen(true)}
                       >
                         <MapPin className="mr-2 h-4 w-4" />
@@ -1182,7 +1181,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {OUR_COOLERS_LIST.map((cooler) => (
+                          {OUR_COOLERS_LIST.filter(c => !field.value?.includes(c)).map((cooler) => (
                             <SelectItem key={cooler} value={cooler}>
                               {cooler}
                             </SelectItem>
