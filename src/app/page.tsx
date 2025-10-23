@@ -2358,12 +2358,12 @@ export default function HomePage() {
         )}>
           {activeTab === 'field-day' && (
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4 w-full">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
-                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="w-full sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
                 </div>
@@ -2808,7 +2808,7 @@ export default function HomePage() {
                         visits={sortedVisitsForCallDay}
                         reportTitle={sortedVisitsTitle}
                         label="Export Sorted Visits to PDF"
-                        className="w-full max-w-sm"
+                        className="max-w-sm"
                         size="sm"
                         salespersonName={selectedSalesperson?.name}
                       />
@@ -2821,7 +2821,7 @@ export default function HomePage() {
                 <ExportPdfButton
                   visits={visitsToDisplay}
                   label="Export All Visits to PDF"
-                  className="w-full max-w-sm"
+                  className="max-w-sm"
                   size="sm"
                   salespersonName={selectedSalesperson?.name}
                   reportTitle="All Visits"

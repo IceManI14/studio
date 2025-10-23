@@ -134,7 +134,7 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({ visits, size, classNa
   };
 
   return (
-    <Button onClick={handleExportPdf} variant={variant} disabled={visits.length === 0} size={size} className={cn("w-full", className)}>
+    <Button onClick={handleExportPdf} variant={variant} disabled={visits.length === 0} size={size} className={cn(className)}>
        <FileDown className="mr-2 h-4 w-4" />
       {label}
     </Button>
