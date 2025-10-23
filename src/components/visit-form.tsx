@@ -376,9 +376,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
   const interestedUnitsValue = form.watch('interestedUnits');
 
+  const pricingDiscussedValue = form.watch('pricingDiscussed');
   useEffect(() => {
-    const pricingDiscussedValue = form.watch('pricingDiscussed');
-    if (!pricingDiscussedValue) {
+    if (pricingDiscussedValue) {
+      if (form.getValues('leaseTerm') === undefined) {
+        form.setValue('leaseTerm', 60, { shouldDirty: true });
+      }
+    } else {
         const currentPrice = form.getValues('priceQuoted');
         const currentLease = form.getValues('leaseTerm');
         const currentFee = form.getValues('installationFee');
@@ -388,7 +392,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
              form.setValue('installationFee', undefined, { shouldDirty: true });
         }
     }
-  }, [form.watch('pricingDiscussed'), form]);
+  }, [pricingDiscussedValue, form]);
 
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
