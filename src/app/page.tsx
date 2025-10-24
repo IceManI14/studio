@@ -271,6 +271,7 @@ export default function HomePage() {
   const [activeTabLabel, setActiveTabLabel] = useState('Field Day');
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
+  const [speedReadings, setSpeedReadings] = useState<number[]>([]);
 
   
   const { toast } = useToast();
@@ -1286,7 +1287,16 @@ export default function HomePage() {
                     if (timeDiffSeconds > 0) {
                         const speedMps = distance / timeDiffSeconds;
                         const speedMph = speedMps * 2.23694;
-                        setCurrentSpeed(speedMph);
+                        
+                        setSpeedReadings(prevReadings => {
+                            const newReadings = [...prevReadings, speedMph];
+                            if (newReadings.length > 5) {
+                                newReadings.shift(); // Keep only the last 5 readings
+                            }
+                            const avgSpeed = newReadings.reduce((a, b) => a + b, 0) / newReadings.length;
+                            setCurrentSpeed(avgSpeed);
+                            return newReadings;
+                        });
                     }
                 }
                 setLastLocation({ lat: latitude, lng: longitude, time: currentTime });
@@ -1294,6 +1304,7 @@ export default function HomePage() {
             (error) => {
                 console.warn(`ERROR(${error.code}): ${error.message}`);
                 setCurrentSpeed(0);
+                setSpeedReadings([]);
             },
             {
                 enableHighAccuracy: true,
@@ -3471,7 +3482,7 @@ export default function HomePage() {
                     )}
                 </div>
                  <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking || isExtractingCities}>
+                    <Button variant="outline" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking || isExtractingCities}>
                         {isFindingParking || isExtractingCities ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Close'}
                     </Button>
                 </DialogFooter>
@@ -3604,4 +3615,6 @@ export default function HomePage() {
     </div>
   );
 }
+    
+
     
