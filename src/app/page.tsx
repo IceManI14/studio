@@ -497,6 +497,18 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visitsToDisplay]);
 
+  const closedDealsCoolerSummary = useMemo(() => {
+    const coolerCounts: Record<string, number> = {};
+    closedDeals.forEach(visit => {
+      if (visit.interestedUnits) {
+        visit.interestedUnits.forEach(unit => {
+          coolerCounts[unit] = (coolerCounts[unit] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(coolerCounts).sort(([, countA], [, countB]) => countB - countA);
+  }, [closedDeals]);
+
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => total + calculateCommission(visit), 0);
   }, [activeFreeTrials]);
@@ -2636,6 +2648,18 @@ export default function HomePage() {
                                   </div>
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                  {closedDealsCoolerSummary.length > 0 && (
+                                    <div className="mb-4 rounded-lg border bg-background/50 p-3">
+                                      <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
+                                      <div className="flex flex-wrap justify-center gap-2">
+                                        {closedDealsCoolerSummary.map(([name, count]) => (
+                                          <Badge key={name} variant="secondary" className="text-sm">
+                                            {name}: <span className="ml-1.5 font-bold">{count}</span>
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                   <Accordion type="multiple" className="w-full space-y-4">
                                     {closedDeals.map(visit => renderVisitCardAccordion(visit))}
                                   </Accordion>
@@ -3619,6 +3643,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
