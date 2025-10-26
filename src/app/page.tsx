@@ -458,7 +458,7 @@ export default function HomePage() {
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
-      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date())
+      .filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) >= new Date() && !visit.dealClosed)
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visitsToDisplay]);
 
@@ -469,7 +469,8 @@ export default function HomePage() {
         visit.futureMeetingSet && 
         !visit.futureMeetingDateTime && 
         !scheduledIds.has(visit.id) &&
-        !visit.notes?.startsWith('Flagged as a hotspot.')
+        !visit.notes?.startsWith('Flagged as a hotspot.') &&
+        !visit.dealClosed
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visitsToDisplay, scheduledVisits]);
@@ -480,7 +481,8 @@ export default function HomePage() {
       .filter(visit => 
         visit.notes?.startsWith('Flagged as a hotspot.') && 
         !visit.futureMeetingDateTime && 
-        !scheduledIds.has(visit.id)
+        !scheduledIds.has(visit.id) &&
+        !visit.dealClosed
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visitsToDisplay, scheduledVisits]);
@@ -3643,6 +3645,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
