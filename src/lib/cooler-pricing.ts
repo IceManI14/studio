@@ -10,6 +10,7 @@ export const COOLER_PRICING_MAP: Record<string, number> = {
   "I15": 119.99,
   "I16": 129.99,
   "3i": 129.99,
+  "2i": 129.99,
 };
 
 export const OUR_COOLERS_LIST = [
@@ -23,4 +24,5 @@ export const OUR_COOLERS_LIST = [
   "I15",
   "I16",
   "3i",
+  "2i",
 ];
