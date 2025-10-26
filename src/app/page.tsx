@@ -2325,7 +2325,8 @@ export default function HomePage() {
         </header>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner mt-2">
+          <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
+          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -2360,7 +2361,6 @@ export default function HomePage() {
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
-          <div className="text-center text-sm font-medium text-foreground mt-2">{activeTabLabel}</div>
         </Tabs>
         
         <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
