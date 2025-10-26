@@ -2241,7 +2241,7 @@ export default function HomePage() {
                             </div>
                           </div>
                           <div className="flex justify-end min-w-[80px] items-center gap-2">
-                            <div className="flex items-center text-sm text-green-400" title={`Current Speed: ${currentSpeed.toFixed(1)} MPH`}>
+                            <div className="flex items-center text-green-400" title={`Current Speed: ${currentSpeed.toFixed(1)} MPH`}>
                               <Gauge className="mr-1 h-4 w-4" />
                               <span className="font-mono">{currentSpeed.toFixed(0)}</span>
                             </div>
@@ -2323,9 +2323,10 @@ export default function HomePage() {
             )}
           </div>
         </header>
+
+        <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
           <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
@@ -3618,3 +3619,4 @@ export default function HomePage() {
     
 
     
+
