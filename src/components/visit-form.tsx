@@ -1079,12 +1079,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       )}
                     </FormControl>
                     
-                    <div className="flex flex-col items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                       <Button
                           type="button"
                           variant="secondary"
                           onClick={handleSaveAndView}
                           disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
+                          size="sm"
                       >
                           <Save className="mr-2 h-4 w-4" />
                           Save & View
@@ -1093,9 +1094,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         type="button"
                         variant="outline"
                         onClick={() => setIsAddressModalOpen(true)}
+                        size="sm"
                       >
                         <MapPin className="mr-2 h-4 w-4" />
-                        Enter Address Manually
+                        Enter Address
                       </Button>
                     </div>
                     <FormMessage />
@@ -1148,13 +1150,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                       </FormLabel>
                       <div className="flex flex-wrap gap-2">
                         {field.value?.map((unit, index) => (
-                          <Badge key={index} variant="secondary" className="text-sm">
+                          <Badge key={`${unit}-${index}`} variant="secondary" className="text-sm">
                             {unit}
                             <button
                               type="button"
                               onClick={() => {
                                 const newUnits = [...(field.value || [])];
-                                const unitIndexToRemove = newUnits.findIndex(u => u === unit);
+                                const unitIndexToRemove = newUnits.indexOf(unit);
                                 if (unitIndexToRemove > -1) {
                                   newUnits.splice(unitIndexToRemove, 1);
                                   field.onChange(newUnits);
@@ -1181,7 +1183,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {OUR_COOLERS_LIST.filter(c => !field.value?.includes(c)).map((cooler) => (
+                          {OUR_COOLERS_LIST.map((cooler) => (
                             <SelectItem key={cooler} value={cooler}>
                               {cooler}
                             </SelectItem>
