@@ -616,7 +616,9 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         updateField('decisionMakerName', details.decisionMakerName);
         updateField('decisionMakerTitle', details.decisionMakerTitle);
         if (details.interestedUnits && details.interestedUnits.length > 0) {
-            updateField('interestedUnits', details.interestedUnits);
+            const currentUnits = new Set(updatedData.interestedUnits || []);
+            details.interestedUnits.forEach(unit => currentUnits.add(unit));
+            updateField('interestedUnits', Array.from(currentUnits));
         }
         updateField('freeTrial', details.freeTrial);
 
@@ -2018,7 +2020,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
               />
 
               <DialogFooter className="pt-4">
-                <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow w-full">
+                <Button type="submit" disabled={isSaving || isSuggestingCompany || isRecordingNotes || isRecordingCompanyName || isCameraViewVisible || isUploadingCard || isAnalyzingNotes} className="aurora-glow">
                   {(isSaving || isSuggestingCompany || isUploadingCard || isAnalyzingNotes) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {(isRecordingNotes || isRecordingCompanyName) && <Mic className="mr-2 h-4 w-4 animate-pulse" /> }
                   {initialData?.id ? 'Save Changes & Close' : 'Log Meeting & Close'}
@@ -2034,4 +2036,3 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
-

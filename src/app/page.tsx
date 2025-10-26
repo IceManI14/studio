@@ -2370,11 +2370,11 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={handleQuickLog} variant="default" size="sm" className="py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
-                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="sm:flex-1 py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
                 </div>
@@ -2738,7 +2738,7 @@ export default function HomePage() {
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="flex flex-col sm:flex-row gap-4 items-center w-full pt-2">
-                              <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                              <div className="flex flex-col gap-1.5 flex-1">
                                 <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
                                 <Select
                                   value={sortCriteria}
@@ -2763,7 +2763,7 @@ export default function HomePage() {
                                 </Select>
                               </div>
                               {sortCriteria === 'city' ? (
-                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                <div className="flex flex-col gap-1.5 flex-1">
                                     <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
                                     <Select
                                         value={citySearchTerm}
@@ -2781,7 +2781,7 @@ export default function HomePage() {
                                     </Select>
                                 </div>
                               ) : (
-                                <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1">
+                                <div className="flex flex-col gap-1.5 flex-1">
                                   <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
                                   <Select
                                     value={sortOrder}
@@ -3619,5 +3619,6 @@ export default function HomePage() {
     
 
     
+
 
 
