@@ -247,7 +247,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 
             {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
                  <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />Interested Units</h4>
+                    <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />{visit.dealClosed ? 'Installed Coolers' : 'Potential Units of Interest'}</h4>
                     <div className="pl-6 space-y-1">
                         <ul className="list-disc list-inside">
                             {visit.interestedUnits.map((unit, index) => (
@@ -435,17 +435,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
               )}
           </div>
           
-          <div className="absolute top-2 left-2 flex flex-col items-start">
-              <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
-              <div className="flex">
-                  {[1, 2, 3, 4, 5].map((starValue) => (
-                      <Star
-                          key={starValue}
-                          className={cn("h-5 w-5 cursor-pointer transition-colors", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
-                      />
-                  ))}
-              </div>
-          </div>
+          {!visit.dealClosed && (
+            <div className="absolute top-2 left-2 flex flex-col items-start">
+                <div className="text-xs text-muted-foreground mb-0.5">Partnership Confidence</div>
+                <div className="flex">
+                    {[1, 2, 3, 4, 5].map((starValue) => (
+                        <Star
+                            key={starValue}
+                            className={cn("h-5 w-5 cursor-pointer transition-colors", starValue <= (visit.partnershipConfidence ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/50")}
+                        />
+                    ))}
+                </div>
+            </div>
+          )}
+
 
           <div className="flex flex-col items-center justify-center w-full pt-12">
             <div className="flex items-center justify-center gap-2 text-sm font-medium mb-1">

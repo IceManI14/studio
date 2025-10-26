@@ -545,6 +545,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       ? [...COMPETITOR_SPECIFIC_COOLER_OPTIONS[watchedCompetitorName]]
       : [...DEFAULT_COOLER_TYPES_LIST];
 
+    if (watchedCompetitorName === 'Ready Refresh/Primo') {
+      form.setValue('coolerType', 'Bottles');
+    }
+
     if (!baseOptions.includes('Other')) {
         baseOptions.push('Other');
     }
@@ -558,7 +562,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         }
     }
     setCurrentCoolerOptions(baseOptions);
-  }, [form.watch('competitorName'), initialData, isOpen]);
+  }, [form, initialData, isOpen]);
 
   const analyzeNotesAndPopulateForm = useCallback(async (notes: string, upToDateVisit: Visit) => {
     if (!notes.trim()) return;
@@ -1107,48 +1111,51 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="partnershipConfidence"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Partnership Confidence</FormLabel>
-                    <FormControl>
-                      <div ref={confidenceStarsRef} tabIndex={-1} className="flex items-center gap-1 mt-1 outline-none" onMouseLeave={() => setHoveredStars(undefined)}>
-                        {[1, 2, 3, 4, 5].map((starValue) => {
-                          const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
-                          return (
-                            <Star
-                              key={starValue}
-                              className={cn(
-                                "h-6 w-6 cursor-pointer transition-colors",
-                                isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
-                              )}
-                              onClick={() => {
-                                field.onChange(starValue)
-                                if (starValue < 4) {
-                                  form.setValue('interestedUnits', []);
-                                }
-                              }}
-                              onMouseEnter={() => setHoveredStars(starValue)}
-                            />
-                          );
-                        })}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!initialData?.dealClosed && (
+                <FormField
+                  control={form.control}
+                  name="partnershipConfidence"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Partnership Confidence</FormLabel>
+                      <FormControl>
+                        <div ref={confidenceStarsRef} tabIndex={-1} className="flex items-center gap-1 mt-1 outline-none" onMouseLeave={() => setHoveredStars(undefined)}>
+                          {[1, 2, 3, 4, 5].map((starValue) => {
+                            const isFilled = starValue <= (hoveredStars ?? field.value ?? 0);
+                            return (
+                              <Star
+                                key={starValue}
+                                className={cn(
+                                  "h-6 w-6 cursor-pointer transition-colors",
+                                  isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
+                                )}
+                                onClick={() => {
+                                  field.onChange(starValue)
+                                  if (starValue < 4) {
+                                    form.setValue('interestedUnits', []);
+                                  }
+                                }}
+                                onMouseEnter={() => setHoveredStars(starValue)}
+                              />
+                            );
+                          })}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
-              {form.watch('partnershipConfidence') && form.watch('partnershipConfidence')! >= 4 && (
+
+              {((form.watch('partnershipConfidence') && form.watch('partnershipConfidence')! >= 4) || initialData?.dealClosed) && (
                 <FormField
                   control={form.control}
                   name="interestedUnits"
                   render={({ field }) => (
                     <FormItem className="space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
                       <FormLabel className="flex items-center">
-                        <PackageCheck className="mr-2 h-5 w-5 text-primary" /> Potential Units of Interest
+                        <PackageCheck className="mr-2 h-5 w-5 text-primary" /> {initialData?.dealClosed ? 'Installed Units' : 'Potential Units of Interest'}
                       </FormLabel>
                       <div className="flex flex-wrap gap-2">
                         {field.value?.map((unit, index) => (
