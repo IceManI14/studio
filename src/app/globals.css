@@ -34,8 +34,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 242 47% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 243 79% 65%; /* Indigo */
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 100% 56%; /* A nice blue */
+    --primary-foreground: 0 0% 0%; /* Black text */
     --secondary: 265 83% 65%; /* Violet */
     --secondary-foreground: 210 40% 98%;
     --muted: 242 47% 20%; /* Muted dark blue */
