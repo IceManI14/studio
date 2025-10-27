@@ -2288,21 +2288,21 @@ export default function HomePage() {
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner">
-            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="planner" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="call-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
-              className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
+              className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2"
               onClick={(e) => {
                 if (visitsToDisplay.length === 0) {
                   e.preventDefault();
@@ -2313,11 +2313,11 @@ export default function HomePage() {
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="ai-chat" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
             </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="about" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <InfoIcon className="h-5 w-5" />
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
@@ -3539,6 +3539,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
