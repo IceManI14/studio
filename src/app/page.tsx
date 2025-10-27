@@ -2116,22 +2116,6 @@ export default function HomePage() {
             <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
           </div>
-          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-            {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-            ) : (
-                <span>{format(new Date(visit.timestamp), 'MMM d, yy')}</span>
-            )}
-            {visit.partnershipConfidence && !visit.dealClosed && (
-              <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                <span className="leading-none">{visit.partnershipConfidence}</span>
-                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-              </Badge>
-            )}
-            {visit.futureMeetingSet && (
-              <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
-            )}
-          </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="p-4">
@@ -2304,21 +2288,21 @@ export default function HomePage() {
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner">
-            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="field-day" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
             </TabsTrigger>
-            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="planner" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <FolderKanban className="h-5 w-5" />
               <span className="hidden sm:inline">Planner</span>
             </TabsTrigger>
-            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="call-day" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <ListChecks className="h-5 w-5" />
               <span className="hidden sm:inline">Call Day</span>
             </TabsTrigger>
             <TabsTrigger
               value="visits"
-              className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2"
+              className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2"
               onClick={(e) => {
                 if (visitsToDisplay.length === 0) {
                   e.preventDefault();
@@ -2329,11 +2313,11 @@ export default function HomePage() {
               <MapPin className="h-5 w-5" />
               <span className="hidden sm:inline">Visits</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="ai-chat" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="hidden sm:inline">Debbie</span>
             </TabsTrigger>
-            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
+            <TabsTrigger value="about" className="rounded-full border-transparent data-[state=active]:bg-primary text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <InfoIcon className="h-5 w-5" />
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
@@ -2346,11 +2330,11 @@ export default function HomePage() {
           {activeTab === 'field-day' && (
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
-                    <Button onClick={handleQuickLog} variant="default" size="sm" className="py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
                         <PlusCircle className="mr-2 h-5 w-5" />
                         Quicklog
                     </Button>
-                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="sm" className="py-6 sm:py-2 text-base sm:text-sm" disabled={!!importedVisits}>
+                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="lg" className="text-base" disabled={!!importedVisits}>
                       <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                     </Button>
                 </div>
@@ -2373,45 +2357,7 @@ export default function HomePage() {
                         value={fieldDayAccordionValue}
                         onValueChange={setFieldDayAccordionValue}
                       >
-                        {todaysVisits.map((visit) => (
-                          <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-                            <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "[&[data-state=open]]:border-primary/20")}>
-                              <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                                  <div className="flex flex-1 items-center gap-3 min-w-0">
-                                    <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-                                    <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                                  </div>
-                                  <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                                    {(visit.interestedUnits && visit.interestedUnits.length > 0) ? (
-                                        <span className="text-sm text-primary font-medium truncate">{`{${visit.interestedUnits[0].split('(')[0].trim()}${visit.interestedUnits.length > 1 ? `, +${visit.interestedUnits.length - 1}` : ''}}`}</span>
-                                    ) : (
-                                        <span>{format(new Date(visit.timestamp), 'h:mm a')}</span>
-                                    )}
-                                    {visit.partnershipConfidence && !visit.dealClosed && (
-                                      <Badge variant="outline" className="flex items-center gap-1 px-1.5 py-0.5 border-transparent bg-transparent">
-                                        <span className="leading-none">{visit.partnershipConfidence}</span>
-                                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                                      </Badge>
-                                    )}
-                                    {visit.futureMeetingSet && (
-                                      <CalendarCheck className={cn("h-4 w-4", visit.freeTrial ? "text-orange-500" : "text-green-500")} />
-                                    )}
-                                  </div>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="p-4">
-                              <VisitCard
-                                visit={visit}
-                                onEdit={handleEditVisit}
-                                onDelete={handleDeleteVisit}
-                                onUpdateDealClosed={handleUpdateDealClosed}
-                                onZoom={setZoomedVisit}
-                                onLogFollowUp={handleLogFollowUp}
-                                onDictateNotes={handleDictateNotes}
-                              />
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
+                        {todaysVisits.map((visit) => renderVisitCardAccordion(visit))}
                       </Accordion>
                     </AccordionContent>
                   </AccordionItem>
@@ -3593,6 +3539,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
