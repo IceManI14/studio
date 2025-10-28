@@ -2317,7 +2317,7 @@ export default function HomePage() {
         <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border-2 border-primary/30 shadow-inner">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -2639,7 +2639,7 @@ export default function HomePage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
-                    <div className="flex flex-col gap-6 items-center">
+                    <div className="flex flex-col gap-4 items-center">
                       <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
                         <div className="w-full mb-2 space-y-2">
                             <DropdownMenu>
@@ -2706,89 +2706,91 @@ export default function HomePage() {
                             Sort Options
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="flex flex-col sm:flex-row gap-4 items-center w-full pt-2">
-                              <div className="flex flex-col gap-1.5 flex-1">
-                                <Label htmlFor="sort-criteria" className="text-sm text-center">Sort Visit Cards By</Label>
-                                <Select
-                                  value={sortCriteria}
-                                  onValueChange={(value) => {
-                                    setSortCriteria(value as any);
-                                    if (value !== 'city') {
-                                        setCitySearchTerm('');
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger id="sort-criteria">
-                                    <SelectValue placeholder="Select criteria" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="partnershipConfidence">Partnership Confidence</SelectItem>
-                                    <SelectItem value="timestamp">Date Visited</SelectItem>
-                                    <SelectItem value="city">Town/City</SelectItem>
-                                    <SelectItem value="dealClosed">Closed Deals</SelectItem>
-                                    <SelectItem value="futureMeetingsSet">Future Meetings Set</SelectItem>
-                                    <SelectItem value="inTrial">In Trial</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              {sortCriteria === 'city' ? (
+                            <div className="flex flex-col gap-4 items-center w-full pt-2">
+                              <div className="flex flex-col sm:flex-row gap-4 w-full">
                                 <div className="flex flex-col gap-1.5 flex-1">
-                                    <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
-                                    <Select
-                                        value={citySearchTerm}
-                                        onValueChange={(value) => setCitySearchTerm(value === '_all_' ? '' : value)}
-                                    >
-                                        <SelectTrigger id="city-search">
-                                            <SelectValue placeholder="Select a city..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="_all_">All Cities</SelectItem>
-                                            {uniqueCities.map(city => (
-                                                <SelectItem key={city} value={city}>{city}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-1.5 flex-1">
-                                  <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
+                                  <Label htmlFor="sort-criteria" className="text-sm text-center">Sort By</Label>
                                   <Select
-                                    value={sortOrder}
-                                    onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                                    value={sortCriteria}
+                                    onValueChange={(value) => {
+                                      setSortCriteria(value as any);
+                                      if (value !== 'city') {
+                                          setCitySearchTerm('');
+                                      }
+                                    }}
                                   >
-                                    <SelectTrigger id="sort-order">
-                                      <SelectValue placeholder="Select order" />
+                                    <SelectTrigger id="sort-criteria">
+                                      <SelectValue placeholder="Select criteria" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {sortCriteria === 'city' ? (
-                                        <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </>
-                                      ) : sortCriteria === 'futureMeetingsSet' ? (
-                                        <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </>
-                                      ) : sortCriteria === 'inTrial' ? (
-                                        <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </>
-                                      ) : sortCriteria === 'dealClosed' ? (
-                                        <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
-                                      ) : sortCriteria === 'timestamp' ? (
-                                        <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
-                                      ) : ( // Default is partnershipConfidence
-                                        <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
-                                      )}
+                                      <SelectItem value="partnershipConfidence">Confidence</SelectItem>
+                                      <SelectItem value="timestamp">Date Visited</SelectItem>
+                                      <SelectItem value="city">City</SelectItem>
+                                      <SelectItem value="dealClosed">Closed Deals</SelectItem>
+                                      <SelectItem value="futureMeetingsSet">Meetings Set</SelectItem>
+                                      <SelectItem value="inTrial">In Trial</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
-                              )}
+                                {sortCriteria === 'city' ? (
+                                  <div className="flex flex-col gap-1.5 flex-1">
+                                      <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
+                                      <Select
+                                          value={citySearchTerm}
+                                          onValueChange={(value) => setCitySearchTerm(value === '_all_' ? '' : value)}
+                                      >
+                                          <SelectTrigger id="city-search">
+                                              <SelectValue placeholder="Select a city..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                              <SelectItem value="_all_">All Cities</SelectItem>
+                                              {uniqueCities.map(city => (
+                                                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                                              ))}
+                                          </SelectContent>
+                                      </Select>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col gap-1.5 flex-1">
+                                    <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
+                                    <Select
+                                      value={sortOrder}
+                                      onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                                    >
+                                      <SelectTrigger id="sort-order">
+                                        <SelectValue placeholder="Select order" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {sortCriteria === 'city' ? (
+                                          <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </>
+                                        ) : sortCriteria === 'futureMeetingsSet' ? (
+                                          <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </>
+                                        ) : sortCriteria === 'inTrial' ? (
+                                          <> <SelectItem value="desc">Newest Trial First</SelectItem> <SelectItem value="asc">Oldest Trial First</SelectItem> </>
+                                        ) : sortCriteria === 'dealClosed' ? (
+                                          <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
+                                        ) : sortCriteria === 'timestamp' ? (
+                                          <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
+                                        ) : ( // Default is partnershipConfidence
+                                          <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                              </div>
+                              <ExportPdfButton
+                                visits={sortedVisitsForCallDay}
+                                reportTitle={sortedVisitsTitle}
+                                label="Export Sorted Visits to PDF"
+                                size="sm"
+                                salespersonName={selectedSalesperson?.name}
+                                variant="default"
+                              />
                             </div>
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
-                      <Separator />
-                      <ExportPdfButton
-                        visits={sortedVisitsForCallDay}
-                        reportTitle={sortedVisitsTitle}
-                        label="Export Sorted Visits to PDF"
-                        size="sm"
-                        salespersonName={selectedSalesperson?.name}
-                      />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -3607,6 +3609,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
