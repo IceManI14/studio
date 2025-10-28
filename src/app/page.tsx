@@ -2332,7 +2332,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
+        <div className="text-center text-lg font-medium text-foreground mb-2">{activeTabLabel}</div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="flex flex-wrap h-auto sm:h-10 justify-around w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
@@ -3689,3 +3689,4 @@ export default function HomePage() {
     
 
     
+
