@@ -485,6 +485,10 @@ export default function HomePage() {
     return Object.entries(coolerCounts).sort(([, countA], [, countB]) => countB - countA);
   }, [closedDeals]);
 
+  const totalCoolersInField = useMemo(() => {
+    return closedDealsCoolerSummary.reduce((total, [, count]) => total + count, 0);
+  }, [closedDealsCoolerSummary]);
+
   const totalTrialCommission = useMemo(() => {
     return activeFreeTrials.reduce((total, visit) => total + calculateCommission(visit), 0);
   }, [activeFreeTrials]);
@@ -2113,8 +2117,7 @@ export default function HomePage() {
       <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
         <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
           <div className="flex flex-1 items-center gap-3 min-w-0">
-            <span className={cn("h-3 w-3 rounded-full shrink-0", visit.dealClosed ? "bg-green-500" : "bg-primary")}></span>
-            <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
           </div>
         </div>
       </AccordionTrigger>
@@ -2560,8 +2563,13 @@ export default function HomePage() {
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                   {closedDealsCoolerSummary.length > 0 && (
                                     <div className="mb-4 rounded-lg border bg-background/50 p-3">
-                                      <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
-                                      <div className="flex flex-wrap justify-center gap-2">
+                                      <div className="flex items-center justify-center gap-4">
+                                        <h4 className="text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
+                                        {totalCoolersInField > 0 && (
+                                          <Badge className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">Total: {totalCoolersInField}</Badge>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-wrap justify-center gap-2 mt-2">
                                         {closedDealsCoolerSummary.map(([name, count]) => (
                                           <Badge key={name} className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">
                                             {name}: <span className="ml-1.5">{count}</span>
@@ -3539,6 +3547,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
