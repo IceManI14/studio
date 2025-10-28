@@ -4,7 +4,7 @@
 import type { Visit } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface VisitCardProps {
   visit: Visit;
@@ -129,6 +130,32 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     
     return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
 })();
+
+  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting') => {
+    const contactEmail = visit.decisionMakerContact && visit.decisionMakerContact.includes('@') ? visit.decisionMakerContact : '';
+    const contactName = visit.decisionMakerName ? ` ${visit.decisionMakerName}` : '';
+    let subject = '';
+    let body = '';
+
+    switch (type) {
+        case 'introduction':
+            subject = `Introduction from Optimum Water Solutions`;
+            body = `Hello${contactName},\n\nI hope this email finds you well.\n\nMy name is [Your Name] and I'm with Optimum Water Solutions. I recently stopped by your office and wanted to introduce our bottle-free water coolers that provide unlimited, pure, and healthy water.\n\nWould you be open to a brief chat next week to see how we can upgrade your office's hydration and save you money?\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'pricing':
+            subject = `Pricing for Optimum Water Coolers at ${visit.companyName}`;
+            body = `Hello${contactName},\n\nFollowing up on our conversation, I've attached some information about our most popular bottle-free coolers. We can provide a system for your office for as low as $39.99/month, which includes all maintenance and filter changes.\n\nThis would replace your current water expenses and provide a healthier, more convenient solution for your team.\n\nI'd be happy to prepare a more detailed quote. When would be a good time to connect for a few minutes?\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'meeting':
+            subject = `Following up from Optimum Water Solutions`;
+            body = `Hello${contactName},\n\nI hope you're having a great week.\n\nI wanted to follow up on my recent visit to ${visit.companyName}. I'd love to find 15 minutes to discuss your current water situation and see how Optimum can provide a better solution.\n\nHow does your availability look for next week?\n\nBest regards,\n[Your Name]`;
+            break;
+    }
+
+    const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+    toast({ title: "Opening Email Client", description: `Preparing a ${type} email for ${visit.companyName}.` });
+  };
 
   const ZoomedContent = () => (
     <ScrollArea className="h-96 pr-4">
@@ -518,6 +545,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-end gap-1">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
+                        <Mail className="h-4 w-4" />
+                        <span className="sr-only">Email Options</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent onClick={e => e.stopPropagation()}>
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('introduction')}>Introduction Email</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('pricing')}>Pricing Proposal</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('meeting')}>Request Meeting</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
             {visit.futureMeetingDateTime && isZoomedView && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Cancel or reschedule meeting for ${visit.companyName}`}>
                 <CalendarX className="h-4 w-4" />
