@@ -58,7 +58,6 @@ import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import UserPerformanceModal from '@/components/user-performance-modal';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
@@ -266,7 +265,6 @@ export default function HomePage() {
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
-  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
   const [callDayAccordionValue, setCallDayAccordionValue] = useState<string[]>([]);
 
   
@@ -1545,10 +1543,6 @@ export default function HomePage() {
         setIsManageFilesModalOpen(false);
         return;
       }
-      if (isPerformanceModalOpen) {
-        setIsPerformanceModalOpen(false);
-        return;
-      }
 
       if (activeTab !== 'field-day') {
         setActiveTab('field-day');
@@ -1569,7 +1563,6 @@ export default function HomePage() {
     isDestinationModalOpen,
     isFindCompanyModalOpen,
     isManageFilesModalOpen,
-    isPerformanceModalOpen
   ]);
 
   // Handlers
@@ -3642,12 +3635,6 @@ export default function HomePage() {
             onFilesChange={handleManagedFilesChange}
         />
         
-        <UserPerformanceModal 
-            isOpen={isPerformanceModalOpen}
-            onClose={() => setIsPerformanceModalOpen(false)}
-            visits={visitsToDisplay}
-        />
-
         <VisitForm
           isOpen={isVisitFormOpen}
           onClose={() => { 
