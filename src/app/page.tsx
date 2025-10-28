@@ -2626,7 +2626,7 @@ export default function HomePage() {
 
           {activeTab === 'call-day' && (
             <div className="space-y-6">
-               <div className="relative w-full max-w-sm mx-auto">
+              <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
@@ -2634,6 +2634,11 @@ export default function HomePage() {
                   className="pl-10 pr-20"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget) {
+                      e.currentTarget.blur();
+                    }
+                  }}
                   disabled={isRecordingSearch}
                 />
                 {searchTerm && !isRecordingSearch && (
@@ -2726,7 +2731,7 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        <div className="w-full mt-2">
+                        <div className="w-full mt-2 flex justify-center">
                           {selectedDate && !visitToReschedule && (
                               <Button
                                   onClick={handleScheduleFromCalendar}
@@ -3610,6 +3615,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
