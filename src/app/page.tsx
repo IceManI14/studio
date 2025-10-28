@@ -59,6 +59,8 @@ import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import UserPerformanceModal from '@/components/user-performance-modal';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 
 interface FoundPlace {
@@ -567,6 +569,29 @@ export default function HomePage() {
         default: return 'Sorted Visits';
     }
   }, [sortCriteria, selectedDate, searchTerm, citySearchTerm]);
+
+  const coolerDistributionChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    closedDeals.forEach(visit => {
+      if (visit.interestedUnits) {
+        visit.interestedUnits.forEach(unit => {
+          counts[unit] = (counts[unit] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [closedDeals]);
+
+  const salesByLocationChartData = useMemo(() => {
+      const counts: Record<string, number> = {};
+      closedDeals.forEach(visit => {
+          if (visit.city) {
+              const coolerCount = visit.interestedUnits?.length || 0;
+              counts[visit.city] = (counts[visit.city] || 0) + coolerCount;
+          }
+      });
+      return Object.entries(counts).map(([city, coolers]) => ({ city, coolers })).sort((a, b) => b.coolers - a.coolers);
+  }, [closedDeals]);
 
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
@@ -3231,14 +3256,74 @@ export default function HomePage() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0">
-                        <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col items-center justify-center text-center p-6">
-                            <UiCardDescription>
-                                Click the button below to view a detailed breakdown of your sales performance, including cooler distribution and sales by location.
-                            </UiCardDescription>
-                            <Button className="mt-4" onClick={() => setIsPerformanceModalOpen(true)}>
-                                <BarChart className="mr-2 h-4 w-4" />
-                                Show Performance Dashboard
-                            </Button>
+                        <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20">
+                            <UiCardHeader>
+                                <UiCardTitle>Sales Performance Dashboard</UiCardTitle>
+                                <UiCardDescription>A visual summary of your sales performance based on closed deals.</UiCardDescription>
+                            </UiCardHeader>
+                            <UiCardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
+                                <UiCard>
+                                    <UiCardHeader>
+                                        <UiCardTitle>Cooler Distribution</UiCardTitle>
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        {coolerDistributionChartData.length > 0 ? (
+                                            <ChartContainer config={{}} className="h-[300px] w-full">
+                                                <PieChart>
+                                                    <RechartsTooltip content={<ChartTooltipContent nameKey="name" />} />
+                                                    <Pie
+                                                        data={coolerDistributionChartData}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        outerRadius={100}
+                                                        labelLine={false}
+                                                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                                            const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                                            const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                                            return (
+                                                                <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                                                                    {`${(percent * 100).toFixed(0)}%`}
+                                                                </text>
+                                                            );
+                                                        }}
+                                                    >
+                                                        {coolerDistributionChartData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Legend />
+                                                </PieChart>
+                                            </ChartContainer>
+                                        ) : (
+                                            <p className="text-muted-foreground text-center">No cooler data from closed deals yet.</p>
+                                        )}
+                                    </UiCardContent>
+                                </UiCard>
+
+                                <UiCard>
+                                    <UiCardHeader>
+                                        <UiCardTitle>Coolers Sold by Location</UiCardTitle>
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        {salesByLocationChartData.length > 0 ? (
+                                            <ChartContainer config={{}} className="h-[300px] w-full">
+                                                <BarChart data={salesByLocationChartData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis type="number" allowDecimals={false} />
+                                                    <YAxis dataKey="city" type="category" width={80} tick={{ fontSize: 12 }} />
+                                                    <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                                                    <Bar dataKey="coolers" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                                                </BarChart>
+                                            </ChartContainer>
+                                        ) : (
+                                            <p className="text-muted-foreground text-center">No location data from closed deals yet.</p>
+                                        )}
+                                    </UiCardContent>
+                                </UiCard>
+                            </UiCardContent>
                         </UiCard>
                     </AccordionContent>
                 </AccordionItem>
@@ -3616,21 +3701,4 @@ export default function HomePage() {
 
     
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    

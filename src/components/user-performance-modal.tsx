@@ -21,11 +21,6 @@ const COLORS = [
     'hsl(var(--chart-3))',
     'hsl(var(--chart-4))',
     'hsl(var(--chart-5))',
-    'hsl(180, 100%, 70%)',
-    'hsl(300, 100%, 70%)',
-    'hsl(45, 100%, 70%)',
-    'hsl(270, 100%, 70%)',
-    'hsl(90, 100%, 70%)',
 ];
 
 export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPerformanceModalProps) {
@@ -80,7 +75,6 @@ export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPe
                                             cx="50%"
                                             cy="50%"
                                             outerRadius={100}
-                                            fill="#8884d8"
                                             labelLine={false}
                                             label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                                                 const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -134,3 +128,5 @@ export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPe
         </Dialog>
     );
 }
+
+    
