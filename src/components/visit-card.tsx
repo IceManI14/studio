@@ -472,11 +472,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               )}
-              {isZoomedView && onZoom && (
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onZoom(null); }} aria-label="Collapse detail view">
-                    <ChevronsUp className="h-4 w-4" />
-                  </Button>
-              )}
           </div>
           
           {!visit.dealClosed && (
