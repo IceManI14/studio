@@ -2317,7 +2317,7 @@ export default function HomePage() {
         <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
+          <TabsList className="flex flex-wrap h-auto sm:h-10 justify-around w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -2747,15 +2747,7 @@ export default function HomePage() {
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="flex flex-col gap-4 items-center w-full pt-2">
-                              <ExportPdfButton
-                                visits={sortedVisitsForCallDay}
-                                reportTitle={sortedVisitsTitle}
-                                label="Export Sorted Visits to PDF"
-                                size="sm"
-                                salespersonName={selectedSalesperson?.name}
-                                variant="default"
-                                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                              />
+                              
                               <div className="flex flex-col sm:flex-row gap-4 w-full">
                                 <div className="flex flex-col gap-1.5 flex-1">
                                   <Label htmlFor="sort-criteria" className="text-sm text-center">Sort By</Label>
@@ -2828,6 +2820,15 @@ export default function HomePage() {
                                   </div>
                                 )}
                               </div>
+                              <ExportPdfButton
+                                visits={sortedVisitsForCallDay}
+                                reportTitle={sortedVisitsTitle}
+                                label="Export Sorted Visits to PDF"
+                                size="sm"
+                                salespersonName={selectedSalesperson?.name}
+                                variant="default"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                              />
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -3609,6 +3610,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
