@@ -2293,7 +2293,7 @@ export default function HomePage() {
   
 
   return (
-    <div className={cn("min-h-screen", visitToReschedule && "cursor-crosshair")}>
+    <div className="min-h-screen">
       <TerritoryUploadModal 
         isOpen={showTerritoryUploadModal}
         onClose={() => setShowTerritoryUploadModal(false)}
@@ -2466,6 +2466,7 @@ export default function HomePage() {
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
+          
           <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
@@ -2882,7 +2883,7 @@ export default function HomePage() {
                   </AccordionTrigger>
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-4 items-center">
-                      <div className={cn("flex flex-col items-center w-full", visitToReschedule && "relative z-50 bg-background p-2 rounded-lg")}>
+                      <div className={cn("flex flex-col items-center w-full")}>
                         <div className="w-full mb-2 space-y-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -2913,7 +2914,7 @@ export default function HomePage() {
                           mode="single"
                           selected={selectedDate}
                           onSelect={handleCalendarSelect}
-                          className={cn("rounded-md border", "bluish-glow")}
+                          className={cn("rounded-md border", visitToReschedule && "cursor-crosshair", "bluish-glow")}
                           modifiers={{
                             logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
