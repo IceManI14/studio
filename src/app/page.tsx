@@ -2563,8 +2563,8 @@ export default function HomePage() {
                                       <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
                                       <div className="flex flex-wrap justify-center gap-2">
                                         {closedDealsCoolerSummary.map(([name, count]) => (
-                                          <Badge key={name} variant="secondary" className="text-sm">
-                                            {name}: <span className="ml-1.5 font-bold">{count}</span>
+                                          <Badge key={name} className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">
+                                            {name}: <span className="ml-1.5">{count}</span>
                                           </Badge>
                                         ))}
                                       </div>
@@ -3539,6 +3539,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
