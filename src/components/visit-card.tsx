@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Visit } from '@/lib/types';
+import type { Visit, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon } from 'lucide-react';
@@ -9,7 +9,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { summarizeNotesAction } from '@/app/actions';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { COMPETITOR_DETAILS } from '@/lib/competitor-details';
@@ -37,45 +37,39 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showExtraInfo, setShowExtraInfo] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [emailTemplates, setEmailTemplates] = useState<CompanyDoc[]>([]);
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
-  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting' | 'thanks_pitch' | 'thanks_business' | 'thanks_time') => {
+  useEffect(() => {
+    const storedDocs = localStorage.getItem('companyDocs');
+    if (storedDocs) {
+      const allDocs: CompanyDoc[] = JSON.parse(storedDocs);
+      setEmailTemplates(allDocs.filter(doc => doc.type === 'template'));
+    }
+  }, [visit]);
+
+  const handleGenerateEmail = (template: CompanyDoc) => {
     const contactEmail = visit.decisionMakerContact && visit.decisionMakerContact.includes('@') ? visit.decisionMakerContact : '';
     const contactName = visit.decisionMakerName ? ` ${visit.decisionMakerName}` : '';
-    let subject = '';
-    let body = '';
-
-    switch (type) {
-        case 'introduction':
-            subject = `Introduction from Optimum Water Solutions`;
-            body = `Hello${contactName},\n\nI hope this email finds you well.\n\nMy name is [Your Name] and I'm with Optimum Water Solutions. I recently stopped by your office and wanted to introduce our bottle-free water coolers that provide unlimited, pure, and healthy water.\n\nWould you be open to a brief chat next week to see how we can upgrade your office's hydration and save you money?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'pricing':
-            subject = `Pricing for Optimum Water Coolers at ${visit.companyName}`;
-            body = `Hello${contactName},\n\nFollowing up on our conversation, I've attached some information about our most popular bottle-free coolers. We can provide a system for your office for as low as $39.99/month, which includes all maintenance and filter changes.\n\nThis would replace your current water expenses and provide a healthier, more convenient solution for your team.\n\nI'd be happy to prepare a more detailed quote. When would be a good time to connect for a few minutes?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'meeting':
-            subject = `Following up from Optimum Water Solutions`;
-            body = `Hello${contactName},\n\nI hope you're having a great week.\n\nI wanted to follow up on my recent visit to ${visit.companyName}. I'd love to find 15 minutes to discuss your current water situation and see how Optimum can provide a better solution.\n\nHow does your availability look for next week?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_pitch':
-            subject = `Thank you for your time today`;
-            body = `Hello${contactName},\n\nJust wanted to send a quick thank you for taking the time to listen to my sales pitch earlier today. I appreciate you considering Optimum Water Solutions and I hope to speak with you again soon.\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_business':
-            subject = `Welcome to the Optimum family!`;
-            body = `Hello${contactName},\n\nThank you so much for your business! We're thrilled to welcome ${visit.companyName} to the Optimum Water Solutions family. We're confident you'll love the switch to our bottle-free coolers.\n\nWe'll be in touch shortly to schedule your installation. If you have any questions in the meantime, please don't hesitate to reach out.\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_time':
-            subject = `Thank you for your time`;
-            body = `Hello${contactName},\n\nThank you for taking a few moments to speak with me today. I appreciate your time.\n\nIf you have any questions in the future, please feel free to reach out.\n\nBest regards,\n[Your Name]`;
-            break;
+    
+    if (!template.content) {
+        toast({ variant: 'destructive', title: 'Invalid Template', description: 'This email template is missing content.' });
+        return;
     }
+
+    // Replace placeholders
+    const subject = template.content.subject
+        .replace(/{{contactName}}/g, contactName.trim())
+        .replace(/{{companyName}}/g, visit.companyName);
+
+    const body = template.content.body
+        .replace(/{{contactName}}/g, contactName.trim())
+        .replace(/{{companyName}}/g, visit.companyName);
 
     const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoLink;
-    toast({ title: "Opening Email Client", description: `Preparing a ${type.replace(/_/g, ' ')} email for ${visit.companyName}.` });
+    toast({ title: "Opening Email Client", description: `Preparing '${template.name}' email for ${visit.companyName}.` });
   };
   
   const handleDealClosedChange = (checked: boolean | 'indeterminate') => {
@@ -83,7 +77,12 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     onUpdateDealClosed(visit.id, isClosingDeal);
 
     if (isClosingDeal) {
-      handleGenerateEmail('thanks_business');
+        const thanksTemplate = emailTemplates.find(t => t.name.toLowerCase().includes('thank you for business'));
+        if (thanksTemplate) {
+            handleGenerateEmail(thanksTemplate);
+        } else {
+             toast({ title: 'Deal Closed!', description: 'Remember to send a thank you email.' });
+        }
     }
   };
 
@@ -570,21 +569,18 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent onClick={e => e.stopPropagation()}>
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('introduction')}>Introduction Email</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('pricing')}>Pricing Proposal</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('meeting')}>Request Meeting</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_pitch')}>Thank You (for listening)</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_business')}>Thank You (for the business)</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_time')}>Thank You (for your time)</DropdownMenuItem>
+                    {emailTemplates.length > 0 ? (
+                        emailTemplates.map(template => (
+                            <DropdownMenuItem key={template.id} onSelect={() => handleGenerateEmail(template)}>
+                                {template.name}
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <DropdownMenuItem disabled>No email templates found.</DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            {visit.futureMeetingDateTime && isZoomedView && (
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(visit); }} aria-label={`Cancel or reschedule meeting for ${visit.companyName}`}>
-                <CalendarX className="h-4 w-4" />
-              </Button>
-            )}
+            
             {onLogFollowUp && (
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onLogFollowUp(visit); }} aria-label={`Log follow-up for ${visit.companyName}`}>
                 <PlusSquare className="h-4 w-4" />
@@ -626,5 +622,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-    

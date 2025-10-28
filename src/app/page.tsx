@@ -259,8 +259,12 @@ export default function HomePage() {
   const [addingFutureVisit, setAddingFutureVisit] = useState(false);
   const [fieldDayAccordionValue, setFieldDayAccordionValue] = useState<string[]>([]);
   const [companyDocs, setCompanyDocs] = useState<CompanyDoc[]>([]);
+  const [editingDoc, setEditingDoc] = useState<CompanyDoc | null>(null);
+  const [newDocType, setNewDocType] = useState<'url' | 'template'>('url');
   const [newDocName, setNewDocName] = useState('');
   const [newDocUrl, setNewDocUrl] = useState('');
+  const [newTemplateSubject, setNewTemplateSubject] = useState('');
+  const [newTemplateBody, setNewTemplateBody] = useState('');
   const [analyzingDocId, setAnalyzingDocId] = useState<string | null>(null);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [visitsForReschedule, setVisitsForReschedule] = useState<Visit[]>([]);
@@ -1227,29 +1231,86 @@ export default function HomePage() {
     toast({ title: 'News Item Removed' });
   }, [newsItems, toast]);
   
-  const handleAddCompanyDoc = useCallback(() => {
-    if (newDocName.trim() && newDocUrl.trim()) {
-      try {
-        // Validate URL format on client side before adding
-        new URL(newDocUrl.trim());
-        const newDoc: CompanyDoc = {
-          id: crypto.randomUUID(),
-          name: newDocName.trim(),
-          url: newDocUrl.trim(),
-        };
-        const updatedDocs = [...companyDocs, newDoc];
-        setCompanyDocs(updatedDocs);
-        localStorage.setItem('companyDocs', JSON.stringify(updatedDocs));
-        setNewDocName('');
-        setNewDocUrl('');
-        toast({ title: "Document Added", description: `${newDoc.name} has been added to your list.`});
-      } catch (e) {
-        toast({ variant: 'destructive', title: 'Invalid URL', description: 'Please enter a valid document URL.'});
+  const handleSaveCompanyDoc = useCallback(() => {
+    let docToSave: CompanyDoc;
+    let isEditing = !!editingDoc;
+
+    if (newDocType === 'url') {
+      if (!newDocName.trim() || !newDocUrl.trim()) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide both a name and a URL.' });
+        return;
       }
-    } else {
-      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide both a name and a URL.' });
+      try {
+        new URL(newDocUrl.trim());
+      } catch {
+        toast({ variant: 'destructive', title: 'Invalid URL' });
+        return;
+      }
+      docToSave = {
+        id: editingDoc?.id || crypto.randomUUID(),
+        name: newDocName.trim(),
+        type: 'url',
+        url: newDocUrl.trim(),
+        lastModified: new Date().toISOString(),
+      };
+    } else { // template
+      if (!newDocName.trim() || !newTemplateSubject.trim() || !newTemplateBody.trim()) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide a name, subject, and body for the template.' });
+        return;
+      }
+      docToSave = {
+        id: editingDoc?.id || crypto.randomUUID(),
+        name: newDocName.trim(),
+        type: 'template',
+        content: {
+          subject: newTemplateSubject.trim(),
+          body: newTemplateBody.trim(),
+        },
+        lastModified: new Date().toISOString(),
+      };
     }
-  }, [newDocName, newDocUrl, companyDocs, toast]);
+    
+    const updatedDocs = isEditing
+      ? companyDocs.map(doc => doc.id === docToSave.id ? docToSave : doc)
+      : [...companyDocs, docToSave];
+
+    setCompanyDocs(updatedDocs);
+    localStorage.setItem('companyDocs', JSON.stringify(updatedDocs));
+    toast({ title: isEditing ? 'Document Updated' : 'Document Saved', description: `${docToSave.name} has been saved.` });
+
+    // Reset form
+    setEditingDoc(null);
+    setNewDocName('');
+    setNewDocUrl('');
+    setNewTemplateSubject('');
+    setNewTemplateBody('');
+    setNewDocType('url');
+
+  }, [editingDoc, newDocType, newDocName, newDocUrl, newTemplateSubject, newTemplateBody, companyDocs, toast]);
+
+  const handleEditCompanyDoc = (doc: CompanyDoc) => {
+    setEditingDoc(doc);
+    setNewDocType(doc.type);
+    setNewDocName(doc.name);
+    if (doc.type === 'url') {
+      setNewDocUrl(doc.url || '');
+      setNewTemplateSubject('');
+      setNewTemplateBody('');
+    } else {
+      setNewDocUrl('');
+      setNewTemplateSubject(doc.content?.subject || '');
+      setNewTemplateBody(doc.content?.body || '');
+    }
+  };
+  
+  const resetDocForm = () => {
+    setEditingDoc(null);
+    setNewDocName('');
+    setNewDocUrl('');
+    setNewTemplateSubject('');
+    setNewTemplateBody('');
+    setNewDocType('url');
+  };
 
   const handleDeleteCompanyDoc = useCallback((docId: string) => {
     const updatedDocs = companyDocs.filter(doc => doc.id !== docId);
@@ -1259,7 +1320,7 @@ export default function HomePage() {
   }, [companyDocs, toast]);
 
   const handleAnalyzeCompanyDoc = useCallback(async (doc: CompanyDoc) => {
-    if (isAiResponding || analyzingDocId) return;
+    if (isAiResponding || analyzingDocId || doc.type !== 'url' || !doc.url) return;
   
     setAnalyzingDocId(doc.id);
   
@@ -2756,17 +2817,17 @@ export default function HomePage() {
                             trialEnd: 'day-trial-end',
                           }}
                         />
-                        <div className="w-full mt-2 flex justify-center">
-                          {selectedDate && !visitToReschedule && (
-                              <Button
-                                  onClick={handleScheduleFromCalendar}
-                                  size="sm"
-                                  disabled={!!importedVisits}
-                              >
-                                  <PlusSquare className="mr-2 h-4 w-4" />
-                                  Schedule on {format(selectedDate, 'MMM d')}
-                              </Button>
-                          )}
+                        <div className="w-full mt-4 flex justify-center">
+                            {selectedDate && !visitToReschedule && (
+                                <Button
+                                    onClick={handleScheduleFromCalendar}
+                                    size="sm"
+                                    disabled={!!importedVisits}
+                                >
+                                    <PlusSquare className="mr-2 h-4 w-4" />
+                                    Schedule on {format(selectedDate, 'MMM d')}
+                                </Button>
+                            )}
                         </div>
                       </div>
 
@@ -3191,36 +3252,69 @@ export default function HomePage() {
                   <AccordionContent className="p-0">
                     <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
                       <UiCardHeader>
-                        <UiCardTitle>Analyze Company Files</UiCardTitle>
-                        <UiCardDescription>Add direct links to important documents (e.g., from Dropbox) for Debbie to analyze.</UiCardDescription>
+                        <UiCardTitle>Manage Documents & Templates</UiCardTitle>
+                        <UiCardDescription>Add file URLs for Debbie to analyze, or create custom email templates for quick replies.</UiCardDescription>
                       </UiCardHeader>
                       <UiCardContent className="space-y-4">
-                        <div className="flex flex-col sm:flex-row items-start gap-2 p-3 border rounded-lg bg-background/50">
-                          <div className="flex-grow space-y-1 w-full">
-                              <Label htmlFor="doc-name" className="text-xs">Document Name</Label>
-                              <Input id="doc-name" placeholder="e.g., Price List 2024" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                        <div className="p-3 border rounded-lg bg-background/50 space-y-4">
+                          <h3 className="text-lg font-semibold">{editingDoc ? 'Edit Document' : 'Add New Document'}</h3>
+                          <Tabs value={newDocType} onValueChange={(v) => setNewDocType(v as 'url' | 'template')}>
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="url">File URL</TabsTrigger>
+                              <TabsTrigger value="template">Email Template</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="url" className="space-y-3 pt-2">
+                                <div className="space-y-1">
+                                    <Label htmlFor="doc-name-url">Document Name</Label>
+                                    <Input id="doc-name-url" placeholder="e.g., Price List 2024" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="doc-url">Document URL</Label>
+                                    <Input id="doc-url" placeholder="Paste direct file link here" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} />
+                                </div>
+                            </TabsContent>
+                             <TabsContent value="template" className="space-y-3 pt-2">
+                                <div className="space-y-1">
+                                    <Label htmlFor="template-name">Template Name</Label>
+                                    <Input id="template-name" placeholder="e.g., Introduction Email" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="template-subject">Subject</Label>
+                                    <Input id="template-subject" placeholder="Email subject line" value={newTemplateSubject} onChange={e => setNewTemplateSubject(e.target.value)} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="template-body">Body</Label>
+                                    <Textarea id="template-body" placeholder="Email body. Use {{companyName}} and {{contactName}} as placeholders." value={newTemplateBody} onChange={e => setNewTemplateBody(e.target.value)} rows={5} />
+                                </div>
+                            </TabsContent>
+                          </Tabs>
+                          <div className="flex gap-2">
+                            <Button onClick={handleSaveCompanyDoc} size="sm">
+                              <Save className="mr-2 h-4 w-4" /> {editingDoc ? 'Update' : 'Save'} Document
+                            </Button>
+                            {editingDoc && <Button variant="ghost" size="sm" onClick={resetDocForm}>Cancel</Button>}
                           </div>
-                          <div className="flex-grow space-y-1 w-full">
-                              <Label htmlFor="doc-url" className="text-xs">Document URL</Label>
-                              <Input id="doc-url" placeholder="Paste direct file link here" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} />
-                          </div>
-                           <Button onClick={handleAddCompanyDoc} className="w-full sm:w-auto mt-auto" size="sm" disabled={!newDocName.trim() || !newDocUrl.trim()}>
-                              <PlusCircle className="mr-2 h-4 w-4" /> Add
-                          </Button>
                         </div>
+
                         {companyDocs.length > 0 ? (
                             <ScrollArea className="h-48">
                                 <ul className="space-y-2 pr-4">
                                 {companyDocs.map((doc) => (
                                     <li key={doc.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                            <FileText className="h-4 w-4 shrink-0 text-primary" />
+                                            {doc.type === 'url' ? <FileText className="h-4 w-4 shrink-0 text-primary" /> : <Mail className="h-4 w-4 shrink-0 text-primary" />}
                                             <span className="truncate text-sm" title={doc.name}>{doc.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
-                                          <Button variant="default" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAnalyzeCompanyDoc(doc)} disabled={!!analyzingDocId}>
-                                              {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
-                                              <span className="ml-1">Analyze</span>
+                                          {doc.type === 'url' && (
+                                            <Button variant="default" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAnalyzeCompanyDoc(doc)} disabled={!!analyzingDocId}>
+                                                {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                                                <span className="ml-1 sr-only">Analyze</span>
+                                            </Button>
+                                          )}
+                                          <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEditCompanyDoc(doc)}>
+                                              <Edit className="h-4 w-4" />
+                                              <span className="sr-only">Edit {doc.name}</span>
                                           </Button>
                                           <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
                                               <Trash2 className="h-4 w-4" />
@@ -3605,13 +3699,3 @@ export default function HomePage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-
-
-
-    

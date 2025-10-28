@@ -98,5 +98,11 @@ export interface HotLead {
 export interface CompanyDoc {
   id: string;
   name: string;
-  url: string;
+  type: 'url' | 'template';
+  url?: string;
+  content?: {
+    subject: string;
+    body: string;
+  };
+  lastModified: string;
 }
