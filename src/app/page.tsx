@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -160,6 +160,15 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   onDictateNotes: (visit: Visit) => void,
 }) {
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
+  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
+    if (e.currentTarget.getAttribute('data-state') === 'closed') {
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  };
 
   useEffect(() => {
     // This effect ensures that when the list of visits changes (e.g., due to filtering),
@@ -175,8 +184,16 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
       onValueChange={setAccordionValue}
     >
       {visits.map((visit) => (
-        <AccordionItem value={visit.id} key={visit.id} className="border bg-card rounded-lg overflow-hidden border-primary/20">
-            <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b border-primary/20">
+        <AccordionItem 
+          value={visit.id} 
+          key={visit.id} 
+          ref={(el) => itemRefs.current.set(visit.id, el)}
+          className="border bg-card rounded-lg overflow-hidden border-primary/20"
+        >
+            <AccordionTrigger 
+              onClick={(e) => handleAccordionScroll(e, { current: itemRefs.current.get(visit.id) || null })}
+              className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b border-primary/20"
+            >
                 <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
                     <div className="flex flex-1 items-center gap-3 min-w-0">
                       <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -1635,7 +1652,7 @@ export default function HomePage() {
   const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
     if (e.currentTarget.getAttribute('data-state') === 'closed') {
       setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 200);
     }
   };
@@ -2222,30 +2239,33 @@ export default function HomePage() {
   };
 
 
-  const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
-    <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
-        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-          <div className="flex flex-1 items-center gap-3 min-w-0">
-             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+  const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => {
+    const itemRef = useRef<HTMLDivElement>(null);
+    return (
+      <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+        <AccordionTrigger onClick={(e) => handleAccordionScroll(e, itemRef)} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+          <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+            <div className="flex flex-1 items-center gap-3 min-w-0">
+               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+            </div>
           </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="p-0">
-        <VisitCard
-          visit={visit}
-          onEdit={handleEditVisit}
-          onDelete={handleDeleteVisit}
-          onUpdateDealClosed={handleUpdateDealClosed}
-          onZoom={setZoomedVisit}
-          onLogFollowUp={handleLogFollowUp}
-          onDictateNotes={handleDictateNotes}
-          variant={variant}
-          isZoomedView={true}
-        />
-      </AccordionContent>
-    </AccordionItem>
-  );
+        </AccordionTrigger>
+        <AccordionContent className="p-0">
+          <VisitCard
+            visit={visit}
+            onEdit={handleEditVisit}
+            onDelete={handleDeleteVisit}
+            onUpdateDealClosed={handleUpdateDealClosed}
+            onZoom={setZoomedVisit}
+            onLogFollowUp={handleLogFollowUp}
+            onDictateNotes={handleDictateNotes}
+            variant={variant}
+            isZoomedView={true}
+          />
+        </AccordionContent>
+      </AccordionItem>
+    );
+  };
 
   const handleAddNewTrial = () => {
     setCurrentEditingVisit({
@@ -2299,7 +2319,7 @@ export default function HomePage() {
                           <span className="font-semibold">{selectedSalesperson.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                           <CalendarIcon className="h-4 w-4 text-primary" />
+                           <Calendar className="h-4 w-4 text-primary" />
                            <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
                       </div>
                   </div>
@@ -2615,7 +2635,7 @@ export default function HomePage() {
                         <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                           <div className="flex items-center justify-center w-full">
                             <div className="flex items-center justify-center gap-2">
-                                <CalendarIcon className="h-5 w-5 text-blue-500" />
+                                <Calendar className="h-5 w-5 text-blue-500" />
                                 <h3 className="text-lg font-medium text-foreground text-center">
                                     Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
                                 </h3>
@@ -3641,13 +3661,6 @@ export default function HomePage() {
             onUpdateHotLeadNotes={handleUpdateHotLeadNotes}
             convertedHotLeads={convertedHotLeads}
             onAddHotLeadAsVisit={handleAddHotLeadAsVisit}
-        />
-        
-        <ManageFilesModal
-            isOpen={isManageFilesModalOpen}
-            onClose={() => setIsManageFilesModalOpen(false)}
-            managedFiles={managedFiles}
-            onFilesChange={handleManagedFilesChange}
         />
         
         <VisitForm
