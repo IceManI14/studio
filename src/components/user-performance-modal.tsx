@@ -21,9 +21,11 @@ const COLORS = [
     'hsl(var(--chart-3))',
     'hsl(var(--chart-4))',
     'hsl(var(--chart-5))',
-    'hsl(210, 100%, 70%)',
     'hsl(180, 100%, 70%)',
     'hsl(300, 100%, 70%)',
+    'hsl(45, 100%, 70%)',
+    'hsl(270, 100%, 70%)',
+    'hsl(90, 100%, 70%)',
 ];
 
 export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPerformanceModalProps) {
@@ -45,10 +47,11 @@ export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPe
         const counts: Record<string, number> = {};
         closedDeals.forEach(visit => {
             if (visit.city) {
-                counts[visit.city] = (counts[visit.city] || 0) + 1;
+                const coolerCount = visit.interestedUnits?.length || 0;
+                counts[visit.city] = (counts[visit.city] || 0) + coolerCount;
             }
         });
-        return Object.entries(counts).map(([city, sales]) => ({ city, sales })).sort((a, b) => b.sales - a.sales);
+        return Object.entries(counts).map(([city, coolers]) => ({ city, coolers })).sort((a, b) => b.coolers - a.coolers);
     }, [closedDeals]);
 
     return (
@@ -105,17 +108,17 @@ export default function UserPerformanceModal({ isOpen, onClose, visits }: UserPe
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Sales by Location</CardTitle>
+                            <CardTitle>Coolers Sold by Location</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {salesByLocation.length > 0 ? (
                                 <ChartContainer config={{}} className="h-[300px] w-full">
                                     <BarChart data={salesByLocation} layout="vertical" margin={{ left: 20, right: 20 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis type="number" />
+                                        <XAxis type="number" allowDecimals={false} />
                                         <YAxis dataKey="city" type="category" width={80} tick={{ fontSize: 12 }} />
                                         <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                                        <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                                        <Bar dataKey="coolers" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                                     </BarChart>
                                 </ChartContainer>
                             ) : (
