@@ -150,7 +150,7 @@ const calculateCommission = (visit: Visit): number => {
 
 
 
-const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes, accordionValue, onAccordionChange }: {
+const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
   visits: Visit[],
   onEdit: (visit: Visit) => void,
   onDelete: (visitId: string) => void,
@@ -158,15 +158,21 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   onZoom: (visit: Visit | null) => void,
   onLogFollowUp: (visit: Visit) => void,
   onDictateNotes: (visit: Visit) => void,
-  accordionValue: string[],
-  onAccordionChange: (value: string[]) => void,
 }) {
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
+
+  useEffect(() => {
+    // This effect ensures that when the list of visits changes (e.g., due to filtering),
+    // the accordion state is reset to collapsed.
+    setAccordionValue([]);
+  }, [visits]);
+
   return (
     <Accordion 
       type="multiple"
       className="w-full space-y-4"
       value={accordionValue}
-      onValueChange={onAccordionChange}
+      onValueChange={setAccordionValue}
     >
       {visits.map((visit) => (
         <AccordionItem value={visit.id} key={visit.id} className="border bg-card rounded-lg overflow-hidden border-primary/20">
@@ -265,7 +271,6 @@ export default function HomePage() {
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
-  const [callDayAccordionValue, setCallDayAccordionValue] = useState<string[]>([]);
 
   
   const { toast } = useToast();
@@ -2897,8 +2902,6 @@ export default function HomePage() {
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
                         onDictateNotes={handleDictateNotes}
-                        accordionValue={callDayAccordionValue}
-                        onAccordionChange={setCallDayAccordionValue}
                       />
                     </AccordionContent>
                   </AccordionItem>
@@ -3689,4 +3692,5 @@ export default function HomePage() {
     
 
     
+
 
