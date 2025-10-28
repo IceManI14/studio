@@ -149,7 +149,7 @@ const calculateCommission = (visit: Visit): number => {
 
 
 
-const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
+const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes, accordionValue, onAccordionChange }: {
   visits: Visit[],
   onEdit: (visit: Visit) => void,
   onDelete: (visitId: string) => void,
@@ -157,23 +157,40 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   onZoom: (visit: Visit | null) => void,
   onLogFollowUp: (visit: Visit) => void,
   onDictateNotes: (visit: Visit) => void,
+  accordionValue: string[],
+  onAccordionChange: (value: string[]) => void,
 }) {
   return (
-    <div className="space-y-4">
+    <Accordion 
+      type="multiple"
+      className="w-full space-y-4"
+      value={accordionValue}
+      onValueChange={onAccordionChange}
+    >
       {visits.map((visit) => (
-        <VisitCard
-          key={visit.id}
-          visit={visit}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onUpdateDealClosed={onUpdateDealClosed}
-          onZoom={onZoom}
-          onLogFollowUp={onLogFollowUp}
-          onDictateNotes={onDictateNotes}
-          isZoomedView={true}
-        />
+        <AccordionItem value={visit.id} key={visit.id} className="border bg-card rounded-lg overflow-hidden border-primary/20">
+            <AccordionTrigger className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b border-primary/20">
+                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+                    <div className="flex flex-1 items-center gap-3 min-w-0">
+                      <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+                    </div>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent className="p-0">
+                <VisitCard
+                  visit={visit}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onUpdateDealClosed={onUpdateDealClosed}
+                  onZoom={onZoom}
+                  onLogFollowUp={onLogFollowUp}
+                  onDictateNotes={onDictateNotes}
+                  isZoomedView={true}
+                />
+            </AccordionContent>
+        </AccordionItem>
       ))}
-    </div>
+    </Accordion>
   )
 });
 
@@ -248,6 +265,7 @@ export default function HomePage() {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [callDayAccordionValue, setCallDayAccordionValue] = useState<string[]>([]);
 
   
   const { toast } = useToast();
@@ -2122,14 +2140,14 @@ export default function HomePage() {
 
   const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => (
     <AccordionItem value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b", visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+      <AccordionTrigger className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
         <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
           <div className="flex flex-1 items-center gap-3 min-w-0">
              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
           </div>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="p-4">
+      <AccordionContent className="p-0">
         <VisitCard
           visit={visit}
           onEdit={handleEditVisit}
@@ -2139,6 +2157,7 @@ export default function HomePage() {
           onLogFollowUp={handleLogFollowUp}
           onDictateNotes={handleDictateNotes}
           variant={variant}
+          isZoomedView={true}
         />
       </AccordionContent>
     </AccordionItem>
@@ -2861,6 +2880,8 @@ export default function HomePage() {
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
                         onDictateNotes={handleDictateNotes}
+                        accordionValue={callDayAccordionValue}
+                        onAccordionChange={setCallDayAccordionValue}
                       />
                     </AccordionContent>
                   </AccordionItem>
@@ -3586,6 +3607,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
