@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -230,17 +230,17 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
 
-  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (e.currentTarget.getAttribute('data-state') === 'closed') {
       setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 200);
     }
   };
 
   return (
     <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, itemRef)} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+      <AccordionTrigger onClick={handleAccordionScroll} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
         <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
           <div className="flex flex-1 items-center gap-3 min-w-0">
              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
@@ -2823,7 +2823,7 @@ export default function HomePage() {
               </div>
           </TabsContent>
           <TabsContent value="call-day">
-            <div className={cn("space-y-6", visitToReschedule && "relative z-40")}>
+            <div className="space-y-6">
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -2917,7 +2917,7 @@ export default function HomePage() {
                           className={cn(
                             "rounded-md border",
                             "bluish-glow",
-                            { "cursor-crosshair": !!visitToReschedule }
+                            visitToReschedule && "relative z-40 cursor-crosshair"
                           )}
                           modifiers={{
                             logged: loggedPastVisitDays,
@@ -3805,4 +3805,3 @@ export default function HomePage() {
     </div>
   );
 }
-
