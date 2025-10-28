@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -217,6 +217,45 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
     </Accordion>
   )
 });
+
+const VisitCardAccordionItem = ({ visit, variant = 'default', handleAccordionScroll, onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
+  visit: Visit;
+  variant?: 'default' | 'planner';
+  handleAccordionScroll: (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => void;
+  onEdit: (visit: Visit) => void;
+  onDelete: (visitId: string) => void;
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
+  setZoomedVisit: (visit: Visit | null) => void;
+  onLogFollowUp: (visit: Visit) => void;
+  onDictateNotes: (visit: Visit) => void;
+}) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+  return (
+    <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, itemRef)} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+          <div className="flex flex-1 items-center gap-3 min-w-0">
+             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+          </div>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="p-0">
+        <VisitCard
+          visit={visit}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onUpdateDealClosed={onUpdateDealClosed}
+          onZoom={setZoomedVisit}
+          onLogFollowUp={onLogFollowUp}
+          onDictateNotes={onDictateNotes}
+          variant={variant}
+          isZoomedView={true}
+        />
+      </AccordionContent>
+    </AccordionItem>
+  );
+};
+
 
 export default function HomePage() {
   // State and Refs
@@ -2239,34 +2278,6 @@ export default function HomePage() {
   };
 
 
-  const renderVisitCardAccordion = (visit: Visit, variant: 'default' | 'planner' = 'default') => {
-    const itemRef = useRef<HTMLDivElement>(null);
-    return (
-      <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-        <AccordionTrigger onClick={(e) => handleAccordionScroll(e, itemRef)} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
-          <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-            <div className="flex flex-1 items-center gap-3 min-w-0">
-               <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-            </div>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="p-0">
-          <VisitCard
-            visit={visit}
-            onEdit={handleEditVisit}
-            onDelete={handleDeleteVisit}
-            onUpdateDealClosed={handleUpdateDealClosed}
-            onZoom={setZoomedVisit}
-            onLogFollowUp={handleLogFollowUp}
-            onDictateNotes={handleDictateNotes}
-            variant={variant}
-            isZoomedView={true}
-          />
-        </AccordionContent>
-      </AccordionItem>
-    );
-  };
-
   const handleAddNewTrial = () => {
     setCurrentEditingVisit({
       id: `temp_${crypto.randomUUID()}`,
@@ -2491,7 +2502,19 @@ export default function HomePage() {
                         value={fieldDayAccordionValue}
                         onValueChange={setFieldDayAccordionValue}
                       >
-                        {todaysVisits.map((visit) => renderVisitCardAccordion(visit))}
+                        {todaysVisits.map((visit) => (
+                          <VisitCardAccordionItem
+                              key={visit.id}
+                              visit={visit}
+                              handleAccordionScroll={handleAccordionScroll}
+                              onEdit={handleEditVisit}
+                              onDelete={handleDeleteVisit}
+                              onUpdateDealClosed={handleUpdateDealClosed}
+                              setZoomedVisit={setZoomedVisit}
+                              onLogFollowUp={handleLogFollowUp}
+                              onDictateNotes={handleDictateNotes}
+                          />
+                        ))}
                       </Accordion>
                     </AccordionContent>
                   </AccordionItem>
@@ -2559,7 +2582,19 @@ export default function HomePage() {
                             </AccordionTrigger>
                             <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
                               <Accordion type="multiple" className="space-y-4">
-                                {visitsOnDay.map(visit => renderVisitCardAccordion(visit))}
+                                {visitsOnDay.map(visit => (
+                                  <VisitCardAccordionItem
+                                    key={visit.id}
+                                    visit={visit}
+                                    handleAccordionScroll={handleAccordionScroll}
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    setZoomedVisit={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                  />
+                                ))}
                               </Accordion>
                             </AccordionContent>
                           </AccordionItem>
@@ -2593,7 +2628,20 @@ export default function HomePage() {
                                     </Button>
                                 </div>
                                 <Accordion type="multiple" className="w-full space-y-4">
-                                  {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                  {activeFreeTrials.map(visit => (
+                                      <VisitCardAccordionItem
+                                          key={visit.id}
+                                          visit={visit}
+                                          variant="planner"
+                                          handleAccordionScroll={handleAccordionScroll}
+                                          onEdit={handleEditVisit}
+                                          onDelete={handleDeleteVisit}
+                                          onUpdateDealClosed={handleUpdateDealClosed}
+                                          setZoomedVisit={setZoomedVisit}
+                                          onLogFollowUp={handleLogFollowUp}
+                                          onDictateNotes={handleDictateNotes}
+                                      />
+                                  ))}
                                 </Accordion>
                                 {totalTrialCommission > 0 && (
                                     <Alert variant="default" className="mt-4 text-left">
@@ -2623,7 +2671,20 @@ export default function HomePage() {
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                   <Accordion type="multiple" className="w-full space-y-4">
-                                    {scheduledVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                    {scheduledVisits.map(visit => (
+                                        <VisitCardAccordionItem
+                                            key={visit.id}
+                                            visit={visit}
+                                            variant="planner"
+                                            handleAccordionScroll={handleAccordionScroll}
+                                            onEdit={handleEditVisit}
+                                            onDelete={handleDeleteVisit}
+                                            onUpdateDealClosed={handleUpdateDealClosed}
+                                            setZoomedVisit={setZoomedVisit}
+                                            onLogFollowUp={handleLogFollowUp}
+                                            onDictateNotes={handleDictateNotes}
+                                        />
+                                    ))}
                                   </Accordion>
                               </AccordionContent>
                           </AccordionItem>
@@ -2650,7 +2711,20 @@ export default function HomePage() {
                           </div>
                           {unscheduledFutureVisits.length > 0 && (
                             <Accordion type="multiple" className="w-full space-y-4">
-                              {unscheduledFutureVisits.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                              {unscheduledFutureVisits.map(visit => (
+                                  <VisitCardAccordionItem
+                                      key={visit.id}
+                                      visit={visit}
+                                      variant="planner"
+                                      handleAccordionScroll={handleAccordionScroll}
+                                      onEdit={handleEditVisit}
+                                      onDelete={handleDeleteVisit}
+                                      onUpdateDealClosed={handleUpdateDealClosed}
+                                      setZoomedVisit={setZoomedVisit}
+                                      onLogFollowUp={handleLogFollowUp}
+                                      onDictateNotes={handleDictateNotes}
+                                  />
+                              ))}
                             </Accordion>
                           )}
                         </AccordionContent>
@@ -2673,7 +2747,20 @@ export default function HomePage() {
                               </AccordionTrigger>
                               <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                 <Accordion type="multiple" className="w-full space-y-4">
-                                    {flaggedHotspots.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                    {flaggedHotspots.map(visit => (
+                                        <VisitCardAccordionItem
+                                            key={visit.id}
+                                            visit={visit}
+                                            variant="planner"
+                                            handleAccordionScroll={handleAccordionScroll}
+                                            onEdit={handleEditVisit}
+                                            onDelete={handleDeleteVisit}
+                                            onUpdateDealClosed={handleUpdateDealClosed}
+                                            setZoomedVisit={setZoomedVisit}
+                                            onLogFollowUp={handleLogFollowUp}
+                                            onDictateNotes={handleDictateNotes}
+                                        />
+                                    ))}
                                 </Accordion>
                               </AccordionContent>
                           </AccordionItem>
@@ -2712,7 +2799,19 @@ export default function HomePage() {
                                     </div>
                                   )}
                                   <Accordion type="multiple" className="w-full space-y-4">
-                                    {closedDeals.map(visit => renderVisitCardAccordion(visit))}
+                                    {closedDeals.map(visit => (
+                                      <VisitCardAccordionItem
+                                          key={visit.id}
+                                          visit={visit}
+                                          handleAccordionScroll={handleAccordionScroll}
+                                          onEdit={handleEditVisit}
+                                          onDelete={handleDeleteVisit}
+                                          onUpdateDealClosed={handleUpdateDealClosed}
+                                          setZoomedVisit={setZoomedVisit}
+                                          onLogFollowUp={handleLogFollowUp}
+                                          onDictateNotes={handleDictateNotes}
+                                      />
+                                    ))}
                                   </Accordion>
                                   {totalClosedCommission > 0 && (
                                     <Alert variant="default" className="mt-4 text-left">
