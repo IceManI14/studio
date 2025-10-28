@@ -2474,160 +2474,199 @@ export default function HomePage() {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="field-day">
-            <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
-                    <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        Quicklog
-                    </Button>
-                    <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="lg" className="text-base" disabled={!!importedVisits}>
-                      <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
-                    </Button>
-                </div>
+          <TabsContent value="field-day" className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
+                  <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
+                      <PlusCircle className="mr-2 h-5 w-5" />
+                      Quicklog
+                  </Button>
+                  <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="lg" className="text-base" disabled={!!importedVisits}>
+                    <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
+                  </Button>
+              </div>
+              <Accordion type="single" collapsible>
+                <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                    <div className="flex items-center justify-center w-full">
+                      <div className="flex items-center justify-center gap-2">
+                        <PlusCircle className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-medium text-foreground text-center">
+                          Today's Visits ({todaysVisits.length})
+                        </h3>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
+                    <Accordion 
+                      type="multiple"
+                      className="w-full space-y-4"
+                      value={fieldDayAccordionValue}
+                      onValueChange={setFieldDayAccordionValue}
+                    >
+                      {todaysVisits.map((visit) => (
+                        <VisitCardAccordionItem
+                            key={visit.id}
+                            visit={visit}
+                            onEdit={handleEditVisit}
+                            onDelete={handleDeleteVisit}
+                            onUpdateDealClosed={handleUpdateDealClosed}
+                            setZoomedVisit={setZoomedVisit}
+                            onLogFollowUp={handleLogFollowUp}
+                            onDictateNotes={handleDictateNotes}
+                        />
+                      ))}
+                    </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
                 <Accordion type="single" collapsible>
-                  <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
-                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                      <div className="flex items-center justify-center w-full">
-                        <div className="flex items-center justify-center gap-2">
-                          <PlusCircle className="h-5 w-5 text-primary" />
-                          <h3 className="text-lg font-medium text-foreground text-center">
-                            Today's Visits ({todaysVisits.length})
-                          </h3>
-                        </div>
+                <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
+                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                    <div className="flex items-center justify-center w-full">
+                      <div className="flex items-center justify-center gap-2">
+                        <ListChecks className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-medium text-foreground text-center">
+                          Past Visits
+                        </h3>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
-                      <Accordion 
-                        type="multiple"
-                        className="w-full space-y-4"
-                        value={fieldDayAccordionValue}
-                        onValueChange={setFieldDayAccordionValue}
-                      >
-                        {todaysVisits.map((visit) => (
-                          <VisitCardAccordionItem
-                              key={visit.id}
-                              visit={visit}
-                              onEdit={handleEditVisit}
-                              onDelete={handleDeleteVisit}
-                              onUpdateDealClosed={handleUpdateDealClosed}
-                              setZoomedVisit={setZoomedVisit}
-                              onLogFollowUp={handleLogFollowUp}
-                              onDictateNotes={handleDictateNotes}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
+                      <div className="relative w-full max-w-sm mx-auto mb-4">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                              type="text"
+                              placeholder={isRecordingFieldDaySearch ? "Listening for search term..." : "Search company name..."}
+                              className="pl-10 pr-20"
+                              value={fieldDaySearchTerm}
+                              onChange={(e) => setFieldDaySearchTerm(e.target.value)}
+                              disabled={isRecordingFieldDaySearch}
                           />
-                        ))}
-                      </Accordion>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-                 <Accordion type="single" collapsible>
-                  <AccordionItem ref={pastVisitsRef} value="past-visits" className="border-none">
-                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, pastVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                      <div className="flex items-center justify-center w-full">
-                        <div className="flex items-center justify-center gap-2">
-                          <ListChecks className="h-5 w-5 text-primary" />
-                          <h3 className="text-lg font-medium text-foreground text-center">
-                            Past Visits
-                          </h3>
-                        </div>
+                          {fieldDaySearchTerm && !isRecordingFieldDaySearch && (
+                              <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setFieldDaySearchTerm('')}
+                              className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                              aria-label="Clear search"
+                              title="Clear search"
+                              >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                          )}
+                          <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleToggleVoiceFieldDaySearch}
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                              aria-label="Search with voice"
+                              title="Search with voice"
+                          >
+                              {isRecordingFieldDaySearch ? (
+                              <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                              ) : (
+                              <Mic className="h-4 w-4 text-foreground" />
+                              )}
+                          </Button>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-2">
-                       <div className="relative w-full max-w-sm mx-auto mb-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder={isRecordingFieldDaySearch ? "Listening for search term..." : "Search company name..."}
-                                className="pl-10 pr-20"
-                                value={fieldDaySearchTerm}
-                                onChange={(e) => setFieldDaySearchTerm(e.target.value)}
-                                disabled={isRecordingFieldDaySearch}
-                            />
-                            {fieldDaySearchTerm && !isRecordingFieldDaySearch && (
-                                <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setFieldDaySearchTerm('')}
-                                className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                                aria-label="Clear search"
-                                title="Clear search"
-                                >
-                                <X className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            )}
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={handleToggleVoiceFieldDaySearch}
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                                aria-label="Search with voice"
-                                title="Search with voice"
-                            >
-                                {isRecordingFieldDaySearch ? (
-                                <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                ) : (
-                                <Mic className="h-4 w-4 text-foreground" />
-                                )}
-                            </Button>
-                        </div>
-                      <Accordion type="multiple" className="w-full space-y-4">
-                        {pastVisitsByDay.map(([day, visitsOnDay]) => (
-                          <AccordionItem value={day} key={day} className="border-none">
-                            <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                              <div className="flex justify-between w-full items-center">
-                                  <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
-                                  <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
-                              </div>
+                    <Accordion type="multiple" className="w-full space-y-4">
+                      {pastVisitsByDay.map(([day, visitsOnDay]) => (
+                        <AccordionItem value={day} key={day} className="border-none">
+                          <AccordionTrigger className={cn("p-3 bg-card/80 rounded-lg shadow-md hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                            <div className="flex justify-between w-full items-center">
+                                <h4 className="font-semibold text-lg text-foreground">{format(addDays(new Date(day), 1), 'eeee, MMMM d, yyyy')}</h4>
+                                <Badge variant="secondary">{visitsOnDay.length} visit{visitsOnDay.length === 1 ? '' : 's'}</Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
+                            <Accordion type="multiple" className="space-y-4">
+                              {visitsOnDay.map(visit => (
+                                <VisitCardAccordionItem
+                                  key={visit.id}
+                                  visit={visit}
+                                  onEdit={handleEditVisit}
+                                  onDelete={handleDeleteVisit}
+                                  onUpdateDealClosed={handleUpdateDealClosed}
+                                  setZoomedVisit={setZoomedVisit}
+                                  onLogFollowUp={handleLogFollowUp}
+                                  onDictateNotes={handleDictateNotes}
+                                />
+                              ))}
+                            </Accordion>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+          </TabsContent>
+          <TabsContent value="planner" className="space-y-6">
+                  <div className="space-y-4">
+                    <Accordion type="single" collapsible>
+                        <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
+                            <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                <div className="flex items-center justify-center w-full">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <PackageCheck className="h-5 w-5 text-orange-500" />
+                                    <h3 className="text-lg font-medium text-foreground text-center">
+                                        In Trial ({activeFreeTrials.length})
+                                    </h3>
+                                  </div>
+                                </div>
                             </AccordionTrigger>
-                            <AccordionContent className="p-4 border border-t-0 rounded-b-lg bg-card/60">
-                              <Accordion type="multiple" className="space-y-4">
-                                {visitsOnDay.map(visit => (
-                                  <VisitCardAccordionItem
-                                    key={visit.id}
-                                    visit={visit}
-                                    onEdit={handleEditVisit}
-                                    onDelete={handleDeleteVisit}
-                                    onUpdateDealClosed={handleUpdateDealClosed}
-                                    setZoomedVisit={setZoomedVisit}
-                                    onLogFollowUp={handleLogFollowUp}
-                                    onDictateNotes={handleDictateNotes}
-                                  />
+                            <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                              <div className="flex justify-center mb-4">
+                                  <Button onClick={handleAddNewTrial} disabled={!!importedVisits}>
+                                      <PlusSquare className="mr-2 h-4 w-4" /> Add New Trial
+                                  </Button>
+                              </div>
+                              <Accordion type="multiple" className="w-full space-y-4">
+                                {activeFreeTrials.map(visit => (
+                                    <VisitCardAccordionItem
+                                        key={visit.id}
+                                        visit={visit}
+                                        variant="planner"
+                                        onEdit={handleEditVisit}
+                                        onDelete={handleDeleteVisit}
+                                        onUpdateDealClosed={handleUpdateDealClosed}
+                                        setZoomedVisit={setZoomedVisit}
+                                        onLogFollowUp={handleLogFollowUp}
+                                        onDictateNotes={handleDictateNotes}
+                                    />
                                 ))}
                               </Accordion>
+                              {totalTrialCommission > 0 && (
+                                  <Alert variant="default" className="mt-4 text-left">
+                                      <PartyPopper className="h-4 w-4 text-orange-500" />
+                                      <AlertTitle className="font-bold text-orange-400">Total Potential Commission</AlertTitle>
+                                      <AlertDescription className="text-2xl font-bold text-foreground">
+                                          ${totalTrialCommission.toFixed(2)}
+                                      </AlertDescription>
+                                  </Alert>
+                              )}
                             </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-            </div>
-          </TabsContent>
-          <TabsContent value="planner">
-              <div className="space-y-6">
-                   <div className="space-y-4">
-                      <Accordion type="single" collapsible>
-                          <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
-                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                  <div className="flex items-center justify-center w-full">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <PackageCheck className="h-5 w-5 text-orange-500" />
-                                      <h3 className="text-lg font-medium text-foreground text-center">
-                                          In Trial ({activeFreeTrials.length})
-                                      </h3>
-                                    </div>
-                                  </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                <div className="flex justify-center mb-4">
-                                    <Button onClick={handleAddNewTrial} disabled={!!importedVisits}>
-                                        <PlusSquare className="mr-2 h-4 w-4" /> Add New Trial
-                                    </Button>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+                {scheduledVisits.length > 0 && (
+                    <Accordion type="single" collapsible>
+                        <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
+                            <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                              <div className="flex items-center justify-center w-full">
+                                <div className="flex items-center justify-center gap-2">
+                                    <CalendarCheck className="h-5 w-5 text-green-500" />
+                                    <h3 className="text-lg font-medium text-foreground text-center">
+                                        Future Meetings (Scheduled) ({scheduledVisits.length})
+                                    </h3>
                                 </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
                                 <Accordion type="multiple" className="w-full space-y-4">
-                                  {activeFreeTrials.map(visit => (
+                                  {scheduledVisits.map(visit => (
                                       <VisitCardAccordionItem
                                           key={visit.id}
                                           visit={visit}
@@ -2641,163 +2680,71 @@ export default function HomePage() {
                                       />
                                   ))}
                                 </Accordion>
-                                {totalTrialCommission > 0 && (
-                                    <Alert variant="default" className="mt-4 text-left">
-                                        <PartyPopper className="h-4 w-4 text-orange-500" />
-                                        <AlertTitle className="font-bold text-orange-400">Total Potential Commission</AlertTitle>
-                                        <AlertDescription className="text-2xl font-bold text-foreground">
-                                            ${totalTrialCommission.toFixed(2)}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
-                  </div>
-                  {scheduledVisits.length > 0 && (
-                      <Accordion type="single" collapsible>
-                          <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
-                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                <div className="flex items-center justify-center w-full">
-                                  <div className="flex items-center justify-center gap-2">
-                                      <CalendarCheck className="h-5 w-5 text-green-500" />
-                                      <h3 className="text-lg font-medium text-foreground text-center">
-                                          Future Meetings (Scheduled) ({scheduledVisits.length})
-                                      </h3>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                  <Accordion type="multiple" className="w-full space-y-4">
-                                    {scheduledVisits.map(visit => (
-                                        <VisitCardAccordionItem
-                                            key={visit.id}
-                                            visit={visit}
-                                            variant="planner"
-                                            onEdit={handleEditVisit}
-                                            onDelete={handleDeleteVisit}
-                                            onUpdateDealClosed={handleUpdateDealClosed}
-                                            setZoomedVisit={setZoomedVisit}
-                                            onLogFollowUp={handleLogFollowUp}
-                                            onDictateNotes={handleDictateNotes}
-                                        />
-                                    ))}
-                                  </Accordion>
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
-                  )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                )}
 
-                  <Accordion type="single" collapsible>
-                    <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
-                        <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                          <div className="flex items-center justify-center w-full">
-                            <div className="flex items-center justify-center gap-2">
-                                <Calendar className="h-5 w-5 text-blue-500" />
-                                <h3 className="text-lg font-medium text-foreground text-center">
-                                    Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
-                                </h3>
-                            </div>
+                <Accordion type="single" collapsible>
+                  <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
+                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                        <div className="flex items-center justify-center w-full">
+                          <div className="flex items-center justify-center gap-2">
+                              <Calendar className="h-5 w-5 text-blue-500" />
+                              <h3 className="text-lg font-medium text-foreground text-center">
+                                  Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
+                              </h3>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                          <div className="flex justify-center mb-4">
-                              <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits}>
-                                  <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
-                              </Button>
-                          </div>
-                          {unscheduledFutureVisits.length > 0 && (
-                            <Accordion type="multiple" className="w-full space-y-4">
-                              {unscheduledFutureVisits.map(visit => (
-                                  <VisitCardAccordionItem
-                                      key={visit.id}
-                                      visit={visit}
-                                      variant="planner"
-                                      onEdit={handleEditVisit}
-                                      onDelete={handleDeleteVisit}
-                                      onUpdateDealClosed={handleUpdateDealClosed}
-                                      setZoomedVisit={setZoomedVisit}
-                                      onLogFollowUp={handleLogFollowUp}
-                                      onDictateNotes={handleDictateNotes}
-                                  />
-                              ))}
-                            </Accordion>
-                          )}
-                        </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                        <div className="flex justify-center mb-4">
+                            <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits}>
+                                <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
+                            </Button>
+                        </div>
+                        {unscheduledFutureVisits.length > 0 && (
+                          <Accordion type="multiple" className="w-full space-y-4">
+                            {unscheduledFutureVisits.map(visit => (
+                                <VisitCardAccordionItem
+                                    key={visit.id}
+                                    visit={visit}
+                                    variant="planner"
+                                    onEdit={handleEditVisit}
+                                    onDelete={handleDeleteVisit}
+                                    onUpdateDealClosed={handleUpdateDealClosed}
+                                    setZoomedVisit={setZoomedVisit}
+                                    onLogFollowUp={handleLogFollowUp}
+                                    onDictateNotes={handleDictateNotes}
+                                />
+                            ))}
+                          </Accordion>
+                        )}
+                      </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
 
-                  {flaggedHotspots.length > 0 && (
-                      <Accordion type="single" collapsible>
-                          <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
-                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                <div className="flex items-center justify-center w-full">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <Flame className="h-5 w-5 text-red-500" />
-                                    <h3 className="text-lg font-medium text-foreground text-center">
-                                        Flagged Hotspots ({flaggedHotspots.length})
-                                    </h3>
-                                  </div>
+                {flaggedHotspots.length > 0 && (
+                    <Accordion type="single" collapsible>
+                        <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
+                            <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                              <div className="flex items-center justify-center w-full">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Flame className="h-5 w-5 text-red-500" />
+                                  <h3 className="text-lg font-medium text-foreground text-center">
+                                      Flagged Hotspots ({flaggedHotspots.length})
+                                  </h3>
                                 </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                <Accordion type="multiple" className="w-full space-y-4">
-                                    {flaggedHotspots.map(visit => (
-                                        <VisitCardAccordionItem
-                                            key={visit.id}
-                                            visit={visit}
-                                            variant="planner"
-                                            onEdit={handleEditVisit}
-                                            onDelete={handleDeleteVisit}
-                                            onUpdateDealClosed={handleUpdateDealClosed}
-                                            setZoomedVisit={setZoomedVisit}
-                                            onLogFollowUp={handleLogFollowUp}
-                                            onDictateNotes={handleDictateNotes}
-                                        />
-                                    ))}
-                                </Accordion>
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
-                  )}
-
-                  <div className="space-y-4">
-                      <Accordion type="single" collapsible>
-                          <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
-                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                  <div className="flex items-center justify-center w-full">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <PartyPopper className="h-5 w-5 text-green-500" />
-                                      <h3 className="text-lg font-medium text-foreground text-center">
-                                          Deals Closed ({closedDeals.length})
-                                      </h3>
-                                    </div>
-                                  </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                  {closedDealsCoolerSummary.length > 0 && (
-                                    <div className="mb-4 rounded-lg border bg-background/50 p-3">
-                                      <div className="flex items-center justify-center gap-4">
-                                        <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
-                                        {totalCoolersInField > 0 && (
-                                          <Badge className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">Total: {totalCoolersInField}</Badge>
-                                        )}
-                                      </div>
-                                      <div className="flex flex-wrap justify-center gap-2 mt-2">
-                                        {closedDealsCoolerSummary.map(([name, count]) => (
-                                          <Badge key={name} className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">
-                                            {name}: <span className="ml-1.5">{count}</span>
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <Accordion type="multiple" className="w-full space-y-4">
-                                    {closedDeals.map(visit => (
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                              <Accordion type="multiple" className="w-full space-y-4">
+                                  {flaggedHotspots.map(visit => (
                                       <VisitCardAccordionItem
                                           key={visit.id}
                                           visit={visit}
+                                          variant="planner"
                                           onEdit={handleEditVisit}
                                           onDelete={handleDeleteVisit}
                                           onUpdateDealClosed={handleUpdateDealClosed}
@@ -2805,25 +2752,74 @@ export default function HomePage() {
                                           onLogFollowUp={handleLogFollowUp}
                                           onDictateNotes={handleDictateNotes}
                                       />
-                                    ))}
-                                  </Accordion>
-                                  {totalClosedCommission > 0 && (
-                                    <Alert variant="default" className="mt-4 text-left">
-                                        <PartyPopper className="h-4 w-4 text-green-500" />
-                                        <AlertTitle className="font-bold text-green-400">Total Closed Commission</AlertTitle>
-                                        <AlertDescription className="text-2xl font-bold text-foreground">
-                                            ${totalClosedCommission.toFixed(2)}
-                                        </AlertDescription>
-                                    </Alert>
-                                  )}
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
-                  </div>
-              </div>
+                                  ))}
+                              </Accordion>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                )}
+
+                <div className="space-y-4">
+                    <Accordion type="single" collapsible>
+                        <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
+                            <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                <div className="flex items-center justify-center w-full">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <PartyPopper className="h-5 w-5 text-green-500" />
+                                    <h3 className="text-lg font-medium text-foreground text-center">
+                                        Deals Closed ({closedDeals.length})
+                                    </h3>
+                                  </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                {closedDealsCoolerSummary.length > 0 && (
+                                  <div className="mb-4 rounded-lg border bg-background/50 p-3">
+                                    <div className="flex items-center justify-center gap-4">
+                                      <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
+                                      {totalCoolersInField > 0 && (
+                                        <Badge className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">Total: {totalCoolersInField}</Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap justify-center gap-2 mt-2">
+                                      {closedDealsCoolerSummary.map(([name, count]) => (
+                                        <Badge key={name} className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">
+                                          {name}: <span className="ml-1.5">{count}</span>
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                <Accordion type="multiple" className="w-full space-y-4">
+                                  {closedDeals.map(visit => (
+                                    <VisitCardAccordionItem
+                                        key={visit.id}
+                                        visit={visit}
+                                        onEdit={handleEditVisit}
+                                        onDelete={handleDeleteVisit}
+                                        onUpdateDealClosed={handleUpdateDealClosed}
+                                        setZoomedVisit={setZoomedVisit}
+                                        onLogFollowUp={handleLogFollowUp}
+                                        onDictateNotes={handleDictateNotes}
+                                    />
+                                  ))}
+                                </Accordion>
+                                {totalClosedCommission > 0 && (
+                                  <Alert variant="default" className="mt-4 text-left">
+                                      <PartyPopper className="h-4 w-4 text-green-500" />
+                                      <AlertTitle className="font-bold text-green-400">Total Closed Commission</AlertTitle>
+                                      <AlertDescription className="text-2xl font-bold text-foreground">
+                                          ${totalClosedCommission.toFixed(2)}
+                                      </AlertDescription>
+                                  </Alert>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
           </TabsContent>
           <TabsContent value="call-day">
-            <div className="space-y-6">
+            <div className={cn("space-y-6", visitToReschedule && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -2917,7 +2913,7 @@ export default function HomePage() {
                           className={cn(
                             "rounded-md border",
                             "bluish-glow",
-                            visitToReschedule && "relative z-40 cursor-crosshair"
+                            visitToReschedule && "cursor-crosshair"
                           )}
                           modifiers={{
                             logged: loggedPastVisitDays,
@@ -3088,7 +3084,7 @@ export default function HomePage() {
               )}
             </div>
           </TabsContent>
-          <TabsContent value="visits">
+          <TabsContent value="visits" className="space-y-6">
             <Accordion type="single" collapsible>
               <AccordionItem value="company-map" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
@@ -3132,8 +3128,7 @@ export default function HomePage() {
               </AccordionItem>
             </Accordion>
           </TabsContent>
-          <TabsContent value="ai-chat">
-            <div className="space-y-6">
+          <TabsContent value="ai-chat" className="space-y-6">
               {!isGenkitConfigured ? (
                 <Alert variant="destructive" className="max-w-2xl mx-auto">
                   <WifiOff className="h-4 w-4" />
@@ -3450,9 +3445,8 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-            </div>
           </TabsContent>
-          <TabsContent value="about">
+          <TabsContent value="about" className="space-y-6">
             <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
                 <div className="w-full text-center">
                     <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
@@ -3805,3 +3799,4 @@ export default function HomePage() {
     </div>
   );
 }
+
