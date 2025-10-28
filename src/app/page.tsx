@@ -2492,6 +2492,41 @@ export default function HomePage() {
           
           {activeTab === 'planner' && (
               <div className="space-y-6">
+                   <div className="space-y-4">
+                      <Accordion type="single" collapsible>
+                          <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
+                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                                  <div className="flex items-center justify-center w-full">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <PackageCheck className="h-5 w-5 text-orange-500" />
+                                      <h3 className="text-lg font-medium text-foreground text-center">
+                                          In Trial ({activeFreeTrials.length})
+                                      </h3>
+                                    </div>
+                                  </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                                <div className="flex justify-center mb-4">
+                                    <Button onClick={handleAddNewTrial} disabled={!!importedVisits}>
+                                        <PlusSquare className="mr-2 h-4 w-4" /> Add New Trial
+                                    </Button>
+                                </div>
+                                <Accordion type="multiple" className="w-full space-y-4">
+                                  {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
+                                </Accordion>
+                                {totalTrialCommission > 0 && (
+                                    <Alert variant="default" className="mt-4 text-left">
+                                        <PartyPopper className="h-4 w-4 text-orange-500" />
+                                        <AlertTitle className="font-bold text-orange-400">Total Potential Commission</AlertTitle>
+                                        <AlertDescription className="text-2xl font-bold text-foreground">
+                                            ${totalTrialCommission.toFixed(2)}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                              </AccordionContent>
+                          </AccordionItem>
+                      </Accordion>
+                  </div>
                   {scheduledVisits.length > 0 && (
                       <Accordion type="single" collapsible>
                           <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
@@ -2565,39 +2600,6 @@ export default function HomePage() {
                   )}
 
                   <div className="space-y-4">
-                      <Accordion type="single" collapsible>
-                          <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
-                              <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
-                                  <div className="flex items-center justify-center w-full">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <PackageCheck className="h-5 w-5 text-orange-500" />
-                                      <h3 className="text-lg font-medium text-foreground text-center">
-                                          In Trial ({activeFreeTrials.length})
-                                      </h3>
-                                    </div>
-                                  </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                                <div className="flex justify-center mb-4">
-                                    <Button onClick={handleAddNewTrial} disabled={!!importedVisits}>
-                                        <PlusSquare className="mr-2 h-4 w-4" /> Add New Trial
-                                    </Button>
-                                </div>
-                                <Accordion type="multiple" className="w-full space-y-4">
-                                  {activeFreeTrials.map(visit => renderVisitCardAccordion(visit, 'planner'))}
-                                </Accordion>
-                                {totalTrialCommission > 0 && (
-                                    <Alert variant="default" className="mt-4 text-left">
-                                        <PartyPopper className="h-4 w-4 text-orange-500" />
-                                        <AlertTitle className="font-bold text-orange-400">Total Potential Commission</AlertTitle>
-                                        <AlertDescription className="text-2xl font-bold text-foreground">
-                                            ${totalTrialCommission.toFixed(2)}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                              </AccordionContent>
-                          </AccordionItem>
-                      </Accordion>
                       <Accordion type="single" collapsible>
                           <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
                               <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3694,3 +3696,6 @@ export default function HomePage() {
     
 
 
+
+
+    
