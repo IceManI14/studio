@@ -2591,7 +2591,7 @@ export default function HomePage() {
                                   {closedDealsCoolerSummary.length > 0 && (
                                     <div className="mb-4 rounded-lg border bg-background/50 p-3">
                                       <div className="flex items-center justify-center gap-4">
-                                        <h4 className="text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
+                                        <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
                                         {totalCoolersInField > 0 && (
                                           <Badge className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">Total: {totalCoolersInField}</Badge>
                                         )}
@@ -2626,6 +2626,46 @@ export default function HomePage() {
 
           {activeTab === 'call-day' && (
             <div className="space-y-6">
+               <div className="relative w-full max-w-sm mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                  className="pl-10 pr-20"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={isRecordingSearch}
+                />
+                {searchTerm && !isRecordingSearch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleVoiceSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  aria-label="Search with voice"
+                  title="Search with voice"
+                >
+                  {isRecordingSearch ? (
+                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-foreground" />
+                  )}
+                </Button>
+              </div>
+
               <Accordion type="single" collapsible>
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -2707,6 +2747,15 @@ export default function HomePage() {
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="flex flex-col gap-4 items-center w-full pt-2">
+                              <ExportPdfButton
+                                visits={sortedVisitsForCallDay}
+                                reportTitle={sortedVisitsTitle}
+                                label="Export Sorted Visits to PDF"
+                                size="sm"
+                                salespersonName={selectedSalesperson?.name}
+                                variant="default"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                              />
                               <div className="flex flex-col sm:flex-row gap-4 w-full">
                                 <div className="flex flex-col gap-1.5 flex-1">
                                   <Label htmlFor="sort-criteria" className="text-sm text-center">Sort By</Label>
@@ -2779,14 +2828,6 @@ export default function HomePage() {
                                   </div>
                                 )}
                               </div>
-                              <ExportPdfButton
-                                visits={sortedVisitsForCallDay}
-                                reportTitle={sortedVisitsTitle}
-                                label="Export Sorted Visits to PDF"
-                                size="sm"
-                                salespersonName={selectedSalesperson?.name}
-                                variant="default"
-                              />
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -2810,14 +2851,13 @@ export default function HomePage() {
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
                     {(() => {
-                      if (!selectedDate) {
-                        return 'Select a date to see visits.';
+                      if (!selectedDate && !searchTerm.trim()) {
+                        return 'Select a date or search to see visits.';
                       }
-                      const today = startOfDay(new Date());
-                      if (new Date(selectedDate) < today) {
-                        return `No visits logged on ${format(selectedDate, 'PPP')}.`;
+                      if (selectedDate) {
+                         return `No visits found for ${format(selectedDate, 'PPP')}.`;
                       }
-                      return `No visits logged or scheduled on ${format(selectedDate, 'PPP')}.`;
+                      return 'No visits found matching your search.';
                     })()}
                   </p>
                 </div>
@@ -2835,45 +2875,6 @@ export default function HomePage() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6">
-                      <div className="relative w-full max-w-sm mx-auto mb-6">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                          className="pl-10 pr-20"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          disabled={isRecordingSearch}
-                        />
-                        {searchTerm && !isRecordingSearch && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSearchTerm('')}
-                            className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                            aria-label="Clear search"
-                            title="Clear search"
-                          >
-                            <X className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleToggleVoiceSearch}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                          aria-label="Search with voice"
-                          title="Search with voice"
-                        >
-                          {isRecordingSearch ? (
-                            <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                          ) : (
-                            <Mic className="h-4 w-4 text-foreground" />
-                          )}
-                        </Button>
-                      </div>
                       <CallDayVisitList 
                         visits={sortedVisitsForCallDay}
                         onEdit={handleEditVisit}
@@ -3249,7 +3250,7 @@ export default function HomePage() {
                 </div>
 
                 <Tabs defaultValue="about-field-day" className="w-full">
-                    <TabsList className="grid w-full grid-cols-7 mb-4 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                    <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
                         <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
                             <PlusCircle className="h-5 w-5" />
                         </TabsTrigger>
@@ -3609,6 +3610,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
