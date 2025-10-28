@@ -218,10 +218,9 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   )
 });
 
-const VisitCardAccordionItem = ({ visit, variant = 'default', handleAccordionScroll, onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
+const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
   visit: Visit;
   variant?: 'default' | 'planner';
-  handleAccordionScroll: (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => void;
   onEdit: (visit: Visit) => void;
   onDelete: (visitId: string) => void;
   onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
@@ -230,6 +229,15 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', handleAccordionScr
   onDictateNotes: (visit: Visit) => void;
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
+
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
+    if (e.currentTarget.getAttribute('data-state') === 'closed') {
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  };
+
   return (
     <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, itemRef)} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
@@ -353,7 +361,6 @@ export default function HomePage() {
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
   const companyDocsRef = useRef<HTMLDivElement>(null);
-  const userPerformanceRef = useRef<HTMLDivElement>(null);
   const debbieRef = useRef<HTMLDivElement>(null);
   const visitCardsRef = useRef<HTMLDivElement>(null);
   const pastVisitsRef = useRef<HTMLDivElement>(null);
@@ -2501,7 +2508,6 @@ export default function HomePage() {
                           <VisitCardAccordionItem
                               key={visit.id}
                               visit={visit}
-                              handleAccordionScroll={handleAccordionScroll}
                               onEdit={handleEditVisit}
                               onDelete={handleDeleteVisit}
                               onUpdateDealClosed={handleUpdateDealClosed}
@@ -2581,7 +2587,6 @@ export default function HomePage() {
                                   <VisitCardAccordionItem
                                     key={visit.id}
                                     visit={visit}
-                                    handleAccordionScroll={handleAccordionScroll}
                                     onEdit={handleEditVisit}
                                     onDelete={handleDeleteVisit}
                                     onUpdateDealClosed={handleUpdateDealClosed}
@@ -2627,7 +2632,6 @@ export default function HomePage() {
                                           key={visit.id}
                                           visit={visit}
                                           variant="planner"
-                                          handleAccordionScroll={handleAccordionScroll}
                                           onEdit={handleEditVisit}
                                           onDelete={handleDeleteVisit}
                                           onUpdateDealClosed={handleUpdateDealClosed}
@@ -2670,7 +2674,6 @@ export default function HomePage() {
                                             key={visit.id}
                                             visit={visit}
                                             variant="planner"
-                                            handleAccordionScroll={handleAccordionScroll}
                                             onEdit={handleEditVisit}
                                             onDelete={handleDeleteVisit}
                                             onUpdateDealClosed={handleUpdateDealClosed}
@@ -2710,7 +2713,6 @@ export default function HomePage() {
                                       key={visit.id}
                                       visit={visit}
                                       variant="planner"
-                                      handleAccordionScroll={handleAccordionScroll}
                                       onEdit={handleEditVisit}
                                       onDelete={handleDeleteVisit}
                                       onUpdateDealClosed={handleUpdateDealClosed}
@@ -2746,7 +2748,6 @@ export default function HomePage() {
                                             key={visit.id}
                                             visit={visit}
                                             variant="planner"
-                                            handleAccordionScroll={handleAccordionScroll}
                                             onEdit={handleEditVisit}
                                             onDelete={handleDeleteVisit}
                                             onUpdateDealClosed={handleUpdateDealClosed}
@@ -2797,7 +2798,6 @@ export default function HomePage() {
                                       <VisitCardAccordionItem
                                           key={visit.id}
                                           visit={visit}
-                                          handleAccordionScroll={handleAccordionScroll}
                                           onEdit={handleEditVisit}
                                           onDelete={handleDeleteVisit}
                                           onUpdateDealClosed={handleUpdateDealClosed}
@@ -2822,8 +2822,8 @@ export default function HomePage() {
                   </div>
               </div>
           </TabsContent>
-          <TabsContent value="call-day" className={cn(visitToReschedule && "relative z-40")}>
-            <div className="space-y-6">
+          <TabsContent value="call-day">
+            <div className={cn("space-y-6", visitToReschedule && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -2914,7 +2914,11 @@ export default function HomePage() {
                           mode="single"
                           selected={selectedDate}
                           onSelect={handleCalendarSelect}
-                          className={cn("rounded-md border", visitToReschedule && "cursor-crosshair", "bluish-glow")}
+                          className={cn(
+                            "rounded-md border",
+                            "bluish-glow",
+                            { "cursor-crosshair": !!visitToReschedule }
+                          )}
                           modifiers={{
                             logged: loggedPastVisitDays,
                             scheduled: scheduledFutureVisitDays,
@@ -3801,3 +3805,4 @@ export default function HomePage() {
     </div>
   );
 }
+
