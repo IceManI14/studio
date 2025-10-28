@@ -2317,7 +2317,7 @@ export default function HomePage() {
         <div className="text-center text-sm font-medium text-foreground mb-2">{activeTabLabel}</div>
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
+          <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
               <span className="hidden sm:inline">Field Day</span>
@@ -3609,6 +3609,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
