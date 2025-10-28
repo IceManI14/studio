@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarIcon, Check, CheckCircle, Edit, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -58,6 +58,7 @@ import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import UserPerformanceModal from '@/components/user-performance-modal';
 
 
 interface FoundPlace {
@@ -246,6 +247,7 @@ export default function HomePage() {
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
   
   const { toast } = useToast();
@@ -268,6 +270,7 @@ export default function HomePage() {
   const newsFeedRef = useRef<HTMLDivElement>(null);
   const hotLeadsRef = useRef<HTMLDivElement>(null);
   const companyDocsRef = useRef<HTMLDivElement>(null);
+  const userPerformanceRef = useRef<HTMLDivElement>(null);
   const debbieRef = useRef<HTMLDivElement>(null);
   const visitCardsRef = useRef<HTMLDivElement>(null);
   const pastVisitsRef = useRef<HTMLDivElement>(null);
@@ -1499,6 +1502,10 @@ export default function HomePage() {
         setIsManageFilesModalOpen(false);
         return;
       }
+      if (isPerformanceModalOpen) {
+        setIsPerformanceModalOpen(false);
+        return;
+      }
 
       if (activeTab !== 'field-day') {
         setActiveTab('field-day');
@@ -1519,6 +1526,7 @@ export default function HomePage() {
     isDestinationModalOpen,
     isFindCompanyModalOpen,
     isManageFilesModalOpen,
+    isPerformanceModalOpen
   ]);
 
   // Handlers
@@ -3181,6 +3189,31 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+              
+              <Accordion type="single" collapsible>
+                <AccordionItem ref={userPerformanceRef} value="user-performance" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, userPerformanceRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                        <div className="flex w-full items-center">
+                            <div className="flex items-center justify-start w-10 shrink-0">
+                                <BarChart className="h-7 w-7 text-primary" />
+                            </div>
+                            <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">User Performance</h2>
+                            <div className="w-10 shrink-0"></div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0">
+                        <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col items-center justify-center text-center p-6">
+                            <UiCardDescription>
+                                Click the button below to view a detailed breakdown of your sales performance, including cooler distribution and sales by location.
+                            </UiCardDescription>
+                            <Button className="mt-4" onClick={() => setIsPerformanceModalOpen(true)}>
+                                <BarChart className="mr-2 h-4 w-4" />
+                                Show Performance Dashboard
+                            </Button>
+                        </UiCard>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
             </div>
           )}
           
@@ -3494,6 +3527,12 @@ export default function HomePage() {
             managedFiles={managedFiles}
             onFilesChange={handleManagedFilesChange}
         />
+        
+        <UserPerformanceModal 
+            isOpen={isPerformanceModalOpen}
+            onClose={() => setIsPerformanceModalOpen(false)}
+            visits={visitsToDisplay}
+        />
 
         <VisitForm
           isOpen={isVisitFormOpen}
@@ -3547,6 +3586,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
