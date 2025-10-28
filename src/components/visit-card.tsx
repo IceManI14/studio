@@ -40,8 +40,51 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const timeZone = 'America/New_York';
   const { toast } = useToast();
 
+  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting' | 'thanks_pitch' | 'thanks_business' | 'thanks_time') => {
+    const contactEmail = visit.decisionMakerContact && visit.decisionMakerContact.includes('@') ? visit.decisionMakerContact : '';
+    const contactName = visit.decisionMakerName ? ` ${visit.decisionMakerName}` : '';
+    let subject = '';
+    let body = '';
+
+    switch (type) {
+        case 'introduction':
+            subject = `Introduction from Optimum Water Solutions`;
+            body = `Hello${contactName},\n\nI hope this email finds you well.\n\nMy name is [Your Name] and I'm with Optimum Water Solutions. I recently stopped by your office and wanted to introduce our bottle-free water coolers that provide unlimited, pure, and healthy water.\n\nWould you be open to a brief chat next week to see how we can upgrade your office's hydration and save you money?\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'pricing':
+            subject = `Pricing for Optimum Water Coolers at ${visit.companyName}`;
+            body = `Hello${contactName},\n\nFollowing up on our conversation, I've attached some information about our most popular bottle-free coolers. We can provide a system for your office for as low as $39.99/month, which includes all maintenance and filter changes.\n\nThis would replace your current water expenses and provide a healthier, more convenient solution for your team.\n\nI'd be happy to prepare a more detailed quote. When would be a good time to connect for a few minutes?\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'meeting':
+            subject = `Following up from Optimum Water Solutions`;
+            body = `Hello${contactName},\n\nI hope you're having a great week.\n\nI wanted to follow up on my recent visit to ${visit.companyName}. I'd love to find 15 minutes to discuss your current water situation and see how Optimum can provide a better solution.\n\nHow does your availability look for next week?\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'thanks_pitch':
+            subject = `Thank you for your time today`;
+            body = `Hello${contactName},\n\nJust wanted to send a quick thank you for taking the time to listen to my sales pitch earlier today. I appreciate you considering Optimum Water Solutions and I hope to speak with you again soon.\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'thanks_business':
+            subject = `Welcome to the Optimum family!`;
+            body = `Hello${contactName},\n\nThank you so much for your business! We're thrilled to welcome ${visit.companyName} to the Optimum Water Solutions family. We're confident you'll love the switch to our bottle-free coolers.\n\nWe'll be in touch shortly to schedule your installation. If you have any questions in the meantime, please don't hesitate to reach out.\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'thanks_time':
+            subject = `Thank you for your time`;
+            body = `Hello${contactName},\n\nThank you for taking a few moments to speak with me today. I appreciate your time.\n\nIf you have any questions in the future, please feel free to reach out.\n\nBest regards,\n[Your Name]`;
+            break;
+    }
+
+    const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+    toast({ title: "Opening Email Client", description: `Preparing a ${type.replace(/_/g, ' ')} email for ${visit.companyName}.` });
+  };
+  
   const handleDealClosedChange = (checked: boolean | 'indeterminate') => {
-    onUpdateDealClosed(visit.id, !!checked);
+    const isClosingDeal = !!checked;
+    onUpdateDealClosed(visit.id, isClosingDeal);
+
+    if (isClosingDeal) {
+      handleGenerateEmail('thanks_business');
+    }
   };
 
   const handleSummarizeAgain = async () => {
@@ -130,44 +173,6 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     
     return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
 })();
-
-  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting' | 'thanks_pitch' | 'thanks_business' | 'thanks_time') => {
-    const contactEmail = visit.decisionMakerContact && visit.decisionMakerContact.includes('@') ? visit.decisionMakerContact : '';
-    const contactName = visit.decisionMakerName ? ` ${visit.decisionMakerName}` : '';
-    let subject = '';
-    let body = '';
-
-    switch (type) {
-        case 'introduction':
-            subject = `Introduction from Optimum Water Solutions`;
-            body = `Hello${contactName},\n\nI hope this email finds you well.\n\nMy name is [Your Name] and I'm with Optimum Water Solutions. I recently stopped by your office and wanted to introduce our bottle-free water coolers that provide unlimited, pure, and healthy water.\n\nWould you be open to a brief chat next week to see how we can upgrade your office's hydration and save you money?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'pricing':
-            subject = `Pricing for Optimum Water Coolers at ${visit.companyName}`;
-            body = `Hello${contactName},\n\nFollowing up on our conversation, I've attached some information about our most popular bottle-free coolers. We can provide a system for your office for as low as $39.99/month, which includes all maintenance and filter changes.\n\nThis would replace your current water expenses and provide a healthier, more convenient solution for your team.\n\nI'd be happy to prepare a more detailed quote. When would be a good time to connect for a few minutes?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'meeting':
-            subject = `Following up from Optimum Water Solutions`;
-            body = `Hello${contactName},\n\nI hope you're having a great week.\n\nI wanted to follow up on my recent visit to ${visit.companyName}. I'd love to find 15 minutes to discuss your current water situation and see how Optimum can provide a better solution.\n\nHow does your availability look for next week?\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_pitch':
-            subject = `Thank you for your time today`;
-            body = `Hello${contactName},\n\nJust wanted to send a quick thank you for taking the time to listen to my sales pitch earlier today. I appreciate you considering Optimum Water Solutions and I hope to speak with you again soon.\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_business':
-            subject = `Welcome to the Optimum family!`;
-            body = `Hello${contactName},\n\nThank you so much for your business! We're thrilled to welcome ${visit.companyName} to the Optimum Water Solutions family. We're confident you'll love the switch to our bottle-free coolers.\n\nWe'll be in touch shortly to schedule your installation. If you have any questions in the meantime, please don't hesitate to reach out.\n\nBest regards,\n[Your Name]`;
-            break;
-        case 'thanks_time':
-            subject = `Thank you for your time`;
-            body = `Hello${contactName},\n\nThank you for taking a few moments to speak with me today. I appreciate your time.\n\nIf you have any questions in the future, please feel free to reach out.\n\nBest regards,\n[Your Name]`;
-            break;
-    }
-
-    const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
-    toast({ title: "Opening Email Client", description: `Preparing a ${type.replace(/_/g, ' ')} email for ${visit.companyName}.` });
-  };
 
   const ZoomedContent = () => (
     <ScrollArea className="h-96 pr-4">
@@ -621,3 +626,5 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
+    
