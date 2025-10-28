@@ -2299,8 +2299,7 @@ export default function HomePage() {
         onClose={() => setShowTerritoryUploadModal(false)}
       />
       <div className={cn(
-          "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8",
-          activeTab !== 'call-day' && visitToReschedule && "opacity-25 pointer-events-none"
+          "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8"
       )}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
@@ -2467,12 +2466,7 @@ export default function HomePage() {
               <span className="hidden sm:inline">About</span>
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-        
-        <div className={cn("mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-             activeTab === 'call-day' && visitToReschedule && "relative z-40"
-        )}>
-          {activeTab === 'field-day' && (
+          <TabsContent value="field-day">
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
                     <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
@@ -2604,9 +2598,8 @@ export default function HomePage() {
                   </AccordionItem>
                 </Accordion>
             </div>
-          )}
-          
-          {activeTab === 'planner' && (
+          </TabsContent>
+          <TabsContent value="planner">
               <div className="space-y-6">
                    <div className="space-y-4">
                       <Accordion type="single" collapsible>
@@ -2827,9 +2820,8 @@ export default function HomePage() {
                       </Accordion>
                   </div>
               </div>
-          )}
-
-          {activeTab === 'call-day' && (
+          </TabsContent>
+          <TabsContent value="call-day" className={cn(visitToReschedule && "relative z-40")}>
             <div className="space-y-6">
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -3090,9 +3082,8 @@ export default function HomePage() {
                 </Accordion>
               )}
             </div>
-          )}
-
-          {activeTab === 'visits' && (
+          </TabsContent>
+          <TabsContent value="visits">
             <Accordion type="single" collapsible>
               <AccordionItem value="company-map" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
@@ -3135,9 +3126,8 @@ export default function HomePage() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-          )}
-
-          {activeTab === 'ai-chat' && (
+          </TabsContent>
+          <TabsContent value="ai-chat">
             <div className="space-y-6">
               {!isGenkitConfigured ? (
                 <Alert variant="destructive" className="max-w-2xl mx-auto">
@@ -3456,9 +3446,8 @@ export default function HomePage() {
               </Accordion>
               
             </div>
-          )}
-          
-          {activeTab === 'about' && (
+          </TabsContent>
+          <TabsContent value="about">
             <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
                 <div className="w-full text-center">
                     <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
@@ -3585,8 +3574,8 @@ export default function HomePage() {
                     </TabsContent>
                 </Tabs>
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
         
         <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
