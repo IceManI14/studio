@@ -19,7 +19,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 interface VisitCardProps {
   visit: Visit;
@@ -131,7 +131,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
 })();
 
-  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting') => {
+  const handleGenerateEmail = (type: 'introduction' | 'pricing' | 'meeting' | 'thanks_pitch' | 'thanks_business' | 'thanks_time') => {
     const contactEmail = visit.decisionMakerContact && visit.decisionMakerContact.includes('@') ? visit.decisionMakerContact : '';
     const contactName = visit.decisionMakerName ? ` ${visit.decisionMakerName}` : '';
     let subject = '';
@@ -150,11 +150,23 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
             subject = `Following up from Optimum Water Solutions`;
             body = `Hello${contactName},\n\nI hope you're having a great week.\n\nI wanted to follow up on my recent visit to ${visit.companyName}. I'd love to find 15 minutes to discuss your current water situation and see how Optimum can provide a better solution.\n\nHow does your availability look for next week?\n\nBest regards,\n[Your Name]`;
             break;
+        case 'thanks_pitch':
+            subject = `Thank you for your time today`;
+            body = `Hello${contactName},\n\nJust wanted to send a quick thank you for taking the time to listen to my sales pitch earlier today. I appreciate you considering Optimum Water Solutions and I hope to speak with you again soon.\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'thanks_business':
+            subject = `Welcome to the Optimum family!`;
+            body = `Hello${contactName},\n\nThank you so much for your business! We're thrilled to welcome ${visit.companyName} to the Optimum Water Solutions family. We're confident you'll love the switch to our bottle-free coolers.\n\nWe'll be in touch shortly to schedule your installation. If you have any questions in the meantime, please don't hesitate to reach out.\n\nBest regards,\n[Your Name]`;
+            break;
+        case 'thanks_time':
+            subject = `Thank you for your time`;
+            body = `Hello${contactName},\n\nThank you for taking a few moments to speak with me today. I appreciate your time.\n\nIf you have any questions in the future, please feel free to reach out.\n\nBest regards,\n[Your Name]`;
+            break;
     }
 
     const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoLink;
-    toast({ title: "Opening Email Client", description: `Preparing a ${type} email for ${visit.companyName}.` });
+    toast({ title: "Opening Email Client", description: `Preparing a ${type.replace(/_/g, ' ')} email for ${visit.companyName}.` });
   };
 
   const ZoomedContent = () => (
@@ -455,6 +467,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     <Edit className="h-4 w-4" />
                   </Button>
               )}
+              {isZoomedView && onLogFollowUp && (
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onLogFollowUp(visit); }} aria-label={`Add Future Visit for ${visit.companyName}`}>
+                  <CalendarIcon className="h-4 w-4" />
+                </Button>
+              )}
               {isZoomedView && onZoom && (
                   <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onZoom(null); }} aria-label="Collapse detail view">
                     <ChevronsUp className="h-4 w-4" />
@@ -556,6 +573,10 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                     <DropdownMenuItem onSelect={() => handleGenerateEmail('introduction')}>Introduction Email</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => handleGenerateEmail('pricing')}>Pricing Proposal</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => handleGenerateEmail('meeting')}>Request Meeting</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_pitch')}>Thank You (for listening)</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_business')}>Thank You (for the business)</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleGenerateEmail('thanks_time')}>Thank You (for your time)</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
