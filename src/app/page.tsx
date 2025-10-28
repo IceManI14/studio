@@ -2837,16 +2837,6 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <div className="mt-6 mb-4 flex justify-center">
-                <ExportPdfButton
-                  visits={visitsToDisplay}
-                  label="Export All Visits to PDF"
-                  salespersonName={selectedSalesperson?.name}
-                  reportTitle="All Visits"
-                  variant="default"
-                />
-              </div>
-
               {sortedVisitsForCallDay.length === 0 ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg">
                   <p className="text-xl text-muted-foreground mb-4">
@@ -2907,8 +2897,8 @@ export default function HomePage() {
                     <div className="w-10 shrink-0"></div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6">
-                  <div className="flex flex-col items-center gap-4 mb-6">
+                <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
+                  <div className="flex flex-col items-center gap-4">
                       {visitsToDisplay.length > 0 && (
                            <div className="flex flex-col items-center gap-2">
                                 <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
@@ -2924,6 +2914,15 @@ export default function HomePage() {
                       )}
                   </div>
                   <MapPlaceholder visits={visitsToDisplay} />
+                   <div className="flex justify-center">
+                    <ExportPdfButton
+                      visits={visitsToDisplay}
+                      label="Export All Visits to PDF"
+                      salespersonName={selectedSalesperson?.name}
+                      reportTitle="All Visits"
+                      variant="default"
+                    />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -3610,6 +3609,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
