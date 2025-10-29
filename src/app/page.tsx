@@ -2778,8 +2778,8 @@ export default function HomePage() {
                     </Accordion>
                 </div>
           </TabsContent>
-          <TabsContent value="call-day">
-            <div className={cn("space-y-6", visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
+          <TabsContent value="call-day" className={cn(visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
+            <div className="space-y-6">
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
