@@ -160,15 +160,6 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   onDictateNotes: (visit: Visit) => void,
 }) {
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
-  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
-
-  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>, ref: React.RefObject<HTMLDivElement>) => {
-    if (e.currentTarget.getAttribute('data-state') === 'closed') {
-      setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
-    }
-  };
 
   useEffect(() => {
     // This effect ensures that when the list of visits changes (e.g., due to filtering),
@@ -184,35 +175,16 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
       onValueChange={setAccordionValue}
     >
       {visits.map((visit) => (
-        <AccordionItem 
-          value={visit.id} 
-          key={visit.id} 
-          ref={(el) => itemRefs.current.set(visit.id, el)}
-          className="border bg-card rounded-lg overflow-hidden border-primary/20"
-        >
-            <AccordionTrigger 
-              onClick={(e) => handleAccordionScroll(e, { current: itemRefs.current.get(visit.id) || null })}
-              className="p-4 hover:no-underline w-full text-left [&[data-state=open]]:border-b border-primary/20"
-            >
-                <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-                    <div className="flex flex-1 items-center gap-3 min-w-0">
-                      <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-                    </div>
-                </div>
-            </AccordionTrigger>
-            <AccordionContent className="p-0">
-                <VisitCard
-                  visit={visit}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onUpdateDealClosed={onUpdateDealClosed}
-                  onZoom={onZoom}
-                  onLogFollowUp={onLogFollowUp}
-                  onDictateNotes={onDictateNotes}
-                  isZoomedView={true}
-                />
-            </AccordionContent>
-        </AccordionItem>
+        <VisitCardAccordionItem
+            key={visit.id}
+            visit={visit}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onUpdateDealClosed={onUpdateDealClosed}
+            setZoomedVisit={onZoom}
+            onLogFollowUp={onLogFollowUp}
+            onDictateNotes={onDictateNotes}
+        />
       ))}
     </Accordion>
   )
@@ -2160,32 +2132,20 @@ export default function HomePage() {
   };
 
   const handleCalendarSelect = useCallback(async (date?: Date) => {
-      // If we are in "reschedule mode"
-      if (visitToReschedule && date) {
-          const updatedVisit = {
-              ...visitToReschedule,
-              futureMeetingDateTime: date,
-          };
-          const payload: SaveVisitPayload = updatedVisit;
-          await handleSaveFromForm(payload, { andClose: false });
-
-          toast({
-              title: 'Meeting Rescheduled!',
-              description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.`,
-          });
-          setVisitToReschedule(null); // Exit reschedule mode
-      } else {
-          // Normal date selection for filtering
-          setSelectedDate(date);
-          const meetingsOnDay = date ? visitsToDisplay.filter(v => 
-              v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)
-          ) : [];
-  
-          if (meetingsOnDay.length > 0) {
-              setVisitsForReschedule(meetingsOnDay);
-              setIsRescheduleModalOpen(true);
-          }
+    if (visitToReschedule && date) {
+      const updatedVisit = { ...visitToReschedule, futureMeetingDateTime: date };
+      const payload: SaveVisitPayload = updatedVisit;
+      await handleSaveFromForm(payload, { andClose: false });
+      toast({ title: 'Meeting Rescheduled!', description: `${visitToReschedule.companyName} is now on ${format(date, 'PPP')}.` });
+      setVisitToReschedule(null); // Exit reschedule mode
+    } else {
+      setSelectedDate(date);
+      const meetingsOnDay = date ? visitsToDisplay.filter(v => v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)) : [];
+      if (meetingsOnDay.length > 0) {
+        setVisitsForReschedule(meetingsOnDay);
+        setIsRescheduleModalOpen(true);
       }
+    }
   }, [visitToReschedule, visitsToDisplay, toast, handleSaveFromForm]);
   
   const handleScheduleFromCalendar = () => {
@@ -2336,7 +2296,7 @@ export default function HomePage() {
                           <span className="font-semibold">{selectedSalesperson.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                           <Calendar className="h-4 w-4 text-primary" />
+                           <CalendarIcon className="h-4 w-4 text-primary" />
                            <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
                       </div>
                   </div>
@@ -2604,7 +2564,7 @@ export default function HomePage() {
               </Accordion>
           </TabsContent>
           <TabsContent value="planner" className="space-y-6">
-                  <div className="space-y-4">
+                <div className="space-y-4">
                     <Accordion type="single" collapsible>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                             <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -2690,7 +2650,7 @@ export default function HomePage() {
                       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                         <div className="flex items-center justify-center w-full">
                           <div className="flex items-center justify-center gap-2">
-                              <Calendar className="h-5 w-5 text-blue-500" />
+                              <CalendarIcon className="h-5 w-5 text-blue-500" />
                               <h3 className="text-lg font-medium text-foreground text-center">
                                   Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
                               </h3>
@@ -2819,7 +2779,7 @@ export default function HomePage() {
                 </div>
           </TabsContent>
           <TabsContent value="call-day">
-            <div className={cn("space-y-6", visitToReschedule && "relative z-40")}>
+            <div className={cn("space-y-6", visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -3799,4 +3759,3 @@ export default function HomePage() {
     </div>
   );
 }
-
