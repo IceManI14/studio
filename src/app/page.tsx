@@ -1515,6 +1515,16 @@ export default function HomePage() {
             },
             lastModified: new Date().toISOString()
           },
+          {
+            id: 'pricing-inquiry-1',
+            name: 'Pricing Inquiry Response',
+            type: 'template',
+            content: {
+              subject: 'Optimum Water Cooler Pricing Information',
+              body: "Hi {{contactName}},\n\nThank you for your interest in Optimum Water Solutions!\n\nOur bottle-less water coolers are an excellent way to provide your team with clean, healthy, and great-tasting water while being environmentally friendly and cost-effective.\n\nPricing can vary based on the specific models you choose and the number of units. However, to give you an idea, our standard plans often start around $39.99 to $49.99 per month per cooler, which includes installation, regular maintenance, and filter changes.\n\nI would be happy to discuss your specific needs and provide a more detailed quote. Would you be available for a brief call next week?\n\nBest regards,\n"
+            },
+            lastModified: new Date().toISOString()
+          },
         ];
 
         const storedCompanyDocs = localStorage.getItem('companyDocs');
@@ -2479,8 +2489,7 @@ export default function HomePage() {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="field-day">
-            <div className="space-y-6">
+          <TabsContent value="field-day" className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
                   <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
                       <PlusCircle className="mr-2 h-5 w-5" />
@@ -2490,7 +2499,7 @@ export default function HomePage() {
                     <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
                   </Button>
               </div>
-              <Accordion type="single" collapsible>
+              <Accordion type="single" collapsible defaultValue="todays-visits">
                 <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -2608,10 +2617,8 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </div>
           </TabsContent>
-          <TabsContent value="planner">
-            <div className="space-y-6">
+          <TabsContent value="planner" className="space-y-6">
                 <div className="space-y-4">
                     <Accordion type="single" collapsible>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
@@ -2825,7 +2832,6 @@ export default function HomePage() {
                         </AccordionItem>
                     </Accordion>
                 </div>
-            </div>
           </TabsContent>
           <TabsContent value="call-day">
             <div className={cn("space-y-6", visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
@@ -2922,7 +2928,7 @@ export default function HomePage() {
                           className={cn(
                             "rounded-md border",
                             "bluish-glow",
-                            visitToReschedule && "cursor-crosshair"
+                            visitToReschedule && activeTab === 'call-day' && "cursor-crosshair"
                           )}
                           modifiers={{
                             logged: loggedPastVisitDays,
@@ -3095,7 +3101,7 @@ export default function HomePage() {
           </TabsContent>
           <TabsContent value="visits">
             <div className="space-y-6">
-              <Accordion type="single" collapsible>
+              <Accordion type="single" collapsible defaultValue="company-map">
                 <AccordionItem value="company-map" className="border-none">
                   <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3814,4 +3820,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 
