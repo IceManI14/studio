@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -60,6 +60,7 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { CalendarIcon } from 'lucide-react';
 
 
 interface FoundPlace {
@@ -281,7 +282,6 @@ export default function HomePage() {
   const [isFindCompanyModalOpen, setIsFindCompanyModalOpen] = useState(false);
   const [managedFiles, setManagedFiles] = useState<ManagedFile[]>([]);
   const [isManageFilesModalOpen, setIsManageFilesModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('field-day');
   const [isSyncing, setIsSyncing] = useState(true);
   const [startDictationOnOpen, setStartDictationOnOpen] = useState(false);
   const [isRecordingHotLeadNotes, setIsRecordingHotLeadNotes] = useState<string | null>(null);
@@ -307,7 +307,7 @@ export default function HomePage() {
   const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
   const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
-  const [activeTabLabel, setActiveTabLabel] = useState('Field Day');
+  const [activeTab, setActiveTab] = useState('field-day');
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
@@ -634,6 +634,18 @@ export default function HomePage() {
       });
       return Object.entries(counts).map(([city, coolers]) => ({ city, coolers })).sort((a, b) => b.coolers - a.coolers);
   }, [closedDeals]);
+
+  const activeTabLabel = useMemo(() => {
+    const labels: { [key: string]: string } = {
+      'field-day': 'Field Day',
+      'planner': 'Planner',
+      'call-day': 'Call Day',
+      'visits': 'Visits Map',
+      'ai-chat': 'Debbie AI',
+      'about': 'About & Feedback',
+    };
+    return labels[activeTab] || '';
+  }, [activeTab]);
 
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
@@ -1472,8 +1484,55 @@ export default function HomePage() {
         const storedFiles = localStorage.getItem('managedFiles');
         if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
 
+        const defaultCompanyDocs: CompanyDoc[] = [
+          {
+            id: 'default-thank-you-1',
+            name: 'Thank You For Listening',
+            type: 'template',
+            content: {
+              subject: 'Thank You from Optimum Water',
+              body: 'Hi {{contactName}},\n\nJust wanted to say thank you for taking the time to speak with me today. I appreciate you listening to my pitch.\n\nLet me know if you have any questions.\n\nBest,\n'
+            },
+            lastModified: new Date().toISOString()
+          },
+          {
+            id: 'default-thank-you-2',
+            name: 'Thank You For Business',
+            type: 'template',
+            content: {
+                subject: 'Thank You from Optimum Water!',
+                body: "Hi {{contactName}},\n\nThank you for choosing Optimum Water as your water provider! I'm happy that you have healthy, clean drinking water now for you and your team.\n\nThere's a QR code on the machine that you can scan for any service needs, and we will have a tech there within 2 days if any issues should arise (which is highly unlikely!).\n\nI'm also available 24/7 for you to call if you need anything I can help you get sorted out.\n\nI look forward to a long-lasting relationship.\n\nBest regards,\n"
+            },
+            lastModified: new Date().toISOString()
+          },
+          {
+            id: 'default-thank-you-3',
+            name: 'Thank You For Your Time',
+            type: 'template',
+            content: {
+              subject: 'Following Up from Optimum',
+              body: 'Hi {{contactName}},\n\nThank you again for your time today. It was great speaking with you about your water needs.\n\nPlease feel free to reach out if you have any further questions.\n\nBest,\n'
+            },
+            lastModified: new Date().toISOString()
+          },
+        ];
+
         const storedCompanyDocs = localStorage.getItem('companyDocs');
-        if (storedCompanyDocs) setCompanyDocs(JSON.parse(storedCompanyDocs));
+        if (storedCompanyDocs) {
+          const parsedDocs = JSON.parse(storedCompanyDocs);
+          // Check if default docs exist to avoid duplicates
+          const mergedDocs = [...defaultCompanyDocs];
+          const defaultIds = new Set(defaultCompanyDocs.map(d => d.id));
+          parsedDocs.forEach((doc: CompanyDoc) => {
+            if (!defaultIds.has(doc.id)) {
+              mergedDocs.push(doc);
+            }
+          });
+          setCompanyDocs(mergedDocs);
+        } else {
+          setCompanyDocs(defaultCompanyDocs);
+          localStorage.setItem('companyDocs', JSON.stringify(defaultCompanyDocs));
+        }
 
         const storedHotLeads = localStorage.getItem('hotLeads');
         if (storedHotLeads) {
@@ -1575,20 +1634,6 @@ export default function HomePage() {
   useEffect(() => {
     currentCityRef.current = currentCity;
   }, [currentCity]);
-  
-  const handleTabChange = (newTab: string) => {
-    setActiveTab(newTab);
-    const labels: { [key: string]: string } = {
-      'field-day': 'Field Day',
-      'planner': 'Planner',
-      'call-day': 'Call Day',
-      'visits': 'Visits Map',
-      'ai-chat': 'Debbie AI',
-      'about': 'About & Feedback',
-    };
-    setActiveTabLabel(labels[newTab] || '');
-  };
-
 
   useEffect(() => {
     localStorage.setItem('submittedSuggestions', JSON.stringify(submittedSuggestions));
@@ -2397,7 +2442,7 @@ export default function HomePage() {
 
         <div className="text-center text-lg font-medium text-foreground mb-2">{activeTabLabel}</div>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex flex-wrap h-auto sm:h-10 justify-around w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
               <PlusCircle className="h-5 w-5" />
@@ -2434,7 +2479,8 @@ export default function HomePage() {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="field-day" className="space-y-6">
+          <TabsContent value="field-day">
+            <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
                   <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
                       <PlusCircle className="mr-2 h-5 w-5" />
@@ -2562,8 +2608,10 @@ export default function HomePage() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </div>
           </TabsContent>
-          <TabsContent value="planner" className="space-y-6">
+          <TabsContent value="planner">
+            <div className="space-y-6">
                 <div className="space-y-4">
                     <Accordion type="single" collapsible>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
@@ -2777,9 +2825,10 @@ export default function HomePage() {
                         </AccordionItem>
                     </Accordion>
                 </div>
+            </div>
           </TabsContent>
-          <TabsContent value="call-day" className={cn(visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
-            <div className="space-y-6">
+          <TabsContent value="call-day">
+            <div className={cn("space-y-6", visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -3044,51 +3093,54 @@ export default function HomePage() {
               )}
             </div>
           </TabsContent>
-          <TabsContent value="visits" className="space-y-6">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="company-map" className="border-none">
-                <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                  <div className="flex w-full items-center">
-                    <div className="flex items-center justify-start w-10 shrink-0">
-                      <MapPin className="h-7 w-7 text-primary" />
+          <TabsContent value="visits">
+            <div className="space-y-6">
+              <Accordion type="single" collapsible>
+                <AccordionItem value="company-map" className="border-none">
+                  <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                    <div className="flex w-full items-center">
+                      <div className="flex items-center justify-start w-10 shrink-0">
+                        <MapPin className="h-7 w-7 text-primary" />
+                      </div>
+                      <h2 id="map-section-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                        Company Map
+                      </h2>
+                      <div className="w-10 shrink-0"></div>
                     </div>
-                    <h2 id="map-section-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                      Company Map
-                    </h2>
-                    <div className="w-10 shrink-0"></div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
-                  <div className="flex flex-col items-center gap-4">
-                      {visitsToDisplay.length > 0 && (
-                           <div className="flex flex-col items-center gap-2">
-                                <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                                    Your Visits: {visitsToDisplay.length}
-                                </Badge>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
-                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
-                                    Email Manager
-                                    </Button>
-                                </div>
-                            </div>
-                      )}
-                  </div>
-                  <MapPlaceholder visits={visitsToDisplay} />
-                   <div className="flex justify-center">
-                    <ExportPdfButton
-                      visits={visitsToDisplay}
-                      label="Export All Visits to PDF"
-                      salespersonName={selectedSalesperson?.name}
-                      reportTitle="All Visits"
-                      variant="default"
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
+                    <div className="flex flex-col items-center gap-4">
+                        {visitsToDisplay.length > 0 && (
+                             <div className="flex flex-col items-center gap-2">
+                                  <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
+                                      Your Visits: {visitsToDisplay.length}
+                                  </Badge>
+                                  <div className="flex flex-wrap gap-2 justify-center">
+                                      <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
+                                      <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
+                                      Email Manager
+                                      </Button>
+                                  </div>
+                              </div>
+                        )}
+                    </div>
+                    <MapPlaceholder visits={visitsToDisplay} />
+                     <div className="flex justify-center">
+                      <ExportPdfButton
+                        visits={visitsToDisplay}
+                        label="Export All Visits to PDF"
+                        salespersonName={selectedSalesperson?.name}
+                        reportTitle="All Visits"
+                        variant="default"
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
           </TabsContent>
-          <TabsContent value="ai-chat" className="space-y-6">
+          <TabsContent value="ai-chat">
+            <div className="space-y-6">
               {!isGenkitConfigured ? (
                 <Alert variant="destructive" className="max-w-2xl mx-auto">
                   <WifiOff className="h-4 w-4" />
@@ -3098,7 +3150,7 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <Accordion type="single" collapsible>
+              <Accordion type="single" collapsible defaultValue="debbie-chat">
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3405,133 +3457,136 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
+            </div>
           </TabsContent>
-          <TabsContent value="about" className="space-y-6">
-            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
-                <div className="w-full text-center">
-                    <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
-                        <InfoIcon className="mr-3 h-7 w-7" /> App Guide
-                    </h2>
-                </div>
+          <TabsContent value="about">
+            <div className="space-y-6">
+              <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
+                  <div className="w-full text-center">
+                      <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
+                          <InfoIcon className="mr-3 h-7 w-7" /> App Guide
+                      </h2>
+                  </div>
 
-                <Tabs defaultValue="about-field-day" className="w-full">
-                    <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
-                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <PlusCircle className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <FolderKanban className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <ListChecks className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <MapPin className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <Bot className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                           <Database className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                           <MessagesSquare className="h-5 w-5" />
-                        </TabsTrigger>
-                    </TabsList>
+                  <Tabs defaultValue="about-field-day" className="w-full">
+                      <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                          <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                              <PlusCircle className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                              <FolderKanban className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                              <ListChecks className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                              <MapPin className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                              <Bot className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                             <Database className="h-5 w-5" />
+                          </TabsTrigger>
+                          <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                             <MessagesSquare className="h-5 w-5" />
+                          </TabsTrigger>
+                      </TabsList>
 
-                    <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
-                        <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
-                            </li>
-                            <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
-                            </li>
-                            <li>
-                                <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
-                            </li>
-                        </ul>
-                    </TabsContent>
+                      <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
+                          <ul className="list-disc list-inside space-y-3">
+                              <li>
+                                  <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
+                              </li>
+                              <li>
+                                  <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                              </li>
+                              <li>
+                                  <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
+                              </li>
+                          </ul>
+                      </TabsContent>
 
-                     <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
-                        <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
-                            </li>
-                            <li>
-                                <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
-                            </li>
-                            <li>
-                                <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
-                            </li>
-                            <li>
-                                <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
-                            </li>
-                        </ul>
-                    </TabsContent>
+                       <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
+                          <ul className="list-disc list-inside space-y-3">
+                              <li>
+                                  <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
+                              </li>
+                              <li>
+                                  <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
+                              </li>
+                              <li>
+                                  <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
+                              </li>
+                              <li>
+                                  <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
+                              </li>
+                          </ul>
+                      </TabsContent>
 
-                    <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
-                    </TabsContent>
+                      <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
+                      </TabsContent>
 
-                    <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
-                    </TabsContent>
+                      <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
+                      </TabsContent>
 
-                    <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
-                         <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
-                            </li>
-                            <li>
-                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
-                            </li>
-                            <li>
-                                <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
-                            </li>
-                             <li>
-                                <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
-                            </li>
-                        </ul>
-                    </TabsContent>
-                    
-                    <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
-                    </TabsContent>
+                      <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
+                           <ul className="list-disc list-inside space-y-3">
+                              <li>
+                                  <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
+                              </li>
+                              <li>
+                                  <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
+                              </li>
+                              <li>
+                                  <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
+                              </li>
+                               <li>
+                                  <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
+                              </li>
+                          </ul>
+                      </TabsContent>
+                      
+                      <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                          <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
+                      </TabsContent>
 
-                    <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
-                        <div className="w-full">
-                            <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
-                                <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
-                            </h3>
-                            <div className="space-y-3">
-                                <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
-                                <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
-                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
-                            </div>
-                        </div>
+                      <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
+                          <div className="w-full">
+                              <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
+                                  <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
+                              </h3>
+                              <div className="space-y-3">
+                                  <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
+                                  <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
+                                  <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
+                              </div>
+                          </div>
 
-                        {submittedSuggestions.length > 0 && (
-                            <div className="w-full pt-4 mt-6 border-t">
-                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
-                                <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
-                                <ol className="list-decimal list-inside space-y-2 text-foreground/90">
-                                    {submittedSuggestions.map((suggestion, index) => (
-                                    <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
-                                        {suggestion.text}
-                                        <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
-                                    </li>
-                                    ))}
-                                </ol>
-                                </div>
-                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
-                            </div>
-                        )}
-                    </TabsContent>
-                </Tabs>
+                          {submittedSuggestions.length > 0 && (
+                              <div className="w-full pt-4 mt-6 border-t">
+                                  <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
+                                  <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
+                                  <ol className="list-decimal list-inside space-y-2 text-foreground/90">
+                                      {submittedSuggestions.map((suggestion, index) => (
+                                      <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
+                                          {suggestion.text}
+                                          <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
+                                      </li>
+                                      ))}
+                                  </ol>
+                                  </div>
+                                  <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
+                              </div>
+                          )}
+                      </TabsContent>
+                  </Tabs>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -3759,3 +3814,4 @@ export default function HomePage() {
     </div>
   );
 }
+
