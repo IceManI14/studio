@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileDown, Gauge, BarChart, Edit, FileType } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileDown, Gauge, BarChart, Edit, FileType, CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -59,7 +59,6 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { CalendarIcon } from 'lucide-react';
 
 
 interface FoundPlace {
@@ -116,49 +115,47 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
     }
 
-    // 2. Handle credit not approved - commission is one month's price
-    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number' && visit.priceQuoted > 0) {
-        return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
-    }
-    
     const priceFromUnits = Array.isArray(visit.interestedUnits)
       ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
       : 0;
 
     const basePrice = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+    const installCommission = (visit.installationFee || 0) / 2;
 
-    // If no base price, no commission (unless it's a trial which is handled next)
-    if (basePrice <= 0 && !visit.freeTrial) {
-        // Exception: if install fee exists, commission is half of it.
-        if (visit.installationFee && visit.installationFee > 0) {
-            return { value: visit.installationFee / 2, isOverride: false, reason: 'Install Fee Only' };
-        }
-        return null;
-    }
-    
-    const installCommission = visit.installationFee ? visit.installationFee / 2 : 0;
-    
-    // 3. Free Trial calculation
+    // 2. Free Trial calculation
     if (visit.freeTrial) {
         const trialCommission = (basePrice * 5) + installCommission;
         if (trialCommission > 0) {
             return { value: trialCommission, isOverride: false, reason: 'Free Trial' };
         }
-        return null;
+        return installCommission > 0 ? { value: installCommission, isOverride: false, reason: 'Install Fee Only' } : null;
     }
 
-    // 4. Standard calculation (non-trial, pricing discussed)
-    if (visit.pricingDiscussed) {
-        const leaseTermYears = (visit.leaseTerm || 0) / 12;
-        const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
-        const total = leaseCommission + installCommission;
-        
-        if (total > 0) {
-            return { value: total, isOverride: false, reason: 'Standard' };
+    // 3. Standard calculation (non-trial)
+    if (basePrice > 0) {
+        // A. Handle credit not approved - commission is one month's price + install commission
+        if (visit.creditApproved === false) {
+            return { value: basePrice + installCommission, isOverride: false, reason: 'Credit Not Approved' };
+        }
+
+        // B. Standard lease commission
+        if (visit.pricingDiscussed) {
+            const leaseTermYears = (visit.leaseTerm || 0) / 12;
+            const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
+            const total = leaseCommission + installCommission;
+            
+            if (total > 0) {
+                return { value: total, isOverride: false, reason: 'Standard' };
+            }
         }
     }
 
-    // If no other conditions met, no commission
+    // 4. If no other conditions met, but there's an install fee
+    if (installCommission > 0) {
+        return { value: installCommission, isOverride: false, reason: 'Install Fee Only' };
+    }
+    
+    // Otherwise, no commission
     return null;
 };
 
@@ -3859,3 +3856,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
