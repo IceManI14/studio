@@ -2644,7 +2644,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
           </TabsContent>
-          <TabsContent value="planner" className="space-y-6">
+          <TabsContent value="planner" className="space-y-6 mt-6">
                 <div className="space-y-4">
                     <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
@@ -2860,7 +2860,7 @@ export default function HomePage() {
                 </div>
           </TabsContent>
           <TabsContent value="call-day">
-            <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
+            <div className={cn(activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto mt-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -2906,7 +2906,7 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
+              <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion} className="mt-6">
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -3083,7 +3083,7 @@ export default function HomePage() {
               </Accordion>
               
               {sortedVisitsForCallDay.length === 0 ? (
-                <div className="text-center py-10 bg-card rounded-lg shadow-lg">
+                <div className="text-center py-10 bg-card rounded-lg shadow-lg mt-6">
                   <p className="text-xl text-muted-foreground mb-4">
                     {(() => {
                       if (!selectedDate && !searchTerm.trim()) {
@@ -3097,7 +3097,7 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
+                <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion} className="mt-6">
                   <AccordionItem ref={visitCardsRef} value="visit-cards" className="border-none">
                     <AccordionTrigger onClick={(e) => handleAccordionScroll(e, visitCardsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                       <div className="flex items-center justify-center w-full">
@@ -3125,500 +3125,494 @@ export default function HomePage() {
               )}
             </div>
           </TabsContent>
-          <TabsContent value="visits">
-            <div className="space-y-6">
-              <Accordion type="single" collapsible defaultValue="company-map">
-                <AccordionItem value="company-map" className="border-none">
-                  <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <MapPin className="h-7 w-7 text-primary" />
-                      </div>
-                      <h2 id="map-section-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
-                        Company Map
-                      </h2>
-                      <div className="w-10 shrink-0"></div>
+          <TabsContent value="visits" className="space-y-6 mt-6">
+            <Accordion type="single" collapsible defaultValue="company-map">
+              <AccordionItem value="company-map" className="border-none">
+                <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <MapPin className="h-7 w-7 text-primary" />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
-                    <div className="flex flex-col items-center gap-4">
-                        {visitsToDisplay.length > 0 && (
-                             <div className="flex flex-col items-center gap-2">
-                                  <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                                      Your Visits: {visitsToDisplay.length}
-                                  </Badge>
-                                  <div className="flex flex-wrap gap-2 justify-center">
-                                      <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
-                                      <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
-                                      Email Manager
-                                      </Button>
-                                  </div>
-                              </div>
-                        )}
-                    </div>
-                    <MapPlaceholder visits={visitsToDisplay} />
-                     <div className="flex justify-center">
-                      <ExportPdfButton
-                        visits={visitsToDisplay}
-                        label="Export All Visits to PDF"
-                        salespersonName={selectedSalesperson?.name}
-                        reportTitle="All Visits"
-                        variant="default"
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
+                    <h2 id="map-section-title" className="text-2xl font-headline font-semibold text-foreground text-center flex-1">
+                      Company Map
+                    </h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
+                  <div className="flex flex-col items-center gap-4">
+                      {visitsToDisplay.length > 0 && (
+                           <div className="flex flex-col items-center gap-2">
+                                <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
+                                    Your Visits: {visitsToDisplay.length}
+                                </Badge>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
+                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
+                                    Email Manager
+                                    </Button>
+                                </div>
+                            </div>
+                      )}
+                  </div>
+                  <MapPlaceholder visits={visitsToDisplay} />
+                   <div className="flex justify-center">
+                    <ExportPdfButton
+                      visits={visitsToDisplay}
+                      label="Export All Visits to PDF"
+                      salespersonName={selectedSalesperson?.name}
+                      reportTitle="All Visits"
+                      variant="default"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
-          <TabsContent value="ai-chat">
-            <div className="space-y-6">
-              {!isGenkitConfigured ? (
-                <Alert variant="destructive" className="max-w-2xl mx-auto">
-                  <WifiOff className="h-4 w-4" />
-                  <AlertTitle>AI Features Disabled</AlertTitle>
-                  <AlertDescription>
-                    The AI assistant is currently unavailable because the Google API Key has not been configured. Please set the `GOOGLE_API_KEY` in your .env file to enable this feature.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
-                <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <Bot className="h-7 w-7 text-primary" />
-                      </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
-                        Debbie AI Assistant
-                      </h2>
-                      <div className="w-10 shrink-0"></div>
+          <TabsContent value="ai-chat" className="space-y-6 mt-6">
+            {!isGenkitConfigured ? (
+              <Alert variant="destructive" className="max-w-2xl mx-auto">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>AI Features Disabled</AlertTitle>
+                <AlertDescription>
+                  The AI assistant is currently unavailable because the Google API Key has not been configured. Please set the `GOOGLE_API_KEY` in your .env file to enable this feature.
+                </AlertDescription>
+              </Alert>
+            ) : (
+            <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
+              <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
+                <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <Bot className="h-7 w-7 text-primary" />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0">
-                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
-                      <UiCardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Bot className="h-8 w-8 text-primary" />
-                            <h2 className="text-2xl font-headline font-semibold text-foreground">
-                              Debbie
-                            </h2>
-                          </div>
-                          <div className="flex items-center gap-2">
-                             <Brain className="h-5 w-5 text-muted-foreground" />
-                            <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
-                              <SelectTrigger className="w-[180px] h-9 text-xs">
-                                <SelectValue placeholder="Select AI Model" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                    <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                      Debbie AI Assistant
+                    </h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0">
+                  <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                    <UiCardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Bot className="h-8 w-8 text-primary" />
+                          <h2 className="text-2xl font-headline font-semibold text-foreground">
+                            Debbie
+                          </h2>
                         </div>
-                      </UiCardHeader>
-                      <UiCardContent className="p-0">
-                        <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
-                          {chatMessages.map((message) => (
-                            <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-                              <div className={`flex items-end gap-2 max-w-[75%]`}>
-                                {message.sender === 'ai' && (
-                                  <Avatar className="h-8 w-8 self-start">
+                        <div className="flex items-center gap-2">
+                           <Brain className="h-5 w-5 text-muted-foreground" />
+                          <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                            <SelectTrigger className="w-[180px] h-9 text-xs">
+                              <SelectValue placeholder="Select AI Model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </UiCardHeader>
+                    <UiCardContent className="p-0">
+                      <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
+                        {chatMessages.map((message) => (
+                          <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                            <div className={`flex items-end gap-2 max-w-[75%]`}>
+                              {message.sender === 'ai' && (
+                                <Avatar className="h-8 w-8 self-start">
+                                  <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
+                                  <AvatarFallback>AI</AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
+                                <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                                <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
+                              </div>
+                              {message.sender === 'user' && (
+                                <Avatar className="h-8 w-8 self-start">
+                                  <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
+                                  <AvatarFallback>U</AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {isAiResponding && ( 
+                          <div className="flex justify-start mb-4">
+                            <div className="flex items-end gap-2 max-w-[75%]">
+                                <Avatar className="h-8 w-8 self-start">
                                     <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
                                     <AvatarFallback>AI</AvatarFallback>
-                                  </Avatar>
-                                )}
-                                <div className={`p-3 rounded-xl shadow-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'}`}>
-                                  <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-                                  <p className="text-xs mt-1.5 opacity-80 text-right">{format(message.timestamp, 'p')}</p>
+                                </Avatar>
+                                <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
                                 </div>
-                                {message.sender === 'user' && (
-                                  <Avatar className="h-8 w-8 self-start">
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person avatar" />
-                                    <AvatarFallback>U</AvatarFallback>
-                                  </Avatar>
-                                )}
-                              </div>
                             </div>
-                          ))}
-                          {isAiResponding && ( 
-                            <div className="flex justify-start mb-4">
-                              <div className="flex items-end gap-2 max-w-[75%]">
-                                  <Avatar className="h-8 w-8 self-start">
-                                      <AvatarImage src="https://placehold.co/40x40.png" alt="AI Avatar" data-ai-hint="robot face" />
-                                      <AvatarFallback>AI</AvatarFallback>
-                                  </Avatar>
-                                  <div className="p-3 rounded-xl shadow-sm bg-secondary text-secondary-foreground rounded-bl-none">
-                                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                                  </div>
-                              </div>
-                            </div>
-                          )}
-                          <div ref={messagesEndRef} />
-                        </ScrollArea>
-                      </UiCardContent>
-                      <UiCardFooter className="p-4 space-y-2 flex-col items-start">
-                        {selectedFile && (
-                          <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
-                            <div className="flex items-center gap-2 truncate">
-                              <Paperclip className="h-4 w-4 text-primary shrink-0" />
-                              <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
-                            </div>
-                            <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
-                              <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                              <span className="sr-only">Clear File</span>
-                            </Button>
                           </div>
                         )}
-                        <div className="flex w-full items-center space-x-2">
-                          <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
-                          <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
-                          <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
-                          <Input 
-                            type="text" 
-                            placeholder={isRecordingChat ? "Listening..." : "Type your message..."} 
-                            value={chatInput} 
-                            onChange={(e) => setChatInput(e.target.value)} 
-                            onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} 
-                            className="flex-1" 
-                            disabled={isAiResponding || isRecordingChat} 
-                          />
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={handleToggleChatVoice} 
-                            disabled={isAiResponding}
-                            aria-label="Speak message"
-                            title="Speak message"
-                          >
-                            {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4 text-foreground" />}
-                          </Button>
-                          <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
-                            {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                            <span className="sr-only">Send</span>
+                        <div ref={messagesEndRef} />
+                      </ScrollArea>
+                    </UiCardContent>
+                    <UiCardFooter className="p-4 space-y-2 flex-col items-start">
+                      {selectedFile && (
+                        <div className="w-full flex items-center justify-between p-2 text-xs bg-secondary rounded-md">
+                          <div className="flex items-center gap-2 truncate">
+                            <Paperclip className="h-4 w-4 text-primary shrink-0" />
+                            <span className="truncate" title={selectedFile.name}>{selectedFile.name}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={handleClearFile} className="h-6 w-6 shrink-0">
+                            <XCircle className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                            <span className="sr-only">Clear File</span>
                           </Button>
                         </div>
-                      </UiCardFooter>
-                    </UiCard>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              )}
-              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
-                <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <Newspaper className="h-7 w-7 text-primary" />
-                      </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Optimum News</h2>
-                      <div className="w-10 shrink-0"></div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0">
-                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
-                      <UiCardContent className="pt-6">
-                        {newsItems.length > 0 ? (
-                            <ul className="space-y-3 text-sm text-foreground">
-                              {newsItems.map((item, index) => (
-                                <li key={index} className="flex justify-between items-start group">
-                                  <span className="flex-grow"><span className="text-primary font-bold mr-2">→</span>{item}</span>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 ml-2"
-                                    onClick={() => handleDeleteNewsItem(index)}
-                                    aria-label="Delete news item"
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </li>
-                              ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center">No news items. Add one below.</p>
-                        )}
-                      </UiCardContent>
-                      <UiCardFooter className="flex-col items-start gap-2 border-t pt-4">
-                        <Label htmlFor="new-news-item" className="font-semibold text-foreground">Add News Item</Label>
-                        <Textarea 
-                          id="new-news-item"
-                          placeholder="Type a new update for the sales team..."
-                          value={newNewsItem}
-                          onChange={(e) => setNewNewsItem(e.target.value)}
-                          className="min-h-[60px]"
+                      )}
+                      <div className="flex w-full items-center space-x-2">
+                        <Button variant="outline" size="icon" onClick={() => setIsManageFilesModalOpen(true)} disabled={isAiResponding} aria-label="Manage long-term files for AI" title="Manage long-term files for AI"><FolderKanban className="h-4 w-4" /></Button>
+                        <Input id="file-upload-input" type="file" accept="application/pdf,text/csv" onChange={handleFileSelect} className="hidden" ref={fileInputRef} disabled={isAiResponding} />
+                        <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isAiResponding} aria-label="Attach a file for this message" title="Attach a file for this message"><Paperclip className="h-4 w-4" /></Button>
+                        <Input 
+                          type="text" 
+                          placeholder={isRecordingChat ? "Listening..." : "Type your message..."} 
+                          value={chatInput} 
+                          onChange={(e) => setChatInput(e.target.value)} 
+                          onKeyPress={(e) => { if (e.key === 'Enter' && !isAiResponding) handleSendChatMessage(); }} 
+                          className="flex-1" 
+                          disabled={isAiResponding || isRecordingChat} 
                         />
-                        <Button onClick={handleAddNewsItem} size="sm" disabled={!newNewsItem.trim()}>
-                          <PlusSquare className="mr-2 h-4 w-4" />
-                          Add to News
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={handleToggleChatVoice} 
+                          disabled={isAiResponding}
+                          aria-label="Speak message"
+                          title="Speak message"
+                        >
+                          {isRecordingChat ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4 text-foreground" />}
                         </Button>
-                      </UiCardFooter>
-                    </UiCard>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              
-              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
-                <AccordionItem ref={eagleEyeRef} value="eagle-eye-feed" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <UserCog className="h-7 w-7 text-primary" />
+                        <Button onClick={handleSendChatMessage} disabled={!chatInput.trim() || isAiResponding || isRecordingChat}>
+                          {isAiResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                          <span className="sr-only">Send</span>
+                        </Button>
                       </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
-                        Eagle Eye
-                      </h2>
-                      <div className="w-10 shrink-0"></div>
+                    </UiCardFooter>
+                  </UiCard>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            )}
+            <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
+              <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
+                <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <Newspaper className="h-7 w-7 text-primary" />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0">
-                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
-                      <UiCardHeader>
-                        <UiCardTitle>Live Chat &amp; Notifications</UiCardTitle>
-                        <UiCardDescription>
-                          This section will contain live updates, messages, and notifications from the Eagle Eye command station.
-                        </UiCardDescription>
-                      </UiCardHeader>
-                      <UiCardContent className="space-y-4">
-                         <div className="text-center text-sm text-muted-foreground p-8 rounded-md border border-dashed">
-                            Real-time chat and notification functionality will be implemented here.
-                        </div>
-                      </UiCardContent>
-                    </UiCard>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                    <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Optimum News</h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0">
+                  <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                    <UiCardContent className="pt-6">
+                      {newsItems.length > 0 ? (
+                          <ul className="space-y-3 text-sm text-foreground">
+                            {newsItems.map((item, index) => (
+                              <li key={index} className="flex justify-between items-start group">
+                                <span className="flex-grow"><span className="text-primary font-bold mr-2">→</span>{item}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 ml-2"
+                                  onClick={() => handleDeleteNewsItem(index)}
+                                  aria-label="Delete news item"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                      ) : (
+                          <p className="text-sm text-muted-foreground text-center">No news items. Add one below.</p>
+                      )}
+                    </UiCardContent>
+                    <UiCardFooter className="flex-col items-start gap-2 border-t pt-4">
+                      <Label htmlFor="new-news-item" className="font-semibold text-foreground">Add News Item</Label>
+                      <Textarea 
+                        id="new-news-item"
+                        placeholder="Type a new update for the sales team..."
+                        value={newNewsItem}
+                        onChange={(e) => setNewNewsItem(e.target.value)}
+                        className="min-h-[60px]"
+                      />
+                      <Button onClick={handleAddNewsItem} size="sm" disabled={!newNewsItem.trim()}>
+                        <PlusSquare className="mr-2 h-4 w-4" />
+                        Add to News
+                      </Button>
+                    </UiCardFooter>
+                  </UiCard>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            
+            <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
+              <AccordionItem ref={eagleEyeRef} value="eagle-eye-feed" className="border-none">
+                <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <UserCog className="h-7 w-7 text-primary" />
+                    </div>
+                    <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                      Eagle Eye
+                    </h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0">
+                  <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                    <UiCardHeader>
+                      <UiCardTitle>Live Chat &amp; Notifications</UiCardTitle>
+                      <UiCardDescription>
+                        This section will contain live updates, messages, and notifications from the Eagle Eye command station.
+                      </UiCardDescription>
+                    </UiCardHeader>
+                    <UiCardContent className="space-y-4">
+                       <div className="text-center text-sm text-muted-foreground p-8 rounded-md border border-dashed">
+                          Real-time chat and notification functionality will be implemented here.
+                      </div>
+                    </UiCardContent>
+                  </UiCard>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
-              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
-                <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
-                  <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
-                    <div className="flex w-full items-center">
-                      <div className="flex items-center justify-start w-10 shrink-0">
-                        <FileText className="h-7 w-7 text-primary" />
-                      </div>
-                      <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Company Documents</h2>
-                      <div className="w-10 shrink-0"></div>
+            <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
+              <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
+                <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <FileText className="h-7 w-7 text-primary" />
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0">
-                    <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
-                      <UiCardHeader>
-                        <UiCardTitle>Manage Documents & Templates</UiCardTitle>
-                        <UiCardDescription>Add file URLs for Debbie to analyze, or create custom email templates for quick replies.</UiCardDescription>
-                      </UiCardHeader>
-                      <UiCardContent className="space-y-4">
-                        <div className="p-3 border rounded-lg bg-background/50 space-y-4">
-                          <h3 className="text-lg font-semibold">{editingDoc ? 'Edit Document' : 'Add New Document'}</h3>
-                          <Tabs value={newDocType} onValueChange={(v) => setNewDocType(v as 'url' | 'template')}>
-                            <TabsList className="grid w-full grid-cols-2">
-                              <TabsTrigger value="url">File URL</TabsTrigger>
-                              <TabsTrigger value="template">Email Template</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="url" className="space-y-3 pt-2">
-                                <div className="space-y-1">
-                                    <Label htmlFor="doc-name-url">Document Name</Label>
-                                    <Input id="doc-name-url" placeholder="e.g., Price List 2024" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="doc-url">Document URL</Label>
-                                    <Input id="doc-url" placeholder="Paste direct file link here" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} />
-                                </div>
-                            </TabsContent>
-                             <TabsContent value="template" className="space-y-3 pt-2">
-                                <div className="space-y-1">
-                                    <Label htmlFor="template-name">Template Name</Label>
-                                    <Input id="template-name" placeholder="e.g., Introduction Email" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="template-subject">Subject</Label>
-                                    <Input id="template-subject" placeholder="Email subject line" value={newTemplateSubject} onChange={e => setNewTemplateSubject(e.target.value)} />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="template-body">Body</Label>
-                                    <Textarea id="template-body" placeholder="Email body. Use {{companyName}} and {{contactName}} as placeholders." value={newTemplateBody} onChange={e => setNewTemplateBody(e.target.value)} rows={5} />
-                                </div>
-                            </TabsContent>
-                          </Tabs>
-                          <div className="flex gap-2">
-                            <Button onClick={handleSaveCompanyDoc} size="sm">
-                              <Save className="mr-2 h-4 w-4" /> {editingDoc ? 'Update' : 'Save'} Document
-                            </Button>
-                            {editingDoc && <Button variant="ghost" size="sm" onClick={resetDocForm}>Cancel</Button>}
+                    <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">Company Documents</h2>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0">
+                  <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
+                    <UiCardHeader>
+                      <UiCardTitle>Manage Documents & Templates</UiCardTitle>
+                      <UiCardDescription>Add file URLs for Debbie to analyze, or create custom email templates for quick replies.</UiCardDescription>
+                    </UiCardHeader>
+                    <UiCardContent className="space-y-4">
+                      <div className="p-3 border rounded-lg bg-background/50 space-y-4">
+                        <h3 className="text-lg font-semibold">{editingDoc ? 'Edit Document' : 'Add New Document'}</h3>
+                        <Tabs value={newDocType} onValueChange={(v) => setNewDocType(v as 'url' | 'template')}>
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="url">File URL</TabsTrigger>
+                            <TabsTrigger value="template">Email Template</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="url" className="space-y-3 pt-2">
+                              <div className="space-y-1">
+                                  <Label htmlFor="doc-name-url">Document Name</Label>
+                                  <Input id="doc-name-url" placeholder="e.g., Price List 2024" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                  <Label htmlFor="doc-url">Document URL</Label>
+                                  <Input id="doc-url" placeholder="Paste direct file link here" value={newDocUrl} onChange={e => setNewDocUrl(e.target.value)} />
+                              </div>
+                          </TabsContent>
+                           <TabsContent value="template" className="space-y-3 pt-2">
+                              <div className="space-y-1">
+                                  <Label htmlFor="template-name">Template Name</Label>
+                                  <Input id="template-name" placeholder="e.g., Introduction Email" value={newDocName} onChange={e => setNewDocName(e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                  <Label htmlFor="template-subject">Subject</Label>
+                                  <Input id="template-subject" placeholder="Email subject line" value={newTemplateSubject} onChange={e => setNewTemplateSubject(e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                  <Label htmlFor="template-body">Body</Label>
+                                  <Textarea id="template-body" placeholder="Email body. Use {{companyName}} and {{contactName}} as placeholders." value={newTemplateBody} onChange={e => setNewTemplateBody(e.target.value)} rows={5} />
+                              </div>
+                          </TabsContent>
+                        </Tabs>
+                        <div className="flex gap-2">
+                          <Button onClick={handleSaveCompanyDoc} size="sm">
+                            <Save className="mr-2 h-4 w-4" /> {editingDoc ? 'Update' : 'Save'} Document
+                          </Button>
+                          {editingDoc && <Button variant="ghost" size="sm" onClick={resetDocForm}>Cancel</Button>}
+                        </div>
+                      </div>
+
+                      {companyDocs.length > 0 ? (
+                          <ScrollArea className="h-48">
+                              <ul className="space-y-2 pr-4">
+                              {companyDocs.map((doc) => (
+                                  <li key={doc.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                                      <div className="flex items-center gap-2 overflow-hidden">
+                                          {doc.type === 'url' ? <FileText className="h-4 w-4 shrink-0 text-primary" /> : <Mail className="h-4 w-4 shrink-0 text-primary" />}
+                                          <span className="truncate text-sm" title={doc.name}>{doc.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        {doc.type === 'url' && (
+                                          <Button variant="default" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAnalyzeCompanyDoc(doc)} disabled={!!analyzingDocId}>
+                                              {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                                              <span className="ml-1 sr-only">Analyze</span>
+                                          </Button>
+                                        )}
+                                        <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEditCompanyDoc(doc)}>
+                                            <Edit className="h-4 w-4" />
+                                            <span className="sr-only">Edit {doc.name}</span>
+                                        </Button>
+                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                            <span className="sr-only">Delete {doc.name}</span>
+                                        </Button>
+                                      </div>
+                                  </li>
+                              ))}
+                              </ul>
+                          </ScrollArea>
+                      ) : (
+                          <div className="text-center text-sm text-muted-foreground p-4 rounded-md border border-dashed">
+                              No company documents added yet.
                           </div>
+                      )}
+                    </UiCardContent>
+                  </UiCard>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            
+          </TabsContent>
+          <TabsContent value="about" className="space-y-6 mt-6">
+            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
+                <div className="w-full text-center">
+                    <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
+                        <InfoIcon className="mr-3 h-7 w-7" /> App Guide
+                    </h2>
+                </div>
+
+                <Tabs defaultValue="about-field-day" className="w-full">
+                    <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
+                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <PlusCircle className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <FolderKanban className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <ListChecks className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <MapPin className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                            <Bot className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                           <Database className="h-5 w-5" />
+                        </TabsTrigger>
+                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
+                           <MessagesSquare className="h-5 w-5" />
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
+                        <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
+                            </li>
+                            <li>
+                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
+                            </li>
+                            <li>
+                                <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
+                            </li>
+                        </ul>
+                    </TabsContent>
+
+                     <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
+                        <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
+                            </li>
+                            <li>
+                                <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
+                            </li>
+                            <li>
+                                <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
+                            </li>
+                            <li>
+                                <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
+                            </li>
+                        </ul>
+                    </TabsContent>
+
+                    <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
+                    </TabsContent>
+
+                    <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
+                    </TabsContent>
+
+                    <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
+                         <ul className="list-disc list-inside space-y-3">
+                            <li>
+                                <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
+                            </li>
+                            <li>
+                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
+                            </li>
+                            <li>
+                                <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
+                            </li>
+                             <li>
+                                <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
+                            </li>
+                        </ul>
+                    </TabsContent>
+                    
+                    <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
+                        <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
+                    </TabsContent>
+
+                    <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
+                        <div className="w-full">
+                            <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
+                                <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
+                            </h3>
+                            <div className="space-y-3">
+                                <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
+                                <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
+                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
+                            </div>
                         </div>
 
-                        {companyDocs.length > 0 ? (
-                            <ScrollArea className="h-48">
-                                <ul className="space-y-2 pr-4">
-                                {companyDocs.map((doc) => (
-                                    <li key={doc.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
-                                        <div className="flex items-center gap-2 overflow-hidden">
-                                            {doc.type === 'url' ? <FileText className="h-4 w-4 shrink-0 text-primary" /> : <Mail className="h-4 w-4 shrink-0 text-primary" />}
-                                            <span className="truncate text-sm" title={doc.name}>{doc.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          {doc.type === 'url' && (
-                                            <Button variant="default" size="sm" className="h-7 px-2 text-xs" onClick={() => handleAnalyzeCompanyDoc(doc)} disabled={!!analyzingDocId}>
-                                                {analyzingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
-                                                <span className="ml-1 sr-only">Analyze</span>
-                                            </Button>
-                                          )}
-                                          <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEditCompanyDoc(doc)}>
-                                              <Edit className="h-4 w-4" />
-                                              <span className="sr-only">Edit {doc.name}</span>
-                                          </Button>
-                                          <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDeleteCompanyDoc(doc.id)}>
-                                              <Trash2 className="h-4 w-4" />
-                                              <span className="sr-only">Delete {doc.name}</span>
-                                          </Button>
-                                        </div>
+                        {submittedSuggestions.length > 0 && (
+                            <div className="w-full pt-4 mt-6 border-t">
+                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
+                                <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
+                                <ol className="list-decimal list-inside space-y-2 text-foreground/90">
+                                    {submittedSuggestions.map((suggestion, index) => (
+                                    <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
+                                        {suggestion.text}
+                                        <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
                                     </li>
-                                ))}
-                                </ul>
-                            </ScrollArea>
-                        ) : (
-                            <div className="text-center text-sm text-muted-foreground p-4 rounded-md border border-dashed">
-                                No company documents added yet.
+                                    ))}
+                                </ol>
+                                </div>
+                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
                             </div>
                         )}
-                      </UiCardContent>
-                    </UiCard>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              
-            </div>
-          </TabsContent>
-          <TabsContent value="about">
-            <div className="space-y-6">
-              <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
-                  <div className="w-full text-center">
-                      <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
-                          <InfoIcon className="mr-3 h-7 w-7" /> App Guide
-                      </h2>
-                  </div>
-
-                  <Tabs defaultValue="about-field-day" className="w-full">
-                      <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
-                          <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                              <PlusCircle className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                              <FolderKanban className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                              <ListChecks className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                              <MapPin className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                              <Bot className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                             <Database className="h-5 w-5" />
-                          </TabsTrigger>
-                          <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                             <MessagesSquare className="h-5 w-5" />
-                          </TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
-                          <ul className="list-disc list-inside space-y-3">
-                              <li>
-                                  <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
-                              </li>
-                              <li>
-                                  <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
-                              </li>
-                              <li>
-                                  <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
-                              </li>
-                          </ul>
-                      </TabsContent>
-
-                       <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
-                          <ul className="list-disc list-inside space-y-3">
-                              <li>
-                                  <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
-                              </li>
-                              <li>
-                                  <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
-                              </li>
-                              <li>
-                                  <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
-                              </li>
-                              <li>
-                                  <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
-                              </li>
-                          </ul>
-                      </TabsContent>
-
-                      <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
-                      </TabsContent>
-
-                      <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
-                      </TabsContent>
-
-                      <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
-                           <ul className="list-disc list-inside space-y-3">
-                              <li>
-                                  <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
-                              </li>
-                              <li>
-                                  <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
-                              </li>
-                              <li>
-                                  <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
-                              </li>
-                               <li>
-                                  <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
-                              </li>
-                          </ul>
-                      </TabsContent>
-                      
-                      <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                          <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
-                      </TabsContent>
-
-                      <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
-                          <div className="w-full">
-                              <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
-                                  <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
-                              </h3>
-                              <div className="space-y-3">
-                                  <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
-                                  <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
-                                  <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
-                              </div>
-                          </div>
-
-                          {submittedSuggestions.length > 0 && (
-                              <div className="w-full pt-4 mt-6 border-t">
-                                  <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
-                                  <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
-                                  <ol className="list-decimal list-inside space-y-2 text-foreground/90">
-                                      {submittedSuggestions.map((suggestion, index) => (
-                                      <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
-                                          {suggestion.text}
-                                          <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
-                                      </li>
-                                      ))}
-                                  </ol>
-                                  </div>
-                                  <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
-                              </div>
-                          )}
-                      </TabsContent>
-                  </Tabs>
-              </div>
+                    </TabsContent>
+                </Tabs>
             </div>
           </TabsContent>
         </Tabs>
