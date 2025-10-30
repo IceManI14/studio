@@ -2860,8 +2860,8 @@ export default function HomePage() {
                 </div>
           </TabsContent>
           <TabsContent value="call-day">
-            <div className={cn("space-y-6", visitToReschedule && activeTab === 'call-day' && "relative z-40")}>
-              <div className="relative w-full max-w-sm mx-auto">
+            <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
+              <div className="relative w-full max-w-sm mx-auto mt-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
