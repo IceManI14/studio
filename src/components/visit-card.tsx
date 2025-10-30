@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import type { Visit, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { calculateCommission } from '@/app/page';
 
 interface VisitCardProps {
   visit: Visit;
@@ -147,31 +149,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const isHtmlCardBack = visit.businessCardImageBackUrl?.trim().startsWith('<!DOCTYPE html>');
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   
-  const potentialCommission = (() => {
-    if (typeof visit.manualCommission === 'number' && visit.manualCommission > 0) {
-        return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
-    }
-    if (!visit.pricingDiscussed && !visit.freeTrial) return null;
-
-    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-        return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
-    }
-    
-    const priceFromUnits = Array.isArray(visit.interestedUnits)
-      ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
-      : 0;
-
-    const priceQuoted = (visit.freeTrial && priceFromUnits > 0) ? priceFromUnits : (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
-
-    const leaseCommission = (priceQuoted && visit.leaseTerm) 
-      ? (priceQuoted * (visit.leaseTerm / 12)) 
-      : 0;
-      
-    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-    const total = leaseCommission + installCommission;
-    
-    return total > 0 ? { value: total, isOverride: false, reason: '' } : null;
-})();
+  const potentialCommission = calculateCommission(visit);
 
   const ZoomedContent = () => (
     <ScrollArea className="h-96 pr-4">

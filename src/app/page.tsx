@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -60,7 +60,6 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { CalendarIcon } from 'lucide-react';
 
 
 interface FoundPlace {
@@ -111,42 +110,52 @@ const salespeople: Salesperson[] = [
     { id: '5', name: 'John Doe (No Territory)', territory: [] },
 ];
 
-const calculateCommission = (visit: Visit): number => {
+export const calculateCommission = (visit: Visit): { value: number; isOverride: boolean; reason: string } | null => {
+    // 1. Manual override is highest priority
     if (typeof visit.manualCommission === 'number' && visit.manualCommission > 0) {
-        return visit.manualCommission;
+        return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
     }
 
-    if (visit.freeTrial) {
-        const priceFromUnits = Array.isArray(visit.interestedUnits)
-            ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
-            : 0;
-        
-        const coolerCommission = (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0)) * 5;
-        const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-        return coolerCommission + installCommission;
+    // 2. No commission if pricing hasn't been discussed (and it's not a trial)
+    if (!visit.pricingDiscussed && !visit.freeTrial) {
+        return null;
     }
 
-    if (!visit.pricingDiscussed) {
-        return 0;
-    }
-    
-    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number') {
-        return visit.priceQuoted;
+    // 3. Handle credit not approved - commission is one month's price
+    if (visit.creditApproved === false && typeof visit.priceQuoted === 'number' && visit.priceQuoted > 0) {
+        return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
     }
 
+    // Determine the base monthly price from interested units or quoted price
     const priceFromUnits = Array.isArray(visit.interestedUnits)
-        ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
-        : 0;
+      ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
+      : 0;
+
+    const basePrice = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
+    const installCommission = visit.installationFee ? visit.installationFee / 2 : 0;
+
+    // 4. Free Trial calculation
+    if (visit.freeTrial) {
+        const trialCommission = (basePrice * 5) + installCommission;
+        if (trialCommission > 0) {
+            return { value: trialCommission, isOverride: false, reason: 'Free Trial' };
+        }
+        return null;
+    }
+
+    // 5. Standard calculation (non-trial, pricing discussed)
+    if (visit.pricingDiscussed) {
+        const leaseTermMonths = visit.leaseTerm || 0;
+        const leaseCommission = basePrice * (leaseTermMonths / 12);
+        const total = leaseCommission + installCommission;
         
-    const priceQuoted = (priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0));
+        if (total > 0) {
+            return { value: total, isOverride: false, reason: 'Standard' };
+        }
+    }
 
-    const leaseCommission = (priceQuoted && visit.leaseTerm)
-        ? (priceQuoted * (visit.leaseTerm / 12))
-        : 0;
-
-    const installCommission = visit.installationFee ? (visit.installationFee / 2) : 0;
-    
-    return leaseCommission + installCommission;
+    // If no other conditions met, no commission
+    return null;
 };
 
 
@@ -555,11 +564,17 @@ export default function HomePage() {
   }, [closedDealsCoolerSummary]);
 
   const totalTrialCommission = useMemo(() => {
-    return activeFreeTrials.reduce((total, visit) => total + calculateCommission(visit), 0);
+    return activeFreeTrials.reduce((total, visit) => {
+        const commission = calculateCommission(visit);
+        return total + (commission ? commission.value : 0);
+    }, 0);
   }, [activeFreeTrials]);
 
   const totalClosedCommission = useMemo(() => {
-    return closedDeals.reduce((total, visit) => total + calculateCommission(visit), 0);
+    return closedDeals.reduce((total, visit) => {
+        const commission = calculateCommission(visit);
+        return total + (commission ? commission.value : 0);
+    }, 0);
   }, [closedDeals]);
 
   const pastVisitsByDay = useMemo(() => {
@@ -2928,7 +2943,7 @@ export default function HomePage() {
                           className={cn(
                             "rounded-md border",
                             "bluish-glow",
-                            visitToReschedule && activeTab === 'call-day' && "cursor-crosshair"
+                            visitToReschedule && "cursor-crosshair"
                           )}
                           modifiers={{
                             logged: loggedPastVisitDays,
@@ -3156,7 +3171,7 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <Accordion type="single" collapsible defaultValue="debbie-chat">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3820,5 +3835,6 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
