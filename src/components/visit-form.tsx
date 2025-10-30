@@ -376,8 +376,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
 
   const interestedUnitsValue = form.watch('interestedUnits');
-
   const pricingDiscussedValue = form.watch('pricingDiscussed');
+  
+  useEffect(() => {
+    if (interestedUnitsValue && interestedUnitsValue.length > 0) {
+      const lastUnit = interestedUnitsValue[interestedUnitsValue.length - 1];
+      if (COOLER_PRICING_MAP[lastUnit]) {
+        form.setValue('pricingDiscussed', true, { shouldDirty: true });
+        form.setValue('priceQuoted', COOLER_PRICING_MAP[lastUnit], { shouldDirty: true });
+        form.setValue('leaseTerm', 60, { shouldDirty: true });
+        form.setValue('installationFee', 149, { shouldDirty: true });
+      }
+    }
+  }, [interestedUnitsValue, form]);
+
   useEffect(() => {
     if (pricingDiscussedValue) {
       if (form.getValues('leaseTerm') === undefined) {
