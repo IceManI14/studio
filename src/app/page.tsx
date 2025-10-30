@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon, FileType } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, FileType, FileUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -59,6 +59,7 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { CalendarIcon } from 'lucide-react';
 
 
 interface FoundPlace {
@@ -1519,6 +1520,16 @@ export default function HomePage() {
             lastModified: new Date().toISOString()
           },
           {
+            id: 'fedex-pricing-1',
+            name: 'FedEx Pricing Inquiry',
+            type: 'template',
+            content: {
+                subject: 'Custom Water Solution Pricing for FedEx',
+                body: "Hi {{contactName}},\n\nThank you for your interest in a custom water solution for your FedEx location.\n\nBased on our discussion, we can offer a special corporate rate. Please see the proposed pricing below:\n\n[INSERT PRICING DETAILS HERE - e.g., Cooler model, monthly rate, etc.]\n\nThis pricing includes our all-inclusive service: installation, regular maintenance, and filter changes, with no hidden fees.\n\nI am confident we can provide a superior and more cost-effective solution for your team. Would you be available for a brief call next week to finalize the details?\n\nBest regards,\n"
+            },
+            lastModified: new Date().toISOString()
+          },
+          {
             id: 'default-thank-you-1',
             name: 'Thank You For Listening',
             type: 'template',
@@ -1535,16 +1546,6 @@ export default function HomePage() {
             content: {
                 subject: 'Thank You from Optimum Water!',
                 body: "Hi {{contactName}},\n\nThank you for choosing Optimum Water as your water provider! I'm happy that you have healthy, clean drinking water now for you and your team.\n\nThere's a QR code on the machine that you can scan for any service needs, and we will have a tech there within 2 days if any issues should arise (which is highly unlikely!).\n\nI'm also available 24/7 for you to call if you need anything I can help you get sorted out.\n\nI look forward to a long-lasting relationship.\n\nBest regards,\n"
-            },
-            lastModified: new Date().toISOString()
-          },
-          {
-            id: 'fedex-pricing-1',
-            name: 'FedEx Pricing Inquiry',
-            type: 'template',
-            content: {
-                subject: 'Custom Water Solution Pricing for FedEx',
-                body: "Hi {{contactName}},\n\nThank you for your interest in a custom water solution for your FedEx location.\n\nBased on our discussion, we can offer a special corporate rate. Please see the proposed pricing below:\n\n[INSERT PRICING DETAILS HERE - e.g., Cooler model, monthly rate, etc.]\n\nThis pricing includes our all-inclusive service: installation, regular maintenance, and filter changes, with no hidden fees.\n\nI am confident we can provide a superior and more cost-effective solution for your team. Would you be available for a brief call next week to finalize the details?\n\nBest regards,\n"
             },
             lastModified: new Date().toISOString()
           },
@@ -2877,7 +2878,7 @@ export default function HomePage() {
                     </Accordion>
                 </div>
           </TabsContent>
-          <TabsContent value="call-day">
+          <TabsContent value="call-day" className="mt-6">
             <div className={cn(activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
               <div className="relative w-full max-w-sm mx-auto mt-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
