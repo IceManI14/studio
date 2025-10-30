@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -116,25 +115,29 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return { value: visit.manualCommission, isOverride: true, reason: 'Manual Override' };
     }
 
-    // 2. No commission if pricing hasn't been discussed (and it's not a trial)
-    if (!visit.pricingDiscussed && !visit.freeTrial) {
-        return null;
-    }
-
-    // 3. Handle credit not approved - commission is one month's price
+    // 2. Handle credit not approved - commission is one month's price
     if (visit.creditApproved === false && typeof visit.priceQuoted === 'number' && visit.priceQuoted > 0) {
         return { value: visit.priceQuoted, isOverride: true, reason: 'Credit Not Approved (1 mo)' };
     }
-
-    // Determine the base monthly price from interested units or quoted price
+    
     const priceFromUnits = Array.isArray(visit.interestedUnits)
       ? visit.interestedUnits.reduce((sum, unitName) => sum + (COOLER_PRICING_MAP[unitName] || 0), 0)
       : 0;
 
     const basePrice = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
-    const installCommission = visit.installationFee ? visit.installationFee / 2 : 0;
 
-    // 4. Free Trial calculation
+    // If no base price, no commission (unless it's a trial which is handled next)
+    if (basePrice <= 0 && !visit.freeTrial) {
+        // Exception: if install fee exists, commission is half of it.
+        if (visit.installationFee && visit.installationFee > 0) {
+            return { value: visit.installationFee / 2, isOverride: false, reason: 'Install Fee Only' };
+        }
+        return null;
+    }
+    
+    const installCommission = visit.installationFee ? visit.installationFee / 2 : 0;
+    
+    // 3. Free Trial calculation
     if (visit.freeTrial) {
         const trialCommission = (basePrice * 5) + installCommission;
         if (trialCommission > 0) {
@@ -143,7 +146,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return null;
     }
 
-    // 5. Standard calculation (non-trial, pricing discussed)
+    // 4. Standard calculation (non-trial, pricing discussed)
     if (visit.pricingDiscussed) {
         const leaseTermMonths = visit.leaseTerm || 0;
         const leaseCommission = basePrice * (leaseTermMonths / 12);
@@ -158,6 +161,54 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
     return null;
 };
 
+
+const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
+  visit: Visit;
+  variant?: 'default' | 'planner';
+  onEdit: (visit: Visit) => void;
+  onDelete: (visitId: string) => void;
+  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
+  setZoomedVisit: (visit: Visit | null) => void;
+  onLogFollowUp: (visit: Visit) => void;
+  onDictateNotes: (visit: Visit) => void;
+}) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+
+  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Check if the trigger is being opened
+    if (e.currentTarget.getAttribute('data-state') === 'closed') {
+      setTimeout(() => {
+        // Scroll the item into view after the animation starts
+        itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150); // Delay should be less than accordion animation duration
+    }
+  };
+
+  return (
+    <AccordionItem ref={itemRef} value={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
+      <AccordionTrigger onClick={handleAccordionScroll} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
+        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
+          <div className="flex flex-1 items-center gap-3 min-w-0">
+             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
+          </div>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="p-0">
+        <VisitCard
+          visit={visit}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onUpdateDealClosed={onUpdateDealClosed}
+          onZoom={setZoomedVisit}
+          onLogFollowUp={onLogFollowUp}
+          onDictateNotes={onDictateNotes}
+          variant={variant}
+          isZoomedView={true}
+        />
+      </AccordionContent>
+    </AccordionItem>
+  );
+};
 
 
 const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
@@ -199,52 +250,6 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
     </Accordion>
   )
 });
-
-const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
-  visit: Visit;
-  variant?: 'default' | 'planner';
-  onEdit: (visit: Visit) => void;
-  onDelete: (visitId: string) => void;
-  onUpdateDealClosed: (visitId: string, dealClosed: boolean) => void;
-  setZoomedVisit: (visit: Visit | null) => void;
-  onLogFollowUp: (visit: Visit) => void;
-  onDictateNotes: (visit: Visit) => void;
-}) => {
-  const itemRef = useRef<HTMLDivElement>(null);
-
-  const handleAccordionScroll = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (e.currentTarget.getAttribute('data-state') === 'closed') {
-      setTimeout(() => {
-        itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
-    }
-  };
-
-  return (
-    <AccordionItem ref={itemRef} value={visit.id} key={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
-      <AccordionTrigger onClick={handleAccordionScroll} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
-        <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-          <div className="flex flex-1 items-center gap-3 min-w-0">
-             <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
-          </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="p-0">
-        <VisitCard
-          visit={visit}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onUpdateDealClosed={onUpdateDealClosed}
-          onZoom={setZoomedVisit}
-          onLogFollowUp={onLogFollowUp}
-          onDictateNotes={onDictateNotes}
-          variant={variant}
-          isZoomedView={true}
-        />
-      </AccordionContent>
-    </AccordionItem>
-  );
-};
 
 
 export default function HomePage() {
@@ -320,6 +325,9 @@ export default function HomePage() {
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
+  const [plannerAccordion, setPlannerAccordion] = useState<string[]>([]);
+  const [aiAccordion, setAiAccordion] = useState<string[]>([]);
+  const [callDayAccordion, setCallDayAccordion] = useState<string[]>([]);
 
   
   const { toast } = useToast();
@@ -1500,6 +1508,16 @@ export default function HomePage() {
         if (storedFiles) setManagedFiles(JSON.parse(storedFiles));
 
         const defaultCompanyDocs: CompanyDoc[] = [
+           {
+            id: 'pricing-inquiry-1',
+            name: 'Pricing Inquiry Response',
+            type: 'template',
+            content: {
+              subject: 'Optimum Water Cooler Pricing Information',
+              body: "Hi {{contactName}},\n\nThank you for your interest in Optimum Water Solutions!\n\nOur bottle-less water coolers are an excellent way to provide your team with clean, healthy, and great-tasting water while being environmentally friendly and cost-effective.\n\nPricing can vary based on the specific models you choose and the number of units. However, to give you an idea, our standard plans often start around $39.99 to $49.99 per month per cooler, which includes installation, regular maintenance, and filter changes.\n\nI would be happy to discuss your specific needs and provide a more detailed quote. Would you be available for a brief call next week?\n\nBest regards,\n"
+            },
+            lastModified: new Date().toISOString()
+          },
           {
             id: 'default-thank-you-1',
             name: 'Thank You For Listening',
@@ -1527,16 +1545,6 @@ export default function HomePage() {
             content: {
               subject: 'Following Up from Optimum',
               body: 'Hi {{contactName}},\n\nThank you again for your time today. It was great speaking with you about your water needs.\n\nPlease feel free to reach out if you have any further questions.\n\nBest,\n'
-            },
-            lastModified: new Date().toISOString()
-          },
-          {
-            id: 'pricing-inquiry-1',
-            name: 'Pricing Inquiry Response',
-            type: 'template',
-            content: {
-              subject: 'Optimum Water Cooler Pricing Information',
-              body: "Hi {{contactName}},\n\nThank you for your interest in Optimum Water Solutions!\n\nOur bottle-less water coolers are an excellent way to provide your team with clean, healthy, and great-tasting water while being environmentally friendly and cost-effective.\n\nPricing can vary based on the specific models you choose and the number of units. However, to give you an idea, our standard plans often start around $39.99 to $49.99 per month per cooler, which includes installation, regular maintenance, and filter changes.\n\nI would be happy to discuss your specific needs and provide a more detailed quote. Would you be available for a brief call next week?\n\nBest regards,\n"
             },
             lastModified: new Date().toISOString()
           },
@@ -2504,16 +2512,19 @@ export default function HomePage() {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="field-day" className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4">
-                  <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
-                      <PlusCircle className="mr-2 h-5 w-5" />
-                      Quicklog
-                  </Button>
-                  <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="lg" className="text-base" disabled={!!importedVisits}>
-                    <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
-                  </Button>
-              </div>
+          {activeTab === 'field-day' && (
+            <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4 my-6">
+                <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Quicklog
+                </Button>
+                <Button onClick={() => setIsFindCompanyModalOpen(true)} variant="secondary" size="lg" className="text-base" disabled={!!importedVisits}>
+                  <UserPlus className="mr-2 h-4 w-4" /> Telemarketer Lead
+                </Button>
+            </div>
+          )}
+
+          <TabsContent value="field-day" className="space-y-6 mt-0">
               <Accordion type="single" collapsible defaultValue="todays-visits">
                 <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -2635,7 +2646,7 @@ export default function HomePage() {
           </TabsContent>
           <TabsContent value="planner" className="space-y-6">
                 <div className="space-y-4">
-                    <Accordion type="single" collapsible>
+                    <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
                             <AccordionTrigger onClick={(e) => handleAccordionScroll(e, activeFreeTrialsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2682,7 +2693,7 @@ export default function HomePage() {
                     </Accordion>
                 </div>
                 {scheduledVisits.length > 0 && (
-                    <Accordion type="single" collapsible>
+                    <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={scheduledVisitsRef} value="scheduled-visits" className="border-none">
                             <AccordionTrigger onClick={(e) => handleAccordionScroll(e, scheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                               <div className="flex items-center justify-center w-full">
@@ -2715,7 +2726,7 @@ export default function HomePage() {
                     </Accordion>
                 )}
 
-                <Accordion type="single" collapsible>
+                <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                   <AccordionItem ref={unscheduledVisitsRef} value="unscheduled-visits" className="border-none">
                       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                         <div className="flex items-center justify-center w-full">
@@ -2756,7 +2767,7 @@ export default function HomePage() {
 
 
                 {flaggedHotspots.length > 0 && (
-                    <Accordion type="single" collapsible>
+                    <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={flaggedHotspotsRef} value="flagged-hotspots" className="border-none">
                             <AccordionTrigger onClick={(e) => handleAccordionScroll(e, flaggedHotspotsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                               <div className="flex items-center justify-center w-full">
@@ -2790,7 +2801,7 @@ export default function HomePage() {
                 )}
 
                 <div className="space-y-4">
-                    <Accordion type="single" collapsible>
+                    <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={dealsClosedRef} value="deals-closed" className="border-none">
                             <AccordionTrigger onClick={(e) => handleAccordionScroll(e, dealsClosedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                                 <div className="flex items-center justify-center w-full">
@@ -2895,7 +2906,7 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              <Accordion type="single" collapsible>
+              <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -2943,7 +2954,7 @@ export default function HomePage() {
                           className={cn(
                             "rounded-md border",
                             "bluish-glow",
-                            visitToReschedule && "cursor-crosshair"
+                            visitToReschedule && activeTab === 'call-day' && "cursor-crosshair"
                           )}
                           modifiers={{
                             logged: loggedPastVisitDays,
@@ -3086,7 +3097,7 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <Accordion type="single" collapsible defaultValue="visit-cards">
+                <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
                   <AccordionItem ref={visitCardsRef} value="visit-cards" className="border-none">
                     <AccordionTrigger onClick={(e) => handleAccordionScroll(e, visitCardsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                       <div className="flex items-center justify-center w-full">
@@ -3171,7 +3182,7 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : (
-              <Accordion type="single" collapsible>
+              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
                 <AccordionItem ref={debbieRef} value="debbie-chat" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3295,7 +3306,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               )}
-              <Accordion type="single" collapsible>
+              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
                 <AccordionItem ref={newsFeedRef} value="news-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, newsFeedRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3349,7 +3360,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              <Accordion type="single" collapsible>
+              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
                 <AccordionItem ref={eagleEyeRef} value="eagle-eye-feed" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3380,7 +3391,7 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
 
-              <Accordion type="single" collapsible>
+              <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
                 <AccordionItem ref={companyDocsRef} value="company-docs" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, companyDocsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                     <div className="flex w-full items-center">
@@ -3835,6 +3846,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
