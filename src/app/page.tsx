@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileDown, Gauge, BarChart, Edit, FileType, CalendarIcon } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileType, CalendarIcon, Gauge, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -130,15 +131,18 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         }
         return installCommission > 0 ? { value: installCommission, isOverride: false, reason: 'Install Fee Only' } : null;
     }
-
-    // 3. Standard calculation (non-trial)
+    
+    // 3. Standard deal calculation (not a trial)
     if (basePrice > 0) {
         // A. Handle credit not approved - commission is one month's price + install commission
         if (visit.creditApproved === false) {
-            return { value: basePrice + installCommission, isOverride: false, reason: 'Credit Not Approved' };
+            const finalValue = basePrice + installCommission;
+            if (finalValue > 0) {
+                return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
+            }
         }
-
-        // B. Standard lease commission
+        
+        // B. Standard lease commission if pricing was discussed
         if (visit.pricingDiscussed) {
             const leaseTermYears = (visit.leaseTerm || 0) / 12;
             const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
@@ -149,6 +153,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
             }
         }
     }
+
 
     // 4. If no other conditions met, but there's an install fee
     if (installCommission > 0) {
@@ -319,13 +324,13 @@ export default function HomePage() {
   const [visitToReschedule, setVisitToReschedule] = useState<Visit | null>(null);
   const [isAllMeetingsModalOpen, setIsAllMeetingsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState('field-day');
   const [lastLocation, setLastLocation] = useState<{lat: number, lng: number, time: number} | null>(null);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
   const [plannerAccordion, setPlannerAccordion] = useState<string[]>([]);
   const [aiAccordion, setAiAccordion] = useState<string[]>([]);
   const [callDayAccordion, setCallDayAccordion] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState('field-day');
 
   
   const { toast } = useToast();
@@ -1053,7 +1058,6 @@ export default function HomePage() {
     setHotLeads([]);
     setConvertedHotLeads(new Set());
     localStorage.removeItem('hotLeads');
-    localStorage.removeItem('convertedHotLeads');
     toast({ title: "Hot Leads Cleared", description: "The hot leads list has been cleared from this device." });
   }, [hotLeads.length, toast]);
 
@@ -3856,5 +3860,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
