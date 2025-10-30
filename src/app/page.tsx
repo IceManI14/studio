@@ -149,7 +149,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
     // 4. Standard calculation (non-trial, pricing discussed)
     if (visit.pricingDiscussed) {
         const leaseTermMonths = visit.leaseTerm || 0;
-        const leaseCommission = basePrice * (leaseTermMonths / 12);
+        const leaseCommission = leaseTermMonths > 0 ? (basePrice * (leaseTermMonths / 12)) : basePrice;
         const total = leaseCommission + installCommission;
         
         if (total > 0) {
@@ -1535,6 +1535,16 @@ export default function HomePage() {
             content: {
                 subject: 'Thank You from Optimum Water!',
                 body: "Hi {{contactName}},\n\nThank you for choosing Optimum Water as your water provider! I'm happy that you have healthy, clean drinking water now for you and your team.\n\nThere's a QR code on the machine that you can scan for any service needs, and we will have a tech there within 2 days if any issues should arise (which is highly unlikely!).\n\nI'm also available 24/7 for you to call if you need anything I can help you get sorted out.\n\nI look forward to a long-lasting relationship.\n\nBest regards,\n"
+            },
+            lastModified: new Date().toISOString()
+          },
+          {
+            id: 'fedex-pricing-1',
+            name: 'FedEx Pricing Inquiry',
+            type: 'template',
+            content: {
+                subject: 'Custom Water Solution Pricing for FedEx',
+                body: "Hi {{contactName}},\n\nThank you for your interest in a custom water solution for your FedEx location.\n\nBased on our discussion, we can offer a special corporate rate. Please see the proposed pricing below:\n\n[INSERT PRICING DETAILS HERE - e.g., Cooler model, monthly rate, etc.]\n\nThis pricing includes our all-inclusive service: installation, regular maintenance, and filter changes, with no hidden fees.\n\nI am confident we can provide a superior and more cost-effective solution for your team. Would you be available for a brief call next week to finalize the details?\n\nBest regards,\n"
             },
             lastModified: new Date().toISOString()
           },
