@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon, FileUp } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon, FileType } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -56,7 +56,7 @@ import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
@@ -2543,7 +2543,7 @@ export default function HomePage() {
           )}
 
           <TabsContent value="field-day" className="space-y-6 mt-0">
-              <Accordion type="single" collapsible defaultValue="todays-visits">
+              <Accordion type="single" collapsible>
                 <AccordionItem ref={todaysVisitsRef} value="todays-visits" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, todaysVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -2749,7 +2749,7 @@ export default function HomePage() {
                       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, unscheduledVisitsRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                         <div className="flex items-center justify-center w-full">
                           <div className="flex items-center justify-center gap-2">
-                              <CalendarIcon className="h-5 w-5 text-blue-500" />
+                              <FileType className="h-5 w-5 text-blue-500" />
                               <h3 className="text-lg font-medium text-foreground text-center">
                                   Future Visits (Unscheduled) ({unscheduledFutureVisits.length})
                               </h3>
@@ -3144,7 +3144,7 @@ export default function HomePage() {
             </div>
           </TabsContent>
           <TabsContent value="visits" className="space-y-6 mt-6">
-            <Accordion type="single" collapsible defaultValue="company-map">
+            <Accordion type="single" collapsible>
               <AccordionItem value="company-map" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
@@ -3858,5 +3858,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

@@ -265,7 +265,7 @@ export default function FindCompanyModal({
 
                 {hotLeads.length > 0 && (
                     <ScrollArea className="flex-grow min-h-0">
-                        <Accordion type="single" collapsible className="w-full" defaultValue="telemarketer-list">
+                        <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value="telemarketer-list" className="border-none">
                                 <AccordionTrigger>Telemarketer List ({hotLeads.length})</AccordionTrigger>
                                 <AccordionContent>
