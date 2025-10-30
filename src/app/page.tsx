@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, CalendarIcon, FileUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -2354,7 +2354,8 @@ export default function HomePage() {
         onClose={() => setShowTerritoryUploadModal(false)}
       />
       <div className={cn(
-          "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8"
+          "container mx-auto px-4 pt-2 pb-8 sm:px-6 lg:px-8 space-y-8",
+          activeTab === 'call-day' && !!visitToReschedule && "relative z-40"
       )}>
         <header className="flex flex-col items-center justify-center w-full pt-4 gap-2">
           <h1 className="text-6xl sm:text-8xl font-headline font-bold text-center aurora-text drop-shadow-lg" style={{ WebkitTextStroke: '1px hsl(var(--accent))' }}>
@@ -2386,6 +2387,13 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                            <CalendarIcon className="h-4 w-4 text-primary" />
                            <span className="font-semibold">{currentDate ? format(currentDate, 'MMM d, yyyy') : 'Loading...'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                          <Input ref={importReportInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportReport} />
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => importReportInputRef.current?.click()}>
+                              <FileUp className="mr-1 h-3 w-3" />
+                              Import Trail
+                          </Button>
                       </div>
                   </div>
 
@@ -3850,3 +3858,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
