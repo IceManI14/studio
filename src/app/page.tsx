@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileDown, Gauge, BarChart, Edit, FileType, FileUp } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileDown, Gauge, BarChart, Edit, FileType } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -149,8 +149,8 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
 
     // 4. Standard calculation (non-trial, pricing discussed)
     if (visit.pricingDiscussed) {
-        const leaseTermMonths = visit.leaseTerm || 0;
-        const leaseCommission = leaseTermMonths > 0 ? (basePrice * (leaseTermMonths / 12)) : basePrice;
+        const leaseTermYears = (visit.leaseTerm || 0) / 12;
+        const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
         const total = leaseCommission + installCommission;
         
         if (total > 0) {
@@ -1545,7 +1545,7 @@ export default function HomePage() {
             type: 'template',
             content: {
                 subject: 'Thank You from Optimum Water!',
-                body: "Hi {{contactName}},\n\nThank you for choosing Optimum Water as your water provider! I'm happy that you have healthy, clean drinking water now for you and your team.\n\nThere's a QR code on the machine that you can scan for any service needs, and we will have a tech there within 2 days if any issues should arise (which is highly unlikely!).\n\nI'm also available 24/7 for you to call if you need anything I can help you get sorted out.\n\nI look forward to a long-lasting relationship.\n\nBest regards,\n"
+                body: "Hi {{contactName}},\n\nI'm happy that you have healthy, clean drinking water now for you and your team. Thank you for choosing Optimum Water as your water provider!\n\nThere's a QR code on the machine that you can scan for any service needs, and we will have a tech there within 2 days if any issues should arise (which is highly unlikely!).\n\nI'm also available 24/7 for you to call if you need anything I can help you get sorted out.\n\nI look forward to a long-lasting relationship.\n\nBest regards,\n"
             },
             lastModified: new Date().toISOString()
           },
@@ -2492,8 +2492,6 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="text-center text-lg font-medium text-foreground mb-2">{activeTabLabel}</div>
-        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex flex-wrap h-auto sm:h-10 justify-around w-full mb-2 bg-card p-1 rounded-full border-2 border-primary/30 shadow-inner">
             <TabsTrigger value="field-day" className="rounded-full data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg flex items-center justify-center gap-2">
@@ -2531,6 +2529,8 @@ export default function HomePage() {
             </TabsTrigger>
           </TabsList>
           
+          <div className="text-center text-lg font-medium text-foreground mb-2 -mt-1">{activeTabLabel}</div>
+
           {activeTab === 'field-day' && (
             <div className="flex flex-col sm:flex-row justify-center items-stretch gap-4 my-6">
                 <Button onClick={handleQuickLog} variant="default" size="lg" className="text-base" disabled={!!importedVisits}>
