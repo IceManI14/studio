@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -57,6 +56,7 @@ import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
+import ExportDetailedPdfButton from '@/components/export-detailed-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -122,7 +122,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
 
     const basePrice = priceFromUnits > 0 ? priceFromUnits : (visit.priceQuoted || 0);
     const installCommission = (visit.installationFee || 0) / 2;
-
+    
     // 2. Free Trial calculation
     if (visit.freeTrial) {
         const trialCommission = (basePrice * 5) + installCommission;
@@ -153,7 +153,6 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
             }
         }
     }
-
 
     // 4. If no other conditions met, but there's an install fee
     if (installCommission > 0) {
@@ -2759,10 +2758,16 @@ export default function HomePage() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center items-center gap-2 mb-4">
                             <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits}>
                                 <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
                             </Button>
+                            <ExportDetailedPdfButton
+                                visits={unscheduledFutureVisits}
+                                salespersonName={selectedSalesperson?.name || undefined}
+                                reportTitle="Unscheduled Future Visits"
+                                label="Export Detailed PDF"
+                            />
                         </div>
                         {unscheduledFutureVisits.length > 0 && (
                           <Accordion type="multiple" className="w-full space-y-4">
@@ -2879,9 +2884,9 @@ export default function HomePage() {
                     </Accordion>
                 </div>
           </TabsContent>
-          <TabsContent value="call-day" className="mt-6">
-            <div className={cn(activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
-              <div className="relative w-full max-w-sm mx-auto mt-6">
+          <TabsContent value="call-day" className="space-y-6 mt-6">
+            <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
+              <div className="relative w-full max-w-sm mx-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
@@ -2926,7 +2931,7 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion} className="mt-6">
+              <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
                   <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callDayFilterRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
                     <div className="flex items-center justify-center w-full">
@@ -3860,3 +3865,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
