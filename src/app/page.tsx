@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -2758,8 +2759,8 @@ export default function HomePage() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
-                        <div className="flex justify-center items-center gap-2 mb-4">
-                            <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits}>
+                        <div className="flex justify-center items-center gap-2">
+                            <Button onClick={handleAddNewFutureVisit} disabled={!!importedVisits} size="sm">
                                 <PlusSquare className="mr-2 h-4 w-4" /> Add Future Visit
                             </Button>
                             <ExportDetailedPdfButton
@@ -2767,6 +2768,7 @@ export default function HomePage() {
                                 salespersonName={selectedSalesperson?.name || undefined}
                                 reportTitle="Unscheduled Future Visits"
                                 label="Export Detailed PDF"
+                                size="sm"
                             />
                         </div>
                         {unscheduledFutureVisits.length > 0 && (
@@ -2886,7 +2888,7 @@ export default function HomePage() {
           </TabsContent>
           <TabsContent value="call-day" className="space-y-6 mt-6">
             <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
-              <div className="relative w-full max-w-sm mx-auto">
+              <div className="relative w-full max-w-sm mx-auto mt-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
