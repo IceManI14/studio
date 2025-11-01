@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, UserPlus, FileUp, FileType, CalendarIcon, Gauge, Edit } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
@@ -57,6 +57,7 @@ import ExportHotLeadsPdfButton from '@/components/export-hot-leads-pdf-button';
 import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { COOLER_PRICING_MAP } from '@/lib/cooler-pricing';
 import ExportPdfButton from '@/components/export-pdf-button';
+import ExportButton from '@/components/export-button';
 import ExportDetailedPdfButton from '@/components/export-detailed-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -133,29 +134,26 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return installCommission > 0 ? { value: installCommission, isOverride: false, reason: 'Install Fee Only' } : null;
     }
     
-    // 3. Standard deal calculation (not a trial)
-    if (basePrice > 0) {
-        // A. Handle credit not approved - commission is one month's price + install commission
-        if (visit.creditApproved === false) {
-            const finalValue = basePrice + installCommission;
-            if (finalValue > 0) {
-                return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
-            }
+    // 3. Handle credit not approved - commission is one month's price + install commission
+    if (visit.creditApproved === false) {
+        const finalValue = basePrice + installCommission;
+        if (finalValue > 0) {
+            return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
         }
+    }
         
-        // B. Standard lease commission if pricing was discussed
-        if (visit.pricingDiscussed) {
-            const leaseTermYears = (visit.leaseTerm || 0) / 12;
-            const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
-            const total = leaseCommission + installCommission;
-            
-            if (total > 0) {
-                return { value: total, isOverride: false, reason: 'Standard' };
-            }
+    // 4. Standard lease commission if pricing was discussed
+    if (visit.pricingDiscussed && basePrice > 0) {
+        const leaseTermYears = (visit.leaseTerm || 0) / 12;
+        const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
+        const total = leaseCommission + installCommission;
+        
+        if (total > 0) {
+            return { value: total, isOverride: false, reason: 'Standard' };
         }
     }
 
-    // 4. If no other conditions met, but there's an install fee
+    // 5. If no other conditions met, but there's an install fee
     if (installCommission > 0) {
         return { value: installCommission, isOverride: false, reason: 'Install Fee Only' };
     }
@@ -3091,15 +3089,22 @@ export default function HomePage() {
                                   </div>
                                 )}
                               </div>
-                              <ExportPdfButton
-                                visits={sortedVisitsForCallDay}
-                                reportTitle={sortedVisitsTitle}
-                                label="Export Sorted Visits to PDF"
-                                size="sm"
-                                salespersonName={selectedSalesperson?.name}
-                                variant="default"
-                                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                              />
+                               <div className="flex items-center gap-2">
+                                <ExportPdfButton
+                                  visits={sortedVisitsForCallDay}
+                                  reportTitle={sortedVisitsTitle}
+                                  label="Export PDF"
+                                  size="sm"
+                                  salespersonName={selectedSalesperson?.name}
+                                  variant="secondary"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                />
+                                <ExportButton
+                                  visits={sortedVisitsForCallDay}
+                                  size="sm"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                />
+                              </div>
                             </div>
                           </AccordionContent>
                         </AccordionItem>
