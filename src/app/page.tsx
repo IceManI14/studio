@@ -3101,6 +3101,7 @@ export default function HomePage() {
                                 />
                                 <ExportButton
                                   visits={sortedVisitsForCallDay}
+                                  salespersonName={selectedSalesperson?.name}
                                   size="sm"
                                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                                 />
@@ -3876,3 +3877,4 @@ export default function HomePage() {
     
 
     
+

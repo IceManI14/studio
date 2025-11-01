@@ -10,9 +10,10 @@ interface ExportButtonProps {
   visits: Visit[];
   size?: ButtonProps['size'];
   className?: string;
+  salespersonName?: string;
 }
 
-const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) => {
+const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className, salespersonName }) => {
   const { toast } = useToast();
 
   const handleExport = () => {
@@ -34,7 +35,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       'Decision Maker Contact', 'Visit Number', 'Interested Units',
       'Has TDS Reading', 'TDS Value', 'Future Meeting Set',
       'Future Meeting DateTime', 'Free Trial', 'Free Trial Start Date', 'Deal Closed',
-      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved'
+      'Pricing Discussed', 'Price Quoted', 'Lease Term', 'Installation Fee', 'Credit Approved', 'Manual Commission'
     ];
 
     const rows = visits.map(visit => [
@@ -72,6 +73,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       visit.leaseTerm ?? '',
       visit.installationFee ?? '',
       visit.creditApproved ? 'Yes' : 'No',
+      visit.manualCommission ?? '',
     ].join(','));
 
     const csvContent = [headers.join(','), ...rows].join('\n');
@@ -81,8 +83,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({ visits, size, className }) 
       const link = document.createElement('a');
       if (link.download !== undefined) { // Feature detection
         const url = URL.createObjectURL(blob);
+        const year = new Date().getFullYear();
+        const user = salespersonName ? salespersonName.replace(/\s/g, '_') : 'user';
+        const fileName = `${user}_${year}.csv`;
+
         link.setAttribute('href', url);
-        link.setAttribute('download', `optimum_trailblazer_visits_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', fileName);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
