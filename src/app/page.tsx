@@ -435,11 +435,6 @@ export default function HomePage() {
 
     let processedVisits = [...visitsToDisplay];
 
-    // Main filter to exclude closed deals, unless specifically filtering for them
-    if (sortCriteria !== 'dealClosed') {
-        processedVisits = processedVisits.filter(visit => !visit.dealClosed);
-    }
-    
     // Date filter is primary if selected
     if (selectedDate) {
         processedVisits = processedVisits.filter(visit => 
@@ -447,6 +442,11 @@ export default function HomePage() {
             (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
         );
     } else {
+        // Main filter to exclude closed deals, unless specifically filtering for them
+        if (sortCriteria !== 'dealClosed') {
+            processedVisits = processedVisits.filter(visit => !visit.dealClosed);
+        }
+
         if (searchTerm.trim() !== '') {
             processedVisits = processedVisits.filter(visit =>
                 visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -3877,4 +3877,5 @@ export default function HomePage() {
     
 
     
+
 
