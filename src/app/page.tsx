@@ -135,7 +135,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
     }
     
     // 3. Handle credit not approved - commission is one month's price + install commission
-    if (visit.creditApproved === false) {
+    if (visit.creditApproved === false) { // Explicitly check for false
         const finalValue = basePrice + installCommission;
         if (finalValue > 0) {
             return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
@@ -3601,7 +3601,14 @@ export default function HomePage() {
                                 <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
                             </li>
                             <li>
-                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding: <span className="text-orange-500 font-bold">Orange</span> for future meetings, <span className="text-green-500 font-bold">Green</span> for closed deals, <span className="text-cyan-400 font-bold">Turquoise</span> for days you were out in the field, and <span className="text-red-500 font-bold">Red</span> for when a free trial ends.
+                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding to give you a quick overview of your schedule:
+                                <ul className="list-[circle] list-inside ml-4 mt-2 space-y-1 text-sm">
+                                  <li><strong className="text-orange-500">Orange:</strong> A future meeting is scheduled.</li>
+                                  <li><strong className="text-green-500">Green:</strong> A deal was closed on this day.</li>
+                                  <li><strong className="text-blue-400">Blue:</strong> You logged one or more visits on this past day.</li>
+                                  <li><strong className="text-red-500">Red:</strong> A free trial is scheduled to end on this day, so it's a good time to follow up!</li>
+                                  <li><strong className="text-black bg-cyan-400 px-1 rounded-sm">Turquoise Background:</strong> Today's date.</li>
+                                </ul>
                             </li>
                             <li>
                                 <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
@@ -3879,3 +3886,6 @@ export default function HomePage() {
     
 
 
+
+
+    
