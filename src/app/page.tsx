@@ -262,12 +262,13 @@ export default function HomePage() {
   const [currentEditingVisit, setCurrentEditingVisit] = useState<Visit | undefined>(undefined);
   const [suggestionText, setSuggestionText] = useState('');
   const [submittedSuggestions, setSubmittedSuggestions] = useState<SubmittedSuggestion[]>([]);
-  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial' | 'city'>('partnershipConfidence');
+  const [sortCriteria, setSortCriteria] = useState<'partnershipConfidence' | 'timestamp' | 'dealClosed' | 'futureMeetingsSet' | 'inTrial' | 'city' | 'competitorName'>('partnershipConfidence');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [zoomedVisit, setZoomedVisit] = useState<Visit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isRecordingSearch, setIsRecordingSearch] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
+  const [competitorSearchTerm, setCompetitorSearchTerm] = useState('');
   const [isRecordingCitySearch, setIsRecordingCitySearch] = useState(false);
   const [fieldDaySearchTerm, setFieldDaySearchTerm] = useState('');
   const [isRecordingFieldDaySearch, setIsRecordingFieldDaySearch] = useState(false);
@@ -430,6 +431,16 @@ export default function HomePage() {
     return Array.from(cities).sort((a, b) => a.localeCompare(b));
   }, [visitsToDisplay]);
 
+  const uniqueCompetitors = useMemo(() => {
+    const competitors = new Set<string>();
+    visitsToDisplay.forEach(visit => {
+      if (visit.competitorName) {
+        competitors.add(visit.competitorName);
+      }
+    });
+    return Array.from(competitors).sort((a, b) => a.localeCompare(b));
+  }, [visitsToDisplay]);
+
   const sortedVisitsForCallDay = useMemo(() => {
     if (visitsToDisplay.length === 0) return [];
 
@@ -459,6 +470,12 @@ export default function HomePage() {
             );
         }
 
+        if (sortCriteria === 'competitorName' && competitorSearchTerm.trim() !== '') {
+            processedVisits = processedVisits.filter(visit =>
+                visit.competitorName?.toLowerCase() === competitorSearchTerm.toLowerCase()
+            );
+        }
+
         if (sortCriteria === 'futureMeetingsSet') {
             processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
         } else if (sortCriteria === 'inTrial') {
@@ -477,11 +494,17 @@ export default function HomePage() {
         const timeB = new Date(b.timestamp).getTime();
         const cityA = a.city || '';
         const cityB = b.city || '';
+        const competitorA = a.competitorName || '';
+        const competitorB = b.competitorName || '';
 
         let comparison = 0;
 
         if (sortCriteria === 'city') {
             comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
+            if (comparison !== 0) return comparison;
+            return confidenceB - confidenceA;
+        } else if (sortCriteria === 'competitorName') {
+            comparison = sortOrder === 'asc' ? competitorA.localeCompare(competitorB) : competitorB.localeCompare(competitorA);
             if (comparison !== 0) return comparison;
             return confidenceB - confidenceA;
         } else if (sortCriteria === 'futureMeetingsSet') {
@@ -511,7 +534,7 @@ export default function HomePage() {
         }
     });
     return sorted;
-  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm]);
+  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm]);
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
@@ -631,10 +654,11 @@ export default function HomePage() {
         case 'futureMeetingsSet': return 'Visits with Future Meetings';
         case 'inTrial': return 'Visits with Active Trials';
         case 'city': return citySearchTerm.trim() ? `Visits in ${citySearchTerm.trim()}` : 'Visits by City';
+        case 'competitorName': return competitorSearchTerm.trim() ? `Visits with ${competitorSearchTerm.trim()}` : 'Visits by Competitor';
         case 'partnershipConfidence': return 'Visits by Confidence';
         default: return 'Sorted Visits';
     }
-  }, [sortCriteria, selectedDate, searchTerm, citySearchTerm]);
+  }, [sortCriteria, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm]);
 
   const coolerDistributionChartData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -3024,9 +3048,8 @@ export default function HomePage() {
                                     value={sortCriteria}
                                     onValueChange={(value) => {
                                       setSortCriteria(value as any);
-                                      if (value !== 'city') {
-                                          setCitySearchTerm('');
-                                      }
+                                      if (value !== 'city') setCitySearchTerm('');
+                                      if (value !== 'competitorName') setCompetitorSearchTerm('');
                                     }}
                                   >
                                     <SelectTrigger id="sort-criteria">
@@ -3036,6 +3059,7 @@ export default function HomePage() {
                                       <SelectItem value="partnershipConfidence">Confidence</SelectItem>
                                       <SelectItem value="timestamp">Date Visited</SelectItem>
                                       <SelectItem value="city">City</SelectItem>
+                                      <SelectItem value="competitorName">Competitor</SelectItem>
                                       <SelectItem value="dealClosed">Closed Deals</SelectItem>
                                       <SelectItem value="futureMeetingsSet">Meetings Set</SelectItem>
                                       <SelectItem value="inTrial">In Trial</SelectItem>
@@ -3060,6 +3084,24 @@ export default function HomePage() {
                                           </SelectContent>
                                       </Select>
                                   </div>
+                                ) : sortCriteria === 'competitorName' ? (
+                                  <div className="flex flex-col gap-1.5 flex-1">
+                                      <Label htmlFor="competitor-search" className="text-sm text-center">Filter by Competitor</Label>
+                                      <Select
+                                          value={competitorSearchTerm}
+                                          onValueChange={(value) => setCompetitorSearchTerm(value === '_all_' ? '' : value)}
+                                      >
+                                          <SelectTrigger id="competitor-search">
+                                              <SelectValue placeholder="Select a competitor..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                              <SelectItem value="_all_">All Competitors</SelectItem>
+                                              {uniqueCompetitors.map(c => (
+                                                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                                              ))}
+                                          </SelectContent>
+                                      </Select>
+                                  </div>
                                 ) : (
                                   <div className="flex flex-col gap-1.5 flex-1">
                                     <Label htmlFor="sort-order" className="text-sm text-center">Order</Label>
@@ -3071,7 +3113,7 @@ export default function HomePage() {
                                         <SelectValue placeholder="Select order" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {sortCriteria === 'city' ? (
+                                        {sortCriteria === 'city' || sortCriteria === 'competitorName' ? (
                                           <> <SelectItem value="asc">A-Z</SelectItem> <SelectItem value="desc">Z-A</SelectItem> </>
                                         ) : sortCriteria === 'futureMeetingsSet' ? (
                                           <> <SelectItem value="desc">Newest Meeting</SelectItem> <SelectItem value="asc">Oldest Meeting</SelectItem> </>
