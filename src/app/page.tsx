@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { format, subDays, isSameDay, isToday, startOfDay, addDays } from 'date-fns';
+import { format, subDays, isSameDay, isToday, startOfDay, addDays, isPast, isFuture } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
@@ -135,7 +135,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
     }
     
     // 3. Handle credit not approved - commission is one month's price + install commission
-    if (visit.creditApproved === false) { // Explicitly check for false
+    if (visit.creditApproved === false) {
         const finalValue = basePrice + installCommission;
         if (finalValue > 0) {
             return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
@@ -443,95 +443,97 @@ export default function HomePage() {
 
   const sortedVisitsForCallDay = useMemo(() => {
     if (visitsToDisplay.length === 0) return [];
-
+  
     let processedVisits = [...visitsToDisplay];
-
+  
     // Date filter is primary if selected
     if (selectedDate) {
-        processedVisits = processedVisits.filter(visit => 
-            isSameDay(new Date(visit.timestamp), selectedDate) ||
-            (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
-        );
+      processedVisits = processedVisits.filter(visit => 
+        isSameDay(new Date(visit.timestamp), selectedDate) ||
+        (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
+      );
     } else {
-        // Main filter to exclude closed deals, unless specifically filtering for them
-        if (sortCriteria !== 'dealClosed') {
-            processedVisits = processedVisits.filter(visit => !visit.dealClosed);
-        }
+      // Main filter to exclude closed deals, unless specifically filtering for them
+      if (sortCriteria !== 'dealClosed') {
+          processedVisits = processedVisits.filter(visit => !visit.dealClosed);
+      }
 
-        if (searchTerm.trim() !== '') {
-            processedVisits = processedVisits.filter(visit =>
-                visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
+      if (searchTerm.trim() !== '') {
+          processedVisits = processedVisits.filter(visit =>
+              visit.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+      }
 
-        if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
-            processedVisits = processedVisits.filter(visit =>
-                visit.city?.toLowerCase() === citySearchTerm.toLowerCase()
-            );
-        }
+      if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
+          processedVisits = processedVisits.filter(visit =>
+              visit.city?.toLowerCase() === citySearchTerm.toLowerCase()
+          );
+      }
 
-        if (sortCriteria === 'competitorName' && competitorSearchTerm.trim() !== '') {
-            processedVisits = processedVisits.filter(visit =>
-                visit.competitorName?.toLowerCase() === competitorSearchTerm.toLowerCase()
-            );
-        }
+      if (sortCriteria === 'competitorName' && competitorSearchTerm.trim() !== '') {
+          processedVisits = processedVisits.filter(visit =>
+              visit.competitorName?.toLowerCase() === competitorSearchTerm.toLowerCase()
+          );
+      }
 
-        if (sortCriteria === 'futureMeetingsSet') {
-            processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
-        } else if (sortCriteria === 'inTrial') {
-            processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
-        } else if (sortCriteria === 'dealClosed') {
-            processedVisits = processedVisits.filter(visit => visit.dealClosed);
-        }
+      if (sortCriteria === 'futureMeetingsSet') {
+          processedVisits = processedVisits.filter(visit => visit.futureMeetingSet && visit.futureMeetingDateTime);
+      } else if (sortCriteria === 'inTrial') {
+          processedVisits = processedVisits.filter(visit => visit.freeTrial && visit.freeTrialStartDate);
+      } else if (sortCriteria === 'dealClosed') {
+          processedVisits = processedVisits.filter(visit => visit.dealClosed);
+      }
     }
-
+  
     const uniqueVisits = Array.from(new Map(processedVisits.map(visit => [visit.id, visit])).values());
-
+  
     const sorted = uniqueVisits.sort((a, b) => {
-        const confidenceA = a.partnershipConfidence ?? 0;
-        const confidenceB = b.partnershipConfidence ?? 0;
-        const timeA = new Date(a.timestamp).getTime();
-        const timeB = new Date(b.timestamp).getTime();
-        const cityA = a.city || '';
-        const cityB = b.city || '';
-        const competitorA = a.competitorName || '';
-        const competitorB = b.competitorName || '';
-
-        let comparison = 0;
-
-        if (sortCriteria === 'city') {
-            comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
-            if (comparison !== 0) return comparison;
-            return confidenceB - confidenceA;
-        } else if (sortCriteria === 'competitorName') {
-            comparison = sortOrder === 'asc' ? competitorA.localeCompare(competitorB) : competitorB.localeCompare(competitorA);
-            if (comparison !== 0) return comparison;
-            return confidenceB - confidenceA;
-        } else if (sortCriteria === 'futureMeetingsSet') {
-            const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
-            const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime!).getTime() : Infinity;
-            comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
-            if (comparison !== 0) return comparison;
-            return timeB - timeA;
-        } else if (sortCriteria === 'inTrial') {
-            const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
-            const trialTimeB = b.freeTrialStartDate ? new Date(b.freeTrialStartDate!).getTime() : 0;
-            comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
-            if (comparison !== 0) return comparison;
-            return confidenceB - confidenceA;
-        } else if (sortCriteria === 'dealClosed') {
-            comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-            if (comparison !== 0) return comparison;
-            return confidenceB - confidenceA;
-        } else if (sortCriteria === 'timestamp') {
-            comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-            if (comparison !== 0) return comparison;
-            return confidenceB - confidenceA;
-        } else { // 'partnershipConfidence'
-            comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
-            if (comparison !== 0) return comparison;
-            return timeB - timeA;
-        }
+      const confidenceA = a.partnershipConfidence ?? 0;
+      const confidenceB = b.partnershipConfidence ?? 0;
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      const cityA = a.city || '';
+      const cityB = b.city || '';
+      const competitorA = a.competitorName || '';
+      const competitorB = b.competitorName || '';
+  
+      let comparison = 0;
+  
+      if (sortCriteria === 'city') {
+        comparison = sortOrder === 'asc' ? cityA.localeCompare(cityB) : cityB.localeCompare(cityA);
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'competitorName') {
+        comparison = sortOrder === 'asc' ? competitorA.localeCompare(competitorB) : competitorB.localeCompare(competitorA);
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'futureMeetingsSet') {
+        const meetingTimeA = a.futureMeetingDateTime ? new Date(a.futureMeetingDateTime).getTime() : Infinity;
+        const meetingTimeB = b.futureMeetingDateTime ? new Date(b.futureMeetingDateTime!).getTime() : Infinity;
+        comparison = sortOrder === 'desc' ? meetingTimeB - meetingTimeA : meetingTimeA - meetingTimeB;
+        if (comparison !== 0) return comparison;
+        return timeB - timeA;
+      } else if (sortCriteria === 'inTrial') {
+        const trialTimeA = a.freeTrialStartDate ? new Date(a.freeTrialStartDate).getTime() : 0;
+        const trialTimeB = b.freeTrialStartDate ? new Date(b.freeTrialStartDate!).getTime() : 0;
+        comparison = sortOrder === 'desc' ? trialTimeB - trialTimeA : trialTimeA - trialTimeB;
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'dealClosed') {
+        const timeAClosed = a.dealClosed && a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeBClosed = b.dealClosed && b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        comparison = sortOrder === 'desc' ? timeBClosed - timeAClosed : timeAClosed - timeBClosed;
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else if (sortCriteria === 'timestamp') {
+        comparison = sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+        if (comparison !== 0) return comparison;
+        return confidenceB - confidenceA;
+      } else { // 'partnershipConfidence'
+        comparison = sortOrder === 'desc' ? confidenceB - confidenceA : confidenceA - confidenceB;
+        if (comparison !== 0) return comparison;
+        return timeB - timeA;
+      }
     });
     return sorted;
   }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm]);
@@ -694,6 +696,21 @@ export default function HomePage() {
     };
     return labels[activeTab] || '';
   }, [activeTab]);
+
+  const selectedDateSummary = useMemo(() => {
+    if (!selectedDate) return null;
+
+    const futureMeetings = visitsToDisplay.filter(v => 
+        v.futureMeetingDateTime && 
+        isSameDay(new Date(v.futureMeetingDateTime), selectedDate) && 
+        isFuture(new Date(v.futureMeetingDateTime)) &&
+        !v.dealClosed
+    ).sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
+    
+    const pastLogs = visitsToDisplay.filter(v => isSameDay(new Date(v.timestamp), selectedDate));
+
+    return { futureMeetings, pastLogs };
+  }, [selectedDate, visitsToDisplay]);
 
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
@@ -2252,13 +2269,8 @@ export default function HomePage() {
       setVisitToReschedule(null); // Exit reschedule mode
     } else {
       setSelectedDate(date);
-      const meetingsOnDay = date ? visitsToDisplay.filter(v => v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), date)) : [];
-      if (meetingsOnDay.length > 0) {
-        setVisitsForReschedule(meetingsOnDay);
-        setIsRescheduleModalOpen(true);
-      }
     }
-  }, [visitToReschedule, visitsToDisplay, toast, handleSaveFromForm]);
+  }, [visitToReschedule, toast, handleSaveFromForm]);
   
   const handleScheduleFromCalendar = () => {
     if (!selectedDate) return;
@@ -2970,32 +2982,6 @@ export default function HomePage() {
                   <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4">
                     <div className="flex flex-col gap-4 items-center">
                       <div className={cn("flex flex-col items-center w-full")}>
-                        <div className="w-full mb-2 space-y-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={scheduledVisits.length === 0 || !!importedVisits}
-                                    >
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        Reschedule an Appointment
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-64">
-                                    {scheduledVisits.map(visit => (
-                                        <DropdownMenuItem key={visit.id} onSelect={() => handleInitiateReschedule(visit)}>
-                                            <div className="flex flex-col">
-                                                <span>{visit.companyName}</span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PP') : 'Unscheduled'}
-                                                </span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
                         <Calendar
                           mode="single"
                           selected={selectedDate}
@@ -3147,6 +3133,15 @@ export default function HomePage() {
                                   size="sm"
                                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                                 />
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                  disabled={scheduledVisits.length === 0 || !!importedVisits}
+                                  onClick={() => setIsAllMeetingsModalOpen(true)}
+                                >
+                                  <RefreshCw className="mr-2 h-4 w-4" /> Reschedule
+                                </Button>
                               </div>
                             </div>
                           </AccordionContent>
@@ -3157,7 +3152,44 @@ export default function HomePage() {
                 </AccordionItem>
               </Accordion>
               
-              {sortedVisitsForCallDay.length === 0 ? (
+              {selectedDate && selectedDateSummary && (
+                <div className="mt-4 p-4 bg-card rounded-lg shadow-lg border border-primary/20">
+                  <h3 className="text-lg font-semibold text-foreground mb-3 text-center">
+                      Day Summary for {format(selectedDate, 'PPP')}
+                  </h3>
+                  {selectedDateSummary.futureMeetings.length > 0 && (
+                      <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-primary">Scheduled Meetings</h4>
+                          <ul className="list-disc list-inside space-y-1 pl-2">
+                              {selectedDateSummary.futureMeetings.map(visit => (
+                                  <li key={visit.id} className="text-sm flex justify-between items-center">
+                                      <span>
+                                          {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'p')}
+                                      </span>
+                                      <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => handleInitiateReschedule(visit)}>
+                                        <RefreshCw className="mr-1 h-3 w-3" /> Reschedule
+                                      </Button>
+                                  </li>
+                              ))}
+                          </ul>
+                      </div>
+                  )}
+                  {selectedDateSummary.pastLogs.length > 0 && selectedDateSummary.futureMeetings.length > 0 && <Separator className="my-3" />}
+                  {selectedDateSummary.pastLogs.length > 0 && (
+                      <div className="space-y-1">
+                          <h4 className="text-sm font-medium text-primary">Logged Visits</h4>
+                          <p className="text-xs text-muted-foreground">{selectedDateSummary.pastLogs.length} visit(s) logged on this day. Select the date again to view them.</p>
+                      </div>
+                  )}
+                  {selectedDateSummary.futureMeetings.length === 0 && selectedDateSummary.pastLogs.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                          No activity scheduled or logged for this day.
+                      </p>
+                  )}
+                </div>
+              )}
+
+              {sortedVisitsForCallDay.length === 0 && !selectedDate ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg mt-6">
                   <p className="text-xl text-muted-foreground mb-4">
                     {(() => {
@@ -3922,12 +3954,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
-    
