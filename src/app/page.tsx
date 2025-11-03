@@ -3092,7 +3092,7 @@ export default function HomePage() {
                               <div className="flex items-center justify-center gap-2">
                                   <ClipboardList className="h-5 w-5 text-primary" />
                                   <h3 className="text-lg font-medium text-foreground text-center">
-                                      Companies to Call Today ({callList.length})
+                                      Companies to call!
                                   </h3>
                               </div>
                           </div>
