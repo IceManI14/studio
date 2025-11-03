@@ -11,7 +11,7 @@ import MapPlaceholder from '@/components/map-placeholder';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { format, subDays, isSameDay, isToday, startOfDay, addDays, isPast, isFuture } from 'date-fns';
+import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
   AlertDialog,
@@ -134,9 +134,9 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return installCommission > 0 ? { value: installCommission, isOverride: false, reason: 'Install Fee Only' } : null;
     }
     
-    // 4. Standard lease commission if pricing was discussed
+    // 3. Standard lease commission if pricing was discussed
     if (visit.pricingDiscussed && basePrice > 0) {
-        // 3. Handle credit not approved - commission is one month's price + install commission
+        // Handle credit not approved - commission is one month's price + install commission
         if (visit.creditApproved === false) {
             const finalValue = basePrice + installCommission;
             if (finalValue > 0) {
@@ -153,7 +153,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         }
     }
 
-    // 5. If no other conditions met, but there's an install fee
+    // 4. If no other conditions met, but there's an install fee
     if (installCommission > 0) {
         return { value: installCommission, isOverride: false, reason: 'Install Fee Only' };
     }
@@ -712,6 +712,20 @@ export default function HomePage() {
 
     return { futureMeetings, pastLogs };
   }, [selectedDate, visitsToDisplay]);
+
+  const upcomingWeekVisits = useMemo(() => {
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
+    return visitsToDisplay
+      .filter(visit => 
+        visit.futureMeetingSet && 
+        visit.futureMeetingDateTime && 
+        new Date(visit.futureMeetingDateTime) >= today &&
+        new Date(visit.futureMeetingDateTime) <= oneWeekFromNow &&
+        !visit.dealClosed
+      )
+      .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
+  }, [visitsToDisplay]);
 
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
@@ -2700,6 +2714,30 @@ export default function HomePage() {
               </Accordion>
           </TabsContent>
           <TabsContent value="planner" className="space-y-6 mt-6">
+                {upcomingWeekVisits.length > 0 && (
+                  <Alert variant="default" className="border-primary/50 bg-primary/10">
+                    <CalendarCheck className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-semibold text-primary">Upcoming Week ({upcomingWeekVisits.length} Meetings)</AlertTitle>
+                    <AlertDescription>
+                      <ul className="list-none space-y-1 mt-2">
+                        {upcomingWeekVisits.map(v => (
+                          <li key={v.id}>
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
+                              onClick={() => setZoomedVisit(v)}
+                            >
+                              {v.companyName}
+                            </Button>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({formatInTimeZone(new Date(v.futureMeetingDateTime!), timeZone, 'E, MMM d @ p')})
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-4">
                     <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
