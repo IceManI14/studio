@@ -134,16 +134,16 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
         return installCommission > 0 ? { value: installCommission, isOverride: false, reason: 'Install Fee Only' } : null;
     }
     
-    // 3. Handle credit not approved - commission is one month's price + install commission
-    if (visit.creditApproved === false) {
-        const finalValue = basePrice + installCommission;
-        if (finalValue > 0) {
-            return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
-        }
-    }
-        
     // 4. Standard lease commission if pricing was discussed
     if (visit.pricingDiscussed && basePrice > 0) {
+        // 3. Handle credit not approved - commission is one month's price + install commission
+        if (visit.creditApproved === false) {
+            const finalValue = basePrice + installCommission;
+            if (finalValue > 0) {
+                return { value: finalValue, isOverride: false, reason: 'Credit Not Approved' };
+            }
+        }
+        
         const leaseTermYears = (visit.leaseTerm || 0) / 12;
         const leaseCommission = leaseTermYears > 0 ? (basePrice * leaseTermYears) : 0;
         const total = leaseCommission + installCommission;
@@ -359,6 +359,7 @@ export default function HomePage() {
   const eagleEyeRef = useRef<HTMLDivElement>(null);
   const currentCityRef = useRef<string | null>(null);
   const importReportInputRef = useRef<HTMLInputElement>(null);
+  const timeZone = 'America/New_York';
   
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
