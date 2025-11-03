@@ -3113,7 +3113,7 @@ export default function HomePage() {
                                           </div>
                                       ))}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center justify-center gap-2">
                                       <ExportPdfButton
                                           visits={callListVisits}
                                           label="Export List PDF"
