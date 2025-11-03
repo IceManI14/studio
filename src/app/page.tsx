@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import MapPlaceholder from '@/components/map-placeholder';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, UserCog, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -163,7 +163,7 @@ export const calculateCommission = (visit: Visit): { value: number; isOverride: 
 };
 
 
-const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes }: {
+const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, onUpdateDealClosed, setZoomedVisit, onLogFollowUp, onDictateNotes, isOnCallList, onToggleCallList }: {
   visit: Visit;
   variant?: 'default' | 'planner';
   onEdit: (visit: Visit) => void;
@@ -172,6 +172,8 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
   setZoomedVisit: (visit: Visit | null) => void;
   onLogFollowUp: (visit: Visit) => void;
   onDictateNotes: (visit: Visit) => void;
+  isOnCallList: boolean;
+  onToggleCallList: (visitId: string) => void;
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
 
@@ -205,6 +207,8 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
           onDictateNotes={onDictateNotes}
           variant={variant}
           isZoomedView={true}
+          isOnCallList={isOnCallList}
+          onToggleCallList={onToggleCallList}
         />
       </AccordionContent>
     </AccordionItem>
@@ -212,7 +216,7 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
 };
 
 
-const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes }: {
+const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDelete, onUpdateDealClosed, onZoom, onLogFollowUp, onDictateNotes, callList, onToggleCallList }: {
   visits: Visit[],
   onEdit: (visit: Visit) => void,
   onDelete: (visitId: string) => void,
@@ -220,6 +224,8 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   onZoom: (visit: Visit | null) => void,
   onLogFollowUp: (visit: Visit) => void,
   onDictateNotes: (visit: Visit) => void,
+  callList: string[],
+  onToggleCallList: (visitId: string) => void,
 }) {
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
 
@@ -246,6 +252,8 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
             setZoomedVisit={onZoom}
             onLogFollowUp={onLogFollowUp}
             onDictateNotes={onDictateNotes}
+            isOnCallList={callList.includes(visit.id)}
+            onToggleCallList={onToggleCallList}
         />
       ))}
     </Accordion>
@@ -330,6 +338,8 @@ export default function HomePage() {
   const [aiAccordion, setAiAccordion] = useState<string[]>([]);
   const [callDayAccordion, setCallDayAccordion] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('field-day');
+  const [callList, setCallList] = useState<string[]>([]);
+  const [callListAccordion, setCallListAccordion] = useState<string[]>([]);
 
   
   const { toast } = useToast();
@@ -337,7 +347,7 @@ export default function HomePage() {
   const fieldDaySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const citySearchRecognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const chatRecognitionRef = useRef<SpeechRecognition | null>(null);
   const hotLeadNotesRecognitionRef = useRef<SpeechRecognition | null>(null);
   const destinationSearchRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -360,6 +370,7 @@ export default function HomePage() {
   const currentCityRef = useRef<string | null>(null);
   const importReportInputRef = useRef<HTMLInputElement>(null);
   const timeZone = 'America/New_York';
+  const callListRef = useRef<HTMLDivElement>(null);
   
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -726,6 +737,11 @@ export default function HomePage() {
       )
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
   }, [visitsToDisplay]);
+
+  const callListVisits = useMemo(() => {
+    const callListMap = new Map(callList.map(id => [id, true]));
+    return visitsToDisplay.filter(visit => callListMap.has(visit.id));
+  }, [callList, visitsToDisplay]);
 
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
@@ -1480,6 +1496,48 @@ export default function HomePage() {
     setAnalyzingDocId(null);
   }, [isAiResponding, analyzingDocId, toast]);
 
+  const handleToggleCallList = useCallback((visitId: string) => {
+    setCallList(prev => {
+        const newCallList = new Set(prev);
+        if (newCallList.has(visitId)) {
+            newCallList.delete(visitId);
+        } else {
+            newCallList.add(visitId);
+        }
+        const updatedList = Array.from(newCallList);
+        localStorage.setItem('callList', JSON.stringify(updatedList));
+        return updatedList;
+    });
+  }, []);
+
+  const handleClearCallList = useCallback(() => {
+      setCallList([]);
+      localStorage.removeItem('callList');
+      toast({ title: "Call List Cleared" });
+  }, [toast]);
+
+  const handleEmailCallList = useCallback(() => {
+      if (callListVisits.length === 0) {
+          toast({ title: 'No companies in call list.' });
+          return;
+      }
+      const subject = `Call List for ${format(new Date(), 'PPP')}`;
+      let body = `Here is the call list for today:\n\n`;
+      callListVisits.forEach((visit, index) => {
+          body += `${index + 1}. ${visit.companyName} (${visit.city || 'N/A'})\n`;
+          if (visit.decisionMakerContact) {
+              body += `   - Contact: ${visit.decisionMakerContact}\n`;
+          }
+          if (visit.notesSummary) {
+              body += `   - AI Summary: ${visit.notesSummary}\n`;
+          }
+          body += `\n`;
+      });
+
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoLink;
+  }, [callListVisits, toast]);
+
   // Effects
   useEffect(() => {
     // This effect ensures the date is only set on the client, preventing hydration mismatch.
@@ -1657,6 +1715,12 @@ export default function HomePage() {
           setNewsItems(defaultNewsItems);
           localStorage.setItem('companyNews', JSON.stringify(defaultNewsItems));
         }
+
+        const storedCallList = localStorage.getItem('callList');
+        if (storedCallList) {
+          setCallList(JSON.parse(storedCallList));
+        }
+
       } catch (error) {
         console.error("Failed to load some local data:", error);
         toast({ variant: "destructive", title: "Local Data Issue", description: "Could not load some saved data from this device." });
@@ -2623,6 +2687,8 @@ export default function HomePage() {
                             setZoomedVisit={setZoomedVisit}
                             onLogFollowUp={handleLogFollowUp}
                             onDictateNotes={handleDictateNotes}
+                            isOnCallList={callList.includes(visit.id)}
+                            onToggleCallList={handleToggleCallList}
                         />
                       ))}
                     </Accordion>
@@ -2702,6 +2768,8 @@ export default function HomePage() {
                                   setZoomedVisit={setZoomedVisit}
                                   onLogFollowUp={handleLogFollowUp}
                                   onDictateNotes={handleDictateNotes}
+                                  isOnCallList={callList.includes(visit.id)}
+                                  onToggleCallList={handleToggleCallList}
                                 />
                               ))}
                             </Accordion>
@@ -2769,6 +2837,8 @@ export default function HomePage() {
                                         setZoomedVisit={setZoomedVisit}
                                         onLogFollowUp={handleLogFollowUp}
                                         onDictateNotes={handleDictateNotes}
+                                        isOnCallList={callList.includes(visit.id)}
+                                        onToggleCallList={handleToggleCallList}
                                     />
                                 ))}
                               </Accordion>
@@ -2811,6 +2881,8 @@ export default function HomePage() {
                                           setZoomedVisit={setZoomedVisit}
                                           onLogFollowUp={handleLogFollowUp}
                                           onDictateNotes={handleDictateNotes}
+                                          isOnCallList={callList.includes(visit.id)}
+                                          onToggleCallList={handleToggleCallList}
                                       />
                                   ))}
                                 </Accordion>
@@ -2857,6 +2929,8 @@ export default function HomePage() {
                                     setZoomedVisit={setZoomedVisit}
                                     onLogFollowUp={handleLogFollowUp}
                                     onDictateNotes={handleDictateNotes}
+                                    isOnCallList={callList.includes(visit.id)}
+                                    onToggleCallList={handleToggleCallList}
                                 />
                             ))}
                           </Accordion>
@@ -2892,6 +2966,8 @@ export default function HomePage() {
                                           setZoomedVisit={setZoomedVisit}
                                           onLogFollowUp={handleLogFollowUp}
                                           onDictateNotes={handleDictateNotes}
+                                          isOnCallList={callList.includes(visit.id)}
+                                          onToggleCallList={handleToggleCallList}
                                       />
                                   ))}
                               </Accordion>
@@ -2942,6 +3018,8 @@ export default function HomePage() {
                                         setZoomedVisit={setZoomedVisit}
                                         onLogFollowUp={handleLogFollowUp}
                                         onDictateNotes={handleDictateNotes}
+                                        isOnCallList={callList.includes(visit.id)}
+                                        onToggleCallList={handleToggleCallList}
                                     />
                                   ))}
                                 </Accordion>
@@ -2961,6 +3039,58 @@ export default function HomePage() {
           </TabsContent>
           <TabsContent value="call-day" className="space-y-6 mt-6">
             <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
+              
+              <Accordion type="multiple" value={callListAccordion} onValueChange={setCallListAccordion}>
+                  <AccordionItem ref={callListRef} value="call-list" className="border-none">
+                      <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callListRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
+                          <div className="flex items-center justify-center w-full">
+                              <div className="flex items-center justify-center gap-2">
+                                  <ClipboardList className="h-5 w-5 text-primary" />
+                                  <h3 className="text-lg font-medium text-foreground text-center">
+                                      Companies to Call Today ({callList.length})
+                                  </h3>
+                              </div>
+                          </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-4 pt-6 space-y-4">
+                          {callListVisits.length > 0 ? (
+                              <>
+                                  <div className="space-y-2">
+                                      {callListVisits.map(visit => (
+                                          <div key={visit.id} className="flex items-center justify-between p-2 rounded-md bg-background/50 border">
+                                              <div>
+                                                  <p className="font-semibold">{visit.companyName}</p>
+                                                  <p className="text-sm text-muted-foreground">{visit.city}</p>
+                                              </div>
+                                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleCallList(visit.id)}>
+                                                  <X className="h-4 w-4" />
+                                              </Button>
+                                          </div>
+                                      ))}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                      <ExportPdfButton
+                                          visits={callListVisits}
+                                          label="Export List PDF"
+                                          reportTitle="Today's Call List"
+                                          size="sm"
+                                          variant="secondary"
+                                      />
+                                      <Button variant="secondary" size="sm" onClick={handleEmailCallList}>
+                                          <Mail className="mr-2 h-4 w-4" /> Email List
+                                      </Button>
+                                      <Button variant="destructive" size="sm" onClick={handleClearCallList}>
+                                          <Trash2 className="mr-2 h-4 w-4" /> Clear List
+                                      </Button>
+                                  </div>
+                              </>
+                          ) : (
+                              <p className="text-center text-muted-foreground">Add visits to your call list using the checkbox on a visit card.</p>
+                          )}
+                      </AccordionContent>
+                  </AccordionItem>
+              </Accordion>
+
               <div className="relative w-full max-w-sm mx-auto mt-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -3264,6 +3394,8 @@ export default function HomePage() {
                         onZoom={setZoomedVisit}
                         onLogFollowUp={handleLogFollowUp}
                         onDictateNotes={handleDictateNotes}
+                        callList={callList}
+                        onToggleCallList={handleToggleCallList}
                       />
                     </AccordionContent>
                   </AccordionItem>
@@ -3784,6 +3916,8 @@ export default function HomePage() {
                   isZoomedView={true}
                   onDictateNotes={handleDictateNotes}
                   onLogFollowUp={handleLogFollowUp}
+                  isOnCallList={callList.includes(zoomedVisit.id)}
+                  onToggleCallList={handleToggleCallList}
                 />
               </>
             )}

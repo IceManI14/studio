@@ -5,7 +5,7 @@
 import type { Visit, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon, ClipboardList } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -33,9 +33,11 @@ interface VisitCardProps {
   onLogFollowUp?: (visit: Visit) => void;
   onDictateNotes?: (visit: Visit) => void;
   variant?: 'default' | 'planner';
+  isOnCallList: boolean;
+  onToggleCallList: (visitId: string) => void;
 }
 
-const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default' }) => {
+const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdateDealClosed, onZoom, isZoomedView, onLogFollowUp, onDictateNotes, variant = 'default', isOnCallList, onToggleCallList }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showExtraInfo, setShowExtraInfo] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -539,6 +541,20 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         </div>
 
         <div className="flex justify-end gap-1">
+            <div 
+              className="flex items-center space-x-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Checkbox 
+                id={`call-list-${visit.id}`} 
+                checked={isOnCallList}
+                onCheckedChange={() => onToggleCallList(visit.id)}
+                aria-label="Add to call list"
+              />
+              <Label htmlFor={`call-list-${visit.id}`} className="cursor-pointer text-sm font-medium text-muted-foreground">
+                Add to Call List
+              </Label>
+            </div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
