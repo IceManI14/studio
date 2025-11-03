@@ -3040,6 +3040,51 @@ export default function HomePage() {
           <TabsContent value="call-day" className="space-y-6 mt-6">
             <div className={cn("space-y-6", activeTab === 'call-day' && visitToReschedule && "relative z-40")}>
               
+              <div className="relative w-full max-w-sm mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
+                  className="pl-10 pr-20"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget) {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  disabled={isRecordingSearch}
+                />
+                {searchTerm && !isRecordingSearch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleVoiceSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  aria-label="Search with voice"
+                  title="Search with voice"
+                >
+                  {isRecordingSearch ? (
+                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-foreground" />
+                  )}
+                </Button>
+              </div>
+              
               <Accordion type="multiple" value={callListAccordion} onValueChange={setCallListAccordion}>
                   <AccordionItem ref={callListRef} value="call-list" className="border-none">
                       <AccordionTrigger onClick={(e) => handleAccordionScroll(e, callListRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none", "bluish-glow")}>
@@ -3090,51 +3135,6 @@ export default function HomePage() {
                       </AccordionContent>
                   </AccordionItem>
               </Accordion>
-
-              <div className="relative w-full max-w-sm mx-auto mt-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={isRecordingSearch ? "Listening for search term..." : "Search company name..."}
-                  className="pl-10 pr-20"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget) {
-                      e.currentTarget.blur();
-                    }
-                  }}
-                  disabled={isRecordingSearch}
-                />
-                {searchTerm && !isRecordingSearch && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 h-8 w-8"
-                    aria-label="Clear search"
-                    title="Clear search"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleVoiceSearch}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                  aria-label="Search with voice"
-                  title="Search with voice"
-                >
-                  {isRecordingSearch ? (
-                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                  ) : (
-                    <Mic className="h-4 w-4 text-foreground" />
-                  )}
-                </Button>
-              </div>
 
               <Accordion type="multiple" value={callDayAccordion} onValueChange={setCallDayAccordion}>
                 <AccordionItem ref={callDayFilterRef} value="item-1" className="border-none">
