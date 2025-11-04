@@ -190,7 +190,16 @@ const findOptimalParkingSchema = z.object({
 export async function findOptimalParkingAction(
   payload: z.infer<typeof findOptimalParkingSchema>
 ): Promise<{ latitude?: number; longitude?: number; locationDescription?: string; error?: string }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const result = await findOptimalParking(payload);
+        return result;
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 const extractCitiesSchema = z.object({
@@ -242,7 +251,39 @@ export async function findCompanyAction(
   }[];
   error?: string
 }> {
-    return { error: GOOGLE_API_DISABLED_ERROR };
+    const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
+    if (!isGenkitConfigured) {
+        return { error: "AI features are currently disabled by the administrator." };
+    }
+    try {
+        const { companyName, city, territory } = payload;
+        const query = city ? `${companyName}, ${city}` : companyName;
+        
+        let searchBounds: SearchBounds | undefined;
+        if (territory && territory.length > 0) {
+            searchBounds = territory.reduce((acc, t) => ({
+                minLat: Math.min(acc.minLat, t.bounds.minLat),
+                maxLat: Math.max(acc.maxLat, t.bounds.maxLat),
+                minLng: Math.min(acc.minLng, t.bounds.minLng),
+                maxLng: Math.max(acc.maxLng, t.bounds.maxLng),
+            }), { minLat: 90, maxLat: -90, minLng: 180, maxLng: -180 });
+        }
+
+        const results = await findPlacesFromText(query, searchBounds);
+
+        return { places: results.map(p => ({
+            companyName: p.suggestedCompanyName,
+            address: p.address,
+            city: p.city,
+            phone: p.phone,
+            latitude: p.latitude,
+            longitude: p.longitude,
+            openingHours: p.openingHours,
+        })) };
+
+    } catch (error: any) {
+        return { error: error.message };
+    }
 }
 
 // Action to update the dealClosed status from the card
@@ -321,15 +362,3 @@ export async function analyzeDocumentAction(
         return { error: error.message };
     }
 }
-
-
-    
-
-    
-
-
-
-
-    
-
-    

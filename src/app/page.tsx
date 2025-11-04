@@ -7,7 +7,7 @@ import type { Visit, ChatMessage, Salesperson, Territory, ManagedFile, ContactIn
 import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
-import MapPlaceholder from '@/components/map-placeholder';
+import GoogleMapComponent from '@/components/google-map';
 import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -3433,7 +3433,7 @@ export default function HomePage() {
                             </div>
                       )}
                   </div>
-                  <MapPlaceholder visits={visitsToDisplay} />
+                  <GoogleMapComponent visits={visitsToDisplay} />
                    <div className="flex justify-center">
                     <ExportPdfButton
                       visits={visitsToDisplay}
