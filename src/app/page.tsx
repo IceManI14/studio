@@ -1636,6 +1636,18 @@ export default function HomePage() {
             lastModified: new Date().toISOString()
           },
           {
+            id: 'cooler-price-sheet-1',
+            name: 'Cooler Price Sheet',
+            type: 'template',
+            content: {
+              subject: 'Optimum Water Cooler Pricing',
+              body: `Hi {{contactName}},\n\nHere is a list of our most popular bottle-less water coolers and their monthly pricing:\n\n${Object.entries(COOLER_PRICING_MAP)
+                .map(([name, price]) => `- ${name}: $${price.toFixed(2)}/month`)
+                .join('\n')}\n\nAll plans include installation, regular maintenance, and filter changes with no hidden fees.\n\nLet me know if you would like to discuss which option is best for you.\n\nBest regards,\n`
+            },
+            lastModified: new Date().toISOString()
+          },
+          {
             id: 'fedex-pricing-1',
             name: 'FedEx Pricing Inquiry',
             type: 'template',
@@ -4147,4 +4159,3 @@ export default function HomePage() {
     </div>
   );
 }
-
