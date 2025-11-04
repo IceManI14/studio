@@ -462,7 +462,8 @@ export default function HomePage() {
     if (selectedDate) {
       processedVisits = processedVisits.filter(visit => 
         isSameDay(new Date(visit.timestamp), selectedDate) ||
-        (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))
+        (visit.futureMeetingSet && visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate)) ||
+        (visit.dealClosed && (isSameDay(new Date(visit.timestamp), selectedDate) || (visit.futureMeetingDateTime && isSameDay(new Date(visit.futureMeetingDateTime), selectedDate))))
       );
     } else {
       // Main filter to exclude closed deals, unless specifically filtering for them
@@ -516,7 +517,7 @@ export default function HomePage() {
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'competitorName') {
-        comparison = sortOrder === 'asc' ? competitorA.localeCompare(competitorB) : competitorB.localeCompare(competitorA);
+        comparison = sortOrder === 'asc' ? competitorA.localeCompare(competitorB) : competitorB.localeCompare(cityA);
         if (comparison !== 0) return comparison;
         return confidenceB - confidenceA;
       } else if (sortCriteria === 'futureMeetingsSet') {
@@ -720,8 +721,10 @@ export default function HomePage() {
     ).sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
     
     const pastLogs = visitsToDisplay.filter(v => isSameDay(new Date(v.timestamp), selectedDate));
+    
+    const dealsClosedOnDate = visitsToDisplay.filter(v => v.dealClosed && isSameDay(new Date(v.timestamp), selectedDate));
 
-    return { futureMeetings, pastLogs };
+    return { futureMeetings, pastLogs, dealsClosedOnDate };
   }, [selectedDate, visitsToDisplay]);
 
   const upcomingWeekVisits = useMemo(() => {
@@ -2782,30 +2785,32 @@ export default function HomePage() {
               </Accordion>
           </TabsContent>
           <TabsContent value="planner" className="space-y-6 mt-6">
-                {upcomingWeekVisits.length > 0 && (
-                  <Alert variant="default" className="border-primary/50 bg-primary/10">
+                <Alert variant="default" className="border-primary/50 bg-primary/10">
                     <CalendarCheck className="h-4 w-4 text-primary" />
                     <AlertTitle className="font-semibold text-primary">Upcoming Week ({upcomingWeekVisits.length} Meetings)</AlertTitle>
-                    <AlertDescription>
-                      <ul className="list-none space-y-1 mt-2">
-                        {upcomingWeekVisits.map(v => (
-                          <li key={v.id}>
-                            <Button
-                              variant="link"
-                              className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
-                              onClick={() => setZoomedVisit(v)}
-                            >
-                              {v.companyName}
-                            </Button>
-                            <span className="text-xs text-muted-foreground ml-2">
-                              ({formatInTimeZone(new Date(v.futureMeetingDateTime!), timeZone, 'E, MMM d @ p')})
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                )}
+                    {upcomingWeekVisits.length > 0 ? (
+                        <AlertDescription>
+                        <ul className="list-none space-y-1 mt-2">
+                            {upcomingWeekVisits.map(v => (
+                            <li key={v.id}>
+                                <Button
+                                variant="link"
+                                className="p-0 h-auto text-sm text-foreground hover:text-primary font-normal"
+                                onClick={() => setZoomedVisit(v)}
+                                >
+                                {v.companyName}
+                                </Button>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                ({formatInTimeZone(new Date(v.futureMeetingDateTime!), timeZone, 'E, MMM d @ p')})
+                                </span>
+                            </li>
+                            ))}
+                        </ul>
+                        </AlertDescription>
+                    ) : (
+                        <AlertDescription>You have no meetings scheduled for the upcoming week.</AlertDescription>
+                    )}
+                </Alert>
                 <div className="space-y-4">
                     <Accordion type="multiple" value={plannerAccordion} onValueChange={setPlannerAccordion}>
                         <AccordionItem ref={activeFreeTrialsRef} value="active-free-trials" className="border-none">
@@ -3322,40 +3327,55 @@ export default function HomePage() {
               </Accordion>
               
               {selectedDate && selectedDateSummary && (
-                <div className="mt-4 p-4 bg-card rounded-lg shadow-lg border border-primary/20">
-                  <h3 className="text-lg font-semibold text-foreground mb-3 text-center">
-                      Day Summary for {format(selectedDate, 'PPP')}
-                  </h3>
-                  {selectedDateSummary.futureMeetings.length > 0 && (
-                      <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-primary">Scheduled Meetings</h4>
-                          <ul className="list-disc list-inside space-y-1 pl-2">
-                              {selectedDateSummary.futureMeetings.map(visit => (
-                                  <li key={visit.id} className="text-sm flex justify-between items-center">
-                                      <span>
-                                          {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'p')}
-                                      </span>
-                                      <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => handleInitiateReschedule(visit)}>
-                                        <RefreshCw className="mr-1 h-3 w-3" /> Reschedule
-                                      </Button>
-                                  </li>
-                              ))}
-                          </ul>
-                      </div>
-                  )}
-                  {selectedDateSummary.pastLogs.length > 0 && selectedDateSummary.futureMeetings.length > 0 && <Separator className="my-3" />}
-                  {selectedDateSummary.pastLogs.length > 0 && (
-                      <div className="space-y-1">
-                          <h4 className="text-sm font-medium text-primary">Logged Visits</h4>
-                          <p className="text-xs text-muted-foreground">{selectedDateSummary.pastLogs.length} visit(s) logged on this day. Select the date again to view them.</p>
-                      </div>
-                  )}
-                  {selectedDateSummary.futureMeetings.length === 0 && selectedDateSummary.pastLogs.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-2">
-                          No activity scheduled or logged for this day.
-                      </p>
-                  )}
-                </div>
+                  <div className="mt-4 p-4 bg-card rounded-lg shadow-lg border border-primary/20">
+                      <h3 className="text-lg font-semibold text-foreground mb-3 text-center">
+                          Day Summary for {format(selectedDate, 'PPP')}
+                      </h3>
+                      
+                      {selectedDateSummary.futureMeetings.length > 0 && (
+                          <div className="space-y-2">
+                              <h4 className="text-sm font-medium text-primary">Scheduled Meetings</h4>
+                              <ul className="list-disc list-inside space-y-1 pl-2">
+                                  {selectedDateSummary.futureMeetings.map(visit => (
+                                      <li key={visit.id} className="text-sm flex justify-between items-center">
+                                          <span>
+                                              {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'p')}
+                                          </span>
+                                          <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => handleInitiateReschedule(visit)}>
+                                            <RefreshCw className="mr-1 h-3 w-3" /> Reschedule
+                                          </Button>
+                                      </li>
+                                  ))}
+                              </ul>
+                          </div>
+                      )}
+
+                      {selectedDateSummary.dealsClosedOnDate.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                              <h4 className="text-sm font-medium text-green-500">Deals Closed</h4>
+                              <ul className="list-disc list-inside space-y-1 pl-2">
+                                  {selectedDateSummary.dealsClosedOnDate.map(visit => (
+                                      <li key={visit.id} className="text-sm">{visit.companyName}</li>
+                                  ))}
+                              </ul>
+                          </div>
+                      )}
+                      
+                      {selectedDateSummary.pastLogs.length > 0 && (selectedDateSummary.futureMeetings.length > 0 || selectedDateSummary.dealsClosedOnDate.length > 0) && <Separator className="my-3" />}
+                      
+                      {selectedDateSummary.pastLogs.length > 0 && (
+                          <div className="space-y-1">
+                              <h4 className="text-sm font-medium text-primary">Logged Visits</h4>
+                              <p className="text-xs text-muted-foreground">{selectedDateSummary.pastLogs.length} visit(s) logged on this day. Select the date again to view them.</p>
+                          </div>
+                      )}
+                      
+                      {selectedDateSummary.futureMeetings.length === 0 && selectedDateSummary.pastLogs.length === 0 && selectedDateSummary.dealsClosedOnDate.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-2">
+                              No activity scheduled or logged for this day.
+                          </p>
+                      )}
+                  </div>
               )}
 
               {sortedVisitsForCallDay.length === 0 && !selectedDate ? (
@@ -4127,3 +4147,4 @@ export default function HomePage() {
     </div>
   );
 }
+
