@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow to get company details from GPS coordinates using Google Places API.
+ * @fileOverview A flow to get company details from GPS coordinates using a free reverse geocoding service.
  *
  * - getCompanyNameFromCoords - A function that suggests a company name from latitude and longitude.
  * - GetCompanyNameFromCoordsInput - The input type for the getCompanyNameFromCoords function.
@@ -9,7 +9,6 @@
  */
 
 import { z } from 'genkit';
-import { findPlaceFromLatLng } from '@/services/google-places';
 
 const GetCompanyNameFromCoordsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -26,29 +25,42 @@ const GetCompanyNameFromCoordsOutputSchema = z.object({
 });
 export type GetCompanyNameFromCoordsOutput = z.infer<typeof GetCompanyNameFromCoordsOutputSchema>;
 
-export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsInput): Promise<GetCompanyNameFromCoordsOutput> {
-  const placeDetails = await findPlaceFromLatLng(input.latitude, input.longitude);
-
-  if (placeDetails) {
-    // Combine city and state for a cleaner display, e.g., "Boston, MA".
-    const displayCity = placeDetails.city && placeDetails.state
-      ? `${placeDetails.city}, ${placeDetails.state}`
-      : placeDetails.city || placeDetails.address;
+// Simple, free reverse geocoder (example using OpenStreetMap Nominatim)
+async function reverseGeocode(lat: number, lon: number): Promise<{ address?: string; city?: string; }> {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    if (!response.ok) return {};
+    const data = await response.json();
     
+    const addressParts = data.address;
+    if (!addressParts) return {};
+
+    const street = addressParts.road || '';
+    const houseNumber = addressParts.house_number || '';
+    const city = addressParts.city || addressParts.town || addressParts.village || '';
+    const state = addressParts.state || '';
+    const postcode = addressParts.postcode || '';
+
+    const fullAddress = `${houseNumber} ${street}`.trim();
+
     return {
-      suggestedCompanyName: placeDetails.suggestedCompanyName,
-      confidenceScore: placeDetails.suggestedCompanyName ? 1.0 : 0.5,
-      address: placeDetails.address,
-      city: displayCity,
-      phone: placeDetails.phone,
+      address: fullAddress ? `${fullAddress}, ${city}, ${state} ${postcode}` : `${city}, ${state}`,
+      city: city && state ? `${city}, ${state}`: city || state
     };
+  } catch (error) {
+    console.error("Reverse geocoding failed:", error);
+    return {};
   }
+}
+
+export async function getCompanyNameFromCoords(input: GetCompanyNameFromCoordsInput): Promise<GetCompanyNameFromCoordsOutput> {
+  const geoDetails = await reverseGeocode(input.latitude, input.longitude);
 
   return {
-    suggestedCompanyName: '',
-    confidenceScore: 0.0,
-    address: 'Could not determine address.',
-    city: 'Location could not be determined', // Specific message for when no details are found
+    suggestedCompanyName: '', // We can't get company name from free service
+    confidenceScore: 0.5,
+    address: geoDetails.address || 'Could not determine address.',
+    city: geoDetails.city || 'Location could not be determined',
     phone: '',
   };
 }
