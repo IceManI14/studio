@@ -722,7 +722,7 @@ export default function HomePage() {
     
     const pastLogs = visitsToDisplay.filter(v => isSameDay(new Date(v.timestamp), selectedDate));
     
-    const dealsClosedOnDate = visitsToDisplay.filter(v => v.dealClosed && isSameDay(new Date(v.timestamp), selectedDate));
+    const dealsClosedOnDate = visitsToDisplay.filter(v => v.dealClosed && (isSameDay(new Date(v.timestamp), selectedDate) || (v.futureMeetingDateTime && isSameDay(new Date(v.futureMeetingDateTime), selectedDate))));
 
     return { futureMeetings, pastLogs, dealsClosedOnDate };
   }, [selectedDate, visitsToDisplay]);
@@ -3140,9 +3140,6 @@ export default function HomePage() {
                                       />
                                       <Button variant="secondary" size="sm" onClick={handleEmailCallList}>
                                           <Mail className="mr-2 h-4 w-4" /> Email List
-                                      </Button>
-                                      <Button variant="destructive" size="sm" onClick={handleClearCallList}>
-                                          <Trash2 className="mr-2 h-4 w-4" /> Clear List
                                       </Button>
                                   </div>
                               </>
