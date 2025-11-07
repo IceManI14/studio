@@ -1933,17 +1933,76 @@ export default function HomePage() {
     setDestinationCities(cities);
   };
 
-  const handleQuickLog = async () => {
-    setIsVisitFormOpen(true);
-    setCurrentEditingVisit({
-      id: `temp_${crypto.randomUUID()}`,
-      timestamp: new Date(),
-      visitNumber: todaysVisits.length + 1,
-      companyName: '',
-      latitude: undefined,
-      longitude: undefined,
-    } as Visit);
-  };
+  const handleQuickLog = useCallback(async () => {
+    const isInsideTerritory = (lat: number, lng: number, territories: Territory[]): boolean => {
+      if (!territories || territories.length === 0) {
+        return true; // No territory defined, always allowed.
+      }
+      return territories.some(t =>
+        lat >= t.bounds.minLat && lat <= t.bounds.maxLat &&
+        lng >= t.bounds.minLng && lng <= t.bounds.maxLng
+      );
+    };
+  
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          if (selectedSalesperson && !isInsideTerritory(latitude, longitude, selectedSalesperson.territory)) {
+            toast({
+              variant: "destructive",
+              title: "Outside Territory",
+              description: "Your current location is outside your defined sales territory.",
+              duration: 7000,
+            });
+          }
+  
+          // Proceed to open the form regardless of territory check, but with location data
+          setIsVisitFormOpen(true);
+          setCurrentEditingVisit({
+            id: `temp_${crypto.randomUUID()}`,
+            timestamp: new Date(),
+            visitNumber: todaysVisits.length + 1,
+            companyName: '',
+            latitude: latitude,
+            longitude: longitude,
+          } as Visit);
+        },
+        (error) => {
+          console.warn("Geolocation Error:", error.message);
+          toast({
+            title: "Location Not Found",
+            description: "Could not get your location. Please ensure location services are enabled.",
+            variant: "destructive",
+          });
+          // Open form without location data
+          setIsVisitFormOpen(true);
+          setCurrentEditingVisit({
+            id: `temp_${crypto.randomUUID()}`,
+            timestamp: new Date(),
+            visitNumber: todaysVisits.length + 1,
+            companyName: '',
+          } as Visit);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      toast({
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support geolocation.",
+        variant: "destructive",
+      });
+      // Fallback for browsers without geolocation
+      setIsVisitFormOpen(true);
+      setCurrentEditingVisit({
+        id: `temp_${crypto.randomUUID()}`,
+        timestamp: new Date(),
+        visitNumber: todaysVisits.length + 1,
+        companyName: '',
+      } as Visit);
+    }
+  }, [selectedSalesperson, todaysVisits.length, toast]);
 
   const handleEditVisit = (visit: Visit) => {
     setCurrentEditingVisit(visit);
