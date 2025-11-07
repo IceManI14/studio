@@ -479,7 +479,7 @@ export default function HomePage() {
 
       if (sortCriteria === 'city' && citySearchTerm.trim() !== '') {
           processedVisits = processedVisits.filter(visit =>
-              visit.city?.toLowerCase() === citySearchTerm.toLowerCase()
+              visit.city?.toLowerCase().includes(citySearchTerm.toLowerCase())
           );
       }
 
@@ -3312,23 +3312,30 @@ export default function HomePage() {
                                   </Select>
                                 </div>
                                 {sortCriteria === 'city' ? (
-                                  <div className="flex flex-col gap-1.5 flex-1">
-                                      <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
-                                      <Select
-                                          value={citySearchTerm}
-                                          onValueChange={(value) => setCitySearchTerm(value === '_all_' ? '' : value)}
-                                      >
-                                          <SelectTrigger id="city-search">
-                                              <SelectValue placeholder="Select a city..." />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                              <SelectItem value="_all_">All Cities</SelectItem>
-                                              {uniqueCities.map(city => (
-                                                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                                              ))}
-                                          </SelectContent>
-                                      </Select>
-                                  </div>
+                                    <div className="flex flex-col gap-1.5 flex-1">
+                                        <Label htmlFor="city-search" className="text-sm text-center">Filter by City</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="city-search"
+                                                type="text"
+                                                placeholder={isRecordingCitySearch ? "Listening..." : "Type a city name..."}
+                                                value={citySearchTerm}
+                                                onChange={(e) => setCitySearchTerm(e.target.value)}
+                                                disabled={isRecordingCitySearch}
+                                                className="pr-10"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={handleToggleVoiceCitySearch}
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                                aria-label="Search city by voice"
+                                            >
+                                                {isRecordingCitySearch ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ) : sortCriteria === 'competitorName' ? (
                                   <div className="flex flex-col gap-1.5 flex-1">
                                       <Label htmlFor="competitor-search" className="text-sm text-center">Filter by Competitor</Label>
@@ -4233,3 +4240,7 @@ export default function HomePage() {
   );
 }
 
+
+
+
+    
