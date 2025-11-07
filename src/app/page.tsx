@@ -1550,7 +1550,7 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
         const watchId = navigator.geolocation.watchPosition(
-            (position) => {
+            async (position) => {
                 const { latitude, longitude } = position.coords;
                 const currentTime = Date.now();
 
@@ -1574,6 +1574,22 @@ export default function HomePage() {
                             setCurrentSpeed(avgSpeed);
                             return newReadings;
                         });
+                    }
+
+                    // Check if moved significantly to update city
+                    const cityUpdateDistance = haversineDistance({lat: lastLocation.lat, lng: lastLocation.lng}, {lat: latitude, lng: longitude});
+                    if (cityUpdateDistance > 500) { // Update city if moved > 500 meters
+                         const geoDetails = await getCompanyNameFromCoordsAction({ latitude, longitude });
+                         if (geoDetails.city && geoDetails.city !== currentCityRef.current) {
+                           setCurrentCity(geoDetails.city);
+                         }
+                    }
+
+                } else {
+                    // First location fix, get city immediately
+                    const geoDetails = await getCompanyNameFromCoordsAction({ latitude, longitude });
+                    if (geoDetails.city) {
+                      setCurrentCity(geoDetails.city);
                     }
                 }
                 setLastLocation({ lat: latitude, lng: longitude, time: currentTime });
@@ -2594,6 +2610,7 @@ export default function HomePage() {
                             <Compass className="h-5 w-5 text-primary flex-shrink-0" />
                             <div className="flex flex-col items-start">
                               <span className="font-semibold text-foreground truncate">Daily Plan</span>
+                               {currentCity && <span className="text-xs text-muted-foreground">{currentCity}</span>}
                             </div>
                           </div>
                           <div className="flex justify-end min-w-[80px] items-center gap-2">
@@ -4215,3 +4232,4 @@ export default function HomePage() {
     </div>
   );
 }
+
