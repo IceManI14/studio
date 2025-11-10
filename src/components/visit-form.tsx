@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCompanyNameFromCoordsAction, type SaveVisitPayload, extractVisitDetailsAction } from '@/app/actions';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit, Navigation, CalendarX } from 'lucide-react';
+import { Loader2, Star, UserCircle, Mic, Trash2, PlusSquare, PackageCheck, Droplets, CalendarCheck, Camera as CameraIcon, Calendar as CalendarIcon, ScanLine, MapPin, DollarSign, Clock, CheckCircle2, Save, X, Edit, Navigation, CalendarX, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -1096,32 +1096,66 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                         </div>
                       )}
                     </FormControl>
-                    
-                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                      <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={handleSaveAndView}
-                          disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
-                          size="sm"
-                      >
-                          <Save className="mr-2 h-4 w-4" />
-                          Save & View
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddressModalOpen(true)}
-                        size="sm"
-                      >
-                        <MapPin className="mr-2 h-4 w-4" />
-                        Enter Address
-                      </Button>
-                    </div>
+                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="decisionMakerContact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Phone</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="tel"
+                          placeholder="General company phone number"
+                          {...field}
+                          className={cn("pl-10", field.value && "pr-9")}
+                        />
+                        {field.value && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => field.onChange("")}
+                            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                            aria-label="Clear Phone"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSaveAndView}
+                    disabled={isSaving || isSuggestingCompany || !form.watch('companyName')}
+                    size="sm"
+                >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save & View
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddressModalOpen(true)}
+                  size="sm"
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Enter Address
+                </Button>
+              </div>
 
               {!initialData?.dealClosed && (
                 <FormField
@@ -1203,7 +1237,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                             <SelectValue placeholder="Add a cooler..." />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="max-h-[--radix-select-content-available-height] overflow-y-auto">
                           {OUR_COOLERS_LIST.map((cooler) => (
                             <SelectItem key={cooler} value={cooler}>
                               {cooler}
@@ -1932,37 +1966,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                 </FormItem>
                               )}
                             />
-                            <FormField
-                              control={form.control}
-                              name="decisionMakerContact"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-sm font-normal">Contact (Email/Phone Ext.)</FormLabel>
-                                  <FormControl>
-                                    <div className="relative">
-                                      <Input 
-                                        placeholder="e.g., jane@example.com or x123" 
-                                        {...field}
-                                        className={cn(field.value && 'pr-9')}
-                                      />
-                                      {field.value && (
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => field.onChange('')}
-                                          className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-                                          aria-label="Clear Contact Info"
-                                        >
-                                          <X className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            
                           </div>
                       </AccordionContent>
                   </AccordionItem>
