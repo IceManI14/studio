@@ -1548,7 +1548,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator && firebaseConfigured) {
         const watchId = navigator.geolocation.watchPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
@@ -3141,11 +3141,6 @@ export default function HomePage() {
                   className="pl-10 pr-20"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget) {
-                      e.currentTarget.blur();
-                    }
-                  }}
                   disabled={isRecordingSearch}
                 />
                 {searchTerm && !isRecordingSearch && (
