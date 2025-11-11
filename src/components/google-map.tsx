@@ -23,14 +23,54 @@ const defaultCenter = {
 
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
+// URLs for different colored markers
+const MARKER_ICONS = {
+  red: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+  green: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+  blue: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+  yellow: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+  purple: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+};
 
 const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   const isGoogleMapsConfigured = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
   const [mapError, setMapError] = useState<string | null>(null);
 
-  const validVisits = useMemo(() => {
-    return visits.filter(v => typeof v.latitude === 'number' && typeof v.longitude === 'number');
+  const { validVisits, firstVisitMap } = useMemo(() => {
+    const filteredVisits = visits.filter(v => typeof v.latitude === 'number' && typeof v.longitude === 'number');
+    
+    const companyFirstVisit = new Map<string, Date>();
+    filteredVisits.forEach(v => {
+      if (v.companyName) {
+        const existingDate = companyFirstVisit.get(v.companyName);
+        if (!existingDate || new Date(v.timestamp) < existingDate) {
+          companyFirstVisit.set(v.companyName, new Date(v.timestamp));
+        }
+      }
+    });
+
+    const visitIsFirst = new Map<string, boolean>();
+    filteredVisits.forEach(v => {
+        if (v.companyName) {
+            const firstVisitDate = companyFirstVisit.get(v.companyName);
+            if (firstVisitDate && new Date(v.timestamp).getTime() === firstVisitDate.getTime()) {
+                visitIsFirst.set(v.id, true);
+            } else {
+                 visitIsFirst.set(v.id, false);
+            }
+        }
+    });
+
+    return { validVisits: filteredVisits, firstVisitMap: visitIsFirst };
   }, [visits]);
+
+  const getMarkerIcon = (visit: Visit) => {
+    if (visit.dealClosed) return MARKER_ICONS.green;
+    if (visit.competitorName === 'Culligan-Quench') return MARKER_ICONS.red;
+    if (visit.futureMeetingSet && visit.futureMeetingDateTime && new Date(visit.futureMeetingDateTime) > new Date()) return MARKER_ICONS.yellow;
+    if (firstVisitMap.get(visit.id) === false) return MARKER_ICONS.blue; // It's a revisit
+    return MARKER_ICONS.purple; // Default
+  };
 
   const onMapLoad = (map: google.maps.Map) => {
     if (validVisits.length > 0) {
@@ -85,7 +125,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
         loadingElement={<div className="h-full w-full flex items-center justify-center bg-muted"><p>Loading Map...</p></div>}
         onError={(error) => setMapError(error.message)}
         onLoad={() => {
-            if (window.google.maps.hasOwnProperty('event')) {
+            if (window.google && window.google.maps && window.google.maps.event) {
                 // This listener checks for auth errors after the script loads
                 window.google.maps.event.addDomListener(window, 'gm_authFailure', () => {
                     setMapError('Google Maps Authentication Failed.');
@@ -190,6 +230,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
               key={visit.id}
               position={{ lat: visit.latitude!, lng: visit.longitude! }}
               title={visit.companyName}
+              icon={getMarkerIcon(visit)}
             />
           ))}
         </GoogleMap>

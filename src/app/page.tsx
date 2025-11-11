@@ -3544,22 +3544,14 @@ export default function HomePage() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 p-6 space-y-6">
-                  <div className="flex flex-col items-center gap-4">
-                      {visitsToDisplay.length > 0 && (
-                           <div className="flex flex-col items-center gap-2">
-                                <Badge variant="default" className="text-lg font-medium bg-accent text-accent-foreground hover:bg-accent/90 border-transparent">
-                                    Your Visits: {visitsToDisplay.length}
-                                </Badge>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    <ExportHotLeadsPdfButton hotLeads={hotLeads} className="h-8 px-2 text-xs" />
-                                    <Button onClick={handleEmailManager} variant="default" size="sm" className="h-8 px-2 text-xs" disabled={!!importedVisits}>
-                                    Email Manager
-                                    </Button>
-                                </div>
-                            </div>
-                      )}
-                  </div>
                   <GoogleMapComponent visits={visitsToDisplay} />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs">
+                      <div className="flex items-center"><img src="https://maps.google.com/mapfiles/ms/icons/green-dot.png" alt="Green marker" className="h-4 w-4 mr-1"/> Deal Closed</div>
+                      <div className="flex items-center"><img src="https://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="Red marker" className="h-4 w-4 mr-1"/> Quench/Culligan</div>
+                      <div className="flex items-center"><img src="https://maps.google.com/mapfiles/ms/icons/yellow-dot.png" alt="Yellow marker" className="h-4 w-4 mr-1"/> Upcoming Meeting</div>
+                      <div className="flex items-center"><img src="https://maps.google.com/mapfiles/ms/icons/blue-dot.png" alt="Blue marker" className="h-4 w-4 mr-1"/> Follow-up Visit</div>
+                      <div className="flex items-center"><img src="https://maps.google.com/mapfiles/ms/icons/purple-dot.png" alt="Purple marker" className="h-4 w-4 mr-1"/> Other Visit</div>
+                  </div>
                    <div className="flex justify-center">
                     <ExportPdfButton
                       visits={visitsToDisplay}
@@ -4258,4 +4250,5 @@ export default function HomePage() {
 
 
     
+
 
