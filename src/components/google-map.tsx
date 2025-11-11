@@ -3,7 +3,7 @@
 
 import type { Visit } from '@/lib/types';
 import { LoadScript, GoogleMap, Marker } from '@react-google-maps/api';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface GoogleMapComponentProps {
   visits: Visit[];
@@ -26,6 +26,7 @@ const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualiz
 
 const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   const isGoogleMapsConfigured = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+  const [mapError, setMapError] = useState<string | null>(null);
 
   const validVisits = useMemo(() => {
     return visits.filter(v => typeof v.latitude === 'number' && typeof v.longitude === 'number');
@@ -59,6 +60,20 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
         </div>
     );
   }
+  
+  if (mapError) {
+     return (
+        <div 
+          className="relative w-full h-64 md:h-96 bg-destructive/10 rounded-lg shadow-md flex flex-col items-center justify-center overflow-hidden border border-destructive/50 text-center p-4"
+          aria-label="Map of visited locations error"
+        >
+          <h3 className="text-lg font-semibold text-destructive">{mapError}</h3>
+          <p className="text-destructive/80 text-sm mt-2">
+            The map cannot be loaded. Please ensure that the Google Maps JavaScript API is enabled and that billing is active for your Google Cloud project. You can fix this in the Google Cloud Console.
+          </p>
+        </div>
+    );
+  }
 
   return (
     <div 
@@ -68,6 +83,15 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
         googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
         libraries={libraries}
         loadingElement={<div className="h-full w-full flex items-center justify-center bg-muted"><p>Loading Map...</p></div>}
+        onError={(error) => setMapError(error.message)}
+        onLoad={() => {
+            if (window.google.maps.hasOwnProperty('event')) {
+                // This listener checks for auth errors after the script loads
+                window.google.maps.event.addDomListener(window, 'gm_authFailure', () => {
+                    setMapError('Google Maps Authentication Failed.');
+                });
+            }
+        }}
       >
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
