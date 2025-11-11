@@ -23,6 +23,7 @@ const nextConfig = {
       process.env.GOOGLE_API_KEY.trim() !== '' &&
       !process.env.GOOGLE_API_KEY.includes('YOUR_GOOGLE_API_KEY_HERE')
     )).toString(),
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
   },
   webpack: (config, { isServer }) => {
     // This is to prevent "Module not found: Can't resolve 'fs'" errors.

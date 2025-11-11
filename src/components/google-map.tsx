@@ -2,60 +2,174 @@
 'use client';
 
 import type { Visit } from '@/lib/types';
-import { MapPin } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { LoadScript, GoogleMap, Marker } from '@react-google-maps/api';
+import { useMemo } from 'react';
 
 interface GoogleMapComponentProps {
   visits: Visit[];
 }
 
-const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
-  const [clientVisits, setClientVisits] = useState<Visit[]>([]);
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+  borderRadius: '0.5rem',
+};
 
-  useEffect(() => {
-    setClientVisits(visits);
+// A default center, will be overridden by fitBounds
+const defaultCenter = {
+  lat: 42.4,
+  lng: -71.7,
+};
+
+const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
+
+
+const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
+  const isGoogleMapsConfigured = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+
+  const validVisits = useMemo(() => {
+    return visits.filter(v => typeof v.latitude === 'number' && typeof v.longitude === 'number');
   }, [visits]);
 
-  // Basic placeholder for map bounds, can be improved
-  const minLat = 25, maxLat = 49; // USA approx
-  const minLng = -125, maxLng = -66; // USA approx
+  const onMapLoad = (map: google.maps.Map) => {
+    if (validVisits.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      validVisits.forEach(visit => {
+        bounds.extend(new window.google.maps.LatLng(visit.latitude!, visit.longitude!));
+      });
+      map.fitBounds(bounds);
 
-  const normalizeCoords = (lat?: number, lng?: number, mapWidth = 500, mapHeight = 300) => {
-    if (lat === undefined || lng === undefined) return { x: 0, y: 0, valid: false };
-    
-    const x = ((lng - minLng) / (maxLng - minLng)) * mapWidth;
-    const y = ((maxLat - lat) / (maxLat - minLat)) * mapHeight; // Y is inverted
-    
-    return { x, y, valid: true };
+      // Add a bit of padding if there's only one marker
+      if (validVisits.length === 1) {
+          map.setZoom(14);
+      }
+    }
   };
+  
+  if (!isGoogleMapsConfigured) {
+    return (
+        <div 
+          className="relative w-full h-64 md:h-96 bg-secondary/50 rounded-lg shadow-md flex flex-col items-center justify-center overflow-hidden border text-center p-4"
+          aria-label="Map of visited locations is disabled"
+        >
+          <h3 className="text-lg font-semibold text-destructive">Google Maps Not Configured</h3>
+          <p className="text-muted-foreground text-sm">
+            Please add your `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to the .env file to enable the map view.
+          </p>
+        </div>
+    );
+  }
 
   return (
     <div 
-      className="relative w-full h-64 md:h-96 bg-secondary/50 rounded-lg shadow-md flex items-center justify-center overflow-hidden border"
-      aria-label="Map of visited locations"
-      data-ai-hint="map location"
+      className="relative w-full h-64 md:h-96 rounded-lg shadow-md overflow-hidden border"
     >
-      <p className="text-muted-foreground font-medium text-lg z-10 bg-background/80 px-4 py-2 rounded">
-        Map of Visited Locations
-      </p>
-      {clientVisits.map(visit => {
-         const {x, y, valid} = normalizeCoords(visit.latitude, visit.longitude);
-         if (!valid) return null;
-
-         return (
-            <MapPin 
-              key={visit.id} 
-              className="absolute text-primary h-6 w-6 transform -translate-x-1/2 -translate-y-full"
-              style={{ left: `${x}px`, top: `${y}px`, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}
-              aria-label={`Location of ${visit.companyName}`}
+      <LoadScript
+        googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
+        libraries={libraries}
+        loadingElement={<div className="h-full w-full flex items-center justify-center bg-muted"><p>Loading Map...</p></div>}
+      >
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={defaultCenter}
+          zoom={7}
+          onLoad={onMapLoad}
+          options={{
+            disableDefaultUI: true,
+            zoomControl: true,
+            streetViewControl: false,
+            mapTypeControl: false,
+            styles: [ // Dark mode styles
+              { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+              { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+              { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+              {
+                featureType: "administrative.locality",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#d59563" }],
+              },
+              {
+                featureType: "poi",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#d59563" }],
+              },
+              {
+                featureType: "poi.park",
+                elementType: "geometry",
+                stylers: [{ color: "#263c3f" }],
+              },
+              {
+                featureType: "poi.park",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#6b9a76" }],
+              },
+              {
+                featureType: "road",
+                elementType: "geometry",
+                stylers: [{ color: "#38414e" }],
+              },
+              {
+                featureType: "road",
+                elementType: "geometry.stroke",
+                stylers: [{ color: "#212a37" }],
+              },
+              {
+                featureType: "road",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#9ca5b3" }],
+              },
+              {
+                featureType: "road.highway",
+                elementType: "geometry",
+                stylers: [{ color: "#746855" }],
+              },
+              {
+                featureType: "road.highway",
+                elementType: "geometry.stroke",
+                stylers: [{ color: "#1f2835" }],
+              },
+              {
+                featureType: "road.highway",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#f3d19c" }],
+              },
+              {
+                featureType: "transit",
+                elementType: "geometry",
+                stylers: [{ color: "#2f3948" }],
+              },
+              {
+                featureType: "transit.station",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#d59563" }],
+              },
+              {
+                featureType: "water",
+                elementType: "geometry",
+                stylers: [{ color: "#17263c" }],
+              },
+              {
+                featureType: "water",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#515c6d" }],
+              },
+              {
+                featureType: "water",
+                elementType: "labels.text.stroke",
+                stylers: [{ color: "#17263c" }],
+              },
+            ]
+          }}
+        >
+          {validVisits.map(visit => (
+            <Marker
+              key={visit.id}
+              position={{ lat: visit.latitude!, lng: visit.longitude! }}
+              title={visit.companyName}
             />
-         );
-      })}
-      <div 
-        className="absolute pulse-dot bg-primary rounded-full w-3 h-3"
-        style={{ left: '50%', top: '50%' }} 
-        aria-hidden="true"
-      />
+          ))}
+        </GoogleMap>
+      </LoadScript>
     </div>
   );
 };
