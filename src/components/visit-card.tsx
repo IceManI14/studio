@@ -154,7 +154,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const potentialCommission = calculateCommission(visit);
 
   const ZoomedContent = () => (
-    <ScrollArea className="h-96 pr-4">
+    <ScrollArea className="max-h-[60vh] pr-4">
         <div className="space-y-4 text-sm">
             <div>
                 <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarDays className="mr-2 h-4 w-4" />Timestamp</h4>
@@ -520,7 +520,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
           </div>
       </CardHeader>
 
-      <CardContent className="flex-grow p-4 pt-0 overflow-y-auto">
+      <CardContent className="flex-grow p-4 pt-0">
         {isZoomedView ? <ZoomedContent /> : <NormalContent />}
       </CardContent>
 
