@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog, Undo } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -2049,37 +2049,56 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
 
-  const handleDeleteVisit = async (visitId: string) => {
-    // Optimistic Deletion
+  const handleDeleteVisit = (visitId: string) => {
     const visitToDelete = visitsToDisplay.find(v => v.id === visitId);
+    if (!visitToDelete) return;
+
+    // Optimistic Deletion
     setVisits(prevVisits => {
         const newVisits = prevVisits.filter(v => v.id !== visitId);
         localStorage.setItem('visits', JSON.stringify(newVisits));
         return newVisits;
     });
 
+    // Show toast with Undo action
     toast({
         title: 'Visit Deleted',
-        description: `${visitToDelete?.companyName || 'The visit'} has been removed locally.`,
+        description: `${visitToDelete.companyName} has been removed.`,
+        action: (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              // Undo action
+              setVisits(prevVisits => {
+                // This could be improved to restore at original position
+                const restoredVisits = [...prevVisits, visitToDelete].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                localStorage.setItem('visits', JSON.stringify(restoredVisits));
+                return restoredVisits;
+              });
+              toast({
+                title: 'Restored',
+                description: `${visitToDelete.companyName} has been restored.`,
+              });
+            }}
+          >
+            <Undo className="mr-2 h-4 w-4" />
+            Undo
+          </Button>
+        ),
+        onClose: () => { // This will be called when toast auto-dismisses
+            // Check if the visit is still deleted
+            if (!visitsRef.current.some(v => v.id === visitId)) {
+                deleteVisitAction(visitId).catch(error => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Sync Delete Failed',
+                        description: `Could not delete from cloud: ${error.message}. It remains deleted on this device.`,
+                    });
+                });
+            }
+        },
     });
-
-    try {
-        const result = await deleteVisitAction(visitId);
-        if (result.error) {
-            throw new Error(result.error);
-        }
-        // No need to update state again, as it's already done.
-        // We could show a "synced" toast, but it might be noisy.
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Sync Delete Failed',
-            description: `Could not delete from cloud: ${error.message}. It remains deleted on this device.`,
-        });
-        // Here you might want to add logic to re-add the visit to the UI
-        // or have a "pending deletes" queue if full offline-sync is needed.
-        // For now, we'll keep it deleted optimistically.
-    }
   };
 
   const handleSubmitSuggestion = async () => {
@@ -4239,3 +4258,4 @@ export default function HomePage() {
 
 
     
+
