@@ -3,7 +3,7 @@
 
 import type { Visit } from '@/lib/types';
 import { LoadScript, GoogleMap, Marker } from '@react-google-maps/api';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 interface GoogleMapComponentProps {
   visits: Visit[];
@@ -35,6 +35,13 @@ const MARKER_ICONS = {
 const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
   const isGoogleMapsConfigured = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
   const [mapError, setMapError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // This function will be attached to the window to be called by Google's script
+    (window as any).gm_authFailure = () => {
+      setMapError('Google Maps Authentication Failed. This may be due to an incorrect API key or billing not being enabled.');
+    };
+  }, []);
 
   const { validVisits, firstVisitMap } = useMemo(() => {
     const filteredVisits = visits.filter(v => typeof v.latitude === 'number' && typeof v.longitude === 'number');
@@ -107,9 +114,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
           className="relative w-full h-64 md:h-96 bg-destructive/10 rounded-lg shadow-md flex flex-col items-center justify-center overflow-hidden border border-destructive/50 text-center p-4"
           aria-label="Map of visited locations error"
         >
-          <h3 className="text-lg font-semibold text-destructive">{mapError}</h3>
+          <h3 className="text-lg font-semibold text-destructive">Map Error: {mapError}</h3>
           <p className="text-destructive/80 text-sm mt-2">
-            The map cannot be loaded. Please ensure that the Google Maps JavaScript API is enabled and that billing is active for your Google Cloud project. You can fix this in the Google Cloud Console.
+            The map cannot be loaded. Please ensure that billing is active for your Google Cloud project and that the Google Maps JavaScript API is enabled. You can fix this in the Google Cloud Console.
           </p>
         </div>
     );
@@ -124,14 +131,6 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ visits }) => {
         libraries={libraries}
         loadingElement={<div className="h-full w-full flex items-center justify-center bg-muted"><p>Loading Map...</p></div>}
         onError={(error) => setMapError(error.message)}
-        onLoad={() => {
-            if (window.google && window.google.maps && window.google.maps.event) {
-                // This listener checks for auth errors after the script loads
-                window.google.maps.event.addDomListener(window, 'gm_authFailure', () => {
-                    setMapError('Google Maps Authentication Failed.');
-                });
-            }
-        }}
       >
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
