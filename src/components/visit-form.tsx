@@ -379,7 +379,12 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const pricingDiscussedValue = form.watch('pricingDiscussed');
   
   useEffect(() => {
-    if (interestedUnitsValue && interestedUnitsValue.length > 0) {
+    const formValues = form.getValues();
+    const priceSet = formValues.priceQuoted !== undefined;
+    const leaseSet = formValues.leaseTerm !== undefined;
+    const installSet = formValues.installationFee !== undefined;
+  
+    if (interestedUnitsValue && interestedUnitsValue.length > 0 && !priceSet && !leaseSet && !installSet) {
       const lastUnit = interestedUnitsValue[interestedUnitsValue.length - 1];
       if (COOLER_PRICING_MAP[lastUnit]) {
         form.setValue('pricingDiscussed', true, { shouldDirty: true });
@@ -395,15 +400,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       if (form.getValues('leaseTerm') === undefined) {
         form.setValue('leaseTerm', 60, { shouldDirty: true });
       }
-    } else {
-        const currentPrice = form.getValues('priceQuoted');
-        const currentLease = form.getValues('leaseTerm');
-        const currentFee = form.getValues('installationFee');
-        if (currentPrice !== undefined || currentLease !== undefined || currentFee !== undefined) {
-             form.setValue('priceQuoted', undefined, { shouldDirty: true });
-             form.setValue('leaseTerm', undefined, { shouldDirty: true });
-             form.setValue('installationFee', undefined, { shouldDirty: true });
-        }
     }
   }, [pricingDiscussedValue, form]);
 
@@ -2059,3 +2055,5 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+
+    
