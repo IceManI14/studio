@@ -4026,17 +4026,19 @@ export default function HomePage() {
               <>
                 <DialogTitle className="sr-only">Visit Details: {zoomedVisit.companyName}</DialogTitle>
                 <DialogDescription className="sr-only">Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.</DialogDescription>
-                <VisitCard
-                  visit={zoomedVisit}
-                  onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
-                  onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
-                  onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
-                  isZoomedView={true}
-                  onDictateNotes={handleDictateNotes}
-                  onLogFollowUp={handleLogFollowUp}
-                  isOnCallList={callList.includes(zoomedVisit.id)}
-                  onToggleCallList={handleToggleCallList}
-                />
+                <div className="max-h-[90vh] overflow-y-auto">
+                    <VisitCard
+                      visit={zoomedVisit}
+                      onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
+                      onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
+                      onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
+                      isZoomedView={true}
+                      onDictateNotes={handleDictateNotes}
+                      onLogFollowUp={handleLogFollowUp}
+                      isOnCallList={callList.includes(zoomedVisit.id)}
+                      onToggleCallList={handleToggleCallList}
+                    />
+                </div>
               </>
             )}
           </DialogContent>
@@ -4250,5 +4252,3 @@ export default function HomePage() {
 
 
     
-
-

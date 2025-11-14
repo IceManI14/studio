@@ -154,217 +154,215 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const potentialCommission = calculateCommission(visit);
 
   const ZoomedContent = () => (
-    <ScrollArea className="max-h-[60vh] pr-4">
-        <div className="space-y-4 text-sm">
-            <div>
-                <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarDays className="mr-2 h-4 w-4" />Timestamp</h4>
-                <p className="pl-6 text-muted-foreground">{formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}</p>
+    <div className="space-y-4 text-sm pr-4">
+        <div>
+            <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarDays className="mr-2 h-4 w-4" />Timestamp</h4>
+            <p className="pl-6 text-muted-foreground">{formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}</p>
+        </div>
+        
+        {address && (
+             <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><MapPin className="mr-2 h-4 w-4" />Address</h4>
+                <p className="pl-6 text-muted-foreground">{address}</p>
             </div>
-            
-            {address && (
-                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><MapPin className="mr-2 h-4 w-4" />Address</h4>
-                    <p className="pl-6 text-muted-foreground">{address}</p>
-                </div>
-            )}
+        )}
 
-            {visit.notes && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><FileText className="mr-2 h-4 w-4" />Visit Notes</h4>
-                    <p className="pl-6 whitespace-pre-wrap bg-muted p-2 rounded-md">{visit.notes}</p>
-                </div>
-            )}
-            
-            {visit.notesSummary && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><Sparkles className="mr-2 h-4 w-4" />AI Summary</h4>
-                    <p className="pl-6 whitespace-pre-wrap bg-muted p-2 rounded-md">{visit.notesSummary}</p>
-                    <Button variant="ghost" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="mt-2 text-primary hover:bg-primary/10 h-auto py-1 px-2 text-xs">
-                        {isSummarizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="mr-1 h-3 w-3" />}
-                        Re-summarize
-                    </Button>
-                </div>
-            )}
+        {visit.notes && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><FileText className="mr-2 h-4 w-4" />Visit Notes</h4>
+                <p className="pl-6 whitespace-pre-wrap bg-muted p-2 rounded-md">{visit.notes}</p>
+            </div>
+        )}
+        
+        {visit.notesSummary && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><Sparkles className="mr-2 h-4 w-4" />AI Summary</h4>
+                <p className="pl-6 whitespace-pre-wrap bg-muted p-2 rounded-md">{visit.notesSummary}</p>
+                <Button variant="ghost" size="sm" onClick={handleSummarizeAgain} disabled={isSummarizing} className="mt-2 text-primary hover:bg-primary/10 h-auto py-1 px-2 text-xs">
+                    {isSummarizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="mr-1 h-3 w-3" />}
+                    Re-summarize
+                </Button>
+            </div>
+        )}
 
-            {(hasDecisionMakerDetails || visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && <Separator />}
+        {(hasDecisionMakerDetails || visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && <Separator />}
 
-            {hasDecisionMakerDetails && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><Contact className="mr-2 h-4 w-4" />Decision Maker Info</h4>
-                    <div className="pl-6 space-y-1">
-                        {visit.decisionMakerName && <p><strong>Name:</strong> {visit.decisionMakerName}</p>}
-                        {visit.decisionMakerTitle && <p><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-                        {visit.decisionMakerContact && <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
-                        {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && (
-                        <div className="pt-2 border-t mt-2">
-                            <p><strong>Scraped Info:</strong> {visit.contactInfo.info}</p>
-                            <p className="text-xs text-muted-foreground"><strong>Confidence:</strong> {Math.round(visit.contactInfo.confidence * 100)}%</p>
-                        </div>
-                        )}
+        {hasDecisionMakerDetails && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><Contact className="mr-2 h-4 w-4" />Decision Maker Info</h4>
+                <div className="pl-6 space-y-1">
+                    {visit.decisionMakerName && <p><strong>Name:</strong> {visit.decisionMakerName}</p>}
+                    {visit.decisionMakerTitle && <p><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
+                    {visit.decisionMakerContact && <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
+                    {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && (
+                    <div className="pt-2 border-t mt-2">
+                        <p><strong>Scraped Info:</strong> {visit.contactInfo.info}</p>
+                        <p className="text-xs text-muted-foreground"><strong>Confidence:</strong> {Math.round(visit.contactInfo.confidence * 100)}%</p>
                     </div>
+                    )}
                 </div>
-            )}
-            
-            {(visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && (
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <h4 className="font-semibold text-primary flex items-center"><FileType className="mr-2 h-4 w-4" />Business Card</h4>
-                  {visit.businessCardImageBackUrl && (
-                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setIsCardFlipped(!isCardFlipped)}>
-                      <RefreshCw className="mr-1 h-3 w-3" />
-                      Flip
-                    </Button>
+            </div>
+        )}
+        
+        {(visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && (
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <h4 className="font-semibold text-primary flex items-center"><FileType className="mr-2 h-4 w-4" />Business Card</h4>
+              {visit.businessCardImageBackUrl && (
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setIsCardFlipped(!isCardFlipped)}>
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                  Flip
+                </Button>
+              )}
+            </div>
+            <div className="pl-6 perspective-1000">
+              <div className={cn("w-full aspect-[1.77] max-w-sm mx-auto relative rolodex-preserve-3d transition-transform duration-700", isCardFlipped ? "[transform:rotateY(180deg)]" : "")}>
+                {/* Front of Card */}
+                <div className="absolute w-full h-full [backface-visibility:hidden]">
+                  {visit.businessCardImageFrontUrl ? (
+                    isHtmlCardFront ? (
+                      <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
+                        <p>Cannot display card front. The saved data is invalid. Please re-upload.</p>
+                      </div>
+                    ) : (
+                      <NextImage
+                        src={visit.businessCardImageFrontUrl}
+                        alt="Business card front"
+                        data-ai-hint="business card professional"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        className="rounded-md border bg-background"
+                      />
+                    )
+                  ) : (
+                     <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Front not available</div>
                   )}
                 </div>
-                <div className="pl-6 perspective-1000">
-                  <div className={cn("w-full aspect-[1.77] max-w-sm mx-auto relative rolodex-preserve-3d transition-transform duration-700", isCardFlipped ? "[transform:rotateY(180deg)]" : "")}>
-                    {/* Front of Card */}
-                    <div className="absolute w-full h-full [backface-visibility:hidden]">
-                      {visit.businessCardImageFrontUrl ? (
-                        isHtmlCardFront ? (
-                          <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
-                            <p>Cannot display card front. The saved data is invalid. Please re-upload.</p>
-                          </div>
-                        ) : (
-                          <NextImage
-                            src={visit.businessCardImageFrontUrl}
-                            alt="Business card front"
-                            data-ai-hint="business card professional"
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            className="rounded-md border bg-background"
-                          />
-                        )
-                      ) : (
-                         <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Front not available</div>
-                      )}
-                    </div>
-                    {/* Back of Card */}
-                    <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                      {visit.businessCardImageBackUrl ? (
-                        isHtmlCardBack ? (
-                           <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
-                            <p>Cannot display card back. The saved data is invalid. Please re-upload.</p>
-                          </div>
-                        ) : (
-                          <NextImage
-                            src={visit.businessCardImageBackUrl}
-                            alt="Business card back"
-                            data-ai-hint="business card professional"
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            className="rounded-md border bg-background"
-                          />
-                        )
-                      ) : (
-                         <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Back not available</div>
-                      )}
-                    </div>
-                  </div>
+                {/* Back of Card */}
+                <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  {visit.businessCardImageBackUrl ? (
+                    isHtmlCardBack ? (
+                       <div className="text-sm text-destructive-foreground bg-destructive p-3 rounded-md h-full flex items-center justify-center">
+                        <p>Cannot display card back. The saved data is invalid. Please re-upload.</p>
+                      </div>
+                    ) : (
+                      <NextImage
+                        src={visit.businessCardImageBackUrl}
+                        alt="Business card back"
+                        data-ai-hint="business card professional"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        className="rounded-md border bg-background"
+                      />
+                    )
+                  ) : (
+                     <div className="h-full flex items-center justify-center bg-muted rounded-md text-muted-foreground">Back not available</div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
 
-            {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number' || (visit.interestedUnits && visit.interestedUnits.length > 0)) && <Separator />}
+        {(visit.discussedCompetitors || visit.hasTDSReading || visit.freeTrial || visit.futureMeetingSet || visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number' || (visit.interestedUnits && visit.interestedUnits.length > 0)) && <Separator />}
 
-            {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
-                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />{visit.dealClosed ? 'Installed Coolers' : 'Potential Units of Interest'}</h4>
-                    <div className="pl-6 space-y-1">
-                        <ul className="list-disc list-inside">
-                            {visit.interestedUnits.map((unit, index) => (
-                                <li key={index}>{unit}</li>
-                            ))}
+        {(visit.interestedUnits && visit.interestedUnits.length > 0) && (
+             <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />{visit.dealClosed ? 'Installed Coolers' : 'Potential Units of Interest'}</h4>
+                <div className="pl-6 space-y-1">
+                    <ul className="list-disc list-inside">
+                        {visit.interestedUnits.map((unit, index) => (
+                            <li key={index}>{unit}</li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        )}
+
+        {visit.discussedCompetitors && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><Swords className="mr-2 h-4 w-4" />Competitor Info</h4>
+                <div className="pl-6 space-y-1">
+                    <p><strong>Competitor:</strong> {visit.competitorName || 'Not specified'}</p>
+                    <p><strong>Cooler Type:</strong> {visit.coolerType || 'Not specified'}</p>
+                    {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
+                        <div className="pt-2 mt-2 border-t">
+                        <h4 className="font-semibold mb-1">{COMPETITOR_DETAILS[visit.competitorName].title || `About ${visit.competitorName}`}</h4>
+                        <ul className="list-disc list-inside text-xs space-y-1">
+                            {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, i) => <li key={i}>{detail}</li>)}
                         </ul>
-                    </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
+        )}
 
-            {visit.discussedCompetitors && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><Swords className="mr-2 h-4 w-4" />Competitor Info</h4>
-                    <div className="pl-6 space-y-1">
-                        <p><strong>Competitor:</strong> {visit.competitorName || 'Not specified'}</p>
-                        <p><strong>Cooler Type:</strong> {visit.coolerType || 'Not specified'}</p>
-                        {visit.competitorName && COMPETITOR_DETAILS[visit.competitorName] && (
-                            <div className="pt-2 mt-2 border-t">
-                            <h4 className="font-semibold mb-1">{COMPETITOR_DETAILS[visit.competitorName].title || `About ${visit.competitorName}`}</h4>
-                            <ul className="list-disc list-inside text-xs space-y-1">
-                                {COMPETITOR_DETAILS[visit.competitorName].details.map((detail, i) => <li key={i}>{detail}</li>)}
-                            </ul>
-                            </div>
-                        )}
-                    </div>
+        {(visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number') && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Pricing & Commission</h4>
+                <div className="pl-6 space-y-1">
+                    {visit.pricingDiscussed && (
+                        <p>
+                            <strong>Pricing:</strong>
+                            {visit.priceQuoted && visit.leaseTerm 
+                                ? ` Quoted $${(typeof visit.priceQuoted === 'string' ? parseFloat(visit.priceQuoted) : visit.priceQuoted).toFixed(2)}/mo for ${visit.leaseTerm} months`
+                                : " Discussed"
+                            }
+                        </p>
+                    )}
+                    {visit.installationFee && <p><strong>Installation Fee:</strong> ${ (typeof visit.installationFee === 'string' ? parseFloat(visit.installationFee) : visit.installationFee).toFixed(2)}</p>}
+                    {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
+                    {typeof visit.manualCommission === 'number' && (
+                       <p className="font-semibold text-primary"><strong>Manual Commission:</strong> ${(typeof visit.manualCommission === 'string' ? parseFloat(visit.manualCommission) : visit.manualCommission).toFixed(2)}</p>
+                    )}
                 </div>
-            )}
+            </div>
+        )}
+        
+        {tdsInfo && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><Droplets className="mr-2 h-4 w-4" />TDS Reading</h4>
+                <div className="pl-6">
+                    <Badge variant={tdsInfo.className.includes('bg-destructive') ? 'destructive' : 'default'} className={cn("text-sm h-auto whitespace-normal text-left w-full justify-start", tdsInfo.className)}>
+                        <div className="flex items-start p-1 w-full">
+                        <span className="shrink-0 mt-0.5 mr-2">{tdsInfo.icon}</span>
+                        <span className="flex-1">{tdsInfo.message}</span>
+                        </div>
+                    </Badge>
+                </div>
+            </div>
+        )}
 
-            {(visit.pricingDiscussed || visit.creditApproved || typeof visit.manualCommission === 'number') && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><DollarSign className="mr-2 h-4 w-4" />Pricing & Commission</h4>
-                    <div className="pl-6 space-y-1">
-                        {visit.pricingDiscussed && (
-                            <p>
-                                <strong>Pricing:</strong>
-                                {visit.priceQuoted && visit.leaseTerm 
-                                    ? ` Quoted $${(typeof visit.priceQuoted === 'string' ? parseFloat(visit.priceQuoted) : visit.priceQuoted).toFixed(2)}/mo for ${visit.leaseTerm} months`
-                                    : " Discussed"
-                                }
-                            </p>
-                        )}
-                        {visit.installationFee && <p><strong>Installation Fee:</strong> ${ (typeof visit.installationFee === 'string' ? parseFloat(visit.installationFee) : visit.installationFee).toFixed(2)}</p>}
-                        {visit.creditApproved && <p><strong>Credit:</strong> Approved for financing.</p>}
-                        {typeof visit.manualCommission === 'number' && (
-                           <p className="font-semibold text-primary"><strong>Manual Commission:</strong> ${(typeof visit.manualCommission === 'string' ? parseFloat(visit.manualCommission) : visit.manualCommission).toFixed(2)}</p>
-                        )}
-                    </div>
+        {visit.freeTrial && (
+             <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />Free Trial</h4>
+                <div className="pl-6 space-y-1">
+                    <p><strong>Status:</strong> A free trial was set up.</p>
+                    {visit.freeTrialStartDate && (
+                        <p><strong>Start Date:</strong>{' '}
+                            <span className="font-semibold text-foreground">
+                                {formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'PPP')}
+                            </span>
+                        </p>
+                    )}
                 </div>
-            )}
-            
-            {tdsInfo && (
-                <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><Droplets className="mr-2 h-4 w-4" />TDS Reading</h4>
-                    <div className="pl-6">
-                        <Badge variant={tdsInfo.className.includes('bg-destructive') ? 'destructive' : 'default'} className={cn("text-sm h-auto whitespace-normal text-left w-full justify-start", tdsInfo.className)}>
-                            <div className="flex items-start p-1 w-full">
-                            <span className="shrink-0 mt-0.5 mr-2">{tdsInfo.icon}</span>
-                            <span className="flex-1">{tdsInfo.message}</span>
-                            </div>
-                        </Badge>
-                    </div>
-                </div>
-            )}
+            </div>
+        )}
 
-            {visit.freeTrial && (
-                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><PackageCheck className="mr-2 h-4 w-4" />Free Trial</h4>
-                    <div className="pl-6 space-y-1">
-                        <p><strong>Status:</strong> A free trial was set up.</p>
-                        {visit.freeTrialStartDate && (
-                            <p><strong>Start Date:</strong>{' '}
-                                <span className="font-semibold text-foreground">
-                                    {formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'PPP')}
-                                </span>
-                            </p>
-                        )}
-                    </div>
+         {visit.futureMeetingSet && (
+             <div>
+                <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarClock className="mr-2 h-4 w-4" />Future Meeting</h4>
+                 <div className="pl-6">
+                    {visit.futureMeetingDateTime ? (
+                        <p>Scheduled for: <span className="font-semibold">{formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'PPPp')}</span></p>
+                    ) : (
+                        <p>A future meeting is planned but not yet scheduled.</p>
+                    )}
                 </div>
-            )}
-
-             {visit.futureMeetingSet && (
-                 <div>
-                    <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarClock className="mr-2 h-4 w-4" />Future Meeting</h4>
-                     <div className="pl-6">
-                        {visit.futureMeetingDateTime ? (
-                            <p>Scheduled for: <span className="font-semibold">{formatInTimeZone(new Date(visit.futureMeetingDateTime), timeZone, 'PPPp')}</span></p>
-                        ) : (
-                            <p>A future meeting is planned but not yet scheduled.</p>
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
-    </ScrollArea>
+            </div>
+        )}
+    </div>
   );
 
   const NormalContent = () => (
