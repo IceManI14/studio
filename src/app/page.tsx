@@ -341,6 +341,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('field-day');
   const [callList, setCallList] = useState<string[]>([]);
   const [callListAccordion, setCallListAccordion] = useState<string[]>([]);
+  const [closedDealsCoolerFilter, setClosedDealsCoolerFilter] = useState<string | null>(null);
 
   
   const { toast } = useToast();
@@ -600,6 +601,13 @@ export default function HomePage() {
       .filter(visit => visit.dealClosed)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [visitsToDisplay]);
+  
+  const filteredClosedDeals = useMemo(() => {
+    if (!closedDealsCoolerFilter) {
+      return closedDeals;
+    }
+    return closedDeals.filter(visit => visit.interestedUnits?.includes(closedDealsCoolerFilter));
+  }, [closedDeals, closedDealsCoolerFilter]);
 
   const closedDealsCoolerSummary = useMemo(() => {
     const coolerCounts: Record<string, number> = {};
@@ -3134,9 +3142,13 @@ export default function HomePage() {
                                   <div className="mb-4 rounded-lg border bg-background/50 p-3">
                                     <div className="flex items-center justify-center gap-4">
                                       <h4 className="mb-2 text-center font-semibold text-foreground">Closed Deal Unit Totals</h4>
-                                      {totalCoolersInField > 0 && (
-                                        <Badge className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">Total: {totalCoolersInField}</Badge>
-                                      )}
+                                       <Button
+                                          size="sm"
+                                          className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
+                                          onClick={() => setClosedDealsCoolerFilter(null)}
+                                        >
+                                          All: <span className="ml-1.5">{totalCoolersInField}</span>
+                                        </Button>
                                     </div>
                                     <div className="flex flex-wrap justify-center gap-2 mt-2">
                                       {closedDealsCoolerSummary.map(([name, count]) => (
@@ -3144,7 +3156,7 @@ export default function HomePage() {
                                           key={name}
                                           size="sm"
                                           className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
-                                          onClick={() => handleCoolerFilterClick(name)}
+                                          onClick={() => setClosedDealsCoolerFilter(name)}
                                         >
                                           {name}: <span className="ml-1.5">{count}</span>
                                         </Button>
@@ -3153,7 +3165,7 @@ export default function HomePage() {
                                   </div>
                                 )}
                                 <Accordion type="multiple" className="w-full space-y-4">
-                                  {closedDeals.map(visit => (
+                                  {filteredClosedDeals.map(visit => (
                                     <VisitCardAccordionItem
                                         key={visit.id}
                                         visit={visit}
