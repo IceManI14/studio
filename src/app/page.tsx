@@ -187,6 +187,8 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
     }
   };
 
+  const coolerCount = visit.interestedUnits?.length || 0;
+
   return (
     <AccordionItem ref={itemRef} value={visit.id} className={cn("border bg-card rounded-lg overflow-hidden", variant === 'planner' ? 'border-orange-500 shadow-orange-500/20' : visit.dealClosed ? "border-green-500" : "border-primary/20")}>
       <AccordionTrigger onClick={handleAccordionScroll} className={cn("p-4 hover:no-underline w-full text-left", {"border-b": !visit.dealClosed}, visit.dealClosed ? "[&[data-state=open]]:border-green-500" : "border-primary/20")}>
@@ -194,6 +196,11 @@ const VisitCardAccordionItem = ({ visit, variant = 'default', onEdit, onDelete, 
           <div className="flex flex-1 items-center gap-3 min-w-0">
              <h4 className="font-semibold text-foreground truncate" title={visit.companyName}>{visit.companyName}</h4>
           </div>
+           {coolerCount > 0 && (
+            <Badge variant={visit.dealClosed ? 'default' : 'secondary'} className={cn(visit.dealClosed && "bg-green-600")}>
+                {coolerCount} {coolerCount === 1 ? 'cooler' : 'coolers'}
+            </Badge>
+          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="p-0">
@@ -4309,3 +4316,4 @@ export default function HomePage() {
     
 
     
+
