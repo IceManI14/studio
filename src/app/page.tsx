@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog, Undo } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -1703,6 +1703,16 @@ export default function HomePage() {
             },
             lastModified: new Date().toISOString()
           },
+          {
+            id: 'free-trial-work-order-1',
+            name: 'Free Trial Work Order',
+            type: 'template',
+            content: {
+              subject: 'WORK ORDER: Free Trial Setup for {{companyName}}',
+              body: "Hi Team,\n\nPlease set up a free trial for the following customer:\n\n- Company: {{companyName}}\n- Address: {{address}}\n- Contact: {{decisionMakerName}} ({{decisionMakerContact}})\n\nUnits to Install:\n{{interestedUnits}}\n\nTrial Start Date: {{trialStartDate}}\n\nNotes from Salesperson:\n{{notes}}\n\nThank you!\n"
+            },
+            lastModified: new Date().toISOString()
+          },
         ];
 
         const storedCompanyDocs = localStorage.getItem('companyDocs');
@@ -2082,7 +2092,7 @@ export default function HomePage() {
               });
             }}
           >
-            <Undo className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Undo
           </Button>
         ),
@@ -4026,7 +4036,7 @@ export default function HomePage() {
               <>
                 <DialogTitle className="sr-only">Visit Details: {zoomedVisit.companyName}</DialogTitle>
                 <DialogDescription className="sr-only">Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.</DialogDescription>
-                <div className="max-h-[90vh] overflow-y-auto">
+                <ScrollArea className="max-h-[90vh]">
                     <VisitCard
                       visit={zoomedVisit}
                       onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
@@ -4038,7 +4048,7 @@ export default function HomePage() {
                       isOnCallList={callList.includes(zoomedVisit.id)}
                       onToggleCallList={handleToggleCallList}
                     />
-                </div>
+                </ScrollArea>
               </>
             )}
           </DialogContent>

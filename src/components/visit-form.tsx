@@ -121,6 +121,7 @@ const visitFormSchema = z.object({
   installationFee: z.coerce.number().optional(),
   creditApproved: z.boolean().optional(),
   manualCommission: z.coerce.number().optional().nullable(),
+  companyPhone: z.string().optional(),
 });
 
 export type VisitFormData = z.infer<typeof visitFormSchema>;
@@ -142,12 +143,21 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     notesSummaryToSave = undefined;
   }
 
+  // Add company phone to notes if present
+  let notesWithPhone = data.notes || '';
+  if (data.companyPhone) {
+      const phoneNote = `Company Phone: ${data.companyPhone}`;
+      if (!notesWithPhone.includes(phoneNote)) {
+          notesWithPhone = `${notesWithPhone}\n\n${phoneNote}`.trim();
+      }
+  }
+
   return {
     id: visitState?.id,
     timestamp: visitState?.timestamp,
     companyName: data.companyName,
     city: data.city,
-    notes: data.notes,
+    notes: notesWithPhone,
     latitude: currentLatitude,
     longitude: currentLongitude,
     partnershipConfidence: data.partnershipConfidence,
@@ -268,7 +278,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const [businessCardFrontPreviewUrl, setBusinessCardFrontPreviewUrl] = useState<string | null>(null);
   const [businessCardBackPreviewUrl, setBusinessCardBackPreviewUrl] = useState<string | null>(null);
   const [isCapturingBack, setIsCapturingBack] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentCoolerOptions, setCurrentCoolerOptions] = useState<string[]>(DEFAULT_COOLER_TYPES_LIST);
   const [customCoolerNameInput, setCustomCoolerNameInput] = useState('');
   const [openAccordion, setOpenAccordion] = useState<string[]>([]);
@@ -316,6 +326,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       installationFee: undefined,
       creditApproved: false,
       manualCommission: undefined,
+      companyPhone: '',
     },
   });
 
@@ -387,10 +398,13 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     if (interestedUnitsValue && interestedUnitsValue.length > 0 && !priceSet && !leaseSet && !installSet) {
       const lastUnit = interestedUnitsValue[interestedUnitsValue.length - 1];
       if (COOLER_PRICING_MAP[lastUnit]) {
-        form.setValue('pricingDiscussed', true, { shouldDirty: true });
-        form.setValue('priceQuoted', COOLER_PRICING_MAP[lastUnit], { shouldDirty: true });
-        form.setValue('leaseTerm', 60, { shouldDirty: true });
-        form.setValue('installationFee', 149, { shouldDirty: true });
+        // Only set if pricing wasn't discussed at all yet
+        if (!form.getValues('pricingDiscussed')) {
+            form.setValue('pricingDiscussed', true, { shouldDirty: true });
+            form.setValue('priceQuoted', COOLER_PRICING_MAP[lastUnit], { shouldDirty: true });
+            form.setValue('leaseTerm', 60, { shouldDirty: true });
+            form.setValue('installationFee', 149, { shouldDirty: true });
+        }
       }
     }
   }, [interestedUnitsValue, form]);
@@ -473,7 +487,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         } else {
             toast({ variant: "destructive", title: "No Company Found", description: "Could not identify a company at this location." });
         }
-        if (result.phone) form.setValue('decisionMakerContact', result.phone, { shouldValidate: true });
+        if (result.phone) form.setValue('companyPhone', result.phone, { shouldValidate: true });
         if (result.city) form.setValue('city', result.city, { shouldValidate: true });
         if (result.address) {
             const currentNotes = form.getValues('notes') || '';
@@ -501,7 +515,15 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, []);
   
   useEffect(() => {
+    const extractCompanyPhoneFromNotes = (notes: string | undefined | null): string | undefined => {
+      if (!notes) return undefined;
+      const phoneRegex = /Company Phone: (.*)/;
+      const match = notes.match(phoneRegex);
+      return match ? match[1] : undefined;
+    }
+  
     if (isOpen) {
+      const companyPhone = extractCompanyPhoneFromNotes(initialData?.notes);
       setFormInitialData(initialData);
       form.reset({
         companyName: initialData?.companyName || '',
@@ -531,6 +553,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
         installationFee: initialData?.installationFee ?? undefined,
         creditApproved: initialData?.creditApproved || false,
         manualCommission: initialData?.manualCommission ?? undefined,
+        companyPhone: companyPhone || '',
       });
 
       setLastAnalyzedNotes(initialData?.notes);
@@ -1099,7 +1122,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
               <FormField
                 control={form.control}
-                name="decisionMakerContact"
+                name="companyPhone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Phone</FormLabel>
