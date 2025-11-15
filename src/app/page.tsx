@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, UserCog } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -277,6 +277,7 @@ export default function HomePage() {
   const [isRecordingSearch, setIsRecordingSearch] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [competitorSearchTerm, setCompetitorSearchTerm] = useState('');
+  const [coolerFilter, setCoolerFilter] = useState<string | null>(null);
   const [isRecordingCitySearch, setIsRecordingCitySearch] = useState(false);
   const [fieldDaySearchTerm, setFieldDaySearchTerm] = useState('');
   const [isRecordingFieldDaySearch, setIsRecordingFieldDaySearch] = useState(false);
@@ -497,6 +498,12 @@ export default function HomePage() {
           processedVisits = processedVisits.filter(visit => visit.dealClosed);
       }
     }
+
+    if (coolerFilter) {
+      processedVisits = processedVisits.filter(visit =>
+        visit.interestedUnits?.includes(coolerFilter)
+      );
+    }
   
     const uniqueVisits = Array.from(new Map(processedVisits.map(visit => [visit.id, visit])).values());
   
@@ -549,7 +556,7 @@ export default function HomePage() {
       }
     });
     return sorted;
-  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm]);
+  }, [visitsToDisplay, sortCriteria, sortOrder, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm, coolerFilter]);
 
   const scheduledVisits = useMemo(() => {
     return visitsToDisplay
@@ -658,6 +665,9 @@ export default function HomePage() {
   }, [scheduledVisits]);
 
   const sortedVisitsTitle = useMemo(() => {
+    if (coolerFilter) {
+        return `Visits with ${coolerFilter}`;
+    }
     if (selectedDate) {
         return `Visits on ${format(selectedDate, 'PPP')}`;
     }
@@ -673,7 +683,7 @@ export default function HomePage() {
         case 'partnershipConfidence': return 'Visits by Confidence';
         default: return 'Sorted Visits';
     }
-  }, [sortCriteria, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm]);
+  }, [sortCriteria, selectedDate, searchTerm, citySearchTerm, competitorSearchTerm, coolerFilter]);
 
   const coolerDistributionChartData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -2580,6 +2590,14 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
   
+  const handleCoolerFilterClick = (coolerName: string) => {
+    setActiveTab('call-day');
+    setCoolerFilter(coolerName);
+    toast({
+      title: `Filtering by ${coolerName}`,
+      description: 'Showing all closed deals with this cooler.'
+    });
+  };
 
   return (
     <div className="min-h-screen">
@@ -3122,9 +3140,14 @@ export default function HomePage() {
                                     </div>
                                     <div className="flex flex-wrap justify-center gap-2 mt-2">
                                       {closedDealsCoolerSummary.map(([name, count]) => (
-                                        <Badge key={name} className="text-sm bg-green-600 text-black font-bold hover:bg-green-700">
+                                        <Button
+                                          key={name}
+                                          size="sm"
+                                          className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
+                                          onClick={() => handleCoolerFilterClick(name)}
+                                        >
                                           {name}: <span className="ml-1.5">{count}</span>
-                                        </Badge>
+                                        </Button>
                                       ))}
                                     </div>
                                   </div>
@@ -3222,7 +3245,7 @@ export default function HomePage() {
                                           <div key={visit.id} className="flex items-center justify-between p-2 rounded-md bg-background/50 border">
                                               <div>
                                                   <p className="font-semibold">{visit.companyName}</p>
-                                                  <p className="text-sm text-muted-foreground">{visit.city}</p>
+                                                  <p className="text-sm text-muted-foreground">{visit.city || 'N/A'}</p>
                                               </div>
                                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleCallList(visit.id)}>
                                                   <X className="h-4 w-4" />
@@ -3494,11 +3517,21 @@ export default function HomePage() {
                   </div>
               )}
 
+              {coolerFilter && (
+                <div className="mt-4 p-3 bg-card rounded-lg shadow-lg border border-primary/20 flex items-center justify-between">
+                  <p className="font-semibold text-foreground">Filtering by Cooler: <span className="font-bold text-primary">{coolerFilter}</span></p>
+                  <Button variant="ghost" size="sm" onClick={() => setCoolerFilter(null)}>
+                    <X className="mr-2 h-4 w-4" />
+                    Clear Filter
+                  </Button>
+                </div>
+              )}
+
               {sortedVisitsForCallDay.length === 0 && !selectedDate ? (
                 <div className="text-center py-10 bg-card rounded-lg shadow-lg mt-6">
                   <p className="text-xl text-muted-foreground mb-4">
                     {(() => {
-                      if (!selectedDate && !searchTerm.trim()) {
+                      if (!selectedDate && !searchTerm.trim() && !coolerFilter) {
                         return 'Select a date or search to see visits.';
                       }
                       if (selectedDate) {
@@ -3768,7 +3801,7 @@ export default function HomePage() {
                 <AccordionTrigger onClick={(e) => handleAccordionScroll(e, eagleEyeRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
                     <div className="flex items-center justify-start w-10 shrink-0">
-                      <UserCog className="h-7 w-7 text-primary" />
+                      <ClipboardList className="h-7 w-7 text-primary" />
                     </div>
                     <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
                       Eagle Eye
@@ -4260,5 +4293,7 @@ export default function HomePage() {
 
 
 
+
+    
 
     
