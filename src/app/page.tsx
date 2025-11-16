@@ -1733,8 +1733,8 @@ export default function HomePage() {
             name: 'Free Trial Work Order',
             type: 'template',
             content: {
-              subject: 'WORK ORDER: Free Trial Setup for {{companyName}}',
-              body: "Hi Team,\n\nPlease set up a free trial for the following customer:\n\n- Company: {{companyName}}\n- Address: {{address}}\n- Contact: {{decisionMakerName}} ({{decisionMakerContact}})\n\nUnits to Install:\n{{interestedUnits}}\n\nTrial Start Date: {{trialStartDate}}\n\nNotes from Salesperson:\n{{notes}}\n\nThank you!\n"
+                subject: 'WORK ORDER (Free Trial): {{companyName}}',
+                body: "Hi Team,\n\nPlease set up a free trial for the following customer:\n\n- Company: {{companyName}}\n- Address: {{address}}\n- Contact: {{contactName}} ({{contactEmailOrPhone}})\n\nUnits to Install:\n{{interestedUnitsList}}\n\nTrial Start Date: {{trialStartDate}}\n\nNotes from Salesperson:\n{{notes}}\n\nThank you!"
             },
             lastModified: new Date().toISOString()
           },
@@ -4316,4 +4316,3 @@ export default function HomePage() {
     
 
     
-
