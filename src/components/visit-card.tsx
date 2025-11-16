@@ -5,7 +5,7 @@
 import type { Visit, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon, ClipboardList } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon, ClipboardList, Phone } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -67,11 +67,16 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
         .replace(/{{contactName}}/g, contactName.trim())
         .replace(/{{companyName}}/g, visit.companyName);
 
-    const body = template.content.body
+    let body = template.content.body
         .replace(/{{contactName}}/g, contactName.trim())
-        .replace(/{{companyName}}/g, visit.companyName);
+        .replace(/{{companyName}}/g, visit.companyName)
+        .replace(/{{address}}/g, extractAddressFromNotes(visit.notes) || 'N/A')
+        .replace(/{{contactEmailOrPhone}}/g, visit.decisionMakerContact || 'N/A')
+        .replace(/{{interestedUnitsList}}/g, visit.interestedUnits?.join(', ') || 'N/A')
+        .replace(/{{trialStartDate}}/g, visit.freeTrialStartDate ? formatInTimeZone(new Date(visit.freeTrialStartDate), timeZone, 'PPP') : 'N/A')
+        .replace(/{{notes}}/g, visit.notes || 'No notes provided.');
 
-    const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoLink = `mailto:${template.name.toLowerCase().includes('work order') ? 'techs@drinkoptimum.com' : contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoLink;
     toast({ title: "Opening Email Client", description: `Preparing '${template.name}' email for ${visit.companyName}.` });
   };
@@ -136,7 +141,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
     return { message: "TDS Level Undefined.", icon: <ShieldQuestion className="mr-1 h-3 w-3" />, className: "text-gray-700 border-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50" };
   };
 
-  const extractAddressFromNotes = (notes: string | undefined): string | null => {
+  const extractAddressFromNotes = (notes: string | undefined | null): string | null => {
       if (!notes) return null;
       const match = notes.match(/Address: (.*)/);
       if (match) return match[1].split('\n')[0].trim();
@@ -154,7 +159,7 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const potentialCommission = calculateCommission(visit);
 
   const ZoomedContent = () => (
-    <div className="space-y-4 text-sm pr-4">
+    <div className="space-y-4 text-sm">
         <div>
             <h4 className="font-semibold text-primary flex items-center mb-1"><CalendarDays className="mr-2 h-4 w-4" />Timestamp</h4>
             <p className="pl-6 text-muted-foreground">{formatInTimeZone(new Date(visit.timestamp), timeZone, 'PPPp')}</p>
@@ -193,7 +198,26 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 <div className="pl-6 space-y-1">
                     {visit.decisionMakerName && <p><strong>Name:</strong> {visit.decisionMakerName}</p>}
                     {visit.decisionMakerTitle && <p><strong>Title:</strong> {visit.decisionMakerTitle}</p>}
-                    {visit.decisionMakerContact && <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>}
+                    {visit.decisionMakerContact ? (
+                      <p><strong>Contact:</strong> {visit.decisionMakerContact}</p>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <strong>Contact:</strong>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(`https://www.google.com/search?q=${encodeURIComponent(visit.companyName)}%20${encodeURIComponent(visit.city || '')}%20phone%20number`, '_blank');
+                          }}
+                        >
+                           <svg className="h-3 w-3 mr-1" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.36 1.67-4.06 1.67-3.4 0-6.17-2.83-6.17-6.23s2.77-6.23 6.17-6.23c1.87 0 3.14.75 3.96 1.5.8.75 1.25 1.8.96 3.14H12.48zM24 12c0-.75-.06-1.5-.18-2.22H12v4.4h6.8c-.27 1.43-1.12 2.6-2.25 3.33v2.8h3.5c2.04-1.87 3.22-4.6 3.22-7.83z" fill="currentColor"/></svg>
+                          Find Phone
+                        </Button>
+                      </div>
+                    )}
                     {visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!" && (
                     <div className="pt-2 border-t mt-2">
                         <p><strong>Scraped Info:</strong> {visit.contactInfo.info}</p>
@@ -614,3 +638,4 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
+
