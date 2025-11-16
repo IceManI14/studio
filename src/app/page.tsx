@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, BarChart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -60,8 +60,8 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import ExportButton from '@/components/export-button';
 import ExportDetailedPdfButton from '@/components/export-detailed-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, BarChart as RechartsBarChart } from 'recharts';
 
 
 interface FoundPlace {
@@ -349,6 +349,7 @@ export default function HomePage() {
   const [callList, setCallList] = useState<string[]>([]);
   const [callListAccordion, setCallListAccordion] = useState<string[]>([]);
   const [closedDealsCoolerFilter, setClosedDealsCoolerFilter] = useState<string | null>(null);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
   
   const { toast } = useToast();
@@ -2614,6 +2615,17 @@ export default function HomePage() {
     });
   };
 
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    coolerDistributionChartData.forEach((item, index) => {
+        config[item.name] = {
+            label: item.name,
+            color: `hsl(var(--chart-${(index % 5) + 1}))`,
+        };
+    });
+    return config;
+  }, [coolerDistributionChartData]);
+
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
@@ -3653,25 +3665,16 @@ export default function HomePage() {
                 <AccordionContent className="p-0">
                   <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20 flex flex-col">
                     <UiCardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Bot className="h-8 w-8 text-primary" />
-                          <h2 className="text-2xl font-headline font-semibold text-foreground">
-                            Debbie
-                          </h2>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-3">
+                                <Bot className="h-8 w-8 text-primary" />
+                                <h2 className="text-2xl font-headline font-semibold text-foreground">Debbie</h2>
+                            </div>
+                            <Button onClick={() => setIsPerformanceModalOpen(true)} variant="secondary" size="sm">
+                                <BarChart className="mr-2 h-4 w-4" />
+                                {selectedSalesperson?.name}'s Performance
+                            </Button>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <Brain className="h-5 w-5 text-muted-foreground" />
-                          <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
-                            <SelectTrigger className="w-[180px] h-9 text-xs">
-                              <SelectValue placeholder="Select AI Model" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {AVAILABLE_AI_MODELS.map(model => ( <SelectItem key={model.id} value={model.id} className="text-xs">{model.name}</SelectItem> ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
                     </UiCardHeader>
                     <UiCardContent className="p-0">
                       <ScrollArea className="h-[200px] sm:h-[280px] w-full p-4 border-t border-b">
@@ -4245,6 +4248,104 @@ export default function HomePage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <Dialog open={isPerformanceModalOpen} onOpenChange={setIsPerformanceModalOpen}>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline text-3xl text-primary">{selectedSalesperson?.name}'s Performance</DialogTitle>
+                    <DialogDescription>A summary of your sales metrics based on closed deals.</DialogDescription>
+                </DialogHeader>
+                {closedDeals.length > 0 ? (
+                    <ScrollArea className="max-h-[70vh]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-1">
+                            <UiCard>
+                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <UiCardTitle className="text-sm font-medium">Deals Closed</UiCardTitle>
+                                    <PartyPopper className="h-4 w-4 text-muted-foreground" />
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <div className="text-2xl font-bold">{closedDeals.length}</div>
+                                </UiCardContent>
+                            </UiCard>
+                             <UiCard>
+                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <UiCardTitle className="text-sm font-medium">Total Coolers Sold</UiCardTitle>
+                                    <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <div className="text-2xl font-bold">{totalCoolersInField}</div>
+                                </UiCardContent>
+                            </UiCard>
+                            <UiCard>
+                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <UiCardTitle className="text-sm font-medium">Total Commission</UiCardTitle>
+                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <div className="text-2xl font-bold">${totalClosedCommission.toFixed(2)}</div>
+                                </UiCardContent>
+                            </UiCard>
+                            <UiCard>
+                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <UiCardTitle className="text-sm font-medium">Avg Commission/Deal</UiCardTitle>
+                                    <Hash className="h-4 w-4 text-muted-foreground" />
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <div className="text-2xl font-bold">
+                                      ${(totalClosedCommission / closedDeals.length).toFixed(2)}
+                                    </div>
+                                </UiCardContent>
+                            </UiCard>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 p-1">
+                             <UiCard>
+                                <UiCardHeader>
+                                    <UiCardTitle>Cooler Distribution</UiCardTitle>
+                                    <UiCardDescription>Breakdown of coolers sold.</UiCardDescription>
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                        <PieChart>
+                                            <ChartTooltipContent nameKey="value" hideLabel />
+                                            <Pie data={coolerDistributionChartData} dataKey="value" nameKey="name" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`}>
+                                                {coolerDistributionChartData.map((entry, index) => (
+                                                     <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
+                                                ))}
+                                            </Pie>
+                                            <Legend content={<p className="text-xs text-muted-foreground text-center mt-2">Mouse over to see cooler type</p>} />
+                                        </PieChart>
+                                    </ChartContainer>
+                                </UiCardContent>
+                            </UiCard>
+                             <UiCard>
+                                <UiCardHeader>
+                                    <UiCardTitle>Sales by Location</UiCardTitle>
+                                    <UiCardDescription>Total coolers sold per city.</UiCardDescription>
+                                </UiCardHeader>
+                                <UiCardContent>
+                                    <ChartContainer config={{ coolers: { label: "Coolers", color: "hsl(var(--chart-1))" } }} className="h-[250px] w-full">
+                                        <RechartsBarChart data={salesByLocationChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis dataKey="city" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                                            <YAxis />
+                                            <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
+                                            <Bar dataKey="coolers" fill="var(--color-coolers)" radius={4} />
+                                        </RechartsBarChart>
+                                    </ChartContainer>
+                                </UiCardContent>
+                            </UiCard>
+                        </div>
+                    </ScrollArea>
+                ) : (
+                    <div className="text-center py-10">
+                        <p className="text-muted-foreground">No closed deals found to generate performance metrics.</p>
+                    </div>
+                )}
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsPerformanceModalOpen(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
         
         <FindCompanyModal
             isOpen={isFindCompanyModalOpen}
@@ -4316,3 +4417,4 @@ export default function HomePage() {
     
 
     
+
