@@ -3276,7 +3276,17 @@ export default function HomePage() {
                                           <div key={visit.id} className="flex items-center justify-between p-2 rounded-md bg-background/50 border">
                                               <div>
                                                   <p className="font-semibold">{visit.companyName}</p>
-                                                  <p className="text-sm text-muted-foreground">{visit.city || 'N/A'}</p>
+                                                  {visit.decisionMakerContact ? (
+                                                    <a href={`tel:${visit.decisionMakerContact}`} className="text-sm text-primary hover:underline flex items-center gap-1">
+                                                      <Phone className="h-3 w-3" />
+                                                      {visit.decisionMakerContact}
+                                                    </a>
+                                                  ) : (
+                                                    <Button variant="link" size="sm" className="h-auto p-0 text-sm" onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(visit.companyName)}%20${encodeURIComponent(visit.city || '')}%20phone%20number`, '_blank')}>
+                                                      <svg className="h-3 w-3 mr-1" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.36 1.67-4.06 1.67-3.4 0-6.17-2.83-6.17-6.23s2.77-6.23 6.17-6.23c1.87 0 3.14.75 3.96 1.5.8.75 1.25 1.8.96 3.14H12.48zM24 12c0-.75-.06-1.5-.18-2.22H12v4.4h6.8c-.27 1.43-1.12 2.6-2.25 3.33v2.8h3.5c2.04-1.87 3.22-4.6 3.22-7.83z" fill="currentColor"/></svg>
+                                                      Find Number
+                                                    </Button>
+                                                  )}
                                               </div>
                                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleCallList(visit.id)}>
                                                   <X className="h-4 w-4" />
@@ -4417,4 +4427,5 @@ export default function HomePage() {
     
 
     
+
 
