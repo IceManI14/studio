@@ -359,7 +359,7 @@ export default function HomePage() {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [speedReadings, setSpeedReadings] = useState<number[]>([]);
   const [plannerAccordion, setPlannerAccordion] = useState<string[]>([]);
-  const [aiAccordion, setAiAccordion] = useState<string[]>([]);
+  const [aiAccordion, setAiAccordion] = useState<string[]>(['performance-dashboard']);
   const [callDayAccordion, setCallDayAccordion] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('field-day');
   const [callList, setCallList] = useState<string[]>([]);
@@ -397,6 +397,7 @@ export default function HomePage() {
   const importReportInputRef = useRef<HTMLInputElement>(null);
   const timeZone = 'America/New_York';
   const callListRef = useRef<HTMLDivElement>(null);
+  const performanceDashboardRef = useRef<HTMLDivElement>(null);
   
   const isGenkitConfigured = process.env.NEXT_PUBLIC_GENKIT_CONFIGURED === 'true';
 
@@ -734,7 +735,9 @@ export default function HomePage() {
       closedDeals.forEach(visit => {
           if (visit.city) {
               const coolerCount = visit.interestedUnits?.length || 0;
-              counts[visit.city] = (counts[visit.city] || 0) + coolerCount;
+              if (coolerCount > 0) {
+                counts[visit.city] = (counts[visit.city] || 0) + coolerCount;
+              }
           }
       });
       return Object.entries(counts).map(([city, coolers]) => ({ city, coolers })).sort((a, b) => b.coolers - a.coolers);
@@ -2085,16 +2088,16 @@ export default function HomePage() {
     toast({ title: `Logging Follow-up for ${existingVisit.companyName}.` });
     
     const newVisitTemplate: Partial<Visit> = {
-      companyName: existingVisit.companyName,
-      latitude: existingVisit.latitude,
-      longitude: existingVisit.longitude,
-      contactInfo: existingVisit.contactInfo,
-      city: existingVisit.city,
-      notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
-      decisionMakerName: existingVisit.decisionMakerName,
-      decisionMakerTitle: existingVisit.decisionMakerTitle,
-      decisionMakerContact: existingVisit.decisionMakerContact,
-      visitNumber: todaysVisits.length + 1,
+        companyName: existingVisit.companyName,
+        latitude: existingVisit.latitude,
+        longitude: existingVisit.longitude,
+        contactInfo: existingVisit.contactInfo,
+        city: existingVisit.city,
+        notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
+        decisionMakerName: existingVisit.decisionMakerName,
+        decisionMakerTitle: existingVisit.decisionMakerTitle,
+        decisionMakerContact: existingVisit.decisionMakerContact,
+        visitNumber: todaysVisits.length + 1,
     };
     
     setCurrentEditingVisit(newVisitTemplate as Visit);
@@ -2641,18 +2644,6 @@ export default function HomePage() {
     return config;
   }, [coolerDistributionChartData]);
 
-  const PieChartLabel = ({ viewBox, name, percent }: { viewBox?: { cx: number, cy: number }, name: string, percent: number }) => {
-    if (!viewBox) return null;
-    const { cx, cy } = viewBox;
-    const percentFormatted = `${(percent * 100).toFixed(0)}%`;
-    return (
-        <text x={cx} y={cy} fill="hsl(var(--foreground))" textAnchor="middle" dominantBaseline="central">
-            <tspan x={cx} dy="-0.5em" fontSize="0.875rem" fontWeight="bold">{name}</tspan>
-            <tspan x={cx} dy="1.2em" fontSize="0.75rem" fill="hsl(var(--muted-foreground))">{percentFormatted}</tspan>
-        </text>
-    );
-  };
-
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
@@ -3191,7 +3182,7 @@ export default function HomePage() {
                                        <Button
                                           size="sm"
                                           className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
-                                          onClick={() => handleCoolerFilterClick(null)}
+                                          onClick={() => setClosedDealsCoolerFilter(null)}
                                         >
                                           All: <span className="ml-1.5">{totalCoolersInField}</span>
                                         </Button>
@@ -3202,7 +3193,7 @@ export default function HomePage() {
                                           key={name}
                                           size="sm"
                                           className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
-                                          onClick={() => handleCoolerFilterClick(name)}
+                                          onClick={() => setClosedDealsCoolerFilter(name)}
                                         >
                                           {name}: <span className="ml-1.5">{count}</span>
                                         </Button>
@@ -3981,8 +3972,8 @@ export default function HomePage() {
             </Accordion>
             
             <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
-                <AccordionItem value="performance-dashboard" className="border-none">
-                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                <AccordionItem ref={performanceDashboardRef} value="performance-dashboard" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, performanceDashboardRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                         <div className="flex w-full items-center">
                             <div className="flex items-center justify-start w-10 shrink-0">
                                 <BarChart className="h-7 w-7 text-primary" />
@@ -4600,4 +4591,5 @@ export default function HomePage() {
 
 
     
+
 
