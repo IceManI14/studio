@@ -2088,7 +2088,7 @@ export default function HomePage() {
       companyName: existingVisit.companyName,
       latitude: existingVisit.latitude,
       longitude: existingVisit.longitude,
-      contactInfo: existingVisit.contactInfo, 
+      contactInfo: existingVisit.contactInfo,
       city: existingVisit.city,
       notes: `Follow-up to visit on ${formatInTimeZone(new Date(existingVisit.timestamp), 'America/New_York', 'PP')}.`,
       decisionMakerName: existingVisit.decisionMakerName,
@@ -2622,13 +2622,8 @@ export default function HomePage() {
     setIsVisitFormOpen(true);
   };
   
-  const handleCoolerFilterClick = (coolerName: string) => {
-    setActiveTab('call-day');
-    setCoolerFilter(coolerName);
-    toast({
-      title: `Filtering by ${coolerName}`,
-      description: 'Showing all closed deals with this cooler.'
-    });
+  const handleCoolerFilterClick = (coolerName: string | null) => {
+    setClosedDealsCoolerFilter(coolerName);
   };
 
   const chartConfig = useMemo(() => {
@@ -3192,7 +3187,7 @@ export default function HomePage() {
                                        <Button
                                           size="sm"
                                           className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
-                                          onClick={() => setClosedDealsCoolerFilter(null)}
+                                          onClick={() => handleCoolerFilterClick(null)}
                                         >
                                           All: <span className="ml-1.5">{totalCoolersInField}</span>
                                         </Button>
@@ -3203,7 +3198,7 @@ export default function HomePage() {
                                           key={name}
                                           size="sm"
                                           className="h-auto py-0.5 px-2.5 text-xs bg-green-600 text-black font-bold hover:bg-green-700"
-                                          onClick={() => setClosedDealsCoolerFilter(name)}
+                                          onClick={() => handleCoolerFilterClick(name)}
                                         >
                                           {name}: <span className="ml-1.5">{count}</span>
                                         </Button>
@@ -4340,7 +4335,7 @@ export default function HomePage() {
                                     <UiCardDescription>Breakdown of coolers sold.</UiCardDescription>
                                 </UiCardHeader>
                                 <UiCardContent>
-                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[300px]">
                                         <PieChart>
                                             <ChartTooltipContent
                                               accessibilityLayer
@@ -4353,8 +4348,9 @@ export default function HomePage() {
                                               nameKey="name"
                                               innerRadius={60}
                                               strokeWidth={5}
+                                              labelLine={true}
                                               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                              labelLine={false}
+                                              outerRadius={80}
                                             >
                                                {coolerDistributionChartData.map((entry, index) => (
                                                   <Cell
@@ -4478,3 +4474,6 @@ export default function HomePage() {
 
     
 
+
+
+    
