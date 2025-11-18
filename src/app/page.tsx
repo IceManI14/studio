@@ -4071,16 +4071,14 @@ export default function HomePage() {
                                             <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                         </UiCardHeader>
                                         <UiCardContent>
-                                            <ScrollArea className="h-[250px] w-full">
-                                                <div className="space-y-2 pr-4">
-                                                    {salesByLocationChartData.map(({ city, coolers }) => (
-                                                        <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                            <span className="font-medium text-foreground">{city}</span>
-                                                            <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </ScrollArea>
+                                            <div className="space-y-2">
+                                                {salesByLocationChartData.map(({ city, coolers }) => (
+                                                    <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                        <span className="font-medium text-foreground">{city}</span>
+                                                        <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </UiCardContent>
                                     </UiCard>
                                 </div>
@@ -4400,8 +4398,8 @@ export default function HomePage() {
                     <DialogDescription>A summary of your sales metrics based on closed deals.</DialogDescription>
                 </DialogHeader>
                 {closedDeals.length > 0 ? (
-                    <ScrollArea className="max-h-[70vh]">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-1">
+                    <ScrollArea className="max-h-[70vh] p-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <UiCard>
                                 <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <UiCardTitle className="text-sm font-medium">Deals Closed</UiCardTitle>
@@ -4441,7 +4439,7 @@ export default function HomePage() {
                                 </UiCardContent>
                             </UiCard>
                         </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 p-1">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                              <UiCard>
                                 <UiCardHeader>
                                     <UiCardTitle>Cooler Distribution</UiCardTitle>
@@ -4452,25 +4450,23 @@ export default function HomePage() {
                                         <PieChart>
                                             <ChartTooltipContent
                                               accessibilityLayer
-                                              cursor={true}
-                                              content={<ChartTooltipContent />}
+                                              cursor={false}
+                                              content={<ChartTooltipContent hideIndicator />}
                                             />
                                             <Pie
-                                              data={coolerDistributionChartData}
-                                              dataKey="value"
-                                              nameKey="name"
-                                              innerRadius={60}
-                                              strokeWidth={5}
-                                              labelLine={true}
-                                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                              outerRadius={80}
+                                                data={coolerDistributionChartData}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                innerRadius={60}
+                                                strokeWidth={5}
+                                                labelLine={true}
+                                                label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                             >
                                                {coolerDistributionChartData.map((entry, index) => (
                                                   <Cell
                                                     key={`cell-${index}`}
                                                     fill={chartConfig[entry.name]?.color}
                                                     className="focus:outline-none"
-                                                    tabIndex={0}
                                                   />
                                                 ))}
                                             </Pie>
@@ -4485,16 +4481,14 @@ export default function HomePage() {
                                     <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                 </UiCardHeader>
                                 <UiCardContent>
-                                    <ScrollArea className="h-[250px] w-full">
-                                        <div className="space-y-2 pr-4">
-                                            {salesByLocationChartData.map(({ city, coolers }) => (
-                                                <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                    <span className="font-medium text-foreground">{city}</span>
-                                                    <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
+                                    <div className="space-y-2">
+                                        {salesByLocationChartData.map(({ city, coolers }) => (
+                                            <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                <span className="font-medium text-foreground">{city}</span>
+                                                <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </UiCardContent>
                             </UiCard>
                         </div>
@@ -4593,3 +4587,6 @@ export default function HomePage() {
     
 
 
+
+
+    
