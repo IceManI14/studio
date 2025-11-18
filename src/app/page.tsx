@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, BarChart, UserCog } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, BarChart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -4081,7 +4081,7 @@ export default function HomePage() {
                                         </UiCardHeader>
                                         <UiCardContent>
                                             <ScrollArea className="h-[250px] w-full">
-                                                <div className="space-y-2">
+                                                <div className="space-y-2 pr-4">
                                                     {salesByLocationChartData.map(({ city, coolers }) => (
                                                         <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
                                                             <span className="font-medium text-foreground">{city}</span>
@@ -4495,7 +4495,7 @@ export default function HomePage() {
                                 </UiCardHeader>
                                 <UiCardContent>
                                     <ScrollArea className="h-[250px] w-full">
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 pr-4">
                                             {salesByLocationChartData.map(({ city, coolers }) => (
                                                 <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
                                                     <span className="font-medium text-foreground">{city}</span>
@@ -4600,3 +4600,4 @@ export default function HomePage() {
 
 
     
+
