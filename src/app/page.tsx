@@ -2623,7 +2623,11 @@ export default function HomePage() {
   };
   
   const handleCoolerFilterClick = (coolerName: string | null) => {
-    setClosedDealsCoolerFilter(coolerName);
+    setActiveTab('call-day');
+    setCoolerFilter(coolerName);
+    setTimeout(() => {
+        callDayFilterRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const chartConfig = useMemo(() => {
@@ -3703,10 +3707,6 @@ export default function HomePage() {
                                 <Bot className="h-8 w-8 text-primary" />
                                 <h2 className="text-2xl font-headline font-semibold text-foreground">Debbie</h2>
                             </div>
-                            <Button onClick={() => setIsPerformanceModalOpen(true)} variant="secondary" size="sm">
-                                <UserCog className="mr-2 h-4 w-4" />
-                                {selectedSalesperson?.name}'s Performance
-                            </Button>
                         </div>
                     </UiCardHeader>
                     <UiCardContent className="p-0">
@@ -3980,6 +3980,128 @@ export default function HomePage() {
               </AccordionItem>
             </Accordion>
             
+            <Accordion type="multiple" value={aiAccordion} onValueChange={setAiAccordion}>
+                <AccordionItem value="performance-dashboard" className="border-none">
+                    <AccordionTrigger onClick={(e) => handleAccordionScroll(e, debbieRef)} className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                        <div className="flex w-full items-center">
+                            <div className="flex items-center justify-start w-10 shrink-0">
+                                <BarChart className="h-7 w-7 text-primary" />
+                            </div>
+                            <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                                Performance Dashboard
+                            </h2>
+                            <div className="w-10 shrink-0"></div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0">
+                         {closedDeals.length > 0 ? (
+                            <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 space-y-6">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <UiCard>
+                                        <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <UiCardTitle className="text-sm font-medium">Deals Closed</UiCardTitle>
+                                            <PartyPopper className="h-4 w-4 text-muted-foreground" />
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <div className="text-2xl font-bold">{closedDeals.length}</div>
+                                        </UiCardContent>
+                                    </UiCard>
+                                     <UiCard>
+                                        <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <UiCardTitle className="text-sm font-medium">Total Coolers Sold</UiCardTitle>
+                                            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <div className="text-2xl font-bold">{totalCoolersInField}</div>
+                                        </UiCardContent>
+                                    </UiCard>
+                                    <UiCard>
+                                        <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <UiCardTitle className="text-sm font-medium">Total Commission</UiCardTitle>
+                                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <div className="text-2xl font-bold">${totalClosedCommission.toFixed(2)}</div>
+                                        </UiCardContent>
+                                    </UiCard>
+                                    <UiCard>
+                                        <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <UiCardTitle className="text-sm font-medium">Avg Commission/Deal</UiCardTitle>
+                                            <Hash className="h-4 w-4 text-muted-foreground" />
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <div className="text-2xl font-bold">
+                                              ${(totalClosedCommission / closedDeals.length).toFixed(2)}
+                                            </div>
+                                        </UiCardContent>
+                                    </UiCard>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                     <UiCard>
+                                        <UiCardHeader>
+                                            <UiCardTitle>Cooler Distribution</UiCardTitle>
+                                            <UiCardDescription>Breakdown of coolers sold.</UiCardDescription>
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[300px]">
+                                                <PieChart>
+                                                    <ChartTooltipContent
+                                                      accessibilityLayer
+                                                      cursor={true}
+                                                      content={<ChartTooltipContent />}
+                                                    />
+                                                    <Pie
+                                                      data={coolerDistributionChartData}
+                                                      dataKey="value"
+                                                      nameKey="name"
+                                                      innerRadius={60}
+                                                      strokeWidth={5}
+                                                      labelLine={true}
+                                                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                                      outerRadius={80}
+                                                    >
+                                                       {coolerDistributionChartData.map((entry, index) => (
+                                                          <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={chartConfig[entry.name]?.color}
+                                                            className="focus:outline-none"
+                                                            tabIndex={0}
+                                                          />
+                                                        ))}
+                                                    </Pie>
+                                                    <ChartLegend content={<CustomPieChartLegend />} />
+                                                </PieChart>
+                                            </ChartContainer>
+                                        </UiCardContent>
+                                    </UiCard>
+                                     <UiCard>
+                                        <UiCardHeader>
+                                            <UiCardTitle>Sales by Location</UiCardTitle>
+                                            <UiCardDescription>Total coolers sold per city.</UiCardDescription>
+                                        </UiCardHeader>
+                                        <UiCardContent>
+                                            <ScrollArea className="h-[250px] w-full">
+                                                <div className="space-y-2">
+                                                    {salesByLocationChartData.map(({ city, coolers }) => (
+                                                        <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                            <span className="font-medium text-foreground">{city}</span>
+                                                            <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </UiCardContent>
+                                    </UiCard>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 bg-card/60 rounded-b-lg border border-primary/20 border-t-0">
+                                <p className="text-muted-foreground">No closed deals found to generate performance metrics.</p>
+                            </div>
+                        )}
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
           </TabsContent>
           <TabsContent value="about" className="space-y-6 mt-6">
             <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
@@ -4372,15 +4494,16 @@ export default function HomePage() {
                                     <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                 </UiCardHeader>
                                 <UiCardContent>
-                                    <ChartContainer config={{ coolers: { label: "Coolers", color: "hsl(var(--chart-1))" } }} className="h-[250px] w-full">
-                                        <RechartsBarChart accessibilityLayer data={salesByLocationChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                                            <CartesianGrid vertical={false} />
-                                            <XAxis dataKey="city" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
-                                            <YAxis />
-                                            <ChartTooltipContent cursor={false} content={<ChartTooltipContent />} />
-                                            <Bar dataKey="coolers" fill="var(--color-coolers)" radius={4} />
-                                        </RechartsBarChart>
-                                    </ChartContainer>
+                                    <ScrollArea className="h-[250px] w-full">
+                                        <div className="space-y-2">
+                                            {salesByLocationChartData.map(({ city, coolers }) => (
+                                                <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                    <span className="font-medium text-foreground">{city}</span>
+                                                    <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
                                 </UiCardContent>
                             </UiCard>
                         </div>
