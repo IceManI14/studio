@@ -267,6 +267,14 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   )
 });
 
+const CustomLegend = (props: any) => {
+  return (
+    <p className="text-xs text-muted-foreground text-center mt-2">
+      Mouse over to see cooler type
+    </p>
+  );
+};
+
 
 export default function HomePage() {
   // State and Refs
@@ -4320,7 +4328,7 @@ export default function HomePage() {
                                                      <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
                                                 ))}
                                             </Pie>
-                                            <Legend content={<p className="text-xs text-muted-foreground text-center mt-2">Mouse over to see cooler type</p>} />
+                                            <Legend content={<CustomLegend />} />
                                         </PieChart>
                                     </ChartContainer>
                                 </UiCardContent>
@@ -4425,6 +4433,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
