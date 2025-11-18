@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import VisitForm from '@/components/visit-form';
 import VisitCard from '@/components/visit-card';
 import GoogleMapComponent from '@/components/google-map';
-import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, BarChart } from 'lucide-react';
+import { PlusCircle, ListChecks, User, InfoIcon, Sunset, Send, PartyPopper, MessagesSquare, Hash, Mail, ListFilter, Bot, MapPin, Brain, Loader2, Paperclip, XCircle, Swords, AlertTriangle, WifiOff, Search, FolderKanban, Map as MapIcon, RefreshCw, UploadCloud, Mic, Compass, Flame, Building, Trash2, Phone, PlusSquare, CalendarCheck, X, PackageCheck, Save, Newspaper, LayoutGrid, Square, Star, DollarSign, FileText, CalendarClock, Database, LogIn, LogOut, FileUp, FileType, CalendarIcon, Gauge, Edit, UserPlus, Info, ClipboardList, BarChart, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, isSameDay, isToday, startOfDay, addDays, isFuture } from 'date-fns';
@@ -60,7 +60,7 @@ import ExportPdfButton from '@/components/export-pdf-button';
 import ExportButton from '@/components/export-button';
 import ExportDetailedPdfButton from '@/components/export-detailed-pdf-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, BarChart as RechartsBarChart } from 'recharts';
 
 
@@ -267,11 +267,19 @@ const CallDayVisitList = memo(function CallDayVisitList({ visits, onEdit, onDele
   )
 });
 
-const CustomLegend = (props: any) => {
+const CustomPieChartLegend = (props: any) => {
+  const { payload } = props;
+  if (!payload) return null;
+
   return (
-    <p className="text-xs text-muted-foreground text-center mt-2">
-      Mouse over to see cooler type
-    </p>
+    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-4">
+      {payload.map((entry: any, index: number) => (
+        <div key={`item-${index}`} className="flex items-center">
+          <span className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: entry.color }} />
+          <span>{entry.value}: {entry.payload.value}</span>
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -2634,6 +2642,18 @@ export default function HomePage() {
     return config;
   }, [coolerDistributionChartData]);
 
+  const PieChartLabel = ({ viewBox, name, percent }: { viewBox?: { cx: number, cy: number }, name: string, percent: number }) => {
+    if (!viewBox) return null;
+    const { cx, cy } = viewBox;
+    const percentFormatted = `${(percent * 100).toFixed(0)}%`;
+    return (
+        <text x={cx} y={cy} fill="hsl(var(--foreground))" textAnchor="middle" dominantBaseline="central">
+            <tspan x={cx} dy="-0.5em" fontSize="0.875rem" fontWeight="bold">{name}</tspan>
+            <tspan x={cx} dy="1.2em" fontSize="0.75rem" fill="hsl(var(--muted-foreground))">{percentFormatted}</tspan>
+        </text>
+    );
+  };
+
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
@@ -3689,7 +3709,7 @@ export default function HomePage() {
                                 <h2 className="text-2xl font-headline font-semibold text-foreground">Debbie</h2>
                             </div>
                             <Button onClick={() => setIsPerformanceModalOpen(true)} variant="secondary" size="sm">
-                                <BarChart className="mr-2 h-4 w-4" />
+                                <UserCog className="mr-2 h-4 w-4" />
                                 {selectedSalesperson?.name}'s Performance
                             </Button>
                         </div>
@@ -4322,13 +4342,30 @@ export default function HomePage() {
                                 <UiCardContent>
                                     <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
                                         <PieChart>
-                                            <ChartTooltipContent nameKey="value" hideLabel />
-                                            <Pie data={coolerDistributionChartData} dataKey="value" nameKey="name" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`}>
-                                                {coolerDistributionChartData.map((entry, index) => (
-                                                     <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
+                                            <ChartTooltipContent
+                                              accessibilityLayer
+                                              cursor={true}
+                                              content={<ChartTooltipContent />}
+                                            />
+                                            <Pie
+                                              data={coolerDistributionChartData}
+                                              dataKey="value"
+                                              nameKey="name"
+                                              innerRadius={60}
+                                              strokeWidth={5}
+                                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                              labelLine={false}
+                                            >
+                                               {coolerDistributionChartData.map((entry, index) => (
+                                                  <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={chartConfig[entry.name]?.color}
+                                                    className="focus:outline-none"
+                                                    tabIndex={0}
+                                                  />
                                                 ))}
                                             </Pie>
-                                            <Legend content={<CustomLegend />} />
+                                            <ChartLegend content={<CustomPieChartLegend />} />
                                         </PieChart>
                                     </ChartContainer>
                                 </UiCardContent>
@@ -4340,11 +4377,11 @@ export default function HomePage() {
                                 </UiCardHeader>
                                 <UiCardContent>
                                     <ChartContainer config={{ coolers: { label: "Coolers", color: "hsl(var(--chart-1))" } }} className="h-[250px] w-full">
-                                        <RechartsBarChart data={salesByLocationChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                        <RechartsBarChart accessibilityLayer data={salesByLocationChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                                             <CartesianGrid vertical={false} />
                                             <XAxis dataKey="city" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
                                             <YAxis />
-                                            <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
+                                            <ChartTooltipContent cursor={false} content={<ChartTooltipContent />} />
                                             <Bar dataKey="coolers" fill="var(--color-coolers)" radius={4} />
                                         </RechartsBarChart>
                                     </ChartContainer>
@@ -4436,4 +4473,8 @@ export default function HomePage() {
 
 
 
+
+
+
+    
 
