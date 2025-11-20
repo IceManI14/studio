@@ -1,6 +1,6 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'Optimum Trailblazer',
@@ -20,10 +20,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@700;900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <div className="relative z-10">
-          {children}
-        </div>
-        <Toaster />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
