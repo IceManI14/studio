@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, addDays, parse } from "date-fns";
+import { format, addDays, parse, startOfDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
@@ -389,37 +389,34 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const pricingDiscussedValue = form.watch('pricingDiscussed');
   
   useEffect(() => {
+    let pricingToggledOn = false;
+    let trialToggledOn = false;
+
     const subscription = form.watch((value, { name, type }) => {
-      if (name === 'pricingDiscussed' && type === 'change') {
-        const isPricingDiscussed = value.pricingDiscussed;
-        if (isPricingDiscussed) {
-          // Only set defaults if the fields are currently empty
-          if (form.getValues('leaseTerm') === undefined) {
-            form.setValue('leaseTerm', 60);
-          }
+        if (name === 'pricingDiscussed' && type === 'change' && value.pricingDiscussed && !pricingToggledOn) {
+            pricingToggledOn = true;
+            if (form.getValues('leaseTerm') === undefined) {
+                form.setValue('leaseTerm', 60);
+            }
         }
-      }
-      
-      if (name === 'freeTrial' && type === 'change') {
-        const isFreeTrial = value.freeTrial;
-        if (isFreeTrial) {
-          // Only set defaults if the fields are currently empty
-          if (!form.getValues("freeTrialStartDate")) {
-            const startDate = new Date();
-            form.setValue("freeTrialStartDate", startDate);
-          }
-          if (!form.getValues("futureMeetingDateTime")) {
-            const startDate = form.getValues("freeTrialStartDate") || new Date();
-            const followUpDate = addDays(startDate, 7);
-            followUpDate.setHours(10, 0, 0, 0);
-            form.setValue("futureMeetingSet", true);
-            form.setValue("futureMeetingDateTime", followUpDate);
-          }
+        
+        if (name === 'freeTrial' && type === 'change' && value.freeTrial && !trialToggledOn) {
+            trialToggledOn = true;
+            if (!form.getValues("freeTrialStartDate")) {
+                const startDate = new Date();
+                form.setValue("freeTrialStartDate", startOfDay(startDate));
+            }
+            if (!form.getValues("futureMeetingDateTime")) {
+                const startDate = form.getValues("freeTrialStartDate") || new Date();
+                const followUpDate = addDays(startOfDay(startDate), 7);
+                form.setValue("futureMeetingSet", true);
+                form.setValue("futureMeetingDateTime", followUpDate);
+            }
         }
-      }
     });
+
     return () => subscription.unsubscribe();
-  }, [form]);
+}, [form]);
 
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
