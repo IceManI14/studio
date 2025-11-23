@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, addDays } from "date-fns";
+import { format, addDays, parse } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from 'next/image';
@@ -170,7 +170,7 @@ const buildVisitPayload = (data: VisitFormData, visitState: Visit | undefined, c
     decisionMakerName: data.decisionMakerName,
     decisionMakerTitle: data.decisionMakerTitle,
     decisionMakerContact: data.decisionMakerContact,
-    interestedUnits: (data.partnershipConfidence && data.partnershipConfidence >= 4) ? data.interestedUnits : [],
+    interestedUnits: data.interestedUnits,
     hasTDSReading: data.hasTDSReading,
     tdsValue: data.hasTDSReading ? data.tdsValue : undefined,
     futureMeetingSet: data.futureMeetingSet,
@@ -1174,10 +1174,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                                   isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"
                                 )}
                                 onClick={() => {
-                                  field.onChange(starValue)
-                                  if (starValue < 4) {
-                                    form.setValue('interestedUnits', []);
-                                  }
+                                  field.onChange(starValue);
                                 }}
                                 onMouseEnter={() => setHoveredStars(starValue)}
                               />
@@ -1688,113 +1685,80 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                 <FormField
                   control={form.control}
                   name="futureMeetingDateTime"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
-                      <FormLabel>Meeting Date & Time</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                               disabled={form.watch('freeTrial')}
-                            >
-                              {field.value ? (
-                                format(new Date(field.value), "PPP 'at' h:mm a")
-                              ) : (
-                                <span>Not yet scheduled</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => {
-                              if (!date) {
-                                field.onChange(undefined);
-                                return;
-                              }
-                              const newDateTime = new Date(date);
-                              const existingTime = field.value ? new Date(field.value) : new Date();
-                              
-                              newDateTime.setHours(field.value ? existingTime.getHours() : 9);
-                              newDateTime.setMinutes(field.value ? existingTime.getMinutes() : 0);
-                              newDateTime.setSeconds(0);
-                              newDateTime.setMilliseconds(0);
-                              
-                              field.onChange(newDateTime);
-                            }}
-                            disabled={(date) =>
-                              date < new Date(new Date().setDate(new Date().getDate() - 1))
-                            }
-                            initialFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                            <div className="flex items-center gap-2">
-                              <Label htmlFor="hours">Time</Label>
-                              <Select
-                                disabled={!field.value}
-                                value={field.value ? String(new Date(field.value).getHours()) : '9'}
-                                onValueChange={(value) => {
-                                  if (!field.value) return;
-                                  const newDate = new Date(field.value);
-                                  newDate.setHours(parseInt(value));
-                                  field.onChange(newDate);
-                                }}
-                              >
-                                <SelectTrigger id="hours" className="w-[80px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Array.from({ length: 12 }, (_, i) => i + 8).map(hour => (
-                                     <SelectItem key={hour} value={String(hour)}>{String(hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour)).padStart(2, '0')} {hour < 12 || hour === 24 ? 'AM' : 'PM'}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              :
-                              <Select
-                                disabled={!field.value}
-                                value={field.value ? String(new Date(field.value).getMinutes()).padStart(2, '0') : '00'}
-                                 onValueChange={(value) => {
-                                  if (!field.value) return;
-                                  const newDate = new Date(field.value);
-                                  newDate.setMinutes(parseInt(value));
-                                  field.onChange(newDate);
-                                }}
-                              >
-                                <SelectTrigger className="w-[80px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="00">00</SelectItem>
-                                  <SelectItem value="15">15</SelectItem>
-                                  <SelectItem value="30">30</SelectItem>
-                                  <SelectItem value="45">45</SelectItem>
-                                </SelectContent>
-                              </Select>
+                  render={({ field }) => {
+                    const [dateString, setDateString] = useState(field.value ? format(new Date(field.value), "MM/dd/yyyy h:mm a") : "");
+                    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+                    useEffect(() => {
+                        setDateString(field.value ? format(new Date(field.value), "MM/dd/yyyy h:mm a") : "");
+                    }, [field.value]);
+
+                    const handleDateChange = (date: Date | undefined) => {
+                        field.onChange(date);
+                        if (date) {
+                            setDateString(format(date, "MM/dd/yyyy h:mm a"));
+                        } else {
+                            setDateString("");
+                        }
+                    };
+
+                    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                        setDateString(e.target.value);
+                    };
+
+                    const handleInputBlur = () => {
+                        const parsedDate = parse(dateString, "MM/dd/yyyy h:mm a", new Date());
+                        if (!isNaN(parsedDate.getTime())) {
+                            field.onChange(parsedDate);
+                        } else {
+                             // Revert to last valid value if input is invalid
+                             setDateString(field.value ? format(new Date(field.value), "MM/dd/yyyy h:mm a") : "");
+                        }
+                    };
+
+                    return (
+                        <FormItem className="flex flex-col space-y-2 rounded-md border border-accent p-3 shadow-sm bg-background/10">
+                            <FormLabel>Meeting Date & Time</FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                     <Input
+                                        placeholder="MM/DD/YYYY h:mm AM/PM"
+                                        value={dateString}
+                                        onChange={handleInputChange}
+                                        onBlur={handleInputBlur}
+                                        className="pr-10"
+                                        disabled={form.watch('freeTrial')}
+                                    />
+                                </FormControl>
+                                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"ghost"}
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                            disabled={form.watch('freeTrial')}
+                                        >
+                                            <CalendarIcon className="h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value ? new Date(field.value) : undefined}
+                                            onSelect={(date) => {
+                                                handleDateChange(date);
+                                                setIsCalendarOpen(false);
+                                            }}
+                                            disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
-                          </div>
-                          <div className="p-2 border-t border-border flex justify-end">
-                              <Button
-                                  type="button"
-                                  variant="ghost"
-                                  onClick={() => field.onChange(undefined)}
-                                  className="text-sm h-8"
-                              >
-                                  Clear Date
-                              </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                            <FormMessage />
+                        </FormItem>
+                    );
+                }}
                 />
               )}
 
