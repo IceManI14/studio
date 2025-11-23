@@ -389,12 +389,37 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   const pricingDiscussedValue = form.watch('pricingDiscussed');
   
   useEffect(() => {
-    if (pricingDiscussedValue) {
-      if (form.getValues('leaseTerm') === undefined) {
-        form.setValue('leaseTerm', 60, { shouldDirty: true });
+    const subscription = form.watch((value, { name, type }) => {
+      if (name === 'pricingDiscussed' && type === 'change') {
+        const isPricingDiscussed = value.pricingDiscussed;
+        if (isPricingDiscussed) {
+          // Only set defaults if the fields are currently empty
+          if (form.getValues('leaseTerm') === undefined) {
+            form.setValue('leaseTerm', 60);
+          }
+        }
       }
-    }
-  }, [pricingDiscussedValue, form]);
+      
+      if (name === 'freeTrial' && type === 'change') {
+        const isFreeTrial = value.freeTrial;
+        if (isFreeTrial) {
+          // Only set defaults if the fields are currently empty
+          if (!form.getValues("freeTrialStartDate")) {
+            const startDate = new Date();
+            form.setValue("freeTrialStartDate", startDate);
+          }
+          if (!form.getValues("futureMeetingDateTime")) {
+            const startDate = form.getValues("freeTrialStartDate") || new Date();
+            const followUpDate = addDays(startDate, 7);
+            followUpDate.setHours(10, 0, 0, 0);
+            form.setValue("futureMeetingSet", true);
+            form.setValue("futureMeetingDateTime", followUpDate);
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
 
   const handleRemoveImage = useCallback((side: 'front' | 'back') => {
@@ -998,23 +1023,6 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
     toast({ title: "Address Added", description: "The address has been saved to the visit notes." });
   };
-  
-  const watchedFreeTrial = form.watch("freeTrial");
-  useEffect(() => {
-    if (watchedFreeTrial) {
-      if (!form.getValues("freeTrialStartDate")) {
-        const startDate = new Date();
-        form.setValue("freeTrialStartDate", startDate, { shouldDirty: true });
-      }
-      if (!form.getValues("futureMeetingDateTime")) {
-        const startDate = form.getValues("freeTrialStartDate") || new Date();
-        const followUpDate = addDays(startDate, 7);
-        followUpDate.setHours(10, 0, 0, 0);
-        form.setValue("futureMeetingSet", true, { shouldDirty: true });
-        form.setValue("futureMeetingDateTime", followUpDate, { shouldDirty: true });
-      }
-    }
-  }, [watchedFreeTrial, form]);
 
   return (
     <>
@@ -2022,4 +2030,5 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
 export default VisitForm;
 
+    
     
