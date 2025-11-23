@@ -29,6 +29,9 @@ export interface Visit {
   hasBusinessCard?: boolean;
   businessCardImageFrontUrl?: string | null;
   businessCardImageBackUrl?: string | null;
+  locationImageUrl?: string | null;
+  underSinkImageUrl?: string | null;
+  installedUnitImageUrl?: string | null;
   discussedCompetitors?: boolean;
   competitorName?: string | null;
   coolerType?: string | null; 

@@ -5,7 +5,7 @@
 import type { Visit, CompanyDoc } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon, ClipboardList, Phone } from 'lucide-react';
+import { CalendarDays, Edit, FileText, Info, Loader2, Sparkles, Star, Trash2, CheckSquare, Square, Swords, Box, ShieldAlert, Hash, PackageCheck, Droplets, AlertTriangle, CheckCircle2, ShieldQuestion, Wind, CalendarCheck, CalendarX, FileType, CalendarClock, Contact, PlusSquare, Mic, Navigation, MapPin, LocateFixed, DollarSign, RefreshCw, X, ChevronsUp, Compass, Mail, CalendarIcon, ClipboardList, Phone, Image as ImageIcon } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
@@ -156,6 +156,8 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
   const hasDecisionMakerDetails = visit.decisionMakerName || visit.decisionMakerTitle || visit.decisionMakerContact || (visit.contactInfo?.info && visit.contactInfo.info !== "No contact info found on web!");
   
   const potentialCommission = calculateCommission(visit);
+  
+  const hasSiteImages = visit.locationImageUrl || visit.underSinkImageUrl || visit.installedUnitImageUrl;
 
   const ZoomedContent = () => (
     <div className="space-y-4 text-sm">
@@ -188,8 +190,34 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
                 </Button>
             </div>
         )}
-
-        {(hasDecisionMakerDetails || visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && <Separator />}
+        
+        {(hasSiteImages || hasDecisionMakerDetails || visit.businessCardImageFrontUrl || visit.businessCardImageBackUrl) && <Separator />}
+        
+        {hasSiteImages && (
+            <div>
+                <h4 className="font-semibold text-primary flex items-center mb-2"><ImageIcon className="mr-2 h-4 w-4" />Site & Install Photos</h4>
+                <div className="pl-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {visit.locationImageUrl && (
+                        <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground">Location</p>
+                            <NextImage src={visit.locationImageUrl} alt="Location photo" width={200} height={150} className="rounded-md border aspect-video object-cover" />
+                        </div>
+                    )}
+                    {visit.underSinkImageUrl && (
+                        <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground">Under Sink</p>
+                            <NextImage src={visit.underSinkImageUrl} alt="Under-sink photo" width={200} height={150} className="rounded-md border aspect-video object-cover" />
+                        </div>
+                    )}
+                    {visit.installedUnitImageUrl && (
+                        <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground">Installed Unit</p>
+                            <NextImage src={visit.installedUnitImageUrl} alt="Installed unit photo" width={200} height={150} className="rounded-md border aspect-video object-cover" />
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
 
         {hasDecisionMakerDetails && (
             <div>
@@ -637,5 +665,3 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit, onDelete, onUpdate
 };
 
 export default VisitCard;
-
-
