@@ -401,32 +401,23 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
       setIsSaving(false);
     }
   }, [form, toast, formInitialData, currentLatitude, currentLongitude, onSave]);
-
-  const pricingDiscussedValue = form.watch('pricingDiscussed');
   
   useEffect(() => {
-    let pricingToggledOn = false;
-    let trialToggledOn = false;
-
     const subscription = form.watch((value, { name, type }) => {
-        if (name === 'pricingDiscussed' && type === 'change' && value.pricingDiscussed && !pricingToggledOn) {
-            pricingToggledOn = true;
-            if (form.getValues('leaseTerm') === undefined) {
-                // form.setValue('leaseTerm', 60);
-            }
+        if (name === 'pricingDiscussed' && type === 'change' && value.pricingDiscussed) {
+          // No auto-population
         }
         
-        if (name === 'freeTrial' && type === 'change' && value.freeTrial && !trialToggledOn) {
-            trialToggledOn = true;
+        if (name === 'freeTrial' && type === 'change' && value.freeTrial) {
+            const startDate = form.getValues("freeTrialStartDate") || new Date();
+            const followUpDate = addDays(startOfDay(startDate), 7);
+            
             if (!form.getValues("freeTrialStartDate")) {
-                const startDate = new Date();
-                form.setValue("freeTrialStartDate", startOfDay(startDate));
+                 form.setValue("freeTrialStartDate", startOfDay(startDate));
             }
             if (!form.getValues("futureMeetingDateTime")) {
-                const startDate = form.getValues("freeTrialStartDate") || new Date();
-                const followUpDate = addDays(startOfDay(startDate), 7);
-                form.setValue("futureMeetingSet", true);
-                form.setValue("futureMeetingDateTime", followUpDate);
+                 form.setValue("futureMeetingSet", true);
+                 form.setValue("futureMeetingDateTime", followUpDate);
             }
         }
     });
@@ -903,11 +894,10 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   }, [isOpen, startDictationOnOpen, handleToggleVoiceNotes]);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    const enableCamera = async () => {
-      if (isCameraViewVisible && videoRef.current) {
+    if (isCameraViewVisible) {
+      const getCameraPermission = async () => {
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
           setHasCameraPermission(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -917,21 +907,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
           setIsCameraViewVisible(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use this feature.',
+          });
         }
-      }
-    };
-
-    enableCamera();
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    };
-  }, [isCameraViewVisible]);
+      };
+      getCameraPermission();
+    } else {
+      stopCameraStream();
+    }
+    // Cleanup function
+    return () => stopCameraStream();
+  }, [isCameraViewVisible, stopCameraStream, toast]);
 
   const handleTakeLater = () => {
     const currentNotes = form.getValues('notes') || '';
@@ -1397,21 +1386,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
                   </div>
                   {isCameraViewVisible && (
                     <div className="mt-2 space-y-2">
-                      {hasCameraPermission === false && (
+                      <video
+                          ref={videoRef}
+                          className="w-full aspect-video rounded-md bg-muted border"
+                          muted
+                          playsInline
+                      />
+                      {hasCameraPermission === false ? (
                          <Alert variant="destructive">
                             <AlertTitle>Camera Access Denied</AlertTitle>
                             <AlertDescription>
                               Please allow camera access in your browser settings to use this feature. You might need to refresh the page after granting permission.
                             </AlertDescription>
                           </Alert>
-                      )}
-                      <video
-                          ref={videoRef}
-                          className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })}
-                          muted
-                          playsInline
-                      />
-                      {hasCameraPermission && (
+                      ) : (
                           <Button type="button" onClick={handleCaptureImage} className="w-full">
                               <CameraIcon className="mr-2 h-4 w-4" /> Capture Image
                           </Button>
@@ -1526,21 +1514,20 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 
                   {isCameraViewVisible && (
                     <div className="mt-2 space-y-2">
-                      {hasCameraPermission === false && (
+                      <video
+                          ref={videoRef}
+                          className="w-full aspect-video rounded-md bg-muted border"
+                          muted
+                          playsInline
+                      />
+                      {hasCameraPermission === false ? (
                          <Alert variant="destructive">
                             <AlertTitle>Camera Access Denied</AlertTitle>
                             <AlertDescription>
                               Please allow camera access in your browser settings to use this feature. You might need to refresh the page after granting permission.
                             </AlertDescription>
                           </Alert>
-                      )}
-                      <video
-                          ref={videoRef}
-                          className={cn("w-full aspect-video rounded-md bg-muted border", { 'hidden': hasCameraPermission === false })}
-                          muted
-                          playsInline
-                      />
-                      {hasCameraPermission && (
+                      ) : (
                           <Button type="button" onClick={handleCaptureImage} className="w-full">
                               <CameraIcon className="mr-2 h-4 w-4" /> Capture {isCapturingBack ? 'Back' : 'Front'}
                           </Button>
