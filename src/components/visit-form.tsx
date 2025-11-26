@@ -404,13 +404,25 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
   
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
-        if (name === 'pricingDiscussed' && type === 'change' && value.pricingDiscussed) {
-          // No auto-population
+        if (name === 'pricingDiscussed' && type === 'change') {
+            if (value.pricingDiscussed) {
+                // If pricing is now being discussed and no values are set, pre-fill them.
+                if (value.leaseTerm === undefined && value.installationFee === undefined) {
+                    form.setValue("leaseTerm", 36);
+                }
+            } else {
+                // If pricing is no longer being discussed, you might want to clear the fields.
+                // This is commented out to prevent data loss if accidentally unchecked.
+                // form.setValue("priceQuoted", undefined);
+                // form.setValue("leaseTerm", undefined);
+                // form.setValue("installationFee", undefined);
+            }
         }
         
         if (name === 'freeTrial' && type === 'change' && value.freeTrial) {
             const startDate = form.getValues("freeTrialStartDate") || new Date();
             const followUpDate = addDays(startOfDay(startDate), 7);
+            followUpDate.setHours(0, 0, 0, 0); // Set time to midnight
             
             if (!form.getValues("freeTrialStartDate")) {
                  form.setValue("freeTrialStartDate", startOfDay(startDate));
@@ -423,7 +435,7 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
     });
 
     return () => subscription.unsubscribe();
-}, [form]);
+  }, [form]);
 
 
   const handleRemoveImage = useCallback((imageType: 'businessCardFront' | 'businessCardBack' | 'location' | 'underSink' | 'installedUnit') => {
@@ -2192,3 +2204,4 @@ const VisitForm: React.FC<VisitFormProps> = ({ isOpen, onClose, onSave, initialD
 };
 
 export default VisitForm;
+

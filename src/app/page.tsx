@@ -1593,8 +1593,9 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    let watchId: number;
     if (typeof window !== 'undefined' && 'geolocation' in navigator && firebaseConfigured) {
-        const watchId = navigator.geolocation.watchPosition(
+        watchId = navigator.geolocation.watchPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
                 const currentTime = Date.now();
@@ -1650,9 +1651,12 @@ export default function HomePage() {
                 maximumAge: 0,
             }
         );
-
-        return () => navigator.geolocation.clearWatch(watchId);
-    }
+      }
+        return () => {
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+          }
+        }
   }, [lastLocation]);
 
   useEffect(() => {
@@ -2081,7 +2085,10 @@ export default function HomePage() {
   };
 
   const handleUpdateDealClosed = async (visitId: string, dealClosed: boolean) => {
-    handleUpdateVisit(visitId, { dealClosed });
+    const result = await handleUpdateVisit(visitId, { dealClosed });
+    if (result) {
+        setZoomedVisit(prev => prev && prev.id === visitId ? { ...prev, dealClosed } : prev);
+    }
   };
 
   const handleLogFollowUp = (existingVisit: Visit) => {
@@ -4038,25 +4045,23 @@ export default function HomePage() {
                                                 <PieChart>
                                                     <ChartTooltipContent
                                                       accessibilityLayer
-                                                      cursor={true}
-                                                      content={<ChartTooltipContent />}
+                                                      cursor={false}
+                                                      content={<ChartTooltipContent hideIndicator />}
                                                     />
                                                     <Pie
-                                                      data={coolerDistributionChartData}
-                                                      dataKey="value"
-                                                      nameKey="name"
-                                                      innerRadius={60}
-                                                      strokeWidth={5}
-                                                      labelLine={true}
-                                                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                                      outerRadius={80}
+                                                        data={coolerDistributionChartData}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        innerRadius={60}
+                                                        strokeWidth={5}
+                                                        labelLine={true}
+                                                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                                     >
                                                        {coolerDistributionChartData.map((entry, index) => (
                                                           <Cell
                                                             key={`cell-${index}`}
                                                             fill={chartConfig[entry.name]?.color}
                                                             className="focus:outline-none"
-                                                            tabIndex={0}
                                                           />
                                                         ))}
                                                     </Pie>
@@ -4071,14 +4076,14 @@ export default function HomePage() {
                                             <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                         </UiCardHeader>
                                         <UiCardContent>
-                                            <div className="space-y-2">
-                                                {salesByLocationChartData.map(({ city, coolers }) => (
-                                                    <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                        <span className="font-medium text-foreground">{city}</span>
-                                                        <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                          <div className="space-y-2">
+                                              {salesByLocationChartData.map(({ city, coolers }) => (
+                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                      <span className="font-medium text-foreground">{city}</span>
+                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                  </div>
+                                              ))}
+                                          </div>
                                         </UiCardContent>
                                     </UiCard>
                                 </div>
@@ -4093,271 +4098,164 @@ export default function HomePage() {
             </Accordion>
           </TabsContent>
           <TabsContent value="about" className="space-y-6 mt-6">
-            <div className="p-6 bg-card rounded-xl shadow-xl min-h-[300px] flex flex-col items-start space-y-6">
-                <div className="w-full text-center">
-                    <h2 className="text-2xl font-headline font-semibold text-primary flex items-center justify-center">
-                        <InfoIcon className="mr-3 h-7 w-7" /> App Guide
+            <Accordion type="single" collapsible>
+              <AccordionItem value="app-info" className="border-none">
+                <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
+                  <div className="flex w-full items-center">
+                    <div className="flex items-center justify-start w-10 shrink-0">
+                      <Info className="h-7 w-7 text-primary" />
+                    </div>
+                    <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
+                      About & Feedback
                     </h2>
-                </div>
+                    <div className="w-10 shrink-0"></div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-0">
+                  <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20">
+                    <UiCardContent className="p-6 space-y-4">
+                      <p className="text-muted-foreground">
+                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to help you track visits, manage contacts, and close more deals.
+                      </p>
+                      
+                      <div className="space-y-2 border-t pt-4">
+                          <h3 className="font-semibold text-foreground">Data Storage</h3>
+                          <p className="text-sm text-muted-foreground">
+                            All your visit data is saved locally in your browser and will persist between sessions on this device. If Firebase is configured, your data will also be synced to the cloud for real-time updates and backup.
+                          </p>
+                      </div>
 
-                <Tabs defaultValue="about-field-day" className="w-full">
-                    <TabsList className="flex flex-wrap h-auto sm:h-10 justify-center w-full mb-2 bg-primary/10 backdrop-blur-sm p-1 rounded-full border border-primary/20">
-                        <TabsTrigger value="about-field-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <PlusCircle className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-planner" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <FolderKanban className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-call-day" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <ListChecks className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-visits" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <MapPin className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-debbie" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                            <Bot className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-data" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                           <Database className="h-5 w-5" />
-                        </TabsTrigger>
-                        <TabsTrigger value="about-feedback" className="rounded-full border-transparent data-[state=active]:bg-primary/20 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center justify-center">
-                           <MessagesSquare className="h-5 w-5" />
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="about-field-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">This is your main hub for logging new visits and capturing opportunities as they happen. Here's how to use it:</p>
-                        <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Navigation Plan:</strong> Before you head out, use the "Navigation Plan" to set a destination city. Debbie will find an optimal, central parking spot for you.
-                            </li>
-                            <li>
-                                <strong>Flag Hotspot:</strong> Tap the <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white shadow-md align-middle"><Flame className="h-4 w-4" /></span> button to mark locations that look promising while you are driving but have other arrangements.
-                            </li>
-                            <li>
-                                <strong>Quicklog:</strong> Use <span className="inline-block bg-accent text-black px-2 py-1 rounded-md text-xs font-semibold">Quicklog</span> to create a new record for any business.
-                            </li>
-                        </ul>
-                    </TabsContent>
-
-                     <TabsContent value="about-planner" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">The Planner tab helps you organize all your future activities. It's automatically sorted into four key sections:</p>
-                        <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Future Meetings (Scheduled):</strong> Any visit with a specific date and time appears here, sorted by the soonest appointment. These are often created automatically when Debbie analyzes your notes.
-                            </li>
-                            <li>
-                                <strong>Future Visits (Unscheduled):</strong> This section is for leads you want to pursue but haven't scheduled yet. You can add to this list by converting a "Hot Lead" from the Debbie tab.
-                            </li>
-                            <li>
-                                <strong>Flagged Hotspots:</strong> This powerful list contains all the locations you've marked on the go with the "Flag Hotspot" button. Review them here, edit their details, and decide when to schedule a full visit.
-                            </li>
-                            <li>
-                                <strong>Active Free Trials:</strong> This section tracks all your visits where a free trial has been set up, helping you monitor them and follow up at the right time to close the deal.
-                            </li>
-                        </ul>
-                    </TabsContent>
-
-                    <TabsContent value="about-call-day" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>The "Call Day" tab is your command center for reviewing past interactions. It provides a filterable and sortable list of all your previous visits, helping you strategize your follow-up calls and emails effectively.</p>
-                    </TabsContent>
-
-                    <TabsContent value="about-visits" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p>The "Visits" tab shows all your logged locations on an interactive map, giving you a visual overview of your progress. From here, you can export your visit data to PDF or CSV and quickly compose a summary email to your manager, saving you time and hassle.</p>
-                    </TabsContent>
-
-                    <TabsContent value="about-debbie" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <p className="mb-4">"Debbie" is your supercharged AI assistant. Her real power lies in automation:</p>
-                         <ul className="list-disc list-inside space-y-3">
-                            <li>
-                                <strong>Automated Data Entry:</strong> When you add notes to a visit (by typing or voice), Debbie reads them and automatically fills out form fields like competitor info, TDS readings, or if a business card was collected.
-                            </li>
-                            <li>
-                                <strong>Smart Scheduling &amp; Calendar:</strong> If your notes mention a meeting, Debbie automatically schedules it. This syncs with the calendar in the "Call Day" tab, which uses color-coding to give you a quick overview of your schedule:
-                                <ul className="list-[circle] list-inside ml-4 mt-2 space-y-1 text-sm">
-                                  <li><strong className="text-orange-500">Orange:</strong> A future meeting is scheduled.</li>
-                                  <li><strong className="text-green-500">Green:</strong> A deal was closed on this day.</li>
-                                  <li><strong className="text-blue-400">Blue:</strong> You logged one or more visits on this past day.</li>
-                                  <li><strong className="text-red-500">Red:</strong> A free trial is scheduled to end on this day, so it's a good time to follow up!</li>
-                                  <li><strong className="text-black bg-cyan-400 px-1 rounded-sm">Turquoise Background:</strong> Today's date.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>Document Analysis:</strong> In the chat, you can upload PDFs or CSVs to give Debbie context for your questions. You can also upload files for long-term memory via the "Manage Files" button.
-                            </li>
-                             <li>
-                                <strong>Lead Generation:</strong> Use the "Find Company" feature to search for businesses in your territory. The results are automatically added as "Hot Leads" in this tab, ready for you to review and convert into future visits.
-                            </li>
-                        </ul>
-                    </TabsContent>
-                    
-                    <TabsContent value="about-data" className="text-foreground text-base leading-relaxed p-4 bg-background/20 rounded-lg">
-                        <DataUsageDashboard visits={visits} hotLeads={hotLeads} managedFiles={managedFiles} />
-                    </TabsContent>
-
-                    <TabsContent value="about-feedback" className="p-4 bg-background/20 rounded-lg">
-                        <div className="w-full">
-                            <h3 className="text-xl font-headline font-semibold text-primary mb-2 flex items-center">
-                                <MessagesSquare className="mr-3 h-6 w-6" /> Suggestions and Improvements
-                            </h3>
-                            <div className="space-y-3">
-                                <Label htmlFor="appSuggestion" className="text-foreground">Your Suggestion:</Label>
-                                <Textarea id="appSuggestion" placeholder="Type your feedback or feature request here..." value={suggestionText} onChange={(e) => setSuggestionText(e.target.value)} className="min-h-[100px]" />
-                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}><Send className="mr-2 h-4 w-4" /> Add Suggestion</Button>
+                       <div className="space-y-2 border-t pt-4">
+                          <h3 className="font-semibold text-foreground">Suggest an Improvement</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Have an idea to make the app better? Type your suggestion below and submit it directly to the development team.
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            <Textarea
+                              placeholder="Type your suggestion here..."
+                              value={suggestionText}
+                              onChange={(e) => setSuggestionText(e.target.value)}
+                            />
+                            <div className="flex gap-2">
+                                <Button onClick={handleSubmitSuggestion} disabled={!suggestionText.trim()}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Submit
+                                </Button>
+                                <Button variant="secondary" onClick={handleEmailSuggestions} disabled={submittedSuggestions.length === 0}>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Email Suggestions
+                                </Button>
                             </div>
-                        </div>
+                          </div>
+                      </div>
 
-                        {submittedSuggestions.length > 0 && (
-                            <div className="w-full pt-4 mt-6 border-t">
-                                <h3 className="text-2xl font-headline font-semibold text-primary mb-3">List of Possible Improvements</h3>
-                                <div className="p-4 bg-secondary/30 rounded-lg border border-border max-h-60 overflow-y-auto">
-                                <ol className="list-decimal list-inside space-y-2 text-foreground/90">
-                                    {submittedSuggestions.map((suggestion, index) => (
-                                    <li key={`${suggestion.timestamp}-${index}`} className="text-sm leading-relaxed">
-                                        {suggestion.text}
-                                        <span className="block text-xs text-muted-foreground mt-0.5">&mdash; on {format(suggestion.timestamp, 'MMM d, yyyy, h:mm a')}</span>
-                                    </li>
-                                    ))}
-                                </ol>
-                                </div>
-                                <Button onClick={handleEmailSuggestions} variant="default" className="mt-4"><Mail className="mr-2 h-4 w-4" /> Email Suggestions to Designer</Button>
-                            </div>
-                        )}
-                    </TabsContent>
-                </Tabs>
-            </div>
+                      <div className="space-y-2 border-t pt-4">
+                         <h3 className="font-semibold text-foreground">Manager Actions</h3>
+                         <div className="flex gap-2">
+                            <Button variant="secondary" onClick={() => handleEmailManager()}>
+                              <Mail className="mr-2 h-4 w-4" /> Email Today's Visits
+                            </Button>
+                         </div>
+                      </div>
+                    </UiCardContent>
+                  </UiCard>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
         </Tabs>
         
-        <Dialog open={!!zoomedVisit} onOpenChange={(isOpen) => { if (!isOpen) setZoomedVisit(null); }}>
-          <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
-            {zoomedVisit && (
-              <>
-                <DialogTitle className="sr-only">Visit Details: {zoomedVisit.companyName}</DialogTitle>
-                <DialogDescription className="sr-only">Detailed view of the visit to {zoomedVisit.companyName}. You can see all recorded information, edit, or delete the visit from this view.</DialogDescription>
-                <VisitCard
+        {zoomedVisit && (
+          <Dialog open={!!zoomedVisit} onOpenChange={(open) => !open && setZoomedVisit(null)}>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>{zoomedVisit.companyName}</DialogTitle>
+                 <DialogDescription>{zoomedVisit.city}</DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[70vh] overflow-y-auto pr-4">
+                <VisitCard 
                   visit={zoomedVisit}
-                  onEdit={(v) => { setZoomedVisit(null); handleEditVisit(v); }}
-                  onDelete={(id) => { setZoomedVisit(null); handleDeleteVisit(id); }}
-                  onUpdateDealClosed={(id, status) => { handleUpdateDealClosed(id, status); setZoomedVisit(prev => prev ? {...prev, dealClosed: status} : null); }}
-                  isZoomedView={true}
-                  onDictateNotes={handleDictateNotes}
+                  onEdit={handleEditVisit}
+                  onDelete={handleDeleteVisit}
+                  onUpdateDealClosed={handleUpdateDealClosed}
+                  onZoom={setZoomedVisit}
                   onLogFollowUp={handleLogFollowUp}
+                  onDictateNotes={handleDictateNotes}
+                  isZoomedView
                   isOnCallList={callList.includes(zoomedVisit.id)}
                   onToggleCallList={handleToggleCallList}
                 />
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         
         <Dialog open={isDestinationModalOpen} onOpenChange={setIsDestinationModalOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Choose Your Destination</DialogTitle>
+                    <DialogTitle>Set Your Destination</DialogTitle>
                     <DialogDescription>
-                        {isExtractingCities ? "Debbie is reading your territory file..." : "Select a city from your territory, or search for one."}
+                        Choose a city from your territory to get an optimal parking suggestion from Debbie.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="max-h-[500px] overflow-y-auto pr-2">
-                    {isExtractingCities ? (
-                        <div className="flex justify-center items-center h-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : (
-                        <div className="flex flex-col space-y-4">
-                           <Button
-                                key="call-day-seabrook"
-                                variant="default"
-                                className="justify-start text-base py-6"
-                                disabled={isFindingParking}
-                                onClick={() => handleSelectDestination('Seabrook, NH')}
+                 <div className="space-y-4 py-4">
+                    <div className="relative">
+                        <Input 
+                            placeholder="Or type a city, state..." 
+                            value={destinationSearchTerm}
+                            onChange={(e) => setDestinationSearchTerm(e.target.value)}
+                            onKeyPress={(e) => { if(e.key === 'Enter') handleDestinationSearch(); }}
+                            className="pr-20"
+                        />
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+                            <Button 
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleToggleVoiceDestinationSearch}
+                                className="h-8 w-8"
+                                aria-label="Speak destination"
                             >
-                               <Phone className="mr-3 h-5 w-5" />
-                               Call Day (Seabrook)
+                                {isRecordingDestinationSearch ? <Mic className="h-4 w-4 text-red-500 animate-pulse" /> : <Mic className="h-4 w-4 text-foreground" />}
                             </Button>
-                            
-                            <div className="relative w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder={isRecordingDestinationSearch ? "Listening for city..." : "Or search for a city..."}
-                                    className="pl-10 pr-10"
-                                    value={destinationSearchTerm}
-                                    onChange={(e) => setDestinationSearchTerm(e.target.value)}
-                                    onKeyPress={(e) => { if (e.key === 'Enter') handleDestinationSearch(); }}
-                                    disabled={isRecordingDestinationSearch || isFindingParking}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={handleToggleVoiceDestinationSearch}
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                                    aria-label="Search destination with voice"
-                                    title="Search destination with voice"
-                                    disabled={isFindingParking}
-                                >
-                                    {isRecordingDestinationSearch ? (
-                                        <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                                    ) : (
-                                        <Mic className="h-4 w-4 text-foreground" />
-                                    )}
-                                </Button>
-                            </div>
-
-                            {destinationCities.length > 0 && (
-                               <div className="relative my-2">
-                                    <Separator />
-                                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">Territory Cities</span>
-                                </div>
-                            )}
-                            {destinationCities.map(city => (
-                                <Button
-                                    key={city}
-                                    variant="ghost"
-                                    className="justify-start"
-                                    disabled={isFindingParking}
-                                    onClick={() => handleSelectDestination(city)}
-                                >
-                                   {city}
-                                </Button>
-                            ))}
-                            {destinationCities.length === 0 && (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No other destination cities found in your territory file.</p>
-                            )}
+                            <Button 
+                                type="button" 
+                                size="sm" 
+                                onClick={handleDestinationSearch} 
+                                className="h-8 rounded-l-none"
+                                disabled={!destinationSearchTerm.trim()}
+                            >
+                                Go
+                            </Button>
                         </div>
+                    </div>
+                    
+                    {isExtractingCities ? (
+                        <div className="flex items-center justify-center h-24">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                    ) : destinationCities.length > 0 ? (
+                        <ScrollArea className="h-40 border rounded-md">
+                            <div className="p-2 space-y-1">
+                                {destinationCities.map(city => (
+                                    <Button key={city} variant="ghost" className="w-full justify-start" onClick={() => handleSelectDestination(city)}>
+                                        {city}
+                                    </Button>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    ) : (
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>No Cities Found</AlertTitle>
+                          <AlertDescription>
+                            No cities are defined in your profile. You can still type a destination manually above.
+                          </AlertDescription>
+                        </Alert>
                     )}
-                </div>
-                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDestinationModalOpen(false)} disabled={isFindingParking || isExtractingCities}>
-                        {isFindingParking || isExtractingCities ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Close'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-        <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Reschedule a Meeting</DialogTitle>
-                    <DialogDescription>
-                        Select a meeting from {selectedDate ? format(selectedDate, 'PPP') : 'the selected date'} to reschedule.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2 py-4">
-                    {visitsForReschedule.map(visit => (
-                        <div key={visit.id} className="flex items-center justify-between p-2 rounded-md border">
-                            <div>
-                                <p className="font-semibold">{visit.companyName}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'p') : 'Time not set'}
-                                </p>
-                            </div>
-                            <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>Reschedule</Button>
-                        </div>
-                    ))}
-                </div>
+                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsRescheduleModalOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setIsDestinationModalOpen(false)}>Cancel</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -4365,132 +4263,134 @@ export default function HomePage() {
         <Dialog open={isAllMeetingsModalOpen} onOpenChange={setIsAllMeetingsModalOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Reschedule an Appointment</DialogTitle>
+                    <DialogTitle>All Scheduled Meetings</DialogTitle>
                     <DialogDescription>
-                        Select one of your upcoming scheduled appointments to reschedule.
+                        Select a meeting to reschedule it on the calendar.
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-96 my-4">
-                  <div className="space-y-2 pr-4">
-                      {scheduledVisits.map(visit => (
-                          <div key={visit.id} className="flex items-center justify-between p-2 rounded-md border">
-                              <div>
-                                  <p className="font-semibold">{visit.companyName}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                      {visit.futureMeetingDateTime ? format(new Date(visit.futureMeetingDateTime), 'PPp') : 'Time not set'}
-                                  </p>
-                              </div>
-                              <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>Reschedule</Button>
-                          </div>
-                      ))}
-                  </div>
+                <ScrollArea className="h-72">
+                    <div className="space-y-2 p-1">
+                        {scheduledVisits.map(visit => (
+                            <div key={visit.id} className="flex justify-between items-center p-2 rounded-md bg-secondary">
+                                <div>
+                                    <p className="font-semibold">{visit.companyName}</p>
+                                    <p className="text-sm text-muted-foreground">{formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'PPPp')}</p>
+                                </div>
+                                <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Reschedule
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </ScrollArea>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAllMeetingsModalOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setIsAllMeetingsModalOpen(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
+        
         <Dialog open={isPerformanceModalOpen} onOpenChange={setIsPerformanceModalOpen}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle className="font-headline text-3xl text-primary">{selectedSalesperson?.name}'s Performance</DialogTitle>
-                    <DialogDescription>A summary of your sales metrics based on closed deals.</DialogDescription>
+                    <DialogTitle>User Performance Dashboard</DialogTitle>
+                    <DialogDescription>A summary of your sales performance based on closed deals.</DialogDescription>
                 </DialogHeader>
                 {closedDeals.length > 0 ? (
-                    <ScrollArea className="max-h-[70vh] p-1">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <UiCard>
-                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <UiCardTitle className="text-sm font-medium">Deals Closed</UiCardTitle>
-                                    <PartyPopper className="h-4 w-4 text-muted-foreground" />
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <div className="text-2xl font-bold">{closedDeals.length}</div>
-                                </UiCardContent>
-                            </UiCard>
-                             <UiCard>
-                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <UiCardTitle className="text-sm font-medium">Total Coolers Sold</UiCardTitle>
-                                    <PackageCheck className="h-4 w-4 text-muted-foreground" />
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <div className="text-2xl font-bold">{totalCoolersInField}</div>
-                                </UiCardContent>
-                            </UiCard>
-                            <UiCard>
-                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <UiCardTitle className="text-sm font-medium">Total Commission</UiCardTitle>
-                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <div className="text-2xl font-bold">${totalClosedCommission.toFixed(2)}</div>
-                                </UiCardContent>
-                            </UiCard>
-                            <UiCard>
-                                <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <UiCardTitle className="text-sm font-medium">Avg Commission/Deal</UiCardTitle>
-                                    <Hash className="h-4 w-4 text-muted-foreground" />
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <div className="text-2xl font-bold">
-                                      ${(totalClosedCommission / closedDeals.length).toFixed(2)}
-                                    </div>
-                                </UiCardContent>
-                            </UiCard>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                             <UiCard>
-                                <UiCardHeader>
-                                    <UiCardTitle>Cooler Distribution</UiCardTitle>
-                                    <UiCardDescription>Breakdown of coolers sold.</UiCardDescription>
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[300px]">
-                                        <PieChart>
-                                            <ChartTooltipContent
-                                              accessibilityLayer
-                                              cursor={false}
-                                              content={<ChartTooltipContent hideIndicator />}
-                                            />
-                                            <Pie
-                                                data={coolerDistributionChartData}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                innerRadius={60}
-                                                strokeWidth={5}
-                                                labelLine={true}
-                                                label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                            >
-                                               {coolerDistributionChartData.map((entry, index) => (
-                                                  <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={chartConfig[entry.name]?.color}
-                                                    className="focus:outline-none"
-                                                  />
-                                                ))}
-                                            </Pie>
-                                            <ChartLegend content={<CustomPieChartLegend />} />
-                                        </PieChart>
-                                    </ChartContainer>
-                                </UiCardContent>
-                            </UiCard>
-                             <UiCard>
-                                <UiCardHeader>
-                                    <UiCardTitle>Sales by Location</UiCardTitle>
-                                    <UiCardDescription>Total coolers sold per city.</UiCardDescription>
-                                </UiCardHeader>
-                                <UiCardContent>
-                                    <div className="space-y-2">
-                                        {salesByLocationChartData.map(({ city, coolers }) => (
-                                            <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                <span className="font-medium text-foreground">{city}</span>
-                                                <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </UiCardContent>
-                            </UiCard>
+                    <ScrollArea className="max-h-[70vh] p-4">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <UiCard>
+                                    <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <UiCardTitle className="text-sm font-medium">Deals Closed</UiCardTitle>
+                                        <PartyPopper className="h-4 w-4 text-muted-foreground" />
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <div className="text-2xl font-bold">{closedDeals.length}</div>
+                                    </UiCardContent>
+                                </UiCard>
+                                    <UiCard>
+                                    <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <UiCardTitle className="text-sm font-medium">Total Coolers Sold</UiCardTitle>
+                                        <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <div className="text-2xl font-bold">{totalCoolersInField}</div>
+                                    </UiCardContent>
+                                </UiCard>
+                                <UiCard>
+                                    <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <UiCardTitle className="text-sm font-medium">Total Commission</UiCardTitle>
+                                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <div className="text-2xl font-bold">${totalClosedCommission.toFixed(2)}</div>
+                                    </UiCardContent>
+                                </UiCard>
+                                <UiCard>
+                                    <UiCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <UiCardTitle className="text-sm font-medium">Avg Commission/Deal</UiCardTitle>
+                                        <Hash className="h-4 w-4 text-muted-foreground" />
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <div className="text-2xl font-bold">
+                                            ${(totalClosedCommission / closedDeals.length).toFixed(2)}
+                                        </div>
+                                    </UiCardContent>
+                                </UiCard>
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <UiCard>
+                                    <UiCardHeader>
+                                        <UiCardTitle>Cooler Distribution</UiCardTitle>
+                                        <UiCardDescription>Breakdown of coolers sold.</UiCardDescription>
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[300px]">
+                                            <PieChart>
+                                                <ChartTooltipContent
+                                                    accessibilityLayer
+                                                    cursor={false}
+                                                    content={<ChartTooltipContent hideIndicator />}
+                                                />
+                                                <Pie
+                                                    data={coolerDistributionChartData}
+                                                    dataKey="value"
+                                                    nameKey="name"
+                                                    innerRadius={60}
+                                                    strokeWidth={5}
+                                                >
+                                                    {coolerDistributionChartData.map((entry, index) => (
+                                                        <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={chartConfig[entry.name]?.color}
+                                                        className="focus:outline-none"
+                                                        />
+                                                    ))}
+                                                </Pie>
+                                                <ChartLegend content={<CustomPieChartLegend />} />
+                                            </PieChart>
+                                        </ChartContainer>
+                                    </UiCardContent>
+                                </UiCard>
+                                    <UiCard>
+                                    <UiCardHeader>
+                                        <UiCardTitle>Sales by Location</UiCardTitle>
+                                        <UiCardDescription>Total coolers sold per city.</UiCardDescription>
+                                    </UiCardHeader>
+                                    <UiCardContent>
+                                        <ScrollArea className="h-72">
+                                          <div className="space-y-2 pr-3">
+                                              {salesByLocationChartData.map(({ city, coolers }) => (
+                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                      <span className="font-medium text-foreground">{city}</span>
+                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                  </div>
+                                              ))}
+                                          </div>
+                                        </ScrollArea>
+                                    </UiCardContent>
+                                </UiCard>
+                            </div>
                         </div>
                     </ScrollArea>
                 ) : (
@@ -4590,3 +4490,6 @@ export default function HomePage() {
 
 
     
+
+    
+
