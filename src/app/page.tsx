@@ -2387,6 +2387,9 @@ export default function HomePage() {
         installationFee: undefined,
         creditApproved: false,
         manualCommission: undefined,
+        locationImageUrl: null,
+        underSinkImageUrl: null,
+        installedUnitImageUrl: null,
     };
     
     handleSaveFromForm(newVisit);
@@ -2445,6 +2448,9 @@ export default function HomePage() {
       installationFee: undefined,
       creditApproved: false,
       manualCommission: undefined,
+      locationImageUrl: null,
+      underSinkImageUrl: null,
+      installedUnitImageUrl: null,
     };
     
     handleSaveFromForm(newVisit);
@@ -2485,6 +2491,9 @@ export default function HomePage() {
             notes: 'Flagged as a hotspot.',
             futureMeetingSet: true, // Mark for future planning
             futureMeetingDateTime: undefined, // But unscheduled
+            locationImageUrl: null,
+            underSinkImageUrl: null,
+            installedUnitImageUrl: null,
         };
   
         handleSaveFromForm(newVisit, { andClose: false, expandOnClose: false });
@@ -2612,6 +2621,9 @@ export default function HomePage() {
                     installationFee: columns[32] ? parseFloat(columns[32]) : undefined,
                     creditApproved: columns[33] === 'Yes',
                     manualCommission: columns[34] ? parseFloat(columns[34]) : undefined,
+                    locationImageUrl: null,
+                    underSinkImageUrl: null,
+                    installedUnitImageUrl: null,
                 };
             });
             setImportedVisits(imported);
@@ -2661,6 +2673,16 @@ export default function HomePage() {
     });
     return config;
   }, [coolerDistributionChartData]);
+
+  const formatMeetingTime = (date: Date) => {
+    const meetingDate = new Date(date);
+    const isDefaultTime = meetingDate.getHours() === 0 && meetingDate.getMinutes() === 0;
+    
+    if (isDefaultTime) {
+      return formatInTimeZone(meetingDate, timeZone, 'E, MMM d');
+    }
+    return formatInTimeZone(meetingDate, timeZone, 'E, MMM d @ p');
+  };
 
   return (
     <div className="min-h-screen">
@@ -2999,7 +3021,7 @@ export default function HomePage() {
                                 {v.companyName}
                                 </Button>
                                 <span className="text-xs text-muted-foreground ml-2">
-                                ({formatInTimeZone(new Date(v.futureMeetingDateTime!), timeZone, 'E, MMM d @ p')})
+                                  ({formatMeetingTime(v.futureMeetingDateTime!)})
                                 </span>
                             </li>
                             ))}
@@ -3284,8 +3306,7 @@ export default function HomePage() {
                   aria-label="Search with voice"
                   title="Search with voice"
                 >
-                  {isRecordingSearch ? (
-                    <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  {isRecordingSearch ? <Mic className="h-4 w-4 text-red-500 animate-pulse" />
                   ) : (
                     <Mic className="h-4 w-4 text-foreground" />
                   )}
@@ -3500,7 +3521,7 @@ export default function HomePage() {
                                         ) : sortCriteria === 'timestamp' ? (
                                           <> <SelectItem value="desc">Newest to Oldest</SelectItem> <SelectItem value="asc">Oldest to Newest</SelectItem> </>
                                         ) : ( // Default is partnershipConfidence
-                                          <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to High</SelectItem> </>
+                                          <> <SelectItem value="desc">High to Low</SelectItem> <SelectItem value="asc">Low to Low</SelectItem> </>
                                         )}
                                       </SelectContent>
                                     </Select>
@@ -3555,7 +3576,7 @@ export default function HomePage() {
                                   {selectedDateSummary.futureMeetings.map(visit => (
                                       <li key={visit.id} className="text-sm flex justify-between items-center">
                                           <span>
-                                              {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'p')}
+                                              {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'PPPp')}
                                           </span>
                                           <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => handleInitiateReschedule(visit)}>
                                             <RefreshCw className="mr-1 h-3 w-3" /> Reschedule
@@ -4087,16 +4108,14 @@ export default function HomePage() {
                                             <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                         </UiCardHeader>
                                         <UiCardContent>
-                                            <ScrollArea className="h-72">
-                                                <div className="space-y-2 pr-3">
-                                                    {salesByLocationChartData.map(({ city, coolers }) => (
-                                                        <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                            <span className="font-medium text-foreground">{city}</span>
-                                                            <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </ScrollArea>
+                                          <div className="space-y-2 pr-3">
+                                              {salesByLocationChartData.map(({ city, coolers }) => (
+                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                      <span className="font-medium text-foreground">{city}</span>
+                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                  </div>
+                                              ))}
+                                          </div>
                                         </UiCardContent>
                                     </UiCard>
                                 </div>
@@ -4392,14 +4411,14 @@ export default function HomePage() {
                                     </UiCardHeader>
                                     <UiCardContent>
                                         <ScrollArea className="h-72">
-                                          <div className="space-y-2 pr-3">
-                                              {salesByLocationChartData.map(({ city, coolers }) => (
-                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                      <span className="font-medium text-foreground">{city}</span>
-                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                  </div>
-                                              ))}
-                                          </div>
+                                            <div className="space-y-2 pr-3">
+                                                {salesByLocationChartData.map(({ city, coolers }) => (
+                                                    <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                        <span className="font-medium text-foreground">{city}</span>
+                                                        <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </ScrollArea>
                                     </UiCardContent>
                                 </UiCard>
@@ -4508,5 +4527,7 @@ export default function HomePage() {
 
 
 
+
+    
 
     
