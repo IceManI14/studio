@@ -4087,14 +4087,16 @@ export default function HomePage() {
                                             <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                         </UiCardHeader>
                                         <UiCardContent>
-                                          <div className="space-y-2">
-                                              {salesByLocationChartData.map(({ city, coolers }) => (
-                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                      <span className="font-medium text-foreground">{city}</span>
-                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                  </div>
-                                              ))}
-                                          </div>
+                                            <ScrollArea className="h-72">
+                                                <div className="space-y-2 pr-3">
+                                                    {salesByLocationChartData.map(({ city, coolers }) => (
+                                                        <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                            <span className="font-medium text-foreground">{city}</span>
+                                                            <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
                                         </UiCardContent>
                                     </UiCard>
                                 </div>
@@ -4505,3 +4507,6 @@ export default function HomePage() {
     
 
 
+
+
+    
