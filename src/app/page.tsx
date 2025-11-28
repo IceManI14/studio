@@ -775,7 +775,8 @@ export default function HomePage() {
   const upcomingWeekVisits = useMemo(() => {
     const today = startOfDay(new Date());
     const oneWeekFromNow = addDays(today, 7);
-    return visitsToDisplay
+    
+    const allMeetings = visitsToDisplay
       .filter(visit => 
         visit.futureMeetingSet && 
         visit.futureMeetingDateTime && 
@@ -784,6 +785,16 @@ export default function HomePage() {
         !visit.dealClosed
       )
       .sort((a, b) => new Date(a.futureMeetingDateTime!).getTime() - new Date(b.futureMeetingDateTime!).getTime());
+
+    // De-duplicate by company name, keeping the earliest meeting
+    const uniqueMeetings = new Map<string, Visit>();
+    for (const meeting of allMeetings) {
+        if (!uniqueMeetings.has(meeting.companyName)) {
+            uniqueMeetings.set(meeting.companyName, meeting);
+        }
+    }
+    
+    return Array.from(uniqueMeetings.values());
   }, [visitsToDisplay]);
 
   const callListVisits = useMemo(() => {
@@ -2640,7 +2651,7 @@ export default function HomePage() {
     }, 100);
   };
 
-  const chartConfig = useMemo(() => {
+  const chartConfig = useMemo<ChartConfig>(() => {
     const config: ChartConfig = {};
     coolerDistributionChartData.forEach((item, index) => {
         config[item.name] = {
@@ -4492,4 +4503,5 @@ export default function HomePage() {
     
 
     
+
 
