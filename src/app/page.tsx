@@ -2675,13 +2675,12 @@ export default function HomePage() {
   }, [coolerDistributionChartData]);
 
   const formatMeetingTime = (date: Date) => {
-    const meetingDate = new Date(date);
-    const isDefaultTime = meetingDate.getHours() === 0 && meetingDate.getMinutes() === 0;
+    const isDefaultTime = date.getHours() === 0 && date.getMinutes() === 0;
     
     if (isDefaultTime) {
-      return formatInTimeZone(meetingDate, timeZone, 'E, MMM d');
+      return formatInTimeZone(date, timeZone, 'E, MMM d');
     }
-    return formatInTimeZone(meetingDate, timeZone, 'E, MMM d @ p');
+    return formatInTimeZone(date, timeZone, 'E, MMM d @ p');
   };
 
   return (
@@ -3307,7 +3306,7 @@ export default function HomePage() {
                   title="Search with voice"
                 >
                   {isRecordingSearch ? <Mic className="h-4 w-4 text-red-500 animate-pulse" />
-                  ) : (
+                  : (
                     <Mic className="h-4 w-4 text-foreground" />
                   )}
                 </Button>
@@ -3576,7 +3575,7 @@ export default function HomePage() {
                                   {selectedDateSummary.futureMeetings.map(visit => (
                                       <li key={visit.id} className="text-sm flex justify-between items-center">
                                           <span>
-                                              {visit.companyName} at {formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'PPPp')}
+                                              {visit.companyName} at {formatInTimeZone(visit.futureMeetingDateTime!, timeZone, 'PPPp')}
                                           </span>
                                           <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => handleInitiateReschedule(visit)}>
                                             <RefreshCw className="mr-1 h-3 w-3" /> Reschedule
@@ -4108,14 +4107,16 @@ export default function HomePage() {
                                             <UiCardDescription>Total coolers sold per city.</UiCardDescription>
                                         </UiCardHeader>
                                         <UiCardContent>
-                                          <div className="space-y-2 pr-3">
-                                              {salesByLocationChartData.map(({ city, coolers }) => (
-                                                  <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
-                                                      <span className="font-medium text-foreground">{city}</span>
-                                                      <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
-                                                  </div>
-                                              ))}
-                                          </div>
+                                          <ScrollArea className="h-72">
+                                            <div className="space-y-2 pr-3">
+                                                {salesByLocationChartData.map(({ city, coolers }) => (
+                                                    <div key={city} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary/30">
+                                                        <span className="font-medium text-foreground">{city}</span>
+                                                        <Badge variant="default" className="bg-primary/80">{coolers} {coolers === 1 ? 'cooler' : 'coolers'}</Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                          </ScrollArea>
                                         </UiCardContent>
                                     </UiCard>
                                 </div>
@@ -4306,7 +4307,7 @@ export default function HomePage() {
                             <div key={visit.id} className="flex justify-between items-center p-2 rounded-md bg-secondary">
                                 <div>
                                     <p className="font-semibold">{visit.companyName}</p>
-                                    <p className="text-sm text-muted-foreground">{formatInTimeZone(new Date(visit.futureMeetingDateTime!), timeZone, 'PPPp')}</p>
+                                    <p className="text-sm text-muted-foreground">{formatInTimeZone(visit.futureMeetingDateTime!, timeZone, 'PPPp')}</p>
                                 </div>
                                 <Button size="sm" onClick={() => handleInitiateReschedule(visit)}>
                                     <RefreshCw className="mr-2 h-4 w-4" /> Reschedule
@@ -4531,3 +4532,4 @@ export default function HomePage() {
     
 
     
+
