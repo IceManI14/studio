@@ -811,6 +811,17 @@ export default function HomePage() {
     return formatInTimeZone(date, timeZone, 'E, MMM d @ p');
   };
 
+  const chartConfig: ChartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    coolerDistributionChartData.forEach((item, index) => {
+        config[item.name] = {
+            label: item.name,
+            color: `hsl(var(--chart-${(index % 5) + 1}))`,
+        };
+    });
+    return config;
+  }, [coolerDistributionChartData]);
+
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
@@ -2672,17 +2683,6 @@ export default function HomePage() {
     }, 100);
   };
 
-  const chartConfig: ChartConfig = useMemo(() => {
-    const config: ChartConfig = {};
-    coolerDistributionChartData.forEach((item, index) => {
-        config[item.name] = {
-            label: item.name,
-            color: `hsl(var(--chart-${(index % 5) + 1}))`,
-        };
-    });
-    return config;
-  }, [coolerDistributionChartData]);
-
   return (
     <div className="min-h-screen">
       <TerritoryUploadModal 
@@ -4532,6 +4532,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
