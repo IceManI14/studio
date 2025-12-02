@@ -802,6 +802,15 @@ export default function HomePage() {
     return visitsToDisplay.filter(visit => callListMap.has(visit.id));
   }, [callList, visitsToDisplay]);
 
+  const formatMeetingTime = (date: Date) => {
+    const isDefaultTime = date.getHours() === 0 && date.getMinutes() === 0;
+    
+    if (isDefaultTime) {
+      return formatInTimeZone(date, timeZone, 'E, MMM d');
+    }
+    return formatInTimeZone(date, timeZone, 'E, MMM d @ p');
+  };
+
   // Callbacks
   const handleSaveFromForm = useCallback(async (payload: SaveVisitPayload, options: { andClose?: boolean; expandOnClose?: boolean; } = {}): Promise<Visit> => {
     const { andClose = true, expandOnClose = false } = options;
@@ -2663,7 +2672,7 @@ export default function HomePage() {
     }, 100);
   };
 
-  const chartConfig = useMemo<ChartConfig>(() => {
+  const chartConfig: ChartConfig = useMemo(() => {
     const config: ChartConfig = {};
     coolerDistributionChartData.forEach((item, index) => {
         config[item.name] = {
@@ -2673,15 +2682,6 @@ export default function HomePage() {
     });
     return config;
   }, [coolerDistributionChartData]);
-
-  const formatMeetingTime = (date: Date) => {
-    const isDefaultTime = date.getHours() === 0 && date.getMinutes() === 0;
-    
-    if (isDefaultTime) {
-      return formatInTimeZone(date, timeZone, 'E, MMM d');
-    }
-    return formatInTimeZone(date, timeZone, 'E, MMM d @ p');
-  };
 
   return (
     <div className="min-h-screen">
@@ -4532,6 +4532,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
