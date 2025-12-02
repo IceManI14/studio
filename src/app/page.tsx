@@ -4148,7 +4148,7 @@ export default function HomePage() {
                   <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20">
                     <UiCardContent className="p-6 space-y-4">
                       <p className="text-muted-foreground">
-                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to help you track visits, manage contacts, and close more deals.
+                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to streamline your daily workflow. It helps you log visits, create leads, plan future meetings, and analyze your performance. With features like the "Debbie" AI assistant, performance dashboards, and location-aware tools, you can stay organized and close more deals.
                       </p>
                       
                       <div className="space-y-2 border-t pt-4">
@@ -4532,4 +4532,5 @@ export default function HomePage() {
     
 
     
+
 
