@@ -105,7 +105,7 @@ const salespeople: Salesperson[] = [
         name: 'James D.', 
         territory: [
             { name: 'Worcester & Springfield Area', bounds: { minLat: 42.05, maxLat: 42.35, minLng: -72.65, maxLng: -71.70 }, cities: ['Worcester, MA', 'Springfield, MA', 'Holyoke, MA', 'Chicopee, MA', 'Westfield, MA'] }
-        ] 
+        ]
     },
     { id: '4', name: 'Corporate', territory: [{ name: 'All Territories', bounds: { minLat: -90, maxLat: 90, minLng: -180, maxLng: 180 } }] },
     { id: '5', name: 'John Doe (No Territory)', territory: [] },
@@ -803,11 +803,11 @@ export default function HomePage() {
 
   const formatMeetingTime = (date: Date | undefined): string => {
     if (!date) return '';
-    const d = date;
+    const d = new Date(date);
     const isDefaultTime = d.getHours() === 0 && d.getMinutes() === 0;
 
     if (isDefaultTime) {
-        return formatInTimeZone(d, timeZone, 'E, MMM d');
+      return formatInTimeZone(d, timeZone, 'E, MMM d');
     }
     return formatInTimeZone(d, timeZone, 'E, MMM d @ p');
   };
