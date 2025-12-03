@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
@@ -804,7 +803,7 @@ export default function HomePage() {
 
   const formatMeetingTime = (date: Date | undefined): string => {
     if (!date) return '';
-    const d = new Date(date);
+    const d = date;
     const isDefaultTime = d.getHours() === 0 && d.getMinutes() === 0;
 
     if (isDefaultTime) {
@@ -3672,7 +3671,7 @@ export default function HomePage() {
             </div>
           </TabsContent>
           <TabsContent value="visits" className="space-y-6 mt-6">
-            <Accordion type="single" collapsible>
+            <Accordion type="single" collapsible defaultChecked>
               <AccordionItem value="company-map" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
@@ -4025,6 +4024,7 @@ export default function HomePage() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0">
+                      <ScrollArea className="max-h-[80vh]">
                          {closedDeals.length > 0 ? (
                             <div className="p-4 bg-card/60 backdrop-blur-sm border border-primary/20 rounded-b-lg shadow-lg border-t-0 space-y-6">
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -4087,8 +4087,6 @@ export default function HomePage() {
                                                         nameKey="name"
                                                         innerRadius={60}
                                                         strokeWidth={5}
-                                                        labelLine={true}
-                                                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                                     >
                                                        {coolerDistributionChartData.map((entry, index) => (
                                                           <Cell
@@ -4118,22 +4116,23 @@ export default function HomePage() {
                                                     </div>
                                                 ))}
                                             </div>
-                                          </ScrollArea>
-                                        </UiCardContent>
-                                    </UiCard>
-                                </div>
+                                        </ScrollArea>
+                                    </UiCardContent>
+                                </UiCard>
                             </div>
-                        ) : (
-                            <div className="text-center py-10 bg-card/60 rounded-b-lg border border-primary/20 border-t-0">
-                                <p className="text-muted-foreground">No closed deals found to generate performance metrics.</p>
-                            </div>
-                        )}
+                        </div>
+                    </ScrollArea>
+                ) : (
+                    <div className="text-center py-10 bg-card/60 rounded-b-lg border border-primary/20 border-t-0">
+                        <p className="text-muted-foreground">No closed deals found to generate performance metrics.</p>
+                    </div>
+                )}
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
           </TabsContent>
           <TabsContent value="about" className="space-y-6 mt-6">
-            <Accordion type="single" collapsible defaultChecked>
+            <Accordion type="single" collapsible>
               <AccordionItem value="app-info" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
@@ -4141,26 +4140,92 @@ export default function HomePage() {
                       <Info className="h-7 w-7 text-primary" />
                     </div>
                     <h2 className="text-2xl font-headline font-semibold text-foreground flex-1 text-center">
-                      About & Feedback
+                      About &amp; Feedback
                     </h2>
                     <div className="w-10 shrink-0"></div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-0">
                   <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20">
-                    <UiCardContent className="p-6 space-y-4">
-                      <p className="text-muted-foreground">
-                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to streamline your daily workflow. It helps you log visits, create leads, plan future meetings, upload images, and analyze your performance. With features like the "Debbie" AI assistant, performance dashboards, and location-aware tools, you can stay organized and close more deals.
-                      </p>
+                    <UiCardContent className="p-6 space-y-6">
                       
-                      <div className="space-y-2 border-t pt-4">
-                          <h3 className="font-semibold text-foreground">Data Storage</h3>
-                          <p className="text-sm text-muted-foreground">
-                            All your visit data is saved locally in your browser and will persist between sessions on this device. If Firebase is configured, your data will also be synced to the cloud for real-time updates and backup.
-                          </p>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-semibold text-primary">Welcome to Optimum Trailblazer!</h3>
+                        <p className="text-muted-foreground">
+                          This is your AI-powered sales companion, designed to streamline your daily workflow. It helps you log visits, create leads, plan your day, and analyze your performance.
+                        </p>
                       </div>
 
-                       <div className="space-y-2 border-t pt-4">
+                      <Separator />
+
+                      <div className="space-y-4">
+                          <h4 className="text-lg font-semibold text-primary">How to Use the App</h4>
+                          <Accordion type="single" collapsible className="w-full space-y-3">
+                              <AccordionItem value="field-day" className="rounded-lg border bg-background/50 px-3">
+                                  <AccordionTrigger><PlusCircle className="mr-2 h-5 w-5 text-orange-500"/>Field Day</AccordionTrigger>
+                                  <AccordionContent className="space-y-2 pt-2">
+                                      <p className="text-sm text-muted-foreground">This is your main hub for daily activities.</p>
+                                      <ul className="list-disc list-inside text-sm space-y-1 pl-2">
+                                          <li><strong>Quicklog:</strong> Instantly start a new visit log, automatically capturing your current GPS location.</li>
+                                          <li><strong>Telemarketer Lead:</strong> Create a new lead from information provided by the telemarketing team.</li>
+                                          <li><strong>Today's Visits:</strong> A list of all visits you've logged today.</li>
+                                          <li><strong>Past Visits:</strong> A searchable, day-by-day history of all previous visits.</li>
+                                      </ul>
+                                  </AccordionContent>
+                              </AccordionItem>
+                              <AccordionItem value="planner" className="rounded-lg border bg-background/50 px-3">
+                                  <AccordionTrigger><FolderKanban className="mr-2 h-5 w-5 text-orange-500"/>Planner</AccordionTrigger>
+                                  <AccordionContent className="space-y-2 pt-2">
+                                      <p className="text-sm text-muted-foreground">Organize and track your future opportunities.</p>
+                                       <ul className="list-disc list-inside text-sm space-y-1 pl-2">
+                                          <li><strong>In Trial:</strong> Manage all active free trials and see your potential commission.</li>
+                                          <li><strong>Future Meetings:</strong> View scheduled and unscheduled future meetings.</li>
+                                          <li><strong>Flagged Hotspots:</strong> Revisit locations you've flagged while driving.</li>
+                                          <li><strong>Deals Closed:</strong> Review all your closed deals and see your total commission.</li>
+                                      </ul>
+                                  </AccordionContent>
+                              </AccordionItem>
+                              <AccordionItem value="call-day" className="rounded-lg border bg-background/50 px-3">
+                                  <AccordionTrigger><ListChecks className="mr-2 h-5 w-5 text-orange-500"/>Call Day</AccordionTrigger>
+                                  <AccordionContent className="space-y-2 pt-2">
+                                      <p className="text-sm text-muted-foreground">Your command center for calls and follow-ups.</p>
+                                      <ul className="list-disc list-inside text-sm space-y-1 pl-2">
+                                          <li><strong>Call List:</strong> Build a list of companies to call.</li>
+                                          <li><strong>Calendar View:</strong> See your activities on a specific day. Click a date to filter the list or schedule a new visit.</li>
+                                          <li><strong>Filter & Sort:</strong> Powerful tools to search and sort your entire visit history by confidence, date, city, and more.</li>
+                                          <li><strong>Export:</strong> Generate PDF or CSV reports of your filtered lists.</li>
+                                      </ul>
+                                  </AccordionContent>
+                              </AccordionItem>
+                              <AccordionItem value="visits" className="rounded-lg border bg-background/50 px-3">
+                                  <AccordionTrigger><MapPin className="mr-2 h-5 w-5 text-orange-500"/>Visits Map</AccordionTrigger>
+                                  <AccordionContent className="space-y-2 pt-2">
+                                      <p className="text-sm text-muted-foreground">Visualize your sales territory.</p>
+                                      <ul className="list-disc list-inside text-sm space-y-1 pl-2">
+                                          <li>See all your logged visits pinned on an interactive map.</li>
+                                          <li>Different pin colors indicate the status of each visit (e.g., Deal Closed, Competitor, Follow-up).</li>
+                                      </ul>
+                                  </AccordionContent>
+                              </AccordionItem>
+                              <AccordionItem value="ai-chat" className="rounded-lg border bg-background/50 px-3">
+                                  <AccordionTrigger><Bot className="mr-2 h-5 w-5 text-orange-500"/>Debbie AI</AccordionTrigger>
+                                  <AccordionContent className="space-y-2 pt-2">
+                                      <p className="text-sm text-muted-foreground">Your personal sales assistant.</p>
+                                       <ul className="list-disc list-inside text-sm space-y-1 pl-2">
+                                          <li><strong>Chat:</strong> Ask Debbie for advice, have her analyze data, or help you plan your day.</li>
+                                          <li><strong>File Upload:</strong> Attach PDFs or CSVs for Debbie to analyze in the current conversation.</li>
+                                          <li><strong>Optimum News:</strong> Stay updated with important company announcements.</li>
+                                          <li><strong>Company Documents:</strong> Manage email templates and documents for Debbie to use as long-term context.</li>
+                                          <li><strong>Performance Dashboard:</strong> Get a visual breakdown of your sales performance, including coolers sold and commission earned.</li>
+                                      </ul>
+                                  </AccordionContent>
+                              </AccordionItem>
+                          </Accordion>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
                           <h3 className="font-semibold text-foreground">Suggest an Improvement</h3>
                           <p className="text-sm text-muted-foreground">
                             Have an idea to make the app better? Type your suggestion below and submit it directly to the development team.
@@ -4184,7 +4249,9 @@ export default function HomePage() {
                           </div>
                       </div>
 
-                      <div className="space-y-2 border-t pt-4">
+                      <Separator />
+                      
+                      <div className="space-y-2">
                          <h3 className="font-semibold text-foreground">Manager Actions</h3>
                          <div className="flex gap-2">
                             <Button variant="secondary" onClick={() => handleEmailManager()}>
@@ -4502,41 +4569,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-    
-
-
-
-    
-
-
-
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-
-
-
-
-
