@@ -802,13 +802,15 @@ export default function HomePage() {
     return visitsToDisplay.filter(visit => callListMap.has(visit.id));
   }, [callList, visitsToDisplay]);
 
-  const formatMeetingTime = (date: Date) => {
-    const isDefaultTime = date.getHours() === 0 && date.getMinutes() === 0;
-    
+  const formatMeetingTime = (date: Date | undefined): string => {
+    if (!date) return '';
+    const d = new Date(date);
+    const isDefaultTime = d.getHours() === 0 && d.getMinutes() === 0;
+
     if (isDefaultTime) {
-      return formatInTimeZone(date, timeZone, 'E, MMM d');
+        return formatInTimeZone(d, timeZone, 'E, MMM d');
     }
-    return formatInTimeZone(date, timeZone, 'E, MMM d @ p');
+    return formatInTimeZone(d, timeZone, 'E, MMM d @ p');
   };
 
   const chartConfig: ChartConfig = useMemo(() => {
@@ -4131,7 +4133,7 @@ export default function HomePage() {
             </Accordion>
           </TabsContent>
           <TabsContent value="about" className="space-y-6 mt-6">
-            <Accordion type="single" collapsible>
+            <Accordion type="single" collapsible defaultChecked>
               <AccordionItem value="app-info" className="border-none">
                 <AccordionTrigger className={cn("p-4 bg-card rounded-lg shadow-lg hover:no-underline data-[state=open]:rounded-b-none data-[state=open]:mb-0", "bluish-glow")}>
                   <div className="flex w-full items-center">
@@ -4148,7 +4150,7 @@ export default function HomePage() {
                   <UiCard className="w-full rounded-t-none border-t-0 bg-card border border-primary/20">
                     <UiCardContent className="p-6 space-y-4">
                       <p className="text-muted-foreground">
-                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to streamline your daily workflow. It helps you log visits, create leads, plan future meetings, and analyze your performance. With features like the "Debbie" AI assistant, performance dashboards, and location-aware tools, you can stay organized and close more deals.
+                        <span className="font-bold text-primary">Optimum Trailblazer</span> is your AI-powered sales companion, designed to streamline your daily workflow. It helps you log visits, create leads, plan future meetings, upload images, and analyze your performance. With features like the "Debbie" AI assistant, performance dashboards, and location-aware tools, you can stay organized and close more deals.
                       </p>
                       
                       <div className="space-y-2 border-t pt-4">
@@ -4532,6 +4534,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
