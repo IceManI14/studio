@@ -805,7 +805,7 @@ export default function HomePage() {
     if (!date) return '';
     const d = new Date(date);
     const isDefaultTime = d.getHours() === 0 && d.getMinutes() === 0;
-
+  
     if (isDefaultTime) {
       return formatInTimeZone(d, timeZone, 'E, MMM d');
     }
